@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wls
+  namespace: mlt-prod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wls
+  template:
+    metadata:
+      labels:
+        app: wls
+    spec:
+      priorityClassName: medium-priority
+      containers:
+        - name: app
+          image: harbor.nb.no/mlt/wls:<version>
+          ports:
+            - name: app-port
+              containerPort: 8080
+            - name: actuator-port
+              containerPort: 8888
+          env:
+            - name: INFO_ENVIRONMENT
+              value: PROD
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: HTTP_PROXY_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: http_proxy_host
+            - name: HTTP_PROXY_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: http_proxy_port
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: actuator-port
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: actuator-port
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 1
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: wls
+  namespace: mlt-prod
+spec:
+  ports:
+    - port: 8080
+      name: rest
+      targetPort: 8080
+    - port: 8888
+      name: http
+      targetPort: 8888
+  selector:
+    app: wls
+  type: ClusterIP
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wls-ingress
+  namespace: mlt-prod
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: <host_url>
+      http:
+        paths:
+          - backend:
+              service:
+                name: wls
+                port:
+                  number: 8080
+            path: /bifrost
+            pathType: Prefix

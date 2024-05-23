@@ -1,0 +1,33 @@
+name: Test Project
+run-name: ${{ github.actor }} is testing the project
+on:
+  # Run on push to main branch
+  push:
+    branches:
+      - main
+  # Runs every time a pull request is created or updated
+  pull_request:
+concurrency:
+  # Define concurrency group name which will then be used to determine duplicate workflow runs
+  group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+  cancel-in-progress: true
+jobs:
+  test-project:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          architecture: x64
+          # Cache maven dependencies for quicker runs
+          cache: maven
+      - name: Test the Project
+        run: mvn verify --fail-at-end
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
+        with:
+          fail_on_test_failures: true
