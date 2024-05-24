@@ -1,5 +1,5 @@
 name: Deploy Project
-run-name: ${{ github.actor }} is testing the project
+run-name: ${{ github.actor }} is deploying the project
 
 on:
   # Run on push to main branch and tags
@@ -54,7 +54,7 @@ jobs:
           # method: approle
           # roleId: ${{ secrets.VAULT_ROLE_ID }}
           # secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/proxy *
+          secrets: secret/v1/application/k8s/mlt/metadata/proxy *
 
       - name: Test the Project
         run: |
