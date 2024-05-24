@@ -46,6 +46,7 @@ jobs:
 
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
+        id: sec
         with:
           url: ${{ secrets.VAULT_URL }}
           method: ldap
@@ -58,11 +59,13 @@ jobs:
 
       - name: Test the Project
         run: |
+          echo ${{ env.HTTP_PROXY_PORT }}
+          echo ${{ steps.sec.outputs.HTTP_PROXY_PORT }}
           sed -i "s/HTTP_PROXY_HOST/${{ env.HTTP_PROXY_HOST }}/g" .m2/settings.xml
-          sed -i "s/HTTP_PROXY_PORT/${{ env.HTTP_PROXY_PORT }}/g" .m2/settings.xml
+          sed -i "s/HTTP_PROXY_PORT/${{ steps.sec.outputs.HTTP_PROXY_PORT }}/g" .m2/settings.xml
           sed -i "s/HTTPS_PROXY_HOST/${{ env.HTTPS_PROXY_HOST }}/g" .m2/settings.xml
           sed -i "s/HTTPS_PROXY_PORT/${{ env.HTTPS_PROXY_PORT }}/g" .m2/settings.xml
-          mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
+          ./mvnw ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
       - name: Publish Test Report
         uses: scacap/action-surefire-report@v1
