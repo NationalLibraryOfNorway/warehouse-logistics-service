@@ -48,14 +48,13 @@ jobs:
         uses: hashicorp/vault-action@v3
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: |
-            secret/v1/application/k8s/mlt/proxy HTTP_PROXY_HOST;
-            secret/v1/application/k8s/mlt/proxy HTTP_PROXY_PORT;
-            secret/v1/application/k8s/mlt/proxy HTTPS_PROXY_HOST;
-            secret/v1/application/k8s/mlt/proxy HTTPS_PROXY_PORT
+          method: ldap
+          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          password: ${{ secrets.VAULT_PASSWORD }}
+          # method: approle
+          # roleId: ${{ secrets.VAULT_ROLE_ID }}
+          # secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: secret/v1/application/k8s/mlt/proxy *
 
       - name: Test the Project
         run: |
