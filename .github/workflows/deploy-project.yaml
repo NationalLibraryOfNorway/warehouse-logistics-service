@@ -56,9 +56,9 @@ jobs:
           # roleId: ${{ secrets.VAULT_ROLE_ID }}
           # secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_HOST
-            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_PORT
-            secret/v1/application/k8s/mlt/metadata/proxy HTTPS_PROXY_HOST
+            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_HOST;
+            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_PORT;
+            secret/v1/application/k8s/mlt/metadata/proxy HTTPS_PROXY_HOST;
             secret/v1/application/k8s/mlt/metadata/proxy HTTPS_PROXY_PORT
 
       - name: Test the Project
