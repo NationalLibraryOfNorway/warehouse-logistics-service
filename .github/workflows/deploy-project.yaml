@@ -56,10 +56,10 @@ jobs:
           # roleId: ${{ secrets.VAULT_ROLE_ID }}
           # secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_HOST;
-            secret/v1/application/k8s/mlt/metadata/proxy HTTP_PROXY_PORT;
-            secret/v1/application/k8s/mlt/metadata/proxy HTTPS_PROXY_HOST;
-            secret/v1/application/k8s/mlt/metadata/proxy HTTPS_PROXY_PORT
+            secret/v1/application/k8s/mlt/proxy HTTP_PROXY_HOST;
+            secret/v1/application/k8s/mlt/proxy HTTP_PROXY_PORT;
+            secret/v1/application/k8s/mlt/proxy HTTPS_PROXY_HOST;
+            secret/v1/application/k8s/mlt/proxy HTTPS_PROXY_PORT
 
       - name: Test the Project
         run: |
@@ -122,7 +122,7 @@ jobs:
 
       - name: Extract Metadata for Docker
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker-action@v5
         with:
           images: mlt/wls # TODO: Figure out what image name will be generated
           tags: |
