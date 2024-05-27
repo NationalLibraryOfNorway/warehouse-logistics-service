@@ -49,12 +49,12 @@ jobs:
         id: sec
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: ldap
-          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
-          password: ${{ secrets.VAULT_PASSWORD }}
-          # method: approle
-          # roleId: ${{ secrets.VAULT_ROLE_ID }}
-          # secretId: ${{ secrets.VAULT_SECRET_ID }}
+          # method: ldap
+          # username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          # password: ${{ secrets.VAULT_PASSWORD }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/proxy *
 
       - name: Test the Project
