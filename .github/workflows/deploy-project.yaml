@@ -72,8 +72,8 @@ jobs:
         run: |
           sed -i "s|HTTP_PROXY_HOST|${{ env.HTTP_PROXY_HOST }}|g" .m2/settings.xml
           sed -i "s|HTTP_PROXY_PORT|${{ env.HTTP_PROXY_PORT }}|g" .m2/settings.xml
-          sed -i "s|HTTPS_PROXY_HOST|${{ env.HTTP_PROXY_HOST.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
-          sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTP_PROXY_HOST.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
+          sed -i "s|HTTPS_PROXY_HOST|${{ env.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
+          sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
       - name: Publish Test Report
