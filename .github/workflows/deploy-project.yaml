@@ -44,17 +44,28 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Install Maven
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install wget -y
+          wget https://downloads.apache.org/maven/maven-3/3.9.7/binaries/apache-maven-3.9.7-bin.tar.gz
+          tar xzf apache-maven-3.9.6-bin.tar.gz
+          sudo mv apache-maven-3.9.6 /opt/
+          sudo ln -s /opt/apache-maven-3.9.7/bin/mvn /usr/local/bin/mvn
+          echo "PATH=/opt/apache-maven-3.9.7/bin:$PATH" >> $GITHUB_ENV
+          mvn -v
+
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         id: sec
         with:
           url: ${{ secrets.VAULT_URL }}
-          # method: ldap
-          # username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
-          # password: ${{ secrets.VAULT_PASSWORD }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          method: ldap
+          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          password: ${{ secrets.VAULT_PASSWORD }}
+          # method: approle
+          # roleId: ${{ secrets.VAULT_ROLE_ID }}
+          # secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/proxy *
 
       - name: Test the Project
@@ -63,7 +74,7 @@ jobs:
           sed -i "s|HTTP_PROXY_PORT|${{ steps.sec.outputs.HTTP_PROXY_PORT }}|g" .m2/settings.xml
           sed -i "s|HTTPS_PROXY_HOST|${{ steps.sec.outputs.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
           sed -i "s|HTTPS_PROXY_PORT|${{ steps.sec.outputs.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
-          ./mvnw ${{ env.MAVEN_CONFIG }} verify --fail-at-end
+          mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
       - name: Publish Test Report
         uses: scacap/action-surefire-report@v1
