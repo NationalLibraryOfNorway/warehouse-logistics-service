@@ -81,8 +81,8 @@ jobs:
         with:
           fail_on_test_failures: true
         env:
-          http_proxy : ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
-          https_proxy : ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
+          http_proxy : http://proxy1.lx.nb.no:3128
+          https_proxy : http://proxy1.lx.nb.no:3128
 
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
