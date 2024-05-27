@@ -76,10 +76,21 @@ jobs:
           sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
-      - name: Publish Test Report
-        uses: scacap/action-surefire-report@v1
+      # - name: Publish Test Report
+      #   uses: scacap/action-surefire-report@v1
+      #   with:
+      #     fail_on_test_failures: true
+      #   env:
+      #     http_proxy : http://proxy1.lx.nb.no:3128
+      #     https_proxy : http://proxy1.lx.nb.no:3128
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: success() || failure()    # run this step even if previous step failed
         with:
-          fail_on_test_failures: true
+          name: JUnit Tests            # Name of the check run which will be created
+          path: target/surefire-reports/TEST-*.xml    # Path to test results
+          reporter: java-junit        # Format of test results
         env:
           http_proxy : http://proxy1.lx.nb.no:3128
           https_proxy : http://proxy1.lx.nb.no:3128
