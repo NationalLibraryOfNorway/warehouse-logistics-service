@@ -84,13 +84,30 @@ jobs:
       #     http_proxy : http://proxy1.lx.nb.no:3128
       #     https_proxy : http://proxy1.lx.nb.no:3128
 
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: success() || failure()    # run this step even if previous step failed
+      - name: Publish Report
+        uses: turing85/publish-report@v2
+        if: ${{ always() }}
         with:
-          name: JUnit Tests            # Name of the check run which will be created
-          path: target/surefire-reports/TEST-*.xml    # Path to test results
-          reporter: java-junit        # Format of test results
+          # cancel-workflow-on-error: 'false' # If we do not want to cancel the whole workflow execution on error
+          # checkout: 'true' # not needed; project is already checked out 
+          comment-header: my-comment-header
+          comment-message-success: |
+            YAY! {0} passed!  
+            
+            {1} tests were successful, {2} tests failed, {3} test were skipped.
+            
+            The report can be found [here]({4}).
+
+          comment-message-failure: |
+            On no! {0} failed!  
+
+            {1} tests were successful, {2} tests failed, {3} test were skipped.
+
+            The report can be found [here]({4}).
+          report-fail-on-error: true # to fail when tests failed
+          report-name: Tests
+          report-path: '**/target/surefire-reports/TEST*.xml'
+          report-reporter: java-junit
         env:
           http_proxy : http://proxy1.lx.nb.no:3128
           https_proxy : http://proxy1.lx.nb.no:3128
