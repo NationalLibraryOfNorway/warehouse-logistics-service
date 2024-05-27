@@ -37,6 +37,11 @@ jobs:
           # Cache maven dependencies for quicker runs
           cache: maven
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          architecture: x64
+
       - name: Cache Maven Packages
         uses: actions/cache@v4
         with:
@@ -76,41 +81,10 @@ jobs:
           sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
-      # - name: Publish Test Report
-      #   uses: scacap/action-surefire-report@v1
-      #   with:
-      #     fail_on_test_failures: true
-      #   env:
-      #     http_proxy : http://proxy1.lx.nb.no:3128
-      #     https_proxy : http://proxy1.lx.nb.no:3128
-
-      - name: Publish Report
-        uses: turing85/publish-report@v2
-        if: ${{ always() }}
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
         with:
-          # cancel-workflow-on-error: 'false' # If we do not want to cancel the whole workflow execution on error
-          # checkout: 'true' # not needed; project is already checked out 
-          comment-header: my-comment-header
-          comment-message-success: |
-            YAY! {0} passed!  
-            
-            {1} tests were successful, {2} tests failed, {3} test were skipped.
-            
-            The report can be found [here]({4}).
-
-          comment-message-failure: |
-            On no! {0} failed!  
-
-            {1} tests were successful, {2} tests failed, {3} test were skipped.
-
-            The report can be found [here]({4}).
-          report-fail-on-error: true # to fail when tests failed
-          report-name: Tests
-          report-path: '**/target/surefire-reports/TEST*.xml'
-          report-reporter: java-junit
-        env:
-          http_proxy : http://proxy1.lx.nb.no:3128
-          https_proxy : http://proxy1.lx.nb.no:3128
+          fail_on_test_failures: true
 
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
