@@ -49,24 +49,20 @@ jobs:
         id: sec
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: ldap
-          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
-          password: ${{ secrets.VAULT_PASSWORD }}
-          # method: approle
-          # roleId: ${{ secrets.VAULT_ROLE_ID }}
-          # secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: |
-            secret/v1/application/k8s/mlt/data/proxy HTTP_PROXY_HOST;
-            secret/v1/application/k8s/mlt/data/proxy HTTP_PROXY_PORT;
-            secret/v1/application/k8s/mlt/data/proxy HTTPS_PROXY_HOST;
-            secret/v1/application/k8s/mlt/data/proxy HTTPS_PROXY_PORT
+          # method: ldap
+          # username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          # password: ${{ secrets.VAULT_PASSWORD }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: secret/v1/application/k8s/mlt/data/proxy *
 
       - name: Test the Project
         run: |
-          sed -i "s/HTTP_PROXY_HOST/${{ steps.sec.outputs.HTTP_PROXY_HOST }}/g" .m2/settings.xml
-          sed -i "s/HTTP_PROXY_PORT/${{ steps.sec.outputs.HTTP_PROXY_PORT }}/g" .m2/settings.xml
-          sed -i "s/HTTPS_PROXY_HOST/${{ steps.sec.outputs.HTTPS_PROXY_HOST }}/g" .m2/settings.xml
-          sed -i "s/HTTPS_PROXY_PORT/${{ steps.sec.outputs.HTTPS_PROXY_PORT }}/g" .m2/settings.xml
+          sed -i "s|HTTP_PROXY_HOST|${{ steps.sec.outputs.HTTP_PROXY_HOST }}|g" .m2/settings.xml
+          sed -i "s|HTTP_PROXY_PORT|${{ steps.sec.outputs.HTTP_PROXY_PORT }}|g" .m2/settings.xml
+          sed -i "s|HTTPS_PROXY_HOST|${{ steps.sec.outputs.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
+          sed -i "s|HTTPS_PROXY_PORT|${{ steps.sec.outputs.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
           cat .m2/settings.xml
           ./mvnw ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
