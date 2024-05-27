@@ -13,7 +13,8 @@ on:
 
 env:
   # Run in batch mode, produce errors, use settings file, set local repo
-  MAVEN_CONFIG: -B -e -s .m2/settings.xml -Dmaven.repo.local=.m2/repository
+  # MAVEN_CONFIG: -B -e -s .m2/settings.xml -Dmaven.repo.local=.m2/repository
+  MAVEN_CONFIG: -B -e -s -Dmaven.repo.local=.m2/repository
 
 concurrency:
   # Define concurrency group name which will then be used to determine duplicate workflow runs
