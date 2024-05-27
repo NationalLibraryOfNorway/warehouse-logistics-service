@@ -46,6 +46,7 @@ jobs:
 
       - name: Install Maven
         run: |
+          cat ~/.m2/settings.xml
           sudo apt-get update -y
           sudo apt-get install wget git -y
           wget https://downloads.apache.org/maven/maven-3/3.9.7/binaries/apache-maven-3.9.7-bin.tar.gz
