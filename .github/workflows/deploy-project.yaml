@@ -51,6 +51,9 @@ jobs:
 
       - name: Install Maven
         run: |
+          echo $GITHUB_WORKSPACE
+          echo {{ env.GITHUB_WORKSPACE }}
+          echo {{ github.workspace }}
           sudo apt-get update -y
           sudo apt-get install wget git -y
           wget https://downloads.apache.org/maven/maven-3/3.9.7/binaries/apache-maven-3.9.7-bin.tar.gz
@@ -88,6 +91,7 @@ jobs:
           name: JUnit Tests            # Name of the check run which will be created
           path: target/surefire-reports/TEST-*.xml    # Path to test results
           reporter: java-junit        # Format of test results
+          working-path: /home/runner/_work/warehouse-logistics-service/warehouse-logistics-service
         env:
           http_proxy : ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
           https_proxy : ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
