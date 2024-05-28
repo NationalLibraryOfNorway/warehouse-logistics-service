@@ -147,7 +147,7 @@ jobs:
 
       - name: Set App Version to Env
         run: |
-          echo IMAGE_VERSION=${{ steps.meta.outputs.tags }} >> $GITHUB_ENV
+          echo IMAGE_NAME=${{ steps.meta.outputs.tags }} >> $GITHUB_ENV
 
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
@@ -176,8 +176,8 @@ jobs:
 
       - name: Deploy to Stage
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to stage: ${{ env.IMAGE_VERSION }}"
-          sed -i "s|<version>|${{ env.IMAGE_VERSION }}|g" k8s/stage/wls.yml
+          echo "Deploying to stage: ${{ steps.meta.outputs.tags }}"
+          sed -i "s|<image_name>|${{ steps.meta.outputs.tags }}|g" k8s/stage/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
@@ -216,8 +216,8 @@ jobs:
 
       - name: Deploy to Prod
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to stage: ${{ env.IMAGE_VERSION }}"
-          sed -i "s|<version>|${{ env.IMAGE_VERSION }}|g" k8s/prod/wls.yml
+          echo "Deploying to prod: ${{ steps.meta.outputs.tags }}"
+          sed -i "s|<image_name>|${{ steps.meta.outputs.tags }}|g" k8s/prod/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/prod/wls.yml
           kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
           kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
