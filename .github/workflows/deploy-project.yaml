@@ -14,7 +14,6 @@ on:
 env:
   # Run in batch mode, produce errors, use settings file, set local repo
   MAVEN_CONFIG: -B -e -s .m2/settings.xml -Dbuild.tag=$GITHUB_REF_NAME -Dbuild.commit-id-short=$GITHUB_SHA -Dbuild.commit-id-long=$GITHUB_SHA -Dbuild.pipeline-id=$GITHUB_RUN_ID
-  APP_VERSION: ${{ github.ref_name }}
 
 concurrency:
   # Define concurrency group name which will then be used to determine duplicate workflow runs
@@ -94,6 +93,8 @@ jobs:
     needs: test-project
     # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') # TODO: Remove this, only for testing
     runs-on: self-hosted-linux
+    outputs:
+      image-name: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -145,10 +146,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Set App Version to Env
-        run: |
-          echo IMAGE_NAME=${{ steps.meta.outputs.tags }} >> $GITHUB_ENV
-
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
@@ -176,8 +173,8 @@ jobs:
 
       - name: Deploy to Stage
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to stage: ${{ steps.meta.outputs.tags }}"
-          sed -i "s|<image_name>|${{ steps.meta.outputs.tags }}|g" k8s/stage/wls.yml
+          echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
+          sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/stage/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
@@ -216,8 +213,8 @@ jobs:
 
       - name: Deploy to Prod
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to prod: ${{ steps.meta.outputs.tags }}"
-          sed -i "s|<image_name>|${{ steps.meta.outputs.tags }}|g" k8s/prod/wls.yml
+          echo "Deploying to prod:${{ needs.publish-image.outputs.image-name }}"
+          sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/prod/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/prod/wls.yml
           kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
           kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
