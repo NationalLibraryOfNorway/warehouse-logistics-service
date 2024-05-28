@@ -73,7 +73,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packaged-project
-          path: target/wls-*.jar
+          path: target/wls.jar
           if-no-files-found: error
           overwrite: true
 
