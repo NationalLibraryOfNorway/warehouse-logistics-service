@@ -176,6 +176,7 @@ jobs:
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
           sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/stage/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
+          cat k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
