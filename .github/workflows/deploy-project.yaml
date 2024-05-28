@@ -34,15 +34,7 @@ jobs:
           distribution: temurin
           java-version: 21
           architecture: x64
-          # Cache maven dependencies for quicker runs
-          cache: maven
-
-      # - name: Cache Maven Packages
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.m2
-      #     key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-      #     restore-keys: ${{ runner.os }}-m2
+          cache: maven # Cache maven dependencies for quicker runs
 
       - name: Install Maven
         run: |
@@ -85,17 +77,10 @@ jobs:
           if-no-files-found: error
           overwrite: true
 
-      # - name: Cache Maven Repository
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.m2/repository
-      #     key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-      #     restore-keys: ${{ runner.os }}-m2
-
   publish-image:
     name: Build and Publish the Docker Image
     needs: test-project
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
     steps:
       - name: Checkout
@@ -109,11 +94,13 @@ jobs:
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
-          url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/harbor *
+          method: ldap
+          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          password: ${{ secrets.VAULT_PASSWORD }}
+          # method: approle
+          # roleId: ${{ secrets.VAULT_ROLE_ID }}
+          # secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: secret/v1/application/k8s/mlt/data/harbor *
 
       - name: Log in to Harbor Registry
         uses: docker/login-action@v3
@@ -148,7 +135,7 @@ jobs:
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
     environment: stage
     steps:
@@ -159,10 +146,13 @@ jobs:
         uses: hashicorp/vault-action@v3
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/k8s-stage *
+          method: ldap
+          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          password: ${{ secrets.VAULT_PASSWORD }}
+          # method: approle
+          # roleId: ${{ secrets.VAULT_ROLE_ID }}
+          # secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: secret/v1/application/k8s/mlt/data/k8s-stage *
 
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v4 # TODO: Check if it needs some more config
@@ -196,11 +186,13 @@ jobs:
         uses: hashicorp/vault-action@v3
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: |
-            secret/v1/application/k8s/mlt/k8s-prod *
+          method: ldap
+          username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
+          password: ${{ secrets.VAULT_PASSWORD }}
+          # method: approle
+          # roleId: ${{ secrets.VAULT_ROLE_ID }}
+          # secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: secret/v1/application/k8s/mlt/data/k8s-prod *
 
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v4 # TODO: Check if it needs some more config
