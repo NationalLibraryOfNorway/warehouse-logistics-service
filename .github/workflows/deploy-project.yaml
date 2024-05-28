@@ -13,7 +13,8 @@ on:
 
 env:
   # Run in batch mode, produce errors, use settings file, set local repo
-  MAVEN_CONFIG: -B -e -s .m2/settings.xml
+  MAVEN_CONFIG: -B -e -s .m2/settings.xml -Dbuild.tag=$GITHUB_REF_NAME -Dbuild.commit-id-short=$GITHUB_SHA -Dbuild.commit-id-long=$GITHUB_SHA -Dbuild.pipeline-id=$GITHUB_RUN_ID
+  APP_VERSION: ${{ github.ref_name }}
 
 concurrency:
   # Define concurrency group name which will then be used to determine duplicate workflow runs
@@ -114,7 +115,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: mlt/wls # TODO: Figure out what image name will be generated
+          images: harbor.nb.no/mlt/wls # TODO: Figure out what image name will be generated
           tags: |
             type=semver,pattern={{version}}
             type=ref,event=branch
