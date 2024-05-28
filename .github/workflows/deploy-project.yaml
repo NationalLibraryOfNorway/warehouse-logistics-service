@@ -11,10 +11,6 @@ on:
   # Runs every time a pull request is created or updated
   pull_request:
 
-env:
-  # Run in batch mode, produce errors, use settings file, set local repo
-  MAVEN_CONFIG: -B -e -s .m2/settings.xml -Dbuild.tag=$GITHUB_REF_NAME -Dbuild.commit-id-short=$GITHUB_SHA -Dbuild.commit-id-long=$GITHUB_SHA -Dbuild.pipeline-id=$GITHUB_RUN_ID #-Dmaven.test.failure.ignore=true
-
 concurrency:
   # Define concurrency group name which will then be used to determine duplicate workflow runs
   group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
@@ -70,14 +66,14 @@ jobs:
           sed -i "s|HTTP_PROXY_PORT|${{ env.HTTP_PROXY_PORT }}|g" .m2/settings.xml
           sed -i "s|HTTPS_PROXY_HOST|${{ env.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
           sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
-          mvn ${{ env.MAVEN_CONFIG }} verify
+          mvn -B -e -s .m2/settings.xml verify
 
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
         if: always()
         with:
           name: JUnit Tests
-          path: "**/TEST-*.xml"
+          path: ./**/TEST-*.xml
           reporter: java-junit
           fail-on-error: true
           fail-on-empty: true

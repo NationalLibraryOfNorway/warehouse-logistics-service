@@ -11,7 +11,7 @@ class BifrostApplicationTests {
 	}
 
   @Test
-  fun itsFunToFail() {
-    assert(false)
+  fun itsFunToNOTFail() {
+    assert(true)
   }
 }
