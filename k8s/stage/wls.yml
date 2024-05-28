@@ -21,8 +21,8 @@ spec:
       app: wls
 
   # Make deployment run 1 copy in stage, 3 in prod, keeping the same number of revision history copies too
-  replicas: 3
-  revisionHistoryLimit: 3
+  replicas: 1
+  revisionHistoryLimit: 1
 
   # Create pods using pod definition in this template
   template:
