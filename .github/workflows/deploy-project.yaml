@@ -64,8 +64,7 @@ jobs:
 
       - name: Test the Project
         run: |
-          pwd
-          ls -la
+          git init
           sed -i "s|HTTP_PROXY_HOST|${{ env.HTTP_PROXY_HOST }}|g" .m2/settings.xml
           sed -i "s|HTTP_PROXY_PORT|${{ env.HTTP_PROXY_PORT }}|g" .m2/settings.xml
           sed -i "s|HTTPS_PROXY_HOST|${{ env.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
