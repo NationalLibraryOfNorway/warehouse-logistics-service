@@ -39,7 +39,6 @@ jobs:
 
       - name: Install Maven
         run: |
-          cat ~/.m2/settings.xml
           sudo apt-get update -y
           sudo apt-get install wget git -y
           wget https://downloads.apache.org/maven/maven-3/3.9.7/binaries/apache-maven-3.9.7-bin.tar.gz
@@ -70,6 +69,14 @@ jobs:
           sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
+      - name: Publish Test Report
+        uses: scacap/action-surefire-report@v1
+        with:
+          fail_on_test_failures: true
+        env:
+          http_proxy : ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
+          https_proxy : ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
+
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
         with:
@@ -81,7 +88,7 @@ jobs:
   publish-image:
     name: Build and Publish the Docker Image
     needs: test-project
-    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') # TODO: Remove this, only for testing
     runs-on: self-hosted-linux
     steps:
       - name: Checkout
