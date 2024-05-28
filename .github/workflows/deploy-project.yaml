@@ -71,6 +71,9 @@ jobs:
 
       - name: Publish Test Report
         uses: scacap/action-surefire-report@v1
+        run: |
+          echo $HTTP_PROXY
+          echo $HTTPS_PROXY
         with:
           fail_on_test_failures: true
         env:
