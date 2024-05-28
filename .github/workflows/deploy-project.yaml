@@ -89,7 +89,7 @@ jobs:
   publish-image:
     name: Build and Publish the Docker Image
     needs: test-project
-    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') # TODO: Remove this, only for testing
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
     outputs:
       image-name: ${{ steps.meta.outputs.tags }}
@@ -144,9 +144,9 @@ jobs:
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
-    # if: github.ref == 'refs/heads/main' # TODO: Remove this, only for testing
+    if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
-    # environment: stage # TODO: Remove this, only for testing
+    environment: stage
     steps:
       - name: Checkout
         uses: actions/checkout@v4
