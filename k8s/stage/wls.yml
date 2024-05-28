@@ -31,12 +31,12 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: http_proxy_host
+                  key: HTTP_PROXY_HOST
             - name: HTTP_PROXY_PORT
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: http_proxy_port
+                  key: HTTP_PROXY_PORT
           imagePullPolicy: Always
           livenessProbe:
             httpGet:

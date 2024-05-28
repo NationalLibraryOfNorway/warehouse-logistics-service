@@ -162,8 +162,8 @@ jobs:
       - name: Deploy to Stage
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
           echo "Deploying to stage version ${{ env.APP_VERSION }}"
-          sed -i "s/<version>/${{ env.APP_VERSION }}/g" k8s/stage/wls.yml
-          sed -i "s/<host_url>/${{ env.K8S_HOST_URL }}/g" k8s/stage/wls.yml
+          sed -i "s|<version>|${{ env.APP_VERSION }}|g" k8s/stage/wls.yml
+          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
@@ -202,8 +202,8 @@ jobs:
       - name: Deploy to Prod
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
           echo "Deploying to production version ${{ env.APP_VERSION }}"
-          sed -i "s/<version>/${{ env.APP_VERSION }}/g" k8s/prod/wls.yml
-          sed -i "s/<host_url>/${{ env.K8S_HOST_URL }}/g" k8s/prod/wls.yml
+          sed -i "s|<version>|g"${{ env.APP_VERSION }}|g" k8s/prod/wls.yml
+          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/prod/wls.yml
           kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
           kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_PROD_USER }} --token=${{ env.K8S_PROD_NB_NO_TOKEN }}
