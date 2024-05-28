@@ -21,6 +21,9 @@ concurrency:
   group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  checks: write
+
 jobs:
   test-project:
     name: Build and Test the Project
@@ -70,12 +73,9 @@ jobs:
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
       - name: Publish Test Report
-        uses: scacap/action-surefire-report@v1
-        run: |
-          echo $HTTP_PROXY
-          echo $HTTPS_PROXY
+        uses: mikepenz/action-junit-report@v3
         with:
-          fail_on_test_failures: true
+          report_paths: '**/target/surefire-reports/TEST-*.xml'
         env:
           HTTP_PROXY: ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
           HTTPS_PROXY: ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
