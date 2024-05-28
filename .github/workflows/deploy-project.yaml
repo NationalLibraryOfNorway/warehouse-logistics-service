@@ -164,23 +164,14 @@ jobs:
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
           sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/stage/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
-          echo "kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}"
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
-          echo "kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}"
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
-          echo "kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}"
           kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
-          echo "kubectl config set-context mlt --cluster=stagecl --user=${{ env.K8S_STAGE_USER }} --namespace=mlt-stage"
-          kubectl config set-context mlt --cluster=stagecl --user=${{ env.K8S_STAGE_USER }} --namespace=mlt-stage
-          echo "kubectl config use-context mlt"
+          kubectl config set-context mlt --cluster=stagecl --user=${{ env.K8S_STAGE_USER }} --namespace=mlt
           kubectl config use-context mlt
-          echo "kubectl config view"
           kubectl config view
-          echo "kubectl version"
           kubectl version
-          echo "kubectl apply -f k8s/stage/wls.yml"
           kubectl apply -f k8s/stage/wls.yml
-          echo "kubectl rollout restart deploy/wls"
           kubectl rollout restart deploy/wls
 
   deploy-to-prod:

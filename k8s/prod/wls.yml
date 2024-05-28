@@ -7,7 +7,7 @@ kind: Deployment
 # Standard object metadata
 metadata:
   name: wls
-  namespace: mlt-prod
+  namespace: mlt
   labels:
     app: bifrost
     creator: MagasinOgLogistikk
@@ -104,7 +104,7 @@ kind: Service
 # Standard object metadata
 metadata:
   name: wls
-  namespace: mlt-prod
+  namespace: mlt
   labels:
     app: bifrost
     creator: MagasinOgLogistikk
@@ -138,7 +138,7 @@ kind: Ingress
 # Standard object metadata
 metadata:
   name: wls-ingress
-  namespace: mlt-prod
+  namespace: mlt
   labels:
     app: bifrost-ingress
     creator: MagasinOgLogistikk
