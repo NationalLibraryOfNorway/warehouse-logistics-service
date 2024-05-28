@@ -94,6 +94,7 @@ jobs:
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
+          url: ${{ secrets.VAULT_URL }}
           method: ldap
           username: ${{ secrets.VAULT_USERNAME }} # TODO: Remove this, only for testing, using my personal account
           password: ${{ secrets.VAULT_PASSWORD }}
