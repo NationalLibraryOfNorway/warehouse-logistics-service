@@ -106,9 +106,9 @@ jobs:
       - name: Log in to Harbor Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ steps.sec.outputs.HARBOR_URL }}
-          username: ${{ steps.sec.outputs.HARBOR_USERNAME }}
-          password: ${{ steps.sec.outputs.HARBOR_PASSWORD }}
+          registry: ${{ env.HARBOR_URL }}
+          username: ${{ env.HARBOR_USERNAME }}
+          password: ${{ env.HARBOR_PASSWORD }}
 
       - name: Extract Metadata for Docker
         id: meta
@@ -160,13 +160,13 @@ jobs:
 
       - name: Deploy to Stage
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to stage version ${{ steps.sec.outputs.APP_VERSION }}"
-          sed -i "s/<version>/${{ steps.sec.outputs.APP_VERSION }}/g" k8s/stage/wls.yml
-          sed -i "s/<host_url>/${{ steps.sec.outputs.K8S_HOST_URL }}/g" k8s/stage/wls.yml
-          kubectl config set-cluster stagecl --server=${{ steps.sec.outputs.K8S_STAGE_SERVER }}
-          kubectl config set clusters.stagecl.certificate-authority-data ${{ steps.sec.outputs.K8S_STAGE_NB_NO_CA }}
-          kubectl config set-credentials ${{ steps.sec.outputs.K8S_STAGE_USER }} --token=${{ steps.sec.outputs.K8S_STAGE_NB_NO_TOKEN }}
-          kubectl config set-context mlt --cluster=stagecl --user=${{ steps.sec.outputs.K8S_STAGE_USER }} --namespace=mlt-stage
+          echo "Deploying to stage version ${{ env.APP_VERSION }}"
+          sed -i "s/<version>/${{ env.APP_VERSION }}/g" k8s/stage/wls.yml
+          sed -i "s/<host_url>/${{ env.K8S_HOST_URL }}/g" k8s/stage/wls.yml
+          kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
+          kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
+          kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
+          kubectl config set-context mlt --cluster=stagecl --user=${{ env.K8S_STAGE_USER }} --namespace=mlt-stage
           kubectl config use-context mlt
           kubectl config view
           kubectl version
@@ -200,13 +200,13 @@ jobs:
 
       - name: Deploy to Prod
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to production version ${{ steps.sec.outputs.APP_VERSION }}"
-          sed -i "s/<version>/${{ steps.sec.outputs.APP_VERSION }}/g" k8s/prod/wls.yml
-          sed -i "s/<host_url>/${{ steps.sec.outputs.K8S_HOST_URL }}/g" k8s/prod/wls.yml
-          kubectl config set-cluster prodcl --server=${{ steps.sec.outputs.K8S_PROD_SERVER }}
-          kubectl config set clusters.prodcl.certificate-authority-data ${{ steps.sec.outputs.K8S_PROD_NB_NO_CA }}
-          kubectl config set-credentials ${{ steps.sec.outputs.K8S_PROD_USER }} --token=${{ steps.sec.outputs.K8S_PROD_NB_NO_TOKEN }}
-          kubectl config set-context mlt --cluster=prodcl --user=${{ steps.sec.outputs.K8S_PROD_USER }} --namespace=mlt-prod
+          echo "Deploying to production version ${{ env.APP_VERSION }}"
+          sed -i "s/<version>/${{ env.APP_VERSION }}/g" k8s/prod/wls.yml
+          sed -i "s/<host_url>/${{ env.K8S_HOST_URL }}/g" k8s/prod/wls.yml
+          kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
+          kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
+          kubectl config set-credentials ${{ env.K8S_PROD_USER }} --token=${{ env.K8S_PROD_NB_NO_TOKEN }}
+          kubectl config set-context mlt --cluster=prodcl --user=${{ env.K8S_PROD_USER }} --namespace=mlt-prod
           kubectl config use-context mlt
           kubectl config view
           kubectl version
