@@ -73,12 +73,17 @@ jobs:
           mvn ${{ env.MAVEN_CONFIG }} verify --fail-at-end
 
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v3
+        uses: scacap/action-surefire-report@v1
         with:
-          report_paths: '**/target/surefire-reports/TEST-*.xml'
-        env:
-          HTTP_PROXY: ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
-          HTTPS_PROXY: ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
+          fail_on_test_failures: true
+
+      # - name: Publish Test Report
+      #   uses: mikepenz/action-junit-report@v4
+      #   with:
+      #     report_paths: '**/target/surefire-reports/TEST-*.xml'
+      #   env:
+      #     HTTP_PROXY: ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
+      #     HTTPS_PROXY: ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
 
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
