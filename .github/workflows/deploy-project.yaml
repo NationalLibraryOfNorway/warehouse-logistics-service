@@ -137,9 +137,9 @@ jobs:
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
-    # if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main' # TODO: Remove this, only for testing
     runs-on: self-hosted-linux
-    environment: stage
+    # environment: stage # TODO: Remove this, only for testing
     steps:
       - name: Checkout
         uses: actions/checkout@v4
