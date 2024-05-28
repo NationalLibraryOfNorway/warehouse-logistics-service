@@ -1,88 +1,154 @@
 apiVersion: apps/v1
+
+# Kind is a string value representing the REST resource this object represents
+# Servers may infer this from the endpoint the client submits requests to
 kind: Deployment
+
+# Standard object metadata
 metadata:
   name: wls
   namespace: mlt-prod
+  labels:
+    app: bifrost
+    creator: MagasinOgLogistikk
+
+# DeploymentSpec is the specification of the desired behavior of the Deployment
 spec:
-  replicas: 3
+  # The .spec.selector field defines how the Deployment finds which Pods to manage
   selector:
+    # In this case, you simply select a label that is defined in the Pod template (app: wls)
     matchLabels:
       app: wls
+
+  # Make Deployment run 1 copy in stage, 3 in prod, keeping the same number of revision history copies too
+  replicas: 3
+  revisionHistoryLimit: 3
+
+  # Create pods using pod definition in this template
   template:
+    # The Pods are labeled app: wls using the .metadata.labels field
     metadata:
       labels:
         app: wls
+
+    # The Pod template's specification, indicates that the Pod runs one container, with image <image_name>
     spec:
-      priorityClassName: medium-priority
+      # Pod priority, low in stage, high in prod
+      priorityClassName: high-priority 
+
+      # How many secs to allow this pod for terminating gracefully
+      terminationGracePeriodSeconds: 60
+
+      # What containers to run in the Deployment
       containers:
-        - name: app
+        - name: wls-app
           image: <image_name>
+
+          # What ports to expose from the container
           ports:
-            - name: app-port
+            - name: rest-port
               containerPort: 8080
             - name: actuator-port
               containerPort: 8888
+          
+          # Environemnt variables to use in this container
           env:
             - name: INFO_ENVIRONMENT
               value: PROD
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
-            - name: HTTP_PROXY_HOST
-              valueFrom:
-                secretKeyRef:
-                  name: wls-secrets
-                  key: HTTP_PROXY_HOST
-            - name: HTTP_PROXY_PORT
-              valueFrom:
-                secretKeyRef:
-                  name: wls-secrets
-                  key: HTTP_PROXY_PORT
+          
+          # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
+          
+          # Set resources limits for the container
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+
+          # Define settings for running the container's liveness probe
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: actuator-port
+              scheme: HTTP
             initialDelaySeconds: 30
-            periodSeconds: 20
             failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 20
             timeoutSeconds: 5
+          
+          # Define settings for running the container's readiness probe
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: actuator-port
+              scheme: HTTP
             initialDelaySeconds: 30
-            periodSeconds: 15
             failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 15
             timeoutSeconds: 1
 
 ---
 
 apiVersion: v1
+
+#  A Service in Kubernetes exposes a network application that is running in your cluster
 kind: Service
+
+# Standard object metadata
 metadata:
   name: wls
   namespace: mlt-prod
+  labels:
+    app: bifrost
+    creator: MagasinOgLogistikk
+
+# Service specification with attributes to use in its creation
 spec:
-  ports:
-    - port: 8080
-      name: rest
-      targetPort: 8080
-    - port: 8888
-      name: http
-      targetPort: 8888
+  # Makes the service allocate a cluster-internal IP address for load-balancing to endpoints
+  # Endpoints are determined by the selector
+  type: ClusterIP
+
+  # The .spec.selector field defines services endpoint
   selector:
     app: wls
-  type: ClusterIP
+
+  # Port exposes the Kubernetes service on the specified port within the cluster to other pods
+  ports:
+    - port: 8080
+      name: rest-port
+      targetPort: 8080
+    - port: 8888
+      name: actuator-port
+      targetPort: 8888
 
 ---
 
 apiVersion: networking.k8s.io/v1
+
+# An Ingress in Kubernetes manages external access to the services in the cluster, typically over HTTP
 kind: Ingress
+
+# Standard object metadata
 metadata:
   name: wls-ingress
   namespace: mlt-prod
+  labels:
+    app: bifrost-ingress
+    creator: MagasinOgLogistikk
+
+# Ingress specification
 spec:
+  # Use an ingress implemented by nginx controller
   ingressClassName: nginx
+
+  # Set rules for ingress, expose wls service on port 8080 with path prefix "bifrost" on host <host_url>
   rules:
     - host: <host_url>
       http:
@@ -91,6 +157,6 @@ spec:
               service:
                 name: wls
                 port:
-                  number: 8080
+                  name: rest-port
             path: /bifrost
             pathType: Prefix
