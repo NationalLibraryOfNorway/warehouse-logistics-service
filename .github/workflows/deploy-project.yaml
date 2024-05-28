@@ -145,6 +145,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Set App Version to Env
+        run: |
+          echo ${{ steps.meta.outputs.tags }}
+
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
@@ -172,7 +176,7 @@ jobs:
 
       - name: Deploy to Stage
         run: | # TODO: Fix this to fit our config and needs, as I've "borrowed" this from Tekst team
-          echo "Deploying to stage version ${{ env.APP_VERSION }}"
+          echo "Deploying to stage mlt/wls:${{ env.APP_VERSION }}"
           sed -i "s|<version>|${{ env.APP_VERSION }}|g" k8s/stage/wls.yml
           sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
