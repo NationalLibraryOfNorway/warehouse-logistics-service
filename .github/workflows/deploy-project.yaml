@@ -1,58 +1,95 @@
+# Name of the workflow and a display name for the workflow
 name: Deploy Project
 run-name: ${{ github.actor }} is deploying the project
 
+# Decides when the workflow gets triggered, this is a "coarse" definition for whole workflow
+# Jobs can refine it further or use the defaults defined here
+# List of all events that can be used for triggering workflows:
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
 on:
-  # Run on push to main branch and tags
+  # Run on push to main branch and tags in the form v*.*.* eg.: v1.0.0
   push:
     branches:
       - main
     tags:
-      - "v*.*.*"
-  # Runs every time a pull request is created or updated
+      - v*.*.*
+  # Runs every time a pull request is created, updated, etc. can use "types" to run only on select PR activities
   pull_request:
 
+# Used to make sure that only one workflow in specified group runs at the same time
 concurrency:
-  # Define concurrency group name which will then be used to determine duplicate workflow runs
+  # Define concurrency group which will then be used to determine duplicate workflow runs
+  # The second property uses fallback values since not every run is a PR run
   group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
   cancel-in-progress: true
 
+# Modify access granted to the workflow in the GITHUB_TOKEN
+# Mainly used here to give checks a write permission so we can get a test run report
 permissions:
   contents: read
   actions: read
   checks: write
 
+
+
+
+# List of jobs that this workflow will execute
 jobs:
+  # Unique identifier for this job, make sure it's unique, you can use "name" property to give it more descriptive name
   test-project:
+    # This name will be displayed in the GitHub UI when
     name: Build and Test the Project
+    # Defines what runner to run this job on, if you want you can use an array to match runner name
+    # for example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
     runs-on: self-hosted-linux
+    # List of steps that this job needs to execute in sequential order, any changes done in one step will carry over to
+    # others, so be mindful of that when making changes to files
     steps:
+      # Simple step which merely checks out the repository to the runner
       - name: Checkout
+        # Specifies that this step should run a pre-defined action
         uses: actions/checkout@v4
 
+      # This steps installs specified Java JDK
       - name: Setup Java JDK
         uses: actions/setup-java@v4
+        # Settings/Inputs/Parameters for the action
         with:
-          distribution: temurin
+          # What JDK distribution to download and use
+          distribution: temurin # If you have no good reason go with Temurin distribution
           java-version: 21
           architecture: x64
+          # Sets up caching and restoring of dependencies for the specified package manager
+          # NB! If you decide to use a non-standard path for package repositories you need to set up caching yourself
+          # In that case use the "@actions/cache" action
           cache: maven
 
+      # Since self hosted runner does not come with Maven, we need to install it
+      # Same for git, we need it to upload test results, hence why we initialize the repo
+      # Lastly gettext provides envsubst which is used in the "Verify the Project" step to replace env variables
       - name: Install Maven and Initialize Repo
-        run: |
+        # Map of environment variables available for only this step, you can define it on job or workflow level too
+        env:
+          MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
+        run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
           sudo apt-get update -y
-          sudo apt-get install wget git -y
-          wget https://downloads.apache.org/maven/maven-3/3.9.7/binaries/apache-maven-3.9.7-bin.tar.gz
-          tar xzf apache-maven-3.9.7-bin.tar.gz
-          rm apache-maven-3.9.7-bin.tar.gz
-          sudo mv apache-maven-3.9.7 /opt/
-          sudo ln -s /opt/apache-maven-3.9.7/bin/mvn /usr/local/bin/mvn
-          echo "PATH=/opt/apache-maven-3.9.7/bin:$PATH" >> $GITHUB_ENV
+          sudo apt-get install wget git gettext -y
+          wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz
+          tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz
+          rm apache-maven-$MAVEN_VERSION-bin.tar.gz
+          sudo mv apache-maven-$MAVEN_VERSION /opt/
+          sudo ln -s /opt/apache-maven-$MAVEN_VERSION/bin/mvn /usr/local/bin/mvn
+          echo "PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
           git init
           mvn -v
 
+      # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing
+      # GitHub secrets wont permit you to see or re-use secrets, speak with Platform team to set up a namespace for you
+      # They should also give you an approle "user" which will allow you to get the secrets from github action
+      # The url must be in form: https://<URL>, while IDs are UUIDs
+      # When providing path to the secret you need to include "/data" after namespace and before the secret name
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
-        id: sec
         with:
           url: ${{ secrets.VAULT_URL }}
           method: approle
@@ -60,30 +97,42 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/proxy *
 
-      - name: Test the Project
+      # This step will actually build, test, and verify the project
+      # envsubst is used to provide proxy settings for Maven
+      - name: Verify the Project
         run: |
-          sed -i "s|HTTP_PROXY_HOST|${{ env.HTTP_PROXY_HOST }}|g" .m2/settings.xml
-          sed -i "s|HTTP_PROXY_PORT|${{ env.HTTP_PROXY_PORT }}|g" .m2/settings.xml
-          sed -i "s|HTTPS_PROXY_HOST|${{ env.HTTPS_PROXY_HOST }}|g" .m2/settings.xml
-          sed -i "s|HTTPS_PROXY_PORT|${{ env.HTTPS_PROXY_PORT }}|g" .m2/settings.xml
-          mvn -B -e -s .m2/settings.xml verify
+          envsubst < .m2/settings.xml > .m2/replaced.xml
+          mvn -B -e -s .m2/replaced.xml verify
 
+      # This step will use the test-reporter action to publish test results in the workflow run
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
+        # If defines conditions that need to be fulfilled to run this step, in this case this step will always run
         if: always()
         with:
+          # Name for the report
           name: JUnit Tests
+          # Where to look for report files, in this case look for any file named "TEST-...xml" anywhere in the project
           path: ./**/TEST-*.xml
+          # What reporter created to use, since this project uses JUnit java-junit is used
           reporter: java-junit
+          # Fail this step if there are test errors
           fail-on-error: true
+          # Fail this step if no test results were found
           fail-on-empty: true
 
+      # Last step will upload the JAR file as an artifact that can then be used in other jobs
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
         with:
+          # Artifact ID
           name: packaged-project
+          # Where to find artifact file(s)
+          # Add "project.build.finalName --> ${project.artifactId}" to pom.xml to drop the version suffix
           path: target/wls.jar
+          # Fail if artifact is not found
           if-no-files-found: error
+          # Allow overwriting of previous artifacts
           overwrite: true
 
   publish-image:
