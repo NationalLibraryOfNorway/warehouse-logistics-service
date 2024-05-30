@@ -204,6 +204,8 @@ jobs:
           push: true
           # Build context, makes the build process use actual files in the runner instead of using files from GitHub
           context: .
+          # Override the path to the Dockerfile, since this project has it in the docker folder
+          file: ./docker/Dockerfile
           # Set tags for the image using output from the meta step
           tags: ${{ steps.meta.outputs.tags }}
           # Set labels for the image using output from the meta step
