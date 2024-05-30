@@ -10,4 +10,8 @@ class BifrostApplicationTests {
 	fun contextLoads() {
 	}
 
+  @Test
+  fun itsFunToNOTFail() {
+    assert(true)
+  }
 }
