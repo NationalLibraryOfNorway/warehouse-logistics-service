@@ -139,8 +139,7 @@ jobs:
     # Defines that test-project job must finish successfully first, before this one can run
     needs: test-project
     # The if statement limits it to run only if action was triggered on main branch or one of the tags
-    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') 
-    # TODO: Re-enable if statement above after testing docker build 
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
     # Outputs allows a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
