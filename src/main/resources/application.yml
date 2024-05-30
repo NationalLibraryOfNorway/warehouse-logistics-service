@@ -1,10 +1,16 @@
+# You probably should make two profiles (dev and prod) and have different configurations for each one
+# They can inherit from this file and override the values they need to change
+
+# Application name setup
 spring:
   application:
     name: Bifrost
 
+# Server port for the main application
 server:
   port: 8080
 
+# Enable actuator endpoints and set the port
 management:
   endpoint:
     health:

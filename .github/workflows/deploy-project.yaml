@@ -30,9 +30,6 @@ permissions:
   actions: read
   checks: write
 
-
-
-
 # List of jobs that this workflow will execute
 jobs:
   # Unique identifier for this job, make sure it's unique, you can use "name" property to give it more descriptive name
@@ -86,6 +83,7 @@ jobs:
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing
       # GitHub secrets wont permit you to see or re-use secrets, speak with Platform team to set up a namespace for you
       # They should also give you an approle "user" which will allow you to get the secrets from github action
+      #
       # The url must be in form: https://<URL>, while IDs are UUIDs
       # When providing path to the secret you need to include "/data" after namespace and before the secret name
       - name: Import Secrets
@@ -98,7 +96,7 @@ jobs:
           secrets: secret/v1/application/k8s/mlt/data/proxy *
 
       # This step will actually build, test, and verify the project
-      # envsubst is used to provide proxy settings for Maven
+      # envsubst is used to provide proxy settings for Maven, proxy host address must be an IP address, not URL 
       - name: Verify the Project
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
@@ -135,22 +133,29 @@ jobs:
           # Allow overwriting of previous artifacts
           overwrite: true
 
+  # This job will build a Docker image with relevant tags and labels, and publish it in Harbor
   publish-image:
     name: Build and Publish the Docker Image
+    # Defines that test-project job must finish successfully first, before this one can run
     needs: test-project
+    # The if statement limits it to run only if action was triggered on main branch or one of the tags
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
+    # Outputs allows a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
+      # The metadata step produces an image name that we need to use in deployment
       image-name: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Sets up a Docker Build action which will produce an image
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
           driver: docker
 
+      # See this step description in the first job
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
@@ -160,6 +165,9 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/harbor *
 
+      # Simple action that authenticates against the NLB's Harbor instance
+      # The url must be in form: https://<URL>, username and password should be for the github robot user
+      # Ask Platform team to create a robot user for you that has access to your project(s) in Harbor registry
       - name: Log in to Harbor Registry
         uses: docker/login-action@v3
         with:
@@ -168,33 +176,50 @@ jobs:
           password: ${{ env.HARBOR_PASSWORD }}
 
       - name: Extract Metadata for Docker
+        # Give this step an unique ID that can be used for referencing it later, here it's used to get the value of tags
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # Define the base that should be used for tags, can be multiple values if needed 
           images: harbor.nb.no/mlt/wls
+          # Defines list of tag types to use for generating the metadata
+          # the semver type will use GitHub tag in semver form and turn it into a proper tag for the image
+          # the ref type wil base its version either on branch or PR event and generate the tag for the image
           tags: |
             type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
 
+      # Downloads previously uploaded artifact with provided name
       - name: Download the JAR File
         uses: actions/download-artifact@v4
         with:
           name: packaged-project
 
+      # Builds and publishes the image in Harbor
       - name: Build the Docker Image
         uses: docker/build-push-action@v5
         with:
+          # Makes the action push image to Harbor, equivalent to "--output-type=registry"
           push: true
+          # Build context, makes the build process use actual files in the runner instead of using files from GitHub
           context: .
+          # Set tags for the image using output from the meta step
           tags: ${{ steps.meta.outputs.tags }}
+          # Set labels for the image using output from the meta step
           labels: ${{ steps.meta.outputs.labels }}
 
+  # Deploys the image to kubernetes stage environment
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
+    # Runs only on main branch
+    # Can be changed to also run on tags, to ensure that stage & prod use same image after a new version release
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
+    # Defines what environment this job references, this allows you to set deployment protections in the project
+    # Allows requiring a number of reviewers or specific reviewers, allow only specific branches or tags
+    # It also permits setting specific secrets and variables
     environment: stage
     steps:
       - name: Checkout
@@ -209,9 +234,19 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/k8s-stage *
 
+      # Installs and prepares a local kubectl instance
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v4
 
+      # Script that sets some needed variables in deployment file, and then configures kubectl for deploying to stage
+      # Script itself is rather generic, especially for simple deployments so you can easily re-use it
+      # Just make sure to set correct context and namespace for your own needs
+      #
+      # K8S_HOST_URL - URL pointing to where you want the app hosted, we have two options for both stage and prod
+      # K8S_STAGE_SERVER - URL to the stage server in form https://<IP_ADDRESS>:<PORT>
+      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Platform team
+      # K8S_STAGE_USER - name of the robot user that can deploy to your namespace, get it from the Platform team
+      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Platform team
       - name: Deploy to Stage
         run: |
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
@@ -230,6 +265,7 @@ jobs:
   deploy-to-prod:
     name: Deploy to Kubernetes Prod 
     needs: publish-image
+    # Runs only on tags
     if: startsWith(github.event.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
     environment: prod
@@ -249,6 +285,7 @@ jobs:
       - name: Setup Kubectl
         uses: azure/setup-kubectl@v4
 
+      # Same concept as in stage deployment, just using production values
       - name: Deploy to Prod
         run: |
           echo "Deploying to prod:${{ needs.publish-image.outputs.image-name }}"
