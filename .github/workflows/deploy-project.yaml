@@ -39,6 +39,9 @@ jobs:
     # Defines what runner to run this job on, if you want you can use an array to match runner name
     # for example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
     runs-on: self-hosted-linux
+    # Container allows setting what type of container the job should run on, this can help you cut down on steps for
+    # installing extra dependences your job might need
+    container: maven:3.9.7-eclipse-temurin-21
     # List of steps that this job needs to execute in sequential order, any changes done in one step will carry over to
     # others, so be mindful of that when making changes to files
     steps:
@@ -47,38 +50,38 @@ jobs:
         # Specifies that this step should run a pre-defined action
         uses: actions/checkout@v4
 
-      # This steps installs specified Java JDK
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        # Settings/Inputs/Parameters for the action
-        with:
-          # What JDK distribution to download and use
-          distribution: temurin # If you have no good reason go with Temurin distribution
-          java-version: 21
-          architecture: x64
-          # Sets up caching and restoring of dependencies for the specified package manager
-          # NB! If you decide to use a non-standard path for package repositories you need to set up caching yourself
-          # In that case use the "@actions/cache" action
-          cache: maven
+      # # This steps installs specified Java JDK
+      # - name: Setup Java JDK
+      #   uses: actions/setup-java@v4
+      #   # Settings/Inputs/Parameters for the action
+      #   with:
+      #     # What JDK distribution to download and use
+      #     distribution: temurin # If you have no good reason go with Temurin distribution
+      #     java-version: 21
+      #     architecture: x64
+      #     # Sets up caching and restoring of dependencies for the specified package manager
+      #     # NB! If you decide to use a non-standard path for package repositories you need to set up caching yourself
+      #     # In that case use the "@actions/cache" action
+      #     cache: maven
 
-      # Since self hosted runner does not come with Maven, we need to install it
-      # Same for git, we need it to upload test results, hence why we initialize the repo
-      # Lastly gettext provides envsubst which is used in the "Verify the Project" step to replace env variables
-      - name: Install Maven and Initialize Repo
-        # Map of environment variables available for only this step, you can define it on job or workflow level too
-        env:
-          MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
-        run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
-          sudo apt-get update -y
-          sudo apt-get install wget git gettext -y
-          wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz
-          tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz
-          rm apache-maven-$MAVEN_VERSION-bin.tar.gz
-          sudo mv apache-maven-$MAVEN_VERSION /opt/
-          sudo ln -s /opt/apache-maven-$MAVEN_VERSION/bin/mvn /usr/local/bin/mvn
-          echo "PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
-          git init
-          mvn -v
+      # # Since self hosted runner does not come with Maven, we need to install it
+      # # Same for git, we need it to upload test results, hence why we initialize the repo
+      # # Lastly gettext provides envsubst which is used in the "Verify the Project" step to replace env variables
+      # - name: Install Maven and Initialize Repo
+      #   # Map of environment variables available for only this step, you can define it on job or workflow level too
+      #   env:
+      #     MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
+      #   run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
+      #     sudo apt-get update -y
+      #     sudo apt-get install wget git gettext -y
+      #     wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz
+      #     tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz
+      #     rm apache-maven-$MAVEN_VERSION-bin.tar.gz
+      #     sudo mv apache-maven-$MAVEN_VERSION /opt/
+      #     sudo ln -s /opt/apache-maven-$MAVEN_VERSION/bin/mvn /usr/local/bin/mvn
+      #     echo "PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
+      #     git init
+      #     mvn -v
 
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing
       # GitHub secrets wont permit you to see or re-use secrets, speak with Platform team to set up a namespace for you
@@ -111,7 +114,7 @@ jobs:
           # Name for the report
           name: JUnit Tests
           # Where to look for report files, in this case look for any file named "TEST-...xml" anywhere in the project
-          path: ./**/TEST-*.xml
+          path: '**/TEST-*.xml'
           # What reporter created to use, since this project uses JUnit java-junit is used
           reporter: java-junit
           # Fail this step if there are test errors

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 
-# Kind is a string value representing the REST resource this object represents
-# Servers may infer this from the endpoint the client submits requests to
+# Kind is a string value representing type of object this manifest represents
+# A Deployment is a declaration of a desired state of pods and other objects in your cluster
 kind: Deployment
 
 # Standard object metadata
@@ -26,7 +26,7 @@ spec:
 
   # Create pods using pod definition in this template
   template:
-    # The Pods are labeled app: wls using the .metadata.labels field
+    # The Pods are labeled as: wls using the .metadata.labels field
     metadata:
       labels:
         app: wls
