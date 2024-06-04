@@ -41,7 +41,7 @@ jobs:
     runs-on: self-hosted-linux
     # Container allows setting what type of container the job should run on, this can help you cut down on steps for
     # installing extra dependences your job might need
-    container: maven:3.9.7-eclipse-temurin-21
+    container: maven:3.9.7-eclipse-temurin-21-jammy
     # List of steps that this job needs to execute in sequential order, any changes done in one step will carry over to
     # others, so be mindful of that when making changes to files
     steps:
