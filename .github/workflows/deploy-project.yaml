@@ -72,9 +72,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install wget git gettext -y
           wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz
-          tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz
-          rm apache-maven-$MAVEN_VERSION-bin.tar.gz
-          sudo mv apache-maven-$MAVEN_VERSION /opt/
+          sudo tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz -C /opt
           sudo ln -s /opt/apache-maven-$MAVEN_VERSION/bin/mvn /usr/local/bin/mvn
           echo "PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
           git init
