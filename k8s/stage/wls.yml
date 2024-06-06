@@ -9,8 +9,8 @@ metadata:
   name: wls
   namespace: mlt
   labels:
-    app: bifrost
-    creator: MagasinOgLogistikk
+    app: hermes
+    creator: magasin-og-logistikk
 
 # DeploymentSpec is the specification of the desired behavior of the Deployment
 spec:
@@ -34,7 +34,7 @@ spec:
     # The Pod template's specification, indicates that the Pod runs one container, with image <image_name>
     spec:
       # Pod priority, low in stage, high in prod
-      priorityClassName: low-priority 
+      priorityClassName: low-priority
 
       # How many secs to allow this pod for terminating gracefully
       terminationGracePeriodSeconds: 30
@@ -50,17 +50,17 @@ spec:
               containerPort: 8080
             - name: actuator-port
               containerPort: 8888
-          
+
           # Environemnt variables to use in this container
           env:
             - name: INFO_ENVIRONMENT
               value: STAGE
             - name: SPRING_PROFILES_ACTIVE
               value: "stage"
-          
+
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
-          
+
           # Set resources limits for the container
           resources:
             requests:
@@ -81,7 +81,7 @@ spec:
             successThreshold: 1
             periodSeconds: 20
             timeoutSeconds: 5
-          
+
           # Define settings for running the container's readiness probe
           readinessProbe:
             httpGet:
@@ -103,11 +103,11 @@ kind: Service
 
 # Standard object metadata
 metadata:
-  name: wls
+  name: wls-service
   namespace: mlt
   labels:
-    app: bifrost
-    creator: MagasinOgLogistikk
+    app: hermes-service
+    creator: magasin-og-logistikk
 
 # Service specification with attributes to use in its creation
 spec:
@@ -140,15 +140,15 @@ metadata:
   name: wls-ingress
   namespace: mlt
   labels:
-    app: bifrost-ingress
-    creator: MagasinOgLogistikk
+    app: hermes-ingress
+    creator: magasin-og-logistikk
 
 # Ingress specification
 spec:
   # Use an ingress implemented by nginx controller
   ingressClassName: nginx
 
-  # Set rules for ingress, expose wls service on port 8080 with path prefix "bifrost" on host <host_url>
+  # Set rules for ingress, expose wls service on port 8080 with path prefix "hermes" on host <host_url>
   rules:
     - host: <host_url>
       http:
@@ -158,5 +158,5 @@ spec:
                 name: wls
                 port:
                   name: rest-port
-            path: /bifrost
+            path: /hermes
             pathType: Prefix

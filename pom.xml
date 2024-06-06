@@ -11,8 +11,8 @@
 	<groupId>no.nb.mlt</groupId>
 	<artifactId>wls</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Bifrost</name>
-	<description>Warehouse Logistics Service functioning as a middleware between NLBs catalogues and storage systems</description>
+	<name>Hermes</name>
+	<description>Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs (National Library of Norway) catalogues and storage systems</description>
 	<properties>
 		<java.version>21</java.version>
 		<kotlin.version>2.0.0</kotlin.version>
