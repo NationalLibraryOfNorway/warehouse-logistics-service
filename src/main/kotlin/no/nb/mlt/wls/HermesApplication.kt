@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class HermesApplication
 
 fun main(args: Array<String>) {
-	runApplication<HermesApplication>(*args)
+  runApplication<HermesApplication>(*args)
 }
