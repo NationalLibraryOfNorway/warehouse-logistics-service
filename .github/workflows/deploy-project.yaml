@@ -91,14 +91,16 @@ jobs:
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/proxy *
+          secrets: |
+            secret/v1/application/k8s/mlt/data/proxy *
+            secret/v1/application/k8s/mlt/data/keycloak *
 
       # This step will actually build, test, and verify the project
       # envsubst is used to provide proxy settings for Maven, proxy host address must be an IP address, not URL
       - name: Verify the Project
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
-          mvn -B -e -s .m2/replaced.xml verify
+          mvn -B -e -s .m2/replaced.xml -DKEYCLOAK_ISSUER_URI= ${{ env.KEYCLOAK_ISSUER_URI_STAGE }} verify
 
       # This step will use the test-reporter action to publish test results in the workflow run
       - name: Publish Test Report
