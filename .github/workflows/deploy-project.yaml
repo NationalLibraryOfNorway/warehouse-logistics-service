@@ -100,7 +100,8 @@ jobs:
       - name: Verify the Project
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
-          mvn -B -e -s .m2/replaced.xml -DKEYCLOAK_ISSUER_URI= ${{ env.KEYCLOAK_ISSUER_URI_STAGE }} verify
+          export DKEYCLOAK_ISSUER_URI=$KEYCLOAK_ISSUER_URI_STAGE
+          mvn -B -e -s .m2/replaced.xml verify
 
       # This step will use the test-reporter action to publish test results in the workflow run
       - name: Publish Test Report
