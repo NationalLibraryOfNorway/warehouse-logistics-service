@@ -94,7 +94,7 @@ jobs:
           secrets: secret/v1/application/k8s/mlt/data/proxy *
 
       # This step will actually build, test, and verify the project
-      # envsubst is used to provide proxy settings for Maven, proxy host address must be an IP address, not URL 
+      # envsubst is used to provide proxy settings for Maven, proxy host address must be an IP address, not URL
       - name: Verify the Project
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
@@ -178,7 +178,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Define the base that should be used for tags, can be multiple values if needed 
+          # Define the base that should be used for tags, can be multiple values if needed
           images: harbor.nb.no/mlt/wls
           # Defines list of tag types to use for generating the metadata
           # the semver type will use GitHub tag in semver form and turn it into a proper tag for the image
@@ -263,7 +263,7 @@ jobs:
           kubectl rollout restart deploy/wls
 
   deploy-to-prod:
-    name: Deploy to Kubernetes Prod 
+    name: Deploy to Kubernetes Prod
     needs: publish-image
     # Runs only on tags
     if: startsWith(github.event.ref, 'refs/tags/v')

@@ -7,13 +7,12 @@ spring:
   # Application name setup
   application:
     name: Hermes
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
 
 # Server port for the main application
 server:
   port: 8080
-  servlet:
-    context-path: /hermes
-
 
 # Enable actuator endpoints and set the port
 management:
@@ -24,15 +23,12 @@ management:
   server:
     port: 8888
 
+# Swagger config for the application
 springdoc:
+  api-docs:
+    path: /api-docs
   swagger-ui:
-    enabled: true
-    use-root-path: true
-
-# Used for enabling and disabling the security settings
-# When developing locally, the security is disabled, otherwise it's on for both stage and prod
-security:
-  enabled: false
+    path: /swagger
 
 ---
 
@@ -49,11 +45,12 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: <REDACTED> #TODO: Change this with a placeholder before commiting
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
 
-# Enable security provided by Keycloak
-security:
-  enabled: true
+# Set the logging level for the web package to debug
+logging:
+  level:
+    web: debug
 
 ---
 
@@ -67,8 +64,12 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: <REDACTED> #TODO: Change this with a placeholder before commiting
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
 
-# Enable security provided by Keycloak
-security:
-  enabled: true
+# Set the logging level for the web package to error
+logging:
+  level:
+    web: error
+
+springdoc:
+  show-actuator: false
