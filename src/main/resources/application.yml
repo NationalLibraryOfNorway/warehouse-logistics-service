@@ -9,6 +9,11 @@ spring:
     name: Hermes
   lifecycle:
     timeout-per-shutdown-phase: 15s
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: test
 
 # Server port for the main application
 server:
