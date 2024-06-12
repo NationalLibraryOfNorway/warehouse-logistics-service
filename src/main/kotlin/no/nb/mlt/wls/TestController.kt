@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1/test")
 class TestController {
-
     @GetMapping("/open", produces = [APPLICATION_JSON_VALUE])
     fun open(): ResponseEntity<Response> {
         return ResponseEntity.ok(Response("Hello to an open endpoint!"))
