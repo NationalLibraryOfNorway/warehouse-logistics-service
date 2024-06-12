@@ -17,7 +17,6 @@ import reactor.core.publisher.Mono
 
 @Configuration
 class SecurityConfig {
-
     @Configuration
     @EnableWebFluxSecurity
     class SecurityEnabled {
@@ -38,7 +37,7 @@ class SecurityConfig {
                             "/swagger-resources/**",
                             "/webjars/swagger-ui/**",
                             "/actuator",
-                            "/actuator/**",
+                            "/actuator/**"
                         ).permitAll()
                         .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-dev-role")
                         .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()

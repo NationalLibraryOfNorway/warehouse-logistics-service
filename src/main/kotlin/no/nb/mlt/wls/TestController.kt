@@ -26,9 +26,9 @@ class TestController {
         return ResponseEntity.ok(
             Response(
                 """
-               Hello ${authentication.name} to an endpoint that only users with the 'wls-dev-role' authority can access!
-               You have following authorities: ${authentication.authorities.joinToString(", ")}
-               """.trimIndent()
+                Hello ${authentication.name} to an endpoint that only users with the 'wls-dev-role' authority can access!
+                You have following authorities: ${authentication.authorities.joinToString(", ")}
+                """.trimIndent()
             )
         )
     }
