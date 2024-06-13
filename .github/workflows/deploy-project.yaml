@@ -51,8 +51,7 @@ jobs:
       - name: Qodana Scan
         uses: JetBrains/qodana-action@v2024.1
         with:
-          pr-mode: false
-          args: --apply-fixes
+          args: --cleanup
           push-fixes: branch
         env:
           # Gets the token from the secrets, make sure to set it up in the repository settings
