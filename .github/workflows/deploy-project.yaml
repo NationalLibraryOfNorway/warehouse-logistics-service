@@ -39,11 +39,6 @@ jobs:
     # Defines what runner to run this job on, if you want you can use an array to match runner name
     # for example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
     runs-on: self-hosted-linux
-    # Change permissions for this job as Qodana requires write access
-    permissions:
-      contents: write
-      actions: write
-      checks: write
     # List of steps that this job needs to execute in sequential order, any changes done in one step will carry over to
     # others, so be mindful of that when making changes to files
     steps:
@@ -51,9 +46,6 @@ jobs:
       - name: Checkout
         # Specifies that this step should run a pre-defined action
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}  # to check out the actual pull request commit, not the merge commit
-          fetch-depth: 0  # a full history is required for pull request analysis
 
       # This steps installs specified Java JDK
       - name: Setup Java JDK
@@ -125,13 +117,6 @@ jobs:
           # Fail this step if no test results were found
           fail-on-empty: true
 
-      - name: Qodana Scan
-        uses: JetBrains/qodana-action@v2024.1
-        env:
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-          HTTP_PROXY: ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
-          HTTPS_PROXY: ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
-
       # Last step will upload the JAR file as an artifact that can then be used in other jobs
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
@@ -145,6 +130,28 @@ jobs:
           if-no-files-found: error
           # Allow overwriting of previous artifacts
           overwrite: true
+
+  # Separate job that will run Qodana scan on the project
+  qodana-scan:
+    # This name will be displayed in the GitHub UI when
+    name: Scan the Project with Qodana
+    # Run this on github runner instead of the self hosted one
+    runs-on: ubuntu-latest
+    # Simply gets the repo and runs a Qodana action to scan the project
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # This is needed to get the actual commit that the PR is based on, not the merge commit
+          ref: ${{ github.event.pull_request.head.sha }}
+          # A full history is required for pull request analysis, so this will only report issues introduced in that PR
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2024.1
+        env:
+          # Gets the token from the secrets, make sure to set it up in the repository settings
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
 
   # This job will build a Docker image with relevant tags and labels, and publish it in Harbor
   publish-image:
