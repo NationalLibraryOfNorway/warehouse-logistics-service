@@ -129,6 +129,8 @@ jobs:
         uses: JetBrains/qodana-action@v2024.1
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          HTTP_PROXY: ${{ env.HTTP_PROXY_HOST }}:${{ env.HTTP_PROXY_PORT }}
+          HTTPS_PROXY: ${{ env.HTTPS_PROXY_HOST }}:${{ env.HTTPS_PROXY_PORT }}
 
       # Last step will upload the JAR file as an artifact that can then be used in other jobs
       - name: Upload the JAR File
