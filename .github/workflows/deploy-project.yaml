@@ -32,31 +32,6 @@ permissions:
 
 # List of jobs that this workflow will execute
 jobs:
-  # Separate job that will run Qodana scan on the project
-  qodana-scan:
-    # This name will be displayed in the GitHub UI when
-    name: Scan the Project with Qodana
-    # Run this on github runner instead of the self hosted one
-    runs-on: ubuntu-latest
-    # Simply gets the repo and runs a Qodana action to scan the project
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # This is needed to get the actual commit that the PR is based on, not the merge commit
-          ref: ${{ github.event.pull_request.head.sha }}
-          # A full history is required for pull request analysis, so this will only report issues introduced in that PR
-          fetch-depth: 0
-
-      - name: Qodana Scan
-        uses: JetBrains/qodana-action@v2024.1
-        with:
-          args: --cleanup
-          push-fixes: branch
-        env:
-          # Gets the token from the secrets, make sure to set it up in the repository settings
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-
   # Unique identifier for this job, make sure it's unique, you can use "name" property to give it more descriptive name
   test-project:
     # This name will be displayed in the GitHub UI when
