@@ -2,21 +2,14 @@
 # It contains the configuration for the application that is common for all profiles
 # The configuration for the stage and prod profiles is in the same file
 # The configuration for the stage and prod profiles is separated by ---
-
 spring:
   # Application name setup
   application:
     name: Hermes
   lifecycle:
     timeout-per-shutdown-phase: 15s
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: test
-      authorizationserver:
-        endpoint:
-          token-uri: test
+  profiles:
+    default: local-dev
 
 # Server port for the main application
 server:
