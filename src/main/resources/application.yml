@@ -14,6 +14,9 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: test
+      authorizationserver:
+        endpoint:
+          token-uri: test
 
 # Server port for the main application
 server:
@@ -51,6 +54,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
 
 # Set the logging level for the web package to debug
 logging:

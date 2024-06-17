@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.core.config
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
+import io.swagger.v3.oas.annotations.security.OAuthFlow
+import io.swagger.v3.oas.annotations.security.OAuthFlows
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
@@ -12,9 +14,13 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @SecurityScheme(
     name = "bearerAuth",
-    type = SecuritySchemeType.HTTP,
-    bearerFormat = "JWT",
-    scheme = "bearer"
+    type = SecuritySchemeType.OAUTH2,
+    flows = OAuthFlows(
+        clientCredentials = OAuthFlow(
+            tokenUrl = "\${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
+            scopes = []
+        )
+    )
 )
 class SwaggerConfig {
     @Bean
