@@ -6,8 +6,10 @@ spring:
   # Application name setup
   application:
     name: Hermes
+  # Set time limit for shutdown phase
   lifecycle:
     timeout-per-shutdown-phase: 15s
+  # Set the default profile to local-dev, used to disable security in the local development or in pipeline
   profiles:
     default: local-dev
 

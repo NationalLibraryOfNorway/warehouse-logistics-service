@@ -36,7 +36,6 @@ jobs:
   test-project:
     # This name will be displayed in the GitHub UI when
     name: Build and Test the Project
-    needs: qodana-scan
     # Defines what runner to run this job on, if you want you can use an array to match runner name
     # for example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
     runs-on: self-hosted-linux

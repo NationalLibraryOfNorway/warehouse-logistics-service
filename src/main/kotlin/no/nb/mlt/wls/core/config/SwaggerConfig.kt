@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 @SecurityScheme(
-    name = "bearerAuth",
+    name = "clientCredentials",
     type = SecuritySchemeType.OAUTH2,
     flows =
     OAuthFlows(
@@ -49,7 +49,7 @@ class SwaggerConfig {
                     )
             )
             .addSecurityItem(
-                SecurityRequirement().addList("bearerAuth")
+                SecurityRequirement().addList("clientCredentials")
             )
     }
 }
