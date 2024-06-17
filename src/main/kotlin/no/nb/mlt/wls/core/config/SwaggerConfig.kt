@@ -16,13 +16,13 @@ import org.springframework.context.annotation.Configuration
     name = "clientCredentials",
     type = SecuritySchemeType.OAUTH2,
     flows =
-    OAuthFlows(
-        clientCredentials =
-        OAuthFlow(
-            tokenUrl = "\${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
-            scopes = []
+        OAuthFlows(
+            clientCredentials =
+                OAuthFlow(
+                    tokenUrl = "\${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
+                    scopes = []
+                )
         )
-    )
 )
 class SwaggerConfig {
     @Bean
