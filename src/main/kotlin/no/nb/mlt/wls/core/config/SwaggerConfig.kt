@@ -15,8 +15,10 @@ import org.springframework.context.annotation.Configuration
 @SecurityScheme(
     name = "bearerAuth",
     type = SecuritySchemeType.OAUTH2,
-    flows = OAuthFlows(
-        clientCredentials = OAuthFlow(
+    flows =
+    OAuthFlows(
+        clientCredentials =
+        OAuthFlow(
             tokenUrl = "\${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
             scopes = []
         )
