@@ -21,6 +21,7 @@ server:
 management:
   endpoint:
     health:
+      # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
       enabled: true
   server:
@@ -29,18 +30,21 @@ management:
 # Swagger config for the application
 springdoc:
   api-docs:
+    # Set the base path for the Swagger API documentation
     path: /api-docs
   swagger-ui:
+    # Set the base path for Swagger UI
     path: /swagger
+  # Show actuator endpoints in Swagger
+  show-actuator: true
 
 ---
 
 # This is the configuration for the stage profile
-
 spring:
-  # Set the configuration to be active only when the stage profile is active
   config:
     activate:
+      # This part of the app config is only activated when the profile is stage
       on-profile: stage
 
   # Set the security settings for the stage profile
@@ -54,6 +58,7 @@ spring:
 # Set the logging level for the web package to debug
 logging:
   level:
+    # Set the logging level for the web package to debug
     web: debug
 
 ---
@@ -62,18 +67,21 @@ logging:
 spring:
   config:
     activate:
+      # This part of the app config is only activated when the profile is prod
       on-profile: prod
 
+  # Set the security settings for the prod profile
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
 
-# Set the logging level for the web package to error
 logging:
   level:
+    # Set the logging level for the web package to error
     web: error
 
 springdoc:
+  # Don't show actuator endpoints in the production environment
   show-actuator: false

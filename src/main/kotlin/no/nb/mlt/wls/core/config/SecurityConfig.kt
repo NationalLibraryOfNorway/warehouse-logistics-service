@@ -96,6 +96,8 @@ class SecurityConfig {
         val error: OAuth2Error = OAuth2Error("invalid_token", "The required audience is missing", null)
 
         override fun validate(jwt: Jwt): OAuth2TokenValidatorResult {
+            // Not sure if I completely understand how the audience is supposed to be used here.
+            // Can be changed as needed when we actually start authenticating real services and requests.
             return if (jwt.audience.contains("wls")) {
                 OAuth2TokenValidatorResult.success()
             } else {
