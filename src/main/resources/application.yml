@@ -1,10 +1,17 @@
-# You probably should make two profiles (dev and prod) and have different configurations for each one
-# They can inherit from this file and override the values they need to change
-
-# Application name setup
+# This is the main configuration file for the application
+# It contains the configuration for the application that is common for all profiles
+# The configuration for the stage and prod profiles is in the same file
+# The configuration for the stage and prod profiles is separated by ---
 spring:
+  # Application name setup
   application:
-    name: Bifrost
+    name: Hermes
+  # Set time limit for shutdown phase
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
+  # Set the default profile to local-dev, used to disable security in the local development or in pipeline
+  profiles:
+    default: local-dev
 
 # Server port for the main application
 server:
@@ -14,7 +21,67 @@ server:
 management:
   endpoint:
     health:
+      # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
       enabled: true
   server:
     port: 8888
+
+# Swagger config for the application
+springdoc:
+  api-docs:
+    # Set the base path for the Swagger API documentation
+    path: /api-docs
+  swagger-ui:
+    # Set the base path for Swagger UI
+    path: /swagger
+  # Show actuator endpoints in Swagger
+  show-actuator: true
+
+---
+
+# This is the configuration for the stage profile
+spring:
+  config:
+    activate:
+      # This part of the app config is only activated when the profile is stage
+      on-profile: stage
+
+  # Set the security settings for the stage profile
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+
+# Set the logging level for the web package to debug
+logging:
+  level:
+    # Set the logging level for the web package to debug
+    web: debug
+
+---
+
+# This is the configuration for the prod profile
+spring:
+  config:
+    activate:
+      # This part of the app config is only activated when the profile is prod
+      on-profile: prod
+
+  # Set the security settings for the prod profile
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+logging:
+  level:
+    # Set the logging level for the web package to error
+    web: error
+
+springdoc:
+  # Don't show actuator endpoints in the production environment
+  show-actuator: false
