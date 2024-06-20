@@ -1,7 +1,7 @@
 # Warehouse Logistics Service
 
 Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs (National Library of Norway) catalogues and storage systems.
-The goal with the service is to unite the different storage systems and magazines, which NLN uses, under the same service.
+The goal with the service is to unite the different storage systems and magazines under the same service.
 
 
 ## Running the application
