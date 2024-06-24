@@ -37,10 +37,7 @@ Keycloak in stage is set up with a test client.
 
 The following environment variables are relevant to configuring the application:
 
-- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication
-  - required for local testing, and when using it in staging
-- `KEYCLOAK_ISSUER_URI_PROD`: Is used to point at the Keycloak server used for authentication
-  - required when deployed to k8s and used in production environments, usually with the "prod" profile
+- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
 
 ### Deploying
 
@@ -51,7 +48,10 @@ Easiest way to test the functionality is to use the provided Swagger UI at http:
 java -DKEYCLOAK_ISSUER_URI=<url> -Dspring.profiles.active=stage -jar wls.jar
 ```
 
-TODO - Pipeline deployment
+There are also multiple pipelines powered by GitHub actions.
+These are used to test, build, and deploy the project, to both the staging and production environment.
+
+The jobs can be viewed in the [Actions tab](https://github.com/NationalLibraryOfNorway/warehouse-logistics-service/actions).
 
 ## License
 
