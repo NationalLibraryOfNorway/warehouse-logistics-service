@@ -21,10 +21,17 @@ cd target/
 java -jar wls.jar
 ```
 
-It's possible to build a Docker image from source using the following commands:
+After building the jar, it is possible to build a Docker image from source using the following commands:
+
+```shell
+# Move the jar to the Docker directory
+cp target/wls.jar docker/
+# Use Docker Buildx to build the Docker Image
+docker build docker/
+# Alternatively, use a custom tag
+docker build -t wls:latest docker/
 ```
-... commands
-```
+
 A pre-built image can be found on NLNs local Harbor instance under the `mlt` namespace.
 
 For local development and testing an IDE like [IntelliJ IDEA](https://www.jetbrains.com/idea/) is recommended.
