@@ -27,6 +27,7 @@ More features and benefits will be added as the service is developed.
 1. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
    1. [Deployment Dependencies](#deployment-dependencies)
+1. [Development](#development)
 1. [Configuration](#configuration)
 1. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
@@ -155,6 +156,7 @@ As the staging and production environments are deployed on internal networks, th
 If you need to access the API in these environments, you will need to use a VPN connection to NLN's network.
 The API is accessible at the usual URL, with the `/hermes` suffix.
 
+
 # Dependencies
 
 ## Local Dependencies
@@ -188,12 +190,34 @@ All of these services are managed by the NLN's Platform team, and are not needed
 However, they are needed for deployment of the application to the staging and production environments.
 MongoDB and Keycloak are also maintained by the Platform team, and are used in the deployed application.
 
+
+# Development
+
+The development of the Hermes WLS is done in "feature branches" that are merged into the `main` branch.
+Name each feature branch after its JIRA code followed by a short summary of the feature.
+For example `mlt-0018-add-readme`.
+
+Make sure that your development tool supports the [EditorConfig](https://editorconfig.org "Link to EditorConfig homepage") standard, and use the included [`.editorconfig`](.editorconfig "Link to project's EditorConfig file") file.
+IntelliJ IDEA supports formatting the code according to the `.editorconfig` file, and can be set up in the `Editor` settings.
+
+Additionally you should run the tests, and run spotless to ensure that the code is formatted correctly.
+To run tests and spotless, use the following commands:
+
+```shell
+mvn clean test
+mvn spotless:apply
+```
+
+The CI/CD pipelnine will run these commands automatically when a pull request is created.
+Although it's better to run them on your machine before pushing as it will save time and resources.
+
 # Configuration
 
 The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `dev` or `stage` for testing authentication (optional, default is `pipeline`)
+
 
 # Deployment
 
@@ -225,6 +249,7 @@ The tag should be in the format `vX.Y.Z`, where `X`, `Y`, and `Z` are numbers, f
 This will trigger the CI/CD pipeline which will deploy the application to the production environment.
 This is quite similar to the staging deployment.
 
+
 # Contact
 
 The project is maintained by the [National Library of Norway](https://github.com/NationalLibraryOfNorway/ "Link to the National Library of Norway's GitHub organization") organization.
@@ -233,6 +258,7 @@ It is owned by the "Warehouse and Logistics" team (MLT).
 For questions or issues, please create a new issue in the repository.
 
 You can also contact the team by email at `mlt at nb dot no`.
+
 
 # License
 
