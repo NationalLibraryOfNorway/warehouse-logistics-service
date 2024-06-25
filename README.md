@@ -1,65 +1,239 @@
-# Warehouse Logistics Service
+# Hermes the Warehouse & Logistics Service
 
-Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs (National Library of Norway) catalogues and storage systems.
-The goal with the service is to unite the different storage systems and catalogues with a common interface.
-This should help us in decoupling the storage systems and catalogues from each other and make it easier to introduce new ones in the future.
+Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs ([National Library of Norway](https://nb.no/en "English version of the NLN website")) catalogues and storage systems.
+The goal with the service is to unite all of the storage systems and catalogues used at NLN with a common interface.
 
-## Running the application
+Benefits of this approach are:
+- Decoupling of the storage systems and catalogues, which make it easier to change systems if needed.
+- Makes it easier for end users to access material stored in different systems.
+- Storage systems don't need to know which catalogue to inform about changes, as the service will handle this.
 
-Hermes WLS runs on Java 21.
+More features and benefits will be added as the service is developed.
 
-### Building
 
-To build and run this application use Maven and the following commands:
+# Table of Contents
+
+1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse-logistics-service)
+1. [Technologies](#technologies)
+1. [Running the Application](#running-the-application)
+   1. [Building and Running Locally](#building-and-running-locally)
+      1. [Using Maven](#using-maven)
+      1. [Using Docker](#using-docker)
+      1. [Using an IDE](#using-an-ide)
+   1. [Running Tests](#running-tests)
+      1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
+      1. [Running Tests in an IDE](#running-tests-in-an-ide)
+1. [Usage](#usage)
+1. [Dependencies](#dependencies)
+   1. [Local Dependencies](#local-dependencies)
+   1. [Deployment Dependencies](#deployment-dependencies)
+1. [Configuration](#configuration)
+1. [Deployment](#deployment)
+   1. [Deploying to Staging Environment](#deploying-to-staging-environment)
+   1. [Deploying to Production Environment](#deploying-to-production-environment)
+1. [Contact](#contact)
+1. [License](#license)
+
+
+# Technologies
+
+Hermes WLS uses the following technologies:
+- [Eclipse Temurin](https://adoptium.net "Eclipse Temurin homepage") for the Java runtime.
+- [Kotlin](https://kotlinlang.org "Kotlin homepage") for the application code.
+- [Maven](https://maven.apache.org "Maven homepage") for project management.
+- [Spring Boot](https://spring.io/projects/spring-boot "Spring Boot homepage") for the application framework.
+- [MongoDB](https://www.mongodb.com "MongoDB homepage") for data storage.
+- [Keycloak](https://www.keycloak.org "Keycloak homepage") for client authentication and authorization.
+- [Swagger](https://swagger.io "Swagger homepage") for API documentation.
+- [Docker](https://www.docker.com "Docker homepage") for containerization.
+- [Harbor](https://goharbor.io "Harbor homepage") for container registry.
+- [Kubernetes](https://kubernetes.io "Kubernetes homepage") for deployment and orchestration.
+- [Vault](https://www.vaultproject.io "Vault homepage") for secrets management.
+- [GitHub Actions](https://github.com/features/actions "GitHub Actions homepage") for CI/CD.
+
+As of now the service is in the early stages of development, and is not yet in production.
+Therefore the technologies listed above are subject to change.
+Check the [pom.xml](pom.xml "Link to project's POM file") file for the most up-to-date list of dependencies.
+As well as the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") for the current Docker image setup.
+And lastly the [Kubernetes deployment](k8s/prod/deployment.yaml "Link to project's k8s deployment file in production") for the current deployment setup.
+You might also want to check the [GitHub Actions](.github/workflows/deploy-project.yaml "Link to project's CI/CD pipeline definition file") for the current CI/CD setup.
+
+# Running the Application
+
+The Warehouse Logistics Service is a Spring Boot application that can be run locally or in a container.
+It is recommended to use Docker for local testing, as the service is designed to run in a containerized environment.
+Additionally, this service depends on other applications, such as MongoDB, which can be spun up using provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
+For development an IDE such as [IntelliJ IDEA](https://www.jetbrains.com/idea/ "Link to JetBrains IntelliJ IDEA program") is recommended.
+
+## Building and Running Locally
+
+### Using Maven
+
+Use following commands to build and run the application locally:
 
 ```shell
-# Build the jar with the maven-jar-plugin
-mvn jar:jar
+# Package the application, will execute the tests too
+mvn clean package
 
 # Run it locally
-cd target/
-java -jar wls.jar
+java -jar target/wls.jar
 ```
 
-After building the jar, it is possible to build a Docker image from source using the following commands:
+### Using Docker
+
+After building the JAR file, it can be used to build a Docker image using the following commands:
 
 ```shell
 # Move the jar to the Docker directory
 cp target/wls.jar docker/
+
 # Use Docker Buildx to build the Docker Image
-docker build docker/
-# Alternatively, use a custom tag
-docker build -t wls:latest docker/
+docker buildx build --platform linux/amd64 -t wls:latest docker/
 ```
 
-A pre-built image can be found on NLNs local Harbor instance under the `mlt` namespace.
+***Caveats:***
+- When building the Docker image outside of NLNs network the build will fail, as it won't be able to access internal Harbor instance.
+  In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-alpine` and build the image locally.
+- Do not attempt to push the image to Harbor manually, as it will fail.
+  The image is built and pushed to Harbor automatically by the CI/CD pipeline.
+
+A pre-built image can be found on NLNs internal Harbor instance under the `mlt` namespace.
+The images are built based on the `main` branch as well as project `tags`, and can be pulled using the following command:
+
+```shell
+# Pull the latest image
+docker pull harbor.nb.no/mlt/wls:latest
+
+# Or pull a specific tag (either a GitHub tag or 'main' for the latest main branch image)
+docker pull harbor.nb.no/mlt/wls:<TAG>
+```
+
+With the image either built or pulled, it can be run using the following command:
+
+```shell
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE='dev' harbor.nb.no/mlt/wls:<TAG>
+```
+
+### Using an IDE
 
 For local development and testing an IDE like [IntelliJ IDEA](https://www.jetbrains.com/idea/) is recommended.
 Its default Spring run configuration for the application works well.
-To test the service with authentication set the "Active profiles" variable to `stage`, and provide the `KEYCLOAK_ISSUER_URI` variable (see below).
-Keycloak in stage is set up with a test client.
+To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `dev`.
+In case you can't/won't use local Keycloak instance, then provide the `KEYCLOAK_ISSUER_URI` variable (see below) and set the `SPRING_PROFILES_ACTIVE` variable to `stage`.
+Keycloak in `dev` and `stage` is set up with a test client `wls`.
 
-### Configuration
+## Running Tests
 
+In order to run the tests, use the following command:
+
+```shell
+mvn clean test
+```
+
+It should run all the tests in the project and provide a report at the end.
+You can see the results in both the console and in the `target/surefire-reports` directory.
+
+### Running Tests in the Pipeline
+
+The CI/CD pipeline will run the tests automatically when a pull request is created.
+It will create a report and provide it in the pull request.
+It can be accessed by clicking on the `Details` link in the `Checks` section for the `Deploy Project / JUnit Tests` check of the pull request.
+
+### Running Tests in an IDE
+
+In an IDE like IntelliJ IDEA, the tests can be run by right-clicking on the `src/test/kotlin` directory in the project and selecting `Run tests in 'kotlin'`.
+Further configuration can be done in the `Run/Debug Configurations` menu.
+
+
+# Usage
+
+Hermes WLS provides a REST API for interacting with the service.
+The API is documented using Swagger, and can be accessed by running the application and navigating to the following URL:
+`http://localhost:8080/swagger`
+
+As the staging and production environments are deployed on internal networks, the deployed API is not accessible from the outside.
+If you need to access the API in these environments, you will need to use a VPN connection to NLN's network.
+The API is accessible at the usual URL, with the `/hermes` suffix.
+
+# Dependencies
+
+## Local Dependencies
+
+Regardless of what method you used to run the Hermes WLS, it has other services and applications that it depends on.
+In order to run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
+This will spin up the following services:
+- MongoDB: database for the application
+- Keycloak: authentication and authorization service for the application
+
+To start the services, run the following command:
+
+```shell
+docker-compose -f docker/compose.yaml up
+```
+
+And to stop the services, run the following command:
+
+```shell
+docker-compose -f docker/compose.yaml down
+```
+
+## Deployment Dependencies
+
+In addition to the local dependencies, the Hermes WLS also depends on the following services:
+- Kubernetes: for deployment and orchestration of the application
+- Harbor: for hosting the Docker image of the application
+- Vault: for secrets management in the deployment pipeline
+
+All of these services are managed by the NLN's Platform team, and are not needed for local development.
+However, they are needed for deployment of the application to the staging and production environments.
+MongoDB and Keycloak are also maintained by the Platform team, and are used in the deployed application.
+
+# Configuration
 
 The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
+- `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `dev` or `stage` for testing authentication (optional, default is `pipeline`)
 
-### Deploying
+# Deployment
 
-When deploying locally, make sure to activate the "stage" profile with Spring, and provide the KEYCLOAK_ISSUER_URI.
-Easiest way to test the functionality is to use the provided Swagger UI at http://localhost:8080/swagger
+The section [Running the Application](#running-the-application) describes how to run the application locally.
+Therefore this section will focus on how to deploy the application to the staging and production environments.
 
-```shell
-java -DKEYCLOAK_ISSUER_URI=<url> -Dspring.profiles.active=stage -jar wls.jar
-```
+Deployment to both environments is handled by their respective Kubernetes deployment files.
+They describe the deployment, service, and ingress for the application.
+There is very little difference between the two files, as the environments are very similar.
+They mostly deal with resource limits and requests, as well as the number of replicas.
 
-There are also multiple pipelines powered by GitHub actions.
-These are used to test, build, and deploy the project, to both the staging and production environment.
+In both cases the deployment is handled by the CI/CD pipeline.
 
-The jobs can be viewed in the [Actions tab](https://github.com/NationalLibraryOfNorway/warehouse-logistics-service/actions).
+## Deploying to Staging Environment
 
-## License
+To deploy the application to the staging environment, push new changes to the `main` branch.
+The repository is set up to only accept merges to the `main` branch through pull requests.
+Therefore in order to deploy tothe staging environment, create a pull request and merge it to the `main` branch.
+Actions in pull request should test the application to make ensure that it is working as expected.
 
-©️2024 National Library of Norway. All rights reserved.
+When a pull request is merged to the `main` branch, the CI/CD pipeline will build the application, create a Docker image, and push it to Harbor.
+Then the image will be deployed to the staging cluster in NLN's internal Kubernetes system.
+
+## Deploying to Production Environment
+
+To deploy the application to the production environment, create a new tag in the repository.
+The tag should be in the format `vX.Y.Z`, where `X`, `Y`, and `Z` are numbers, following the semantic versioning standard.
+
+This will trigger the CI/CD pipeline which will deploy the application to the production environment.
+This is quite similar to the staging deployment.
+
+# Contact
+
+The project is maintained by the [National Library of Norway](https://github.com/NationalLibraryOfNorway/ "Link to the National Library of Norway's GitHub organization") organization.
+It is owned by the "Warehouse and Logistics" team (MLT).
+
+For questions or issues, please create a new issue in the repository.
+
+You can also contact the team by email at `mlt at nb dot no`.
+
+# License
+
+This project is licensed under the [MIT License](LICENSE.md "Link to project's LICENSE file").
