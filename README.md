@@ -1,7 +1,7 @@
 # Hermes the Warehouse & Logistics Service
 
 Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs ([National Library of Norway](https://nb.no/en "English version of the NLN website")) catalogues and storage systems.
-The goal with the service is to unite all of the storage systems and catalogues used at NLN with a common interface.
+The goal with the service is to unite all the storage systems and catalogues used at NLN with a common interface.
 
 Benefits of this approach are:
 - Decoupling of the storage systems and catalogues, which make it easier to change systems if needed.
@@ -13,27 +13,27 @@ More features and benefits will be added as the service is developed.
 
 # Table of Contents
 
-1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse-logistics-service)
-1. [Technologies](#technologies)
-1. [Running the Application](#running-the-application)
+1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse--logistics-service)
+2. [Technologies](#technologies)
+3. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-      1. [Using Docker](#using-docker)
-      1. [Using an IDE](#using-an-ide)
-   1. [Running Tests](#running-tests)
+      2. [Using Docker](#using-docker)
+      3. [Using an IDE](#using-an-ide)
+   2. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
-      1. [Running Tests in an IDE](#running-tests-in-an-ide)
-1. [Usage](#usage)
-1. [Dependencies](#dependencies)
+      2. [Running Tests in an IDE](#running-tests-in-an-ide)
+4. [Usage](#usage)
+5. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
-   1. [Deployment Dependencies](#deployment-dependencies)
-1. [Development](#development)
-1. [Configuration](#configuration)
-1. [Deployment](#deployment)
+   2. [Deployment Dependencies](#deployment-dependencies)
+6. [Development](#development)
+7. [Configuration](#configuration)
+8. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
-   1. [Deploying to Production Environment](#deploying-to-production-environment)
-1. [Contact](#contact)
-1. [License](#license)
+   2. [Deploying to Production Environment](#deploying-to-production-environment)
+9. [Contact](#contact)
+10. [License](#license)
 
 
 # Technologies
@@ -56,7 +56,7 @@ As of now the service is in the early stages of development, and is not yet in p
 Therefore the technologies listed above are subject to change.
 Check the [pom.xml](pom.xml "Link to project's POM file") file for the most up-to-date list of dependencies.
 As well as the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") for the current Docker image setup.
-And lastly the [Kubernetes deployment](k8s/prod/deployment.yaml "Link to project's k8s deployment file in production") for the current deployment setup.
+And lastly the [Kubernetes deployment](k8s/prod/wls.yml "Link to project's k8s deployment file in production") for the current deployment setup.
 You might also want to check the [GitHub Actions](.github/workflows/deploy-project.yaml "Link to project's CI/CD pipeline definition file") for the current CI/CD setup.
 
 # Running the Application
@@ -200,7 +200,7 @@ For example `mlt-0018-add-readme`.
 Make sure that your development tool supports the [EditorConfig](https://editorconfig.org "Link to EditorConfig homepage") standard, and use the included [`.editorconfig`](.editorconfig "Link to project's EditorConfig file") file.
 IntelliJ IDEA supports formatting the code according to the `.editorconfig` file, and can be set up in the `Editor` settings.
 
-Additionally you should run the tests, and run spotless to ensure that the code is formatted correctly.
+Additionally you should run the tests, and run Spotless to ensure that the code is formatted correctly.
 To run tests and spotless, use the following commands:
 
 ```shell
@@ -235,7 +235,7 @@ In both cases the deployment is handled by the CI/CD pipeline.
 
 To deploy the application to the staging environment, push new changes to the `main` branch.
 The repository is set up to only accept merges to the `main` branch through pull requests.
-Therefore in order to deploy tothe staging environment, create a pull request and merge it to the `main` branch.
+Therefore in order to deploy to the staging environment, create a pull request and merge it to the `main` branch.
 Actions in pull request should test the application to make ensure that it is working as expected.
 
 When a pull request is merged to the `main` branch, the CI/CD pipeline will build the application, create a Docker image, and push it to Harbor.
