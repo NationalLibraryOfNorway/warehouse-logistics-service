@@ -25,6 +25,10 @@ services:
       ME_CONFIG_BASICAUTH: false
 
   # Keycloak is configured to automatically import a test realm with service accounts
+  # GUI will be available at: http://localhost:8082
+  # When making changes to the realm, export the realm and save it in the keycloak/import folder
+  # docker exec -it wls-local-keycloak-1 /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
+  # docker cp wls-local-keycloak-1:/tmp/mlt-local-realm-export.json ./docker/keycloak/import/mlt-local-realm-export.json
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
     restart: always
@@ -32,21 +36,8 @@ services:
     environment:
       KEYCLOAK_ADMIN: root
       KEYCLOAK_ADMIN_PASSWORD: toor
-      KEYCLOAK_EXTRA_ARGS: --import-realm
-    # depends_on:
-    #   - postgres
     ports:
       - 8082:8080
-    command:
-      - start-dev
+    command: start-dev --import-realm
     volumes:
-      - ./keycloak/realms:/opt/keycloak/data/import
-
-  # Keycloak needs persistent storage, and postgres is the default
-  # postgres:
-  #   image: postgres
-  #   environment:
-  #     ALLOW_EMPTY_PASSWORD: yes
-  #     POSTGRES_USER: bn_keycloak
-  #     POSTGRES_DB: bitnami_keycloak
-  #     POSTGRES_HOST_AUTH_METHOD: trust
+      - ./keycloak/import:/opt/keycloak/data/import

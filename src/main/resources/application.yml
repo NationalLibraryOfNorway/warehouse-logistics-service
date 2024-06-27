@@ -50,14 +50,14 @@ spring:
   config:
     activate:
       # This part of the app config is only activated when the profile is dev
-      on-profile: dev
+      on-profile: local-dev
 
   # Set the security settings for the dev profile
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8443/auth/realms/mlt
+          issuer-uri: http://localhost:8082/realms/mlt-local
 
 ---
 

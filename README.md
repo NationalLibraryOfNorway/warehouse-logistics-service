@@ -13,27 +13,27 @@ More features and benefits will be added as the service is developed.
 
 # Table of Contents
 
-1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse--logistics-service)
-2. [Technologies](#technologies)
-3. [Running the Application](#running-the-application)
+1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse-logistics-service)
+1. [Technologies](#technologies)
+1. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-      2. [Using Docker](#using-docker)
-      3. [Using an IDE](#using-an-ide)
-   2. [Running Tests](#running-tests)
+      1. [Using Docker](#using-docker)
+      1. [Using an IDE](#using-an-ide)
+   1. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
-      2. [Running Tests in an IDE](#running-tests-in-an-ide)
-4. [Usage](#usage)
-5. [Dependencies](#dependencies)
+      1. [Running Tests in an IDE](#running-tests-in-an-ide)
+1. [Usage](#usage)
+1. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
-   2. [Deployment Dependencies](#deployment-dependencies)
-6. [Development](#development)
-7. [Configuration](#configuration)
-8. [Deployment](#deployment)
+   1. [Deployment Dependencies](#deployment-dependencies)
+1. [Development](#development)
+1. [Configuration](#configuration)
+1. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
-   2. [Deploying to Production Environment](#deploying-to-production-environment)
-9. [Contact](#contact)
-10. [License](#license)
+   1. [Deploying to Production Environment](#deploying-to-production-environment)
+1. [Contact](#contact)
+1. [License](#license)
 
 
 # Technologies
@@ -165,18 +165,26 @@ Regardless of what method you used to run the Hermes WLS, it has other services 
 In order to run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 This will spin up the following services:
 - MongoDB: database for the application
+  - Can be accessed through provided mongo-express service at: `http://localhost:8081`
+  - Use the following credentials to log in:
+    - Username: `root`
+    - Password: `toor`
 - Keycloak: authentication and authorization service for the application
+  - Can be accessed at: `http://localhost:8082`
+  - Use the following credentials to log in:
+    - Username: `root`
+    - Password: `toor`
 
 To start the services, run the following command:
 
 ```shell
-docker-compose -f docker/compose.yaml up
+docker compose -f docker/compose.yaml -p wls-local up -d
 ```
 
 And to stop the services, run the following command:
 
 ```shell
-docker-compose -f docker/compose.yaml down
+docker compose -p wls-local down
 ```
 
 ## Deployment Dependencies
