@@ -1,0 +1,12 @@
+package no.nb.mlt.wls.core.service
+
+import no.nb.mlt.wls.core.data.Products
+import no.nb.mlt.wls.core.repository.ProductsRepository
+import org.springframework.stereotype.Service
+
+@Service
+class ProductsService(val db: ProductsRepository) {
+    fun save(product: Products) {
+        db.save(product)
+    }
+}
