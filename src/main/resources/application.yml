@@ -9,9 +9,9 @@ spring:
   # Set time limit for shutdown phase
   lifecycle:
     timeout-per-shutdown-phase: 15s
-  # Set the default profile to local-dev, used to disable security in the local development or in pipeline
+  # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
-    default: local-dev
+    default: pipeline
 
 # Server port for the main application
 server:
@@ -38,6 +38,27 @@ springdoc:
   # Show actuator endpoints in Swagger
   show-actuator: true
 
+logging:
+  level:
+    # Set the logging level for the web package to debug
+    web: debug
+
+---
+
+# This is the configuration for the dev profile
+spring:
+  config:
+    activate:
+      # This part of the app config is only activated when the profile is dev
+      on-profile: dev
+
+  # Set the security settings for the dev profile
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8443/auth/realms/mlt
+
 ---
 
 # This is the configuration for the stage profile
@@ -53,13 +74,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
-
-
-# Set the logging level for the web package to debug
-logging:
-  level:
-    # Set the logging level for the web package to debug
-    web: debug
 
 ---
 

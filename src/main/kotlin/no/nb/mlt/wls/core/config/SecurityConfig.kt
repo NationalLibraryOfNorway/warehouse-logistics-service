@@ -26,7 +26,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 import reactor.core.publisher.Mono
 
 @Configuration
-@Profile("!local-dev")
+@Profile("!pipeline")
 @EnableWebFluxSecurity
 class SecurityConfig {
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
