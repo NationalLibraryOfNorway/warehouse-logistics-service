@@ -51,7 +51,7 @@ class SecurityConfig {
                         "/actuator",
                         "/actuator/**"
                     ).permitAll()
-                    .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-dev-role")
+                    .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-role")
                     .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()
                     .pathMatchers(HttpMethod.GET, "/v1/test/open").permitAll()
             }
