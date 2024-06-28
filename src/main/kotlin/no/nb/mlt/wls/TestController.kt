@@ -1,11 +1,8 @@
 package no.nb.mlt.wls
 
-import io.wispforest.endec.format.json.GsonDeserializer
-import io.wispforest.endec.format.json.GsonSerializer
 import jakarta.validation.Valid
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Products
-import no.nb.mlt.wls.core.dto.ProductDTO
 import no.nb.mlt.wls.core.service.ProductsService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.ResponseEntity
@@ -50,17 +47,13 @@ class TestController(val productsService: ProductsService) {
     @PostMapping("/json", produces = [APPLICATION_JSON_VALUE])
     fun produceJson(
         authentication: Authentication,
-        @RequestBody @Valid product: ProductDTO
+        @RequestBody @Valid products: Products
     ): ResponseEntity<Products> {
         try {
-            val product1 = ProductDTO.ENDEC.encodeFully(GsonSerializer::of, product)
-
-            val product2 = Products.ENDEC.decodeFully(GsonDeserializer::of, product1)
-
-            productsService.save(product2)
+            productsService.save(products)
 
             return ResponseEntity.ok(
-                product2
+                products
             )
         } catch (e: Exception) {
             return ResponseEntity.internalServerError().build()

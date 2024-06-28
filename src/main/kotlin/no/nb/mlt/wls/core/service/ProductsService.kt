@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service
 
 @Service
 class ProductsService(val db: ProductsRepository) {
-    fun save(product: Products) {
-        db.save(product)
+    fun save(products: Products) {
+        db.save(products)
     }
 
     fun getByHostName(hostName: HostName): List<Products> {

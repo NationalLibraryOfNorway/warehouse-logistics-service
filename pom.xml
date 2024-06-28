@@ -53,18 +53,6 @@
     </dependency>
 
     <dependency>
-      <groupId>io.wispforest</groupId>
-      <artifactId>endec</artifactId>
-      <version>0.1.1</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.wispforest.endec</groupId>
-      <artifactId>gson</artifactId>
-      <version>0.1.0</version>
-    </dependency>
-
-    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
     </dependency>
