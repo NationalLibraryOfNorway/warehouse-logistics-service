@@ -4,10 +4,6 @@ import io.wispforest.endec.format.json.GsonDeserializer
 import io.wispforest.endec.format.json.GsonSerializer
 import jakarta.validation.Valid
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.InnerProduct
-import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.PreferredEnvironment
 import no.nb.mlt.wls.core.data.Products
 import no.nb.mlt.wls.core.dto.ProductDTO
 import no.nb.mlt.wls.core.service.ProductsService
@@ -23,7 +19,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1/test")
 class TestController(val productsService: ProductsService) {
-
     @GetMapping("/open", produces = [APPLICATION_JSON_VALUE])
     fun open(): ResponseEntity<Response> {
         return ResponseEntity.ok(Response("Hello to an open endpoint!"))
@@ -47,10 +42,9 @@ class TestController(val productsService: ProductsService) {
     }
 
     @GetMapping("/json", produces = [APPLICATION_JSON_VALUE])
-    fun testStructure(authentication: Authentication): ResponseEntity<Products> {
-        return ResponseEntity.ok(
-            Products(HostName.ALMA, "", InnerProduct("", "test", Packaging.NONE, ""), false, PreferredEnvironment.NONE, Owner.NB)
-        )
+    fun getJson(authentication: Authentication): ResponseEntity<List<Products>> {
+        val list = productsService.getByHostName(HostName.ALMA)
+        return ResponseEntity.ok(list)
     }
 
     @PostMapping("/json", produces = [APPLICATION_JSON_VALUE])
