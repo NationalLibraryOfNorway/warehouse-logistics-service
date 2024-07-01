@@ -74,6 +74,12 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+  data:
+    mongodb:
+      username: ${MONGODB_USERNAME}
+      password: ${MONGODB_PASSWORD}
+      database: ${MONGODB_DATABASE}
+      uri: mongodb:// + ${MONGODB_URL}
 
 ---
 
@@ -90,6 +96,12 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+  data:
+    mongodb:
+      username: ${MONGODB_USERNAME}
+      password: ${MONGODB_PASSWORD}
+      database: ${MONGODB_DATABASE}
+      uri: mongodb:// + ${MONGODB_URL}
 
 logging:
   level:
