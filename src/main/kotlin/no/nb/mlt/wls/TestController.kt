@@ -1,13 +1,17 @@
 package no.nb.mlt.wls
 
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.product.model.ProductModel
 import no.nb.mlt.wls.product.dto.ProductDTO
+import no.nb.mlt.wls.product.model.ProductModel
 import no.nb.mlt.wls.product.service.ProductsService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/v1/test")
@@ -35,7 +39,10 @@ class TestController(val productsService: ProductsService) {
     }
 
     @GetMapping("/json", produces = [APPLICATION_JSON_VALUE])
-    fun getJson(authentication: Authentication, @RequestBody hostName: HostName): ResponseEntity<List<ProductModel>> {
+    fun getJson(
+        authentication: Authentication,
+        @RequestBody hostName: HostName
+    ): ResponseEntity<List<ProductModel>> {
         val list = productsService.getByHostName(hostName)
         return ResponseEntity.ok(list)
     }
@@ -46,20 +53,20 @@ class TestController(val productsService: ProductsService) {
         @RequestBody dto: ProductDTO
     ): ResponseEntity<ProductDTO> {
         try {
-            val product =  ProductModel(
-                hostName = dto.hostName,
-                hostId = dto.hostId,
-                category = dto.category,
-                description = dto.description,
-                packaging = dto.packaging,
-                location = dto.location,
-                quantity = dto.quantity,
-                preferredEnvironment = dto.preferredEnvironment,
-                owner = dto.owner,
-            )
+            val product =
+                ProductModel(
+                    hostName = dto.hostName,
+                    hostId = dto.hostId,
+                    category = dto.category,
+                    description = dto.description,
+                    packaging = dto.packaging,
+                    location = dto.location,
+                    quantity = dto.quantity,
+                    preferredEnvironment = dto.preferredEnvironment,
+                    owner = dto.owner
+                )
             productsService.save(product)
             return ResponseEntity.ok(dto)
-
         } catch (e: Exception) {
             return ResponseEntity.internalServerError().build()
         }
