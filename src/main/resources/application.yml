@@ -79,7 +79,7 @@ spring:
       username: ${MONGODB_USERNAME}
       password: ${MONGODB_PASSWORD}
       database: ${MONGODB_DATABASE}
-      uri: mongodb:// + ${MONGODB_URL}
+      host: ${MONGODB_URL}
 
 ---
 
@@ -101,7 +101,7 @@ spring:
       username: ${MONGODB_USERNAME}
       password: ${MONGODB_PASSWORD}
       database: ${MONGODB_DATABASE}
-      uri: mongodb:// + ${MONGODB_URL}
+      host: ${MONGODB_URL}
 
 logging:
   level:
