@@ -35,8 +35,8 @@ class TestController(val productsService: ProductsService) {
     }
 
     @GetMapping("/json", produces = [APPLICATION_JSON_VALUE])
-    fun getJson(authentication: Authentication): ResponseEntity<List<ProductModel>> {
-        val list = productsService.getByHostName(HostName.ALMA)
+    fun getJson(authentication: Authentication, @RequestBody hostName: HostName): ResponseEntity<List<ProductModel>> {
+        val list = productsService.getByHostName(hostName)
         return ResponseEntity.ok(list)
     }
 
