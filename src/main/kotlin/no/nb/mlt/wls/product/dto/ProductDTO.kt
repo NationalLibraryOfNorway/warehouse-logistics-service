@@ -3,7 +3,6 @@ package no.nb.mlt.wls.product.dto
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.PreferredEnvironment
 
 data class ProductDTO(

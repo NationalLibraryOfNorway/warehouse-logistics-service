@@ -4,5 +4,5 @@ enum class Packaging {
     BOX,
     ABOX,
     CRATE,
-    NONE,
+    NONE
 }

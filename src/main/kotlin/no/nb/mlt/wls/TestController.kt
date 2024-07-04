@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1/test")
 class TestController(val productService: ProductService) {
-
     @GetMapping("/open", produces = [APPLICATION_JSON_VALUE])
     fun open(): ResponseEntity<Response> {
         return ResponseEntity.ok(Response("Hello to an open endpoint!"))
@@ -79,13 +78,13 @@ class TestController(val productService: ProductService) {
 
     // TODO - Review
     fun mapPackaging(pack: PackagingDTO): Packaging {
-
-        val newPack = when (pack) {
-            PackagingDTO.OBJ -> Packaging.CRATE
-            PackagingDTO.ESK -> Packaging.BOX
-            PackagingDTO.ABOX -> Packaging.ABOX
-            PackagingDTO.EA -> Packaging.NONE
-        }
+        val newPack =
+            when (pack) {
+                PackagingDTO.OBJ -> Packaging.CRATE
+                PackagingDTO.ESK -> Packaging.BOX
+                PackagingDTO.ABOX -> Packaging.ABOX
+                PackagingDTO.EA -> Packaging.NONE
+            }
         // TODO - Logging
         println("mapping $pack to $newPack")
         return newPack
