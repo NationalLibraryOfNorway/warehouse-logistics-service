@@ -13,8 +13,8 @@ data class ProductDTO(
     @Schema(example = "BOOK") val category: String,
     @Schema(example = "Tyv etter loven") val description: String,
     @Schema(example = "OBJ") val packaging: Packaging,
-    @Schema(example = "magasin_1") val location: String,
-    @Schema(example = "1") val quantity: Int,
+    @Schema(example = "SYNQ_WAREHOUSE") val location: String,
+    @Schema(example = "1.0") val quantity: Float,
     @Schema(example = "NONE") val preferredEnvironment: PreferredEnvironment,
     @Schema(example = "NB") val owner: Owner
 )

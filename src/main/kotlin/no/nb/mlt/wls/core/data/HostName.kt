@@ -4,5 +4,5 @@ enum class HostName {
     AXIELL,
     ALMA,
     ASTA,
-    BIBLIOFIL
+    BIBLIOFIL,
 }
