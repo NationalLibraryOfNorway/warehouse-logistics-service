@@ -64,27 +64,27 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: KEYCLOAK_ISSUER_URI_PROD
+                  key: KEYCLOAK_ISSUER_URI
             - name: MONGODB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_PROD_USER
+                  key: MONGO_USER
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_PROD_PASSWORD
+                  key: MONGO_PASSWORD
             - name: MONGODB_DATABASE
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_PROD_DB
+                  key: MONGO_DB
             - name: MONGODB_URL
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_PROD_URL
+                  key: MONGO_URL
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
