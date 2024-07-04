@@ -1,9 +1,11 @@
 package no.nb.mlt.wls
 
 import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.product.dto.PackagingDTO
 import no.nb.mlt.wls.product.dto.ProductDTO
 import no.nb.mlt.wls.product.model.ProductModel
-import no.nb.mlt.wls.product.service.ProductsService
+import no.nb.mlt.wls.product.service.ProductService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
@@ -15,7 +17,8 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/v1/test")
-class TestController(val productsService: ProductsService) {
+class TestController(val productService: ProductService) {
+
     @GetMapping("/open", produces = [APPLICATION_JSON_VALUE])
     fun open(): ResponseEntity<Response> {
         return ResponseEntity.ok(Response("Hello to an open endpoint!"))
@@ -43,7 +46,7 @@ class TestController(val productsService: ProductsService) {
         authentication: Authentication,
         @RequestBody hostName: HostName
     ): ResponseEntity<List<ProductModel>> {
-        val list = productsService.getByHostName(hostName)
+        val list = productService.getByHostName(hostName)
         return ResponseEntity.ok(list)
     }
 
@@ -59,13 +62,13 @@ class TestController(val productsService: ProductsService) {
                     hostId = dto.hostId,
                     category = dto.category,
                     description = dto.description,
-                    packaging = dto.packaging,
+                    packaging = mapPackaging(dto.packaging),
                     location = dto.location,
                     quantity = dto.quantity,
                     preferredEnvironment = dto.preferredEnvironment,
                     owner = dto.owner
                 )
-            productsService.save(product)
+            productService.save(product)
             return ResponseEntity.ok(dto)
         } catch (e: Exception) {
             return ResponseEntity.internalServerError().build()
@@ -73,4 +76,18 @@ class TestController(val productsService: ProductsService) {
     }
 
     class Response(val message: String)
+
+    // TODO - Review
+    fun mapPackaging(pack: PackagingDTO): Packaging {
+
+        val newPack = when (pack) {
+            PackagingDTO.OBJ -> Packaging.CRATE
+            PackagingDTO.ESK -> Packaging.BOX
+            PackagingDTO.ABOX -> Packaging.ABOX
+            PackagingDTO.EA -> Packaging.NONE
+        }
+        // TODO - Logging
+        println("mapping $pack to $newPack")
+        return newPack
+    }
 }

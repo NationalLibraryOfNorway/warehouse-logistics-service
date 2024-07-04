@@ -13,7 +13,7 @@ data class ProductModel(
     val description: String,
     val packaging: Packaging,
     val location: String,
-    val quantity: Int,
+    val quantity: Float,
     val preferredEnvironment: PreferredEnvironment,
     val owner: Owner
 )
