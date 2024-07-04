@@ -69,7 +69,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_USER
+                  key: MONGO_USERNAME
             - name: MONGODB_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -79,7 +79,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: wls-secrets
-                  key: MONGO_DB
+                  key: MONGO_DATABASE
             - name: MONGODB_URL
               valueFrom:
                 secretKeyRef:
