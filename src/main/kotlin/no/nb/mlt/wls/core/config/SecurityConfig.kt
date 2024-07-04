@@ -51,8 +51,10 @@ class SecurityConfig {
                         "/actuator",
                         "/actuator/**"
                     ).permitAll()
+                    // TODO - Move these to the respective controllers endpoints once ready
                     .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-role")
                     .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()
+                    .pathMatchers("/v1/test/json").authenticated()
                     .pathMatchers(HttpMethod.GET, "/v1/test/open").permitAll()
             }
             .oauth2ResourceServer { server ->
@@ -93,7 +95,7 @@ class SecurityConfig {
     }
 
     internal class AudienceValidator : OAuth2TokenValidator<Jwt> {
-        val error: OAuth2Error = OAuth2Error("invalid_token", "The required audience is missing", null)
+        private val error: OAuth2Error = OAuth2Error("invalid_token", "The required audience is missing", null)
 
         override fun validate(jwt: Jwt): OAuth2TokenValidatorResult {
             // Not sure if I completely understand how the audience is supposed to be used here.

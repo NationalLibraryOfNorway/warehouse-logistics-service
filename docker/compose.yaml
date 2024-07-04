@@ -1,12 +1,17 @@
 services:
   # Sets up a simple mongo database for local development
-  # TODO: Either add a volume or a startup script to populate the database with test data
+  # TODO: populate the database with test data
   mongo-db:
     image: mongo:4.4.22 # Same as the version in prod env
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
+      MONGO_INITDB_DATABASE: wls
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Set up a mongo-express instance to view the mongo database
   # Will be available at: http://localhost:8081
