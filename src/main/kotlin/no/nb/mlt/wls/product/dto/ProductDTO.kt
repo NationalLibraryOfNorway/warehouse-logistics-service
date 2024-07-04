@@ -6,7 +6,6 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.PreferredEnvironment
 
-@JvmRecord
 data class ProductDTO(
     @Schema(example = "ALMA") val hostName: HostName,
     @Schema(example = "product-12345") val hostId: String,
