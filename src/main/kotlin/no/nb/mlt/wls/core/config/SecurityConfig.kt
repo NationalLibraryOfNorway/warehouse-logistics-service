@@ -51,6 +51,7 @@ class SecurityConfig {
                         "/actuator",
                         "/actuator/**"
                     ).permitAll()
+                    // TODO - Move these to the respective controllers endpoints once ready
                     .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-role")
                     .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()
                     .pathMatchers("/v1/test/json").authenticated()
