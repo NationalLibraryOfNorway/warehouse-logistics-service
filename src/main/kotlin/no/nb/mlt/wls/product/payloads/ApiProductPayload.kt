@@ -28,26 +28,28 @@ data class ApiProductPayload(
     val owner: Owner
 )
 
-fun ApiProductPayload.toProduct() = Product(
-    hostName = hostName,
-    hostId = hostId,
-    category = category,
-    description = description,
-    packaging = packaging,
-    location = location,
-    quantity = quantity,
-    preferredEnvironment = preferredEnvironment,
-    owner = owner
-)
+fun ApiProductPayload.toProduct() =
+    Product(
+        hostName = hostName,
+        hostId = hostId,
+        category = category,
+        description = description,
+        packaging = packaging,
+        location = location,
+        quantity = quantity,
+        preferredEnvironment = preferredEnvironment,
+        owner = owner
+    )
 
-fun Product.toPayload() = ApiProductPayload(
-    hostName = hostName,
-    hostId = hostId,
-    category = category,
-    description = description,
-    packaging = packaging,
-    location = location,
-    quantity = quantity,
-    preferredEnvironment = preferredEnvironment,
-    owner = owner
-)
+fun Product.toPayload() =
+    ApiProductPayload(
+        hostName = hostName,
+        hostId = hostId,
+        category = category,
+        description = description,
+        packaging = packaging,
+        location = location,
+        quantity = quantity,
+        preferredEnvironment = preferredEnvironment,
+        owner = owner
+    )
