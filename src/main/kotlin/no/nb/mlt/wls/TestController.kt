@@ -1,19 +1,14 @@
 package no.nb.mlt.wls
 
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.product.dto.PackagingDTO
-import no.nb.mlt.wls.product.dto.ProductDTO
-import no.nb.mlt.wls.product.model.ProductModel
+import no.nb.mlt.wls.product.payloads.ApiProductPayload
+import no.nb.mlt.wls.product.payloads.toPayload
+import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.service.ProductService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/v1/test")
@@ -43,50 +38,24 @@ class TestController(val productService: ProductService) {
     @GetMapping("/json", produces = [APPLICATION_JSON_VALUE])
     fun getJson(
         authentication: Authentication,
-        @RequestBody hostName: HostName
-    ): ResponseEntity<List<ProductModel>> {
-        val list = productService.getByHostName(hostName)
+        @RequestParam hostName: HostName
+    ): ResponseEntity<List<ApiProductPayload>> {
+        val list = productService.getByHostName(hostName).map { it.toPayload() }
         return ResponseEntity.ok(list)
     }
 
     @PostMapping("/json", produces = [APPLICATION_JSON_VALUE])
     fun produceJson(
         authentication: Authentication,
-        @RequestBody dto: ProductDTO
-    ): ResponseEntity<ProductDTO> {
+        @RequestBody payload: ApiProductPayload
+    ): ResponseEntity<ApiProductPayload> {
         try {
-            val product =
-                ProductModel(
-                    hostName = dto.hostName,
-                    hostId = dto.hostId,
-                    category = dto.category,
-                    description = dto.description,
-                    packaging = mapPackaging(dto.packaging),
-                    location = dto.location,
-                    quantity = dto.quantity,
-                    preferredEnvironment = dto.preferredEnvironment,
-                    owner = dto.owner
-                )
-            productService.save(product)
-            return ResponseEntity.ok(dto)
+            productService.save(payload.toProduct())
+            return ResponseEntity.ok(payload)
         } catch (e: Exception) {
             return ResponseEntity.internalServerError().build()
         }
     }
 
     class Response(val message: String)
-
-    // TODO - Review
-    fun mapPackaging(pack: PackagingDTO): Packaging {
-        val newPack =
-            when (pack) {
-                PackagingDTO.OBJ -> Packaging.CRATE
-                PackagingDTO.ESK -> Packaging.BOX
-                PackagingDTO.ABOX -> Packaging.ABOX
-                PackagingDTO.EA -> Packaging.NONE
-            }
-        // TODO - Logging
-        println("mapping $pack to $newPack")
-        return newPack
-    }
 }

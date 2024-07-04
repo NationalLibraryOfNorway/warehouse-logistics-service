@@ -5,7 +5,7 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.PreferredEnvironment
 
-data class ProductModel(
+data class Product(
     val hostName: HostName,
     val hostId: String,
     val category: String,
