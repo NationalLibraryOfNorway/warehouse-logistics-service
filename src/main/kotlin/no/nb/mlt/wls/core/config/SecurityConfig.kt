@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile
 import org.springframework.core.convert.converter.Converter
 import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AbstractAuthenticationToken
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.GrantedAuthority
@@ -28,6 +29,7 @@ import reactor.core.publisher.Mono
 @Configuration
 @Profile("!pipeline")
 @EnableWebFluxSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 class SecurityConfig {
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     val issuerUri: String = ""
@@ -55,6 +57,7 @@ class SecurityConfig {
                     .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-role")
                     .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()
                     .pathMatchers("/v1/test/json").authenticated()
+                    .pathMatchers("/v1/synq/**").authenticated()
                     .pathMatchers(HttpMethod.GET, "/v1/test/open").permitAll()
             }
             .oauth2ResourceServer { server ->
