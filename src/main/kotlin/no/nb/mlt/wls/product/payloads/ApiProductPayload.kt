@@ -62,6 +62,6 @@ fun ApiProductPayload.toSynqPayload(): SynqProductPayload {
         productCategory = category,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
-        hostName = this.hostName.name,
+        hostName = this.hostName.name
     )
 }
