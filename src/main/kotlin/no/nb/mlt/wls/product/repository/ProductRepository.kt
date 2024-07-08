@@ -6,4 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository
 
 interface ProductRepository : MongoRepository<Product, String> {
     fun findByHostName(hostName: HostName): List<Product>
+
+    fun existsByHostId(id: String): Boolean
 }

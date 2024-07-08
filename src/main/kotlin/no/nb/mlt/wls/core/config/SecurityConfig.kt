@@ -57,7 +57,7 @@ class SecurityConfig {
                     .pathMatchers(HttpMethod.GET, "/v1/test/authorized").hasAuthority("wls-role")
                     .pathMatchers(HttpMethod.GET, "/v1/test/authenticated").authenticated()
                     .pathMatchers("/v1/test/json").authenticated()
-                    .pathMatchers("/v1/synq/**").authenticated()
+                    .pathMatchers("/v1/product").authenticated()
                     .pathMatchers(HttpMethod.GET, "/v1/test/open").permitAll()
             }
             .oauth2ResourceServer { server ->

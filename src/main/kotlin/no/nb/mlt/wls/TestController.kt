@@ -2,7 +2,7 @@ package no.nb.mlt.wls
 
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
-import no.nb.mlt.wls.product.payloads.toPayload
+import no.nb.mlt.wls.product.payloads.toApiPayload
 import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.service.ProductService
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -45,7 +45,7 @@ class TestController(val productService: ProductService) {
         authentication: Authentication,
         @RequestParam hostName: HostName
     ): ResponseEntity<List<ApiProductPayload>> {
-        val list = productService.getByHostName(hostName).map { it.toPayload() }
+        val list = productService.getByHostName(hostName).map { it.toApiPayload() }
         return ResponseEntity.ok(list)
     }
 

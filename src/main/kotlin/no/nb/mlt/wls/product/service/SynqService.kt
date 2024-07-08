@@ -18,7 +18,8 @@ class SynqService {
     @Value("\${synq.path.createProduct}")
     lateinit var path: String
 
-    fun test(payload: SynqProductPayload) {
+    fun createProduct(payload: SynqProductPayload) {
+        // TODO - Validation
         val uri = URI.create("$baseUrl$path")
         val response = restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), String::class.java)
         println(response.statusCode)
