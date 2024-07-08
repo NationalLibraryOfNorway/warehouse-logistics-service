@@ -225,7 +225,12 @@ The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `dev` or `stage` for testing authentication (optional, default is `pipeline`)
-
+- `MONGODB_USERNAME`: Is the username used for constructing the URI which is used to connect to MongoDB (required)
+- `MONGODB_PASSWORD`: Is the password used for constructing the URI which is used to connect to MongoDB (required)
+- `MONGODB_DATABASE`: Is the database name used for constructing the URI which is used to connect to MongoDB (required)
+- `MONGODB_URL`: Is the base URL used for constructing the URI which is used to connect to MongoDB (required)
+- `SYNQ_BASE_URL`: Is the URL used for communicating against SynQ (required)
+- `SYNQ_CREATE_PRODUCT_PATH`: Is used to define the path for where to send `SynqPayload`s when creating products (required)
 
 # Deployment
 
