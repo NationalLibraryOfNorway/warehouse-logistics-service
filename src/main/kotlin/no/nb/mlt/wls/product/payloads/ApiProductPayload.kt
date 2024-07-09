@@ -1,10 +1,10 @@
 package no.nb.mlt.wls.product.payloads
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.PreferredEnvironment
 import no.nb.mlt.wls.product.model.Product
 
 data class ApiProductPayload(
@@ -23,7 +23,7 @@ data class ApiProductPayload(
     @Schema(example = "1.0")
     val quantity: Float,
     @Schema(example = "NONE")
-    val preferredEnvironment: PreferredEnvironment,
+    val environment: Environment,
     @Schema(example = "NB")
     val owner: Owner
 )
@@ -37,7 +37,7 @@ fun ApiProductPayload.toProduct() =
         packaging = packaging,
         location = location,
         quantity = quantity,
-        preferredEnvironment = preferredEnvironment,
+        environment = environment,
         owner = owner
     )
 
@@ -50,7 +50,7 @@ fun Product.toApiPayload() =
         packaging = packaging,
         location = location,
         quantity = quantity,
-        preferredEnvironment = preferredEnvironment,
+        environment = environment,
         owner = owner
     )
 

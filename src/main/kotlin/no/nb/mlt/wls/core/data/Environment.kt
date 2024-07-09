@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.core.data
 
-enum class PreferredEnvironment {
+enum class Environment {
     FRYS,
     NONE
 }

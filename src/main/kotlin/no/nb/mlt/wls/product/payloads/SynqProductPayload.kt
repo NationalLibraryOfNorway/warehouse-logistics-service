@@ -1,9 +1,9 @@
 package no.nb.mlt.wls.product.payloads
 
+import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.PreferredEnvironment
 import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqOwner
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqOwner.NB
@@ -44,7 +44,7 @@ fun SynqProductPayload.toProduct() =
         packaging = productUom.uomId.toPackaging(),
         location = "SYNQ",
         quantity = 1.0f,
-        preferredEnvironment = PreferredEnvironment.NONE,
+        environment = Environment.NONE,
         owner = owner.toOwner()
     )
 
