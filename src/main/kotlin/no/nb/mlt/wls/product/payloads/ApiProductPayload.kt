@@ -53,4 +53,3 @@ fun Product.toApiPayload() =
         environment = environment,
         owner = owner
     )
-

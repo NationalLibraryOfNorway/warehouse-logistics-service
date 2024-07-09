@@ -15,7 +15,6 @@ class SynqService {
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
-
     fun createProduct(payload: SynqProductPayload) {
         // TODO - Validation
         val uri = URI.create("$baseUrl/nbproducts")
