@@ -22,11 +22,11 @@ data class SynqProductPayload(
 ) {
     enum class SynqPackaging {
         OBJ,
-        ESK;
+        ESK
     }
 
     enum class SynqOwner {
-        NB;
+        NB
     }
 
     class Barcode(val barcodeId: String)
@@ -56,7 +56,7 @@ fun Product.toSynqPayload() =
         productCategory = category,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
-        hostName = hostName.name,
+        hostName = hostName.name
     )
 
 fun SynqPackaging.toPackaging(): Packaging {

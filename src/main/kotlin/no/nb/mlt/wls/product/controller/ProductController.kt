@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1")
 class ProductController(val synqService: SynqService, val productService: ProductService) {
-
     @PostMapping("/product")
     fun createProduct(
         @RequestBody payload: ApiProductPayload
