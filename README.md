@@ -13,25 +13,25 @@ More features and benefits will be added as the service is developed.
 
 # Table of Contents
 
-1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse-logistics-service)
+1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse--logistics-service)
 2. [Technologies](#technologies)
 3. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-      1. [Using Docker](#using-docker)
-      1. [Using an IDE](#using-an-ide)
-   1. [Running Tests](#running-tests)
+      2. [Using Docker](#using-docker)
+      3. [Using an IDE](#using-an-ide)
+   2. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
-      1. [Running Tests in an IDE](#running-tests-in-an-ide)
+      2. [Running Tests in an IDE](#running-tests-in-an-ide)
 4. [Usage](#usage)
 5. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
-   1. [Deployment Dependencies](#deployment-dependencies)
+   2. [Deployment Dependencies](#deployment-dependencies)
 6. [Development](#development)
 7. [Configuration](#configuration)
 8. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
-   1. [Deploying to Production Environment](#deploying-to-production-environment)
+   2. [Deploying to Production Environment](#deploying-to-production-environment)
 9. [Contact](#contact)
 10. [License](#license)
 
@@ -225,11 +225,11 @@ The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `dev` or `stage` for testing authentication (optional, default is `pipeline`)
-- `MONGODB_USERNAME`: Is the username used for constructing the URI which is used to connect to MongoDB (required)
-- `MONGODB_PASSWORD`: Is the password used for constructing the URI which is used to connect to MongoDB (required)
-- `MONGODB_DATABASE`: Is the database name used for constructing the URI which is used to connect to MongoDB (required)
-- `MONGODB_URL`: Is the base URL used for constructing the URI which is used to connect to MongoDB (required)
-- `SYNQ_BASE_URL`: Is the URL used for communicating against SynQ (required)
+- `MONGODB_USERNAME`: Is the username used for connecting to MongoDB (required)
+- `MONGODB_PASSWORD`: Is the password used for connecting to MongoDB (required)
+- `MONGODB_DATABASE`: Is the name of the database that Hermes should use (required)
+- `MONGODB_URL`: Is the base URL at which a MongoDB instance runs (required)
+- `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (required)
 
 # Deployment
 
