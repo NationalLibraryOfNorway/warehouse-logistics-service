@@ -14,8 +14,8 @@ More features and benefits will be added as the service is developed.
 # Table of Contents
 
 1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse-logistics-service)
-1. [Technologies](#technologies)
-1. [Running the Application](#running-the-application)
+2. [Technologies](#technologies)
+3. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
       1. [Using Docker](#using-docker)
@@ -23,17 +23,17 @@ More features and benefits will be added as the service is developed.
    1. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
       1. [Running Tests in an IDE](#running-tests-in-an-ide)
-1. [Usage](#usage)
-1. [Dependencies](#dependencies)
+4. [Usage](#usage)
+5. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
    1. [Deployment Dependencies](#deployment-dependencies)
-1. [Development](#development)
-1. [Configuration](#configuration)
-1. [Deployment](#deployment)
+6. [Development](#development)
+7. [Configuration](#configuration)
+8. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
    1. [Deploying to Production Environment](#deploying-to-production-environment)
-1. [Contact](#contact)
-1. [License](#license)
+9. [Contact](#contact)
+10. [License](#license)
 
 
 # Technologies

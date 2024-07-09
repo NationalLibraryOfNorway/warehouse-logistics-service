@@ -54,14 +54,3 @@ fun Product.toApiPayload() =
         owner = owner
     )
 
-fun ApiProductPayload.toSynqPayload(): SynqProductPayload {
-    return SynqProductPayload(
-        productId = this.hostId,
-        owner = this.owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(this.hostId),
-        productCategory = category,
-        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
-        confidential = false,
-        hostName = this.hostName.name
-    )
-}
