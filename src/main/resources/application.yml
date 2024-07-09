@@ -91,7 +91,6 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
-    createProduct: ${SYNQ_CREATE_PRODUCT_PATH}
 
 ---
 

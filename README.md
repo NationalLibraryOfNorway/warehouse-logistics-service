@@ -230,7 +230,6 @@ The following environment variables are relevant to configuring the application:
 - `MONGODB_DATABASE`: Is the database name used for constructing the URI which is used to connect to MongoDB (required)
 - `MONGODB_URL`: Is the base URL used for constructing the URI which is used to connect to MongoDB (required)
 - `SYNQ_BASE_URL`: Is the URL used for communicating against SynQ (required)
-- `SYNQ_CREATE_PRODUCT_PATH`: Is used to define the path for where to send `SynqPayload`s when creating products (required)
 
 # Deployment
 
