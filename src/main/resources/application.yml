@@ -90,6 +90,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          audiences: ${KEYCLOAK_TOKEN_AUD}
 
   # Set the database settings for the stage profile
   data:
@@ -119,6 +120,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          audiences: ${KEYCLOAK_TOKEN_AUD}
 
   # Set the database settings for the prod profile
   data:
