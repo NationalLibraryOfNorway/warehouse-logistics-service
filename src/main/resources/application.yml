@@ -69,14 +69,11 @@ spring:
       username: bruker
       password: drossap
       database: wls
-synq:
-  path:
-    base: ${SYNQ_BASE_URL}
 
-# Set a dummy base path to SynQ for testing purposes
+# Set a dummycatalog base path to SynQ for testing purposes
 synq:
   path:
-    base: http://localhost:69420/synq/resources
+    base: http://dummycatalog.nb.no/synq/resources
 
 ---
 
