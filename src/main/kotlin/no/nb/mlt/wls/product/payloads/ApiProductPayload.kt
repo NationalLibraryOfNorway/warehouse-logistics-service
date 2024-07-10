@@ -23,7 +23,7 @@ data class ApiProductPayload(
     @Schema(example = "1.0")
     val quantity: Float,
     @Schema(example = "NONE")
-    val environment: Environment,
+    val preferredEnvironment: Environment,
     @Schema(example = "NB")
     val owner: Owner
 )
@@ -37,7 +37,7 @@ fun ApiProductPayload.toProduct() =
         packaging = packaging,
         location = location,
         quantity = quantity,
-        environment = environment,
+        environment = preferredEnvironment,
         owner = owner
     )
 
@@ -50,6 +50,6 @@ fun Product.toApiPayload() =
         packaging = packaging,
         location = location,
         quantity = quantity,
-        environment = environment,
+        preferredEnvironment = environment,
         owner = owner
     )

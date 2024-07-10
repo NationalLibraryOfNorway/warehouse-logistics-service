@@ -15,7 +15,7 @@ class ProductService(val db: ProductRepository) {
         db.save(products)
     }
 
-    fun getByHostName(hostName: HostName): List<Product> {
+    fun getByHostNameAndName(hostName: HostName, name: String): List<Product> {
         return db.findByHostName(hostName)
     }
 }
