@@ -21,9 +21,7 @@ class SecurityConfig {
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http {
-            cors {
-                disable()
-            }
+            csrf {  }
             authorizeExchange {
                 authorize("/api-docs", permitAll)
                 authorize("/api-docs/**", permitAll)
