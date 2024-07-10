@@ -21,7 +21,7 @@ class SecurityConfig {
     @Bean
     fun springSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http {
-            csrf {  }
+            csrf { }
             authorizeExchange {
                 authorize("/api-docs", permitAll)
                 authorize("/api-docs/**", permitAll)
