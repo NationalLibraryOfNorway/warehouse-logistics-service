@@ -37,8 +37,9 @@ springdoc:
   swagger-ui:
     # Set the base path for Swagger UI
     path: /swagger
-  # Show actuator endpoints in Swagger
-  show-actuator: true
+  # Don't show actuator endpoints in Swagger, they are on different port
+  show-actuator: false
+
 
 logging:
   level:
@@ -60,8 +61,10 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8082/realms/mlt-local
+          audiences: http://localhost:8080/hermes
+
+  # Set the database settings for the local-dev profile
   data:
-    # Setup local MongoDB settings for testing
     mongodb:
       username: bruker
       password: drossap
@@ -69,6 +72,11 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Set a dummy base path to SynQ for testing purposes
+synq:
+  path:
+    base: http://localhost:69420/synq/resources
 
 ---
 
@@ -85,12 +93,16 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+  # Set the database settings for the stage profile
   data:
     mongodb:
       username: ${MONGODB_USERNAME}
       password: ${MONGODB_PASSWORD}
       database: ${MONGODB_DATABASE}
       host: ${MONGODB_URL}
+
+# Set base path to SynQ API in stage environment
 synq:
   path:
     base: ${SYNQ_BASE_URL}
@@ -110,6 +122,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
+
+  # Set the database settings for the prod profile
   data:
     mongodb:
       username: ${MONGODB_USERNAME}
@@ -117,11 +131,12 @@ spring:
       database: ${MONGODB_DATABASE}
       host: ${MONGODB_URL}
 
+# Set base path to SynQ API in prod environment
+synq:
+  path:
+    base: ${SYNQ_BASE_URL}
+
 logging:
   level:
     # Set the logging level for the web package to error
     web: error
-
-springdoc:
-  # Don't show actuator endpoints in the production environment
-  show-actuator: false
