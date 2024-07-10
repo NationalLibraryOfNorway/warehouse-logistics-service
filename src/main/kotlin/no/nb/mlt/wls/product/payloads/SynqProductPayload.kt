@@ -34,7 +34,7 @@ data class SynqProductPayload(
     class ProductUom(val uomId: SynqPackaging)
 }
 
-// TODO - Will we ever receive this payload?
+// unused
 fun SynqProductPayload.toProduct() =
     Product(
         hostName = HostName.valueOf(hostName),
