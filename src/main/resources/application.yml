@@ -66,6 +66,9 @@ spring:
       username: bruker
       password: drossap
       database: wls
+synq:
+  path:
+    base: ${SYNQ_BASE_URL}
 
 ---
 
