@@ -56,9 +56,17 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
-      "id" : "cc94bf30-3a5d-483c-aee4-f2f261f4f4c5",
-      "name" : "wls-role",
-      "description" : "Role for the local version of the Hermes WLS",
+      "id" : "114a28bf-331e-4288-9adf-5bec63af6dbc",
+      "name" : "order-role",
+      "description" : "",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
+      "id" : "c5c93a00-ce0a-4589-ac09-e88edf3e0d36",
+      "name" : "product-role",
+      "description" : "",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
@@ -425,7 +433,7 @@
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "wls-role", "default-roles-mlt-realm" ],
+    "realmRoles" : [ "default-roles-mlt-realm" ],
     "notBefore" : 0,
     "groups" : [ ]
   } ],
@@ -668,6 +676,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1719488186",
       "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "+",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -721,8 +730,8 @@
         "jsonType.label" : "String"
       }
     } ],
-    "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "wls-audience-scope", "email" ],
-    "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+    "defaultClientScopes" : [ "wls-product-scope", "wls-audience", "wls-order-scope" ],
+    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "roles", "profile", "offline_access", "microprofile-jwt", "email" ]
   } ],
   "clientScopes" : [ {
     "id" : "f72419b3-e002-4619-99a3-46501fd7977a",
@@ -755,6 +764,7 @@
       "protocolMapper" : "oidc-audience-resolve-mapper",
       "consentRequired" : false,
       "config" : {
+        "lightweight.claim" : "false",
         "introspection.token.claim" : "true",
         "access.token.claim" : "true"
       }
@@ -793,6 +803,83 @@
         "introspection.token.claim" : "true",
         "access.token.claim" : "true",
         "userinfo.token.claim" : "true"
+      }
+    } ]
+  }, {
+    "id" : "e77adead-5964-4400-9368-3b1520d57bdd",
+    "name" : "wls-product-scope",
+    "description" : "A client scope used to define product scope for WLS",
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "include.in.token.scope" : "true",
+      "display.on.consent.screen" : "false",
+      "gui.order" : "",
+      "consent.screen.text" : ""
+    }
+  }, {
+    "id" : "e817c5f7-f0e9-4738-b9d6-09f6918a9a5f",
+    "name" : "phone",
+    "description" : "OpenID Connect built-in scope: phone",
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "include.in.token.scope" : "true",
+      "display.on.consent.screen" : "true",
+      "consent.screen.text" : "${phoneScopeConsentText}"
+    },
+    "protocolMappers" : [ {
+      "id" : "3e208bfc-3d22-45d1-8636-e5cf546eefb0",
+      "name" : "phone number verified",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "phoneNumberVerified",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "phone_number_verified",
+        "jsonType.label" : "boolean"
+      }
+    }, {
+      "id" : "fa821941-3117-4df5-885d-be22fddafd29",
+      "name" : "phone number",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "phoneNumber",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "phone_number",
+        "jsonType.label" : "String"
+      }
+    } ]
+  }, {
+    "id" : "52ecb084-2b29-49f5-88f4-6616ce51a233",
+    "name" : "wls-audience",
+    "description" : "A client scope used to define audience for WLS",
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "include.in.token.scope" : "false",
+      "display.on.consent.screen" : "false",
+      "gui.order" : "",
+      "consent.screen.text" : ""
+    },
+    "protocolMappers" : [ {
+      "id" : "0f3dbe8c-c9e2-4811-8d68-4edfa486ee5c",
+      "name" : "audience resolve",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-audience-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "id.token.claim" : "true",
+        "lightweight.claim" : "true",
+        "introspection.token.claim" : "true",
+        "access.token.claim" : "true",
+        "included.custom.audience" : "http://localhost:8080/hermes"
       }
     } ]
   }, {
@@ -1126,47 +1213,6 @@
       }
     } ]
   }, {
-    "id" : "e817c5f7-f0e9-4738-b9d6-09f6918a9a5f",
-    "name" : "phone",
-    "description" : "OpenID Connect built-in scope: phone",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "true",
-      "display.on.consent.screen" : "true",
-      "consent.screen.text" : "${phoneScopeConsentText}"
-    },
-    "protocolMappers" : [ {
-      "id" : "3e208bfc-3d22-45d1-8636-e5cf546eefb0",
-      "name" : "phone number verified",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "phoneNumberVerified",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "phone_number_verified",
-        "jsonType.label" : "boolean"
-      }
-    }, {
-      "id" : "fa821941-3117-4df5-885d-be22fddafd29",
-      "name" : "phone number",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "phoneNumber",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "phone_number",
-        "jsonType.label" : "String"
-      }
-    } ]
-  }, {
     "id" : "d6fc6cbb-f842-4765-a66f-54344b7a43da",
     "name" : "email",
     "description" : "OpenID Connect built-in scope: email",
@@ -1208,31 +1254,16 @@
       }
     } ]
   }, {
-    "id" : "52ecb084-2b29-49f5-88f4-6616ce51a233",
-    "name" : "wls-audience-scope",
-    "description" : "A client scope used to define audience for WLS",
+    "id" : "2f9f07c6-b866-402b-8f18-3f7baf021f12",
+    "name" : "wls-order-scope",
+    "description" : "A client scope used to define order scope for WLS",
     "protocol" : "openid-connect",
     "attributes" : {
-      "include.in.token.scope" : "false",
+      "include.in.token.scope" : "true",
       "display.on.consent.screen" : "false",
       "gui.order" : "",
       "consent.screen.text" : ""
-    },
-    "protocolMappers" : [ {
-      "id" : "a41358eb-4b5a-4ced-9121-46cd49f9898b",
-      "name" : "axiell-audience-mapper",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-audience-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "included.custom.audience" : "wls",
-        "userinfo.token.claim" : "false",
-        "id.token.claim" : "false",
-        "lightweight.claim" : "true",
-        "access.token.claim" : "true"
-      }
-    } ]
+    }
   }, {
     "id" : "086313ff-2f82-4206-92f5-49b5fe7c3e34",
     "name" : "offline_access",
@@ -1243,8 +1274,8 @@
       "display.on.consent.screen" : "true"
     }
   } ],
-  "defaultDefaultClientScopes" : [ "role_list", "profile", "email", "roles", "web-origins", "acr", "wls-audience-scope" ],
-  "defaultOptionalClientScopes" : [ "offline_access", "address", "phone", "microprofile-jwt" ],
+  "defaultDefaultClientScopes" : [ "wls-audience", "wls-order-scope", "wls-product-scope" ],
+  "defaultOptionalClientScopes" : [ "offline_access", "address", "phone", "microprofile-jwt", "email", "profile", "acr", "role_list", "roles", "web-origins" ],
   "browserSecurityHeaders" : {
     "contentSecurityPolicyReportOnly" : "",
     "xContentTypeOptions" : "nosniff",
@@ -1322,7 +1353,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1331,7 +1362,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
