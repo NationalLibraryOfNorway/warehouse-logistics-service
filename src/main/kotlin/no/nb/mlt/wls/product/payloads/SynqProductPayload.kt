@@ -59,20 +59,24 @@ fun Product.toSynqPayload() =
         hostName = hostName.name
     )
 
-fun SynqPackaging.toPackaging(): Packaging = when (this) {
-    OBJ -> Packaging.NONE
-    ESK -> Packaging.BOX
-}
+fun SynqPackaging.toPackaging(): Packaging =
+    when (this) {
+        OBJ -> Packaging.NONE
+        ESK -> Packaging.BOX
+    }
 
-fun SynqOwner.toOwner(): Owner = when (this) {
-    NB -> Owner.NB
-}
+fun SynqOwner.toOwner(): Owner =
+    when (this) {
+        NB -> Owner.NB
+    }
 
-fun Owner.toSynqOwner(): SynqOwner = when (this) {
-    Owner.NB -> NB
-}
+fun Owner.toSynqOwner(): SynqOwner =
+    when (this) {
+        Owner.NB -> NB
+    }
 
-fun Packaging.toSynqPackaging(): SynqPackaging = when (this) {
-    Packaging.NONE -> OBJ
-    Packaging.BOX -> ESK
-}
+fun Packaging.toSynqPackaging(): SynqPackaging =
+    when (this) {
+        Packaging.NONE -> OBJ
+        Packaging.BOX -> ESK
+    }
