@@ -8,13 +8,13 @@ import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "products")
 data class Product(
-    val hostName: HostName,
     val hostId: String,
-    val category: String,
+    val hostName: HostName,
     val description: String,
+    val productCategory: String,
+    val preferredEnvironment: Environment,
     val packaging: Packaging,
-    val location: String,
-    val quantity: Float,
-    val environment: Environment,
-    val owner: Owner
+    val owner: Owner,
+    val location: String?,
+    val quantity: Double?
 )

@@ -15,6 +15,7 @@ data class SynqProductPayload(
     val productId: String,
     val owner: SynqOwner,
     val barcode: Barcode,
+    val description: String,
     val productCategory: String,
     val productUom: ProductUom,
     val confidential: Boolean,
@@ -39,12 +40,12 @@ fun SynqProductPayload.toProduct() =
     Product(
         hostName = HostName.valueOf(hostName),
         hostId = barcode.barcodeId,
-        category = productCategory,
-        description = "",
+        productCategory = productCategory,
+        description = description,
         packaging = productUom.uomId.toPackaging(),
         location = "SYNQ",
-        quantity = 1.0f,
-        environment = Environment.NONE,
+        quantity = 1.0,
+        preferredEnvironment = Environment.NONE,
         owner = owner.toOwner()
     )
 
@@ -53,10 +54,11 @@ fun Product.toSynqPayload() =
         productId = hostId,
         owner = owner.toSynqOwner(),
         barcode = SynqProductPayload.Barcode(hostId),
-        productCategory = category,
+        description = description,
+        productCategory = productCategory,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
-        hostName = hostName.name
+        hostName = hostName.toString()
     )
 
 fun SynqPackaging.toPackaging(): Packaging =
