@@ -7,24 +7,28 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.product.model.Product
 
+// TODO - Enforce style with validation. Should valid fields be returned in an error message, or be declared in the description?
 data class ApiProductPayload(
-    @Schema(example = "AXIELL")
+    @Schema(description = "Name of the host where the product originated from", example = "Axiell")
     val hostName: HostName,
-    @Schema(example = "product-12345")
+    @Schema(description = "The ID from the host", example = "mlt-12345")
     val hostId: String,
-    @Schema(example = "BOOK")
+    @Schema(description = "What kind of item is being stored. Books, issues, etc.", example = "BOOK")
     val category: String,
-    @Schema(example = "Tyv etter loven")
+    @Schema(
+        description = "Describes what the item stored is. For objects this is usually the book name. For crates this is most often empty",
+        example = "Tyv etter loven"
+    )
     val description: String,
-    @Schema(example = "NONE")
+    @Schema(description = "Describes how the item is packaged, like whether it is in a box", example = "NONE")
     val packaging: Packaging,
-    @Schema(example = "SYNQ_WAREHOUSE")
+    @Schema(description = "Location of where the object will be stored", example = "SYNQ_WAREHOUSE")
     val location: String,
-    @Schema(example = "1.0")
+    @Schema(description = "How many of this product is stored. Use whole numbers", example = "1.0")
     val quantity: Float,
-    @Schema(example = "NONE")
+    @Schema(description = "Describes how the product should be stored. Products which need special treatment, like ", example = "NONE")
     val preferredEnvironment: Environment,
-    @Schema(example = "NB")
+    @Schema(description = "", example = "NB")
     val owner: Owner
 )
 
