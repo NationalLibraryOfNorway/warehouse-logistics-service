@@ -7,10 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
-import no.nb.mlt.wls.product.payloads.toProduct
-import no.nb.mlt.wls.product.payloads.toSynqPayload
 import no.nb.mlt.wls.product.service.ProductService
-import no.nb.mlt.wls.product.service.SynqService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -20,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/v1")
 @Tag(name = "Product Controller", description = "API for managing products in Hermes WLS")
-class ProductController(val synqService: SynqService, val productService: ProductService) {
+class ProductController(val productService: ProductService) {
     @Operation(
         summary = "Register a product in the storage system",
         description =
@@ -76,19 +73,5 @@ class ProductController(val synqService: SynqService, val productService: Produc
     @PostMapping("/product")
     fun createProduct(
         @RequestBody payload: ApiProductPayload
-    ): ResponseEntity<ApiProductPayload> {
-        // This can be removed once the call to synq is moved to the product service
-        val product = payload.toProduct()
-
-        // Product service should validate the product, and return a 400 response if it is invalid
-        // Product service should check if product already exists, and return a 200 response if it does
-        // Product service should save the product in DB and appropriate storage system, and return a 201 response
-        productService.save(product)
-
-        // This should be moved to the product service, it needs to decide where to put the product
-        synqService.createProduct(product.toSynqPayload())
-
-        // This should be moved to the product service, it should know what to return
-        return ResponseEntity.status(201).body(payload)
-    }
+    ): ResponseEntity<ApiProductPayload> = productService.save(payload)
 }
