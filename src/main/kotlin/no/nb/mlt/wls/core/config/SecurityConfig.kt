@@ -29,8 +29,8 @@ class SecurityConfig {
                 authorize("/webjars/swagger-ui/**", permitAll)
                 authorize("/actuator", permitAll)
                 authorize("/actuator/**", permitAll)
-                authorize("/v1/product", hasAuthority("SCOPE_wls-product-scope"))
-                authorize("/v1/order", hasAuthority("SCOPE_wls-order-scope"))
+                authorize("/v1/product", hasAuthority("SCOPE_wls-product"))
+                authorize("/v1/order", hasAuthority("SCOPE_wls-order"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
