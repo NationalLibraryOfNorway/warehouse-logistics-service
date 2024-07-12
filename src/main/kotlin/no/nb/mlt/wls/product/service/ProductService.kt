@@ -21,7 +21,8 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
         // Product service should validate the product, and return a 400 response if it is invalid
         val invalidResponse = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload)
 
-        // TODO - Error messages?
+        // REVIEW - Everything validated?
+        // And do we need more descriptive error messages?
         if (payload.description.isBlank()) {
             return invalidResponse
         }
@@ -35,12 +36,12 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload)
         }
 
-        // REVIEW - Everything validated?
-
         // Product service should check if product already exists, and return a 200 response if it does
-        if (getByHostNameAndName(payload.hostName, payload.hostName.name).contains(payload.toProduct())) {
+        val queriedProducts = getByHostNameAndId(payload.hostName, payload.hostId)
+        if (queriedProducts != null) {
             return ResponseEntity.ok(payload)
         }
+        // TODO - Should we roll back if SynQ fails to create the product?
 
         // Product service should save the product in DB and appropriate storage system, and return a 201 response
         val product = db.save(payload.toProduct())
@@ -49,10 +50,10 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(product.toApiPayload())
     }
 
-    fun getByHostNameAndName(
+    fun getByHostNameAndId(
         hostName: HostName,
         name: String
-    ): List<Product> {
-        return db.findByHostName(hostName)
+    ): Product? {
+        return db.findByHostNameAndHostId(hostName, name)
     }
 }

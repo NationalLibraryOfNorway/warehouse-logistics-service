@@ -5,7 +5,7 @@ import no.nb.mlt.wls.product.model.Product
 import org.springframework.data.mongodb.repository.MongoRepository
 
 interface ProductRepository : MongoRepository<Product, String> {
-    fun findByHostName(hostName: HostName): List<Product>
+    fun findByHostNameAndHostId(hostName: HostName, id: String): Product?
 
     fun existsByHostId(id: String): Boolean
 }
