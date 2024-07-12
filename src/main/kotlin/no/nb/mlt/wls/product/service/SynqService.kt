@@ -16,10 +16,11 @@ class SynqService {
     lateinit var baseUrl: String
 
     fun createProduct(payload: SynqProductPayload) {
-        // TODO - Validation
         // NOTE - Could trust validation from product service? Or should this have some SynQ specific validation?
         val uri = URI.create("$baseUrl/load-units/batch-create")
         val response = restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), String::class.java)
+        // TODO - Handle error from SynQ
+
         println(response.statusCode)
     }
 }
