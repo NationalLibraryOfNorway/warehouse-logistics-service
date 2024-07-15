@@ -54,7 +54,7 @@ spec:
             - name: actuator-port
               containerPort: 8888
 
-          # Environemnt variables to use in this container
+          # Environment variables to use in this container
           env:
             - name: INFO_ENVIRONMENT
               value: PROD
@@ -65,6 +65,11 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: KEYCLOAK_ISSUER_URI
+            - name: KEYCLOAK_TOKEN_AUD
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: KEYCLOAK_TOKEN_AUD
             - name: MONGODB_USERNAME
               valueFrom:
                 secretKeyRef:

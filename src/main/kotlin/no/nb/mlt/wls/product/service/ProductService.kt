@@ -2,16 +2,72 @@ package no.nb.mlt.wls.product.service
 
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.product.model.Product
+import no.nb.mlt.wls.product.payloads.ApiProductPayload
+import no.nb.mlt.wls.product.payloads.toApiPayload
+import no.nb.mlt.wls.product.payloads.toProduct
+import no.nb.mlt.wls.product.payloads.toSynqPayload
 import no.nb.mlt.wls.product.repository.ProductRepository
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ServerErrorException
+import org.springframework.web.server.ServerWebInputException
+import kotlin.math.ceil
+import kotlin.math.floor
 
 @Service
-class ProductService(val db: ProductRepository) {
-    fun save(products: Product) {
-        db.save(products)
+class ProductService(val db: ProductRepository, val synqService: SynqService) {
+    fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
+        // Check if the payload is valid and throw an exception if it is not
+        throwIfInvalidPayload(payload)
+
+        // Product service should check if product already exists, and return a 200 response if it does
+        val existingProduct = getByHostNameAndId(payload.hostName, payload.hostId)
+        if (existingProduct != null) {
+            return ResponseEntity.ok(existingProduct.toApiPayload())
+        }
+
+        val product = payload.toProduct()
+
+        // Product service should create the product in the storage system, and return error message if it fails
+        if (synqService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
+            return ResponseEntity.ok().build()
+        }
+
+        // Product service should save the product in the database, and return 500 if it fails
+        try {
+            db.save(payload.toProduct())
+        } catch (e: Exception) {
+            throw ServerErrorException("Failed to save product in database, but created in storage system", e)
+        }
+
+        // Product service should return a 201 response if the product was created with created product in response body
+        return ResponseEntity.status(HttpStatus.CREATED).body(product.toApiPayload())
     }
 
-    fun getByHostName(hostName: HostName): List<Product> {
-        return db.findByHostName(hostName)
+    private fun throwIfInvalidPayload(payload: ApiProductPayload) {
+        if (payload.hostId.isBlank()) {
+            throw ServerWebInputException("The product's hostId is required, and it cannot be blank")
+        }
+
+        if (payload.description.isBlank()) {
+            throw ServerWebInputException("The product's description is required, and it cannot be blank")
+        }
+
+        if (payload.productCategory.isBlank()) {
+            throw ServerWebInputException("The product's category is required, and it cannot be blank")
+        }
+
+        // Quantity has to be a whole number, despite some storage systems supporting floating points
+        if (payload.quantity != null && floor(payload.quantity) != ceil(payload.quantity)) {
+            throw ServerWebInputException("The product's quantity has to be a whole number")
+        }
+    }
+
+    fun getByHostNameAndId(
+        hostName: HostName,
+        name: String
+    ): Product? {
+        return db.findByHostNameAndHostId(hostName, name)
     }
 }
