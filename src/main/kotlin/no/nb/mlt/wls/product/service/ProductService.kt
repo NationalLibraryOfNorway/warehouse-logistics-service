@@ -41,12 +41,19 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
         if (queriedProducts != null) {
             return ResponseEntity.ok(payload)
         }
-        // TODO - Should we roll back if SynQ fails to create the product?
+        val product = payload.toProduct()
+        val synqResponse = synqService.createProduct(product.toSynqPayload())
+
+        if (!synqResponse.statusCode.is2xxSuccessful) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(payload)
+        }
 
         // Product service should save the product in DB and appropriate storage system, and return a 201 response
-        val product = db.save(payload.toProduct())
-        synqService.createProduct(product.toSynqPayload())
-
+        try {
+            db.save(payload.toProduct())
+        } catch (e: Exception) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(payload)
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(product.toApiPayload())
     }
 
