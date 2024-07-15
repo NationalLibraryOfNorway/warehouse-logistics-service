@@ -193,7 +193,7 @@ spec:
         paths:
           - backend:
               service:
-                name: wls
+                name: wls-service
                 port:
                   name: rest-port
             path: /hermes
