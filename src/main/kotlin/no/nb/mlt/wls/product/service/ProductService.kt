@@ -10,51 +10,58 @@ import no.nb.mlt.wls.product.repository.ProductRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ServerErrorException
+import org.springframework.web.server.ServerWebInputException
+import kotlin.math.ceil
+import kotlin.math.floor
 
 @Service
 class ProductService(val db: ProductRepository, val synqService: SynqService) {
-    fun exists(product: Product): Boolean {
-        return db.existsByHostId(product.hostId)
-    }
-
     fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
-        // Product service should validate the product, and return a 400 response if it is invalid
-        val invalidResponse = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload)
-
-        // REVIEW - Everything validated?
-        // And do we need more descriptive error messages?
-        if (payload.description.isBlank()) {
-            return invalidResponse
-        }
-
-        if (payload.productCategory.isBlank()) {
-            return invalidResponse
-        }
-
-        // Quantity has to be a whole number, despite some storage systems supporting floating points
-        if (payload.quantity == null || Math.floor(payload.quantity) != payload.quantity) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(payload)
-        }
+        // Check if the payload is valid and throw an exception if it is not
+        throwIfInvalidPayload(payload)
 
         // Product service should check if product already exists, and return a 200 response if it does
-        val queriedProducts = getByHostNameAndId(payload.hostName, payload.hostId)
-        if (queriedProducts != null) {
-            return ResponseEntity.ok(payload)
+        val existingProduct = getByHostNameAndId(payload.hostName, payload.hostId)
+        if (existingProduct != null) {
+            return ResponseEntity.ok(existingProduct.toApiPayload())
         }
+
         val product = payload.toProduct()
-        val synqResponse = synqService.createProduct(product.toSynqPayload())
 
-        if (!synqResponse.statusCode.is2xxSuccessful) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(payload)
+        // Product service should create the product in the storage system, and return error message if it fails
+        if (synqService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
+            return ResponseEntity.ok().build()
         }
 
-        // Product service should save the product in DB and appropriate storage system, and return a 201 response
+        // Product service should save the product in the database, and return 500 if it fails
         try {
             db.save(payload.toProduct())
         } catch (e: Exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(payload)
+            throw ServerErrorException("Failed to save product in database, but created in storage system", e)
         }
+
+        // Product service should return a 201 response if the product was created with created product in response body
         return ResponseEntity.status(HttpStatus.CREATED).body(product.toApiPayload())
+    }
+
+    private fun throwIfInvalidPayload(payload: ApiProductPayload) {
+        if (payload.hostId.isBlank()) {
+            throw ServerWebInputException("The product's hostId is required, and it cannot be blank")
+        }
+
+        if (payload.description.isBlank()) {
+            throw ServerWebInputException("The product's description is required, and it cannot be blank")
+        }
+
+        if (payload.productCategory.isBlank()) {
+            throw ServerWebInputException("The product's category is required, and it cannot be blank")
+        }
+
+        // Quantity has to be a whole number, despite some storage systems supporting floating points
+        if (payload.quantity != null && floor(payload.quantity) != ceil(payload.quantity)) {
+            throw ServerWebInputException("The product's quantity has to be a whole number")
+        }
     }
 
     fun getByHostNameAndId(

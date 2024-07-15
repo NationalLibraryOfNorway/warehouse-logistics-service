@@ -9,6 +9,4 @@ interface ProductRepository : MongoRepository<Product, String> {
         hostName: HostName,
         id: String
     ): Product?
-
-    fun existsByHostId(id: String): Boolean
 }
