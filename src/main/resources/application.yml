@@ -18,6 +18,7 @@ spring:
 # Server port for the main application
 server:
   port: 8080
+  shutdown: graceful
 
 # Enable actuator endpoints and set the port
 management:
