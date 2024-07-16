@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.test.context.SpringBootTest
 
 @EnableTestcontainers
-@SpringBootTest
+@SpringBootTest(classes = [HermesApplication::class])
 class HermesApplicationTests {
     @Test
     fun contextLoads() {
