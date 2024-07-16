@@ -14,4 +14,17 @@ db.createUser(
 );
 db.createCollection('products');
 
+db.products.insertOne({
+    "hostName": "AXIELL",
+    "hostId": "product-12345",
+    "category": "BOOK",
+    "description": "Tyv etter loven",
+    "packaging": "NONE",
+    "location": "SYNQ_WAREHOUSE",
+    "quantity": 1,
+    "preferredEnvironment": "NONE",
+    "owner": "NB",
+    "_class": "no.nb.mlt.wls.product.model.Product"
+})
+
 print('END #################################################################');
