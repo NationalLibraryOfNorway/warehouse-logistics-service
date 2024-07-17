@@ -62,7 +62,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8082/realms/mlt-local
-          audiences: http://localhost:8080/hermes
+          audiences: http://localhost:8080
 
   # Set the database settings for the local-dev profile
   data:

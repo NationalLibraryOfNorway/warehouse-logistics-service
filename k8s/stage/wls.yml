@@ -191,10 +191,10 @@ spec:
     - host: <host_url>
       http:
         paths:
-          - backend:
+          - path: /
+            pathType: Prefix
+            backend:
               service:
                 name: wls-service
                 port:
                   name: rest-port
-            path: /hermes
-            pathType: Prefix
