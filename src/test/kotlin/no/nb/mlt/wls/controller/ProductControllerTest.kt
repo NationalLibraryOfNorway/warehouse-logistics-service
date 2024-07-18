@@ -7,22 +7,30 @@ import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.product.controller.ProductController
 import no.nb.mlt.wls.product.model.Product
-import no.nb.mlt.wls.product.payloads.toApiPayload
+import no.nb.mlt.wls.product.payloads.toSynqPayload
+import no.nb.mlt.wls.product.repository.ProductRepository
 import no.nb.mlt.wls.product.service.ProductService
-import org.junit.jupiter.api.Assertions.assertEquals
+import no.nb.mlt.wls.product.service.SynqService
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.test.web.reactive.server.WebTestClient
 
-@SpringBootTest
 @EnableTestcontainers
-@AutoConfigureMockMvc
-class ProductControllerTest() {
+@SpringBootTest
+@EnableMongoRepositories("no.nb.mlt.wls.product.repository")
+class ProductControllerTest {
     @MockkBean
-    lateinit var productService: ProductService
+    private lateinit var synqService: SynqService
+
+    @Autowired
+    lateinit var repository: ProductRepository
 
     val testProduct =
         Product(
@@ -39,11 +47,39 @@ class ProductControllerTest() {
 
     @Test
     fun saveProductTest() {
+        populateDb(repository)
+        val webTestClient: WebTestClient =
+            WebTestClient
+                .bindToController(ProductController(ProductService(repository, synqService)))
+                .build()
+        // FIXME - Mockk struggles with generating or finding the mocks
+        // Assumes responses from SynQ is OK, as this in reality requires integration testing
         every {
-            productService.save(testProduct.toApiPayload())
-        } returns ResponseEntity(testProduct.toApiPayload(), HttpStatus.OK)
+            synqService.createProduct(testProduct.toSynqPayload())
+        } returns ResponseEntity(SynqService.SynqError(0, ""), HttpStatus.OK)
 
-        val result = productService.save(testProduct.toApiPayload())
-        assertEquals(HttpStatus.OK, result.statusCode)
+        webTestClient.post()
+            .uri("/product")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testProduct)
+            .exchange()
+            .expectStatus().isOk
+    }
+
+    fun populateDb(repository: ProductRepository) {
+        repository.save(
+            Product(
+                hostName = HostName.AXIELL,
+                hostId = "product-12346",
+                productCategory = "BOOK",
+                description = "Tyv etter loven",
+                packaging = Packaging.NONE,
+                location = "SYNQ_WAREHOUSE",
+                quantity = 1.0,
+                preferredEnvironment = Environment.NONE,
+                owner = Owner.NB
+            )
+        )
+        repository.save(testProduct)
     }
 }
