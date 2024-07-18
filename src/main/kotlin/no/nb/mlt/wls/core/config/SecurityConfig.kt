@@ -26,6 +26,7 @@ class SecurityConfig {
                 authorize("/api-docs", permitAll)
                 authorize("/api-docs/**", permitAll)
                 authorize("/swagger", permitAll)
+                authorize("/swagger/**", permitAll)
                 authorize("/webjars/swagger-ui/**", permitAll)
                 authorize("/actuator", permitAll)
                 authorize("/actuator/**", permitAll)
