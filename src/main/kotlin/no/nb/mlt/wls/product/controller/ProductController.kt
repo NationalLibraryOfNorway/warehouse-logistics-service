@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping(path =  ["", "/v1"])
+@RequestMapping(path = ["", "/v1"])
 @Tag(name = "Product Controller", description = "API for managing products in Hermes WLS")
 class ProductController(val productService: ProductService) {
     @Operation(
