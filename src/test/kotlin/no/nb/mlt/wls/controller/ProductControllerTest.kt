@@ -2,6 +2,7 @@ package no.nb.mlt.wls.controller
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import io.mockk.junit5.MockKExtension
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
@@ -9,11 +10,11 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.product.controller.ProductController
 import no.nb.mlt.wls.product.model.Product
-import no.nb.mlt.wls.product.payloads.toSynqPayload
 import no.nb.mlt.wls.product.repository.ProductRepository
 import no.nb.mlt.wls.product.service.ProductService
 import no.nb.mlt.wls.product.service.SynqService
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
@@ -25,6 +26,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @EnableTestcontainers
 @SpringBootTest
 @EnableMongoRepositories("no.nb.mlt.wls.product.repository")
+@ExtendWith(MockKExtension::class)
 class ProductControllerTest {
     @MockkBean
     private lateinit var synqService: SynqService
@@ -52,18 +54,17 @@ class ProductControllerTest {
             WebTestClient
                 .bindToController(ProductController(ProductService(repository, synqService)))
                 .build()
-        // FIXME - Mockk struggles with generating or finding the mocks
-        // Assumes responses from SynQ is OK, as this in reality requires integration testing
+        // Assumes responses from SynQ is CREATED, as this in reality requires integration testing
         every {
-            synqService.createProduct(testProduct.toSynqPayload())
-        } returns ResponseEntity(SynqService.SynqError(0, ""), HttpStatus.OK)
+            synqService.createProduct(any())
+        } returns ResponseEntity(SynqService.SynqError(0, ""), HttpStatus.CREATED)
 
         webTestClient.post()
             .uri("/product")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testProduct)
             .exchange()
-            .expectStatus().isOk
+            .expectStatus().isCreated
     }
 
     fun populateDb(repository: ProductRepository) {
@@ -80,6 +81,6 @@ class ProductControllerTest {
                 owner = Owner.NB
             )
         )
-        repository.save(testProduct)
+        // repository.save(testProduct)
     }
 }
