@@ -42,7 +42,7 @@ class ProductControllerTest {
             description = "Ringenes Herre samling",
             packaging = Packaging.BOX,
             location = "SYNQ_WAREHOUSE",
-            quantity = 1.0,
+            quantity = 0.0,
             preferredEnvironment = Environment.NONE,
             owner = Owner.NB
         )

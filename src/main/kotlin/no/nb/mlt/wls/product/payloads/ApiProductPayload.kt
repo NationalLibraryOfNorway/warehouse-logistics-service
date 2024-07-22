@@ -19,7 +19,7 @@ import no.nb.mlt.wls.product.model.Product
             "packaging": "NONE",
             "owner": "NB",
             "location": "SYNQ_WAREHOUSE",
-            "quantity": 1.0
+            "quantity": 0.0
         }
     """
 )
