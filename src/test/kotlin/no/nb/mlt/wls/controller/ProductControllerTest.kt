@@ -81,6 +81,5 @@ class ProductControllerTest {
                 owner = Owner.NB
             )
         )
-        // repository.save(testProduct)
     }
 }
