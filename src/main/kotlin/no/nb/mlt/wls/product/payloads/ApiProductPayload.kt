@@ -17,9 +17,7 @@ import no.nb.mlt.wls.product.model.Product
             "productCategory": "BOOK",
             "preferredEnvironment": "NONE",
             "packaging": "NONE",
-            "owner": "NB",
-            "location": "SYNQ_WAREHOUSE",
-            "quantity": 0.0
+            "owner": "NB"
         }
     """
 )
