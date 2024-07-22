@@ -7,7 +7,6 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.product.model.Product
 
-// TODO - Enforce style with validation. Should valid fields be returned in an error message, or be declared in the description?
 @Schema(
     description = "Payload for registering a product in Hermes WLS, and appropriate storage system for the product.",
     example = """
@@ -18,9 +17,7 @@ import no.nb.mlt.wls.product.model.Product
             "productCategory": "BOOK",
             "preferredEnvironment": "NONE",
             "packaging": "NONE",
-            "owner": "NB",
-            "location": "SYNQ_WAREHOUSE",
-            "quantity": 1.0
+            "owner": "NB"
         }
     """
 )

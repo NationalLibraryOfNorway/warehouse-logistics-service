@@ -1,6 +1,5 @@
 services:
   # Sets up a simple mongo database for local development
-  # TODO: populate the database with test data
   mongo-db:
     image: mongo:4.4.22 # Same as the version in prod env
     restart: always
