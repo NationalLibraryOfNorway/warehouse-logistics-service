@@ -41,7 +41,7 @@ class ProductControllerTest {
             productCategory = "BOOK",
             description = "Ringenes Herre samling",
             packaging = Packaging.BOX,
-            location = "SYNQ_WAREHOUSE",
+            location = null,
             quantity = 0.0,
             preferredEnvironment = Environment.NONE,
             owner = Owner.NB
