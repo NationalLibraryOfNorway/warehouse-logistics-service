@@ -27,7 +27,11 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
             return ResponseEntity.ok(existingProduct.toApiPayload())
         }
 
-        val product = payload.toProduct()
+        // Convert payload to product, but set quantity and location to default values in case they are given
+        // We don't want to use values from the payload, as the product should not be in the storage system yet
+        // Hence its quantity should be 0 and location should be null
+        // Not done in the mapping function as we want it to be explicit for clarity
+        val product = payload.toProduct().copy(quantity = 0.0, location = null)
 
         // Product service should create the product in the storage system, and return error message if it fails
         if (synqService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {

@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.product.payloads
 
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
@@ -66,6 +67,7 @@ data class ApiProductPayload(
     @Schema(
         description = "Where the product is located, e.g. SYNQ_WAREHOUSE, AUTOSTORE, KARDEX, etc.",
         examples = ["SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
+        accessMode = READ_ONLY,
         required = false
     )
     val location: String?,
@@ -74,6 +76,7 @@ data class ApiProductPayload(
             "Quantity on hand of the product, this denotes if the product is in storage or not. " +
                 "If the product is in storage then quantity is 1.0, if it's not in storage then quantity is 0.0.",
         examples = [ "0.0", "1.0"],
+        accessMode = READ_ONLY,
         required = false
     )
     val quantity: Double?
