@@ -22,7 +22,9 @@ class ProductController(val productService: ProductService) {
         summary = "Register a product in the storage system",
         description =
             "Register data about the product in Hermes WLS and appropriate storage system, " +
-                "so that the physical product can be placed in the physical storage."
+                "so that the physical product can be placed in the physical storage. " +
+                "NOTE: When registering new product quantity and location are set to default values (0.0 and null). " +
+                "Hence you should not provide these values in the payload, or at least know they will be overwritten."
     )
     @ApiResponses(
         value = [
