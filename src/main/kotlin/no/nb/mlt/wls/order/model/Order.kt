@@ -5,23 +5,23 @@ import no.nb.mlt.wls.core.data.Owner
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "orders")
-data class Order (
+data class Order(
     val hostName: HostName,
     val hostOrderId: String,
     val status: OrderStatus,
     val productLine: List<ProductLine>,
     val orderType: OrderType,
+    val owner: Owner?,
     val receiver: OrderReceiver,
-    val callbackUrl: String,
-    val owner: Owner
+    val callbackUrl: String
 )
 
-data class ProductLine (
+data class ProductLine(
     val hostId: String,
     val status: OrderStatus?
 )
 
-data class OrderReceiver (
+data class OrderReceiver(
     val name: String,
     val location: String,
     val address: String?,
@@ -43,7 +43,7 @@ enum class OrderStatus(private val status: String) {
 
 enum class OrderType(private val type: String) {
     LOAN("Loan"),
-    DIGITIZATION("Digitization"),;
+    DIGITIZATION("Digitization") ;
 
     override fun toString(): String {
         return type
