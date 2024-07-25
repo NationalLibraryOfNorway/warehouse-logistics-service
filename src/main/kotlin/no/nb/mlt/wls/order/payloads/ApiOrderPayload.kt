@@ -39,12 +39,12 @@ import no.nb.mlt.wls.order.model.ProductLine
     """
 )
 data class ApiOrderPayload(
+    // TODO: I don't see why we need this, but it was in the mock API
     @Schema(
         description = "Order ID in the database(?)",
         example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         accessMode = READ_ONLY
     )
-    // TODO: I don't see why we need this, but it was in the mock API
     val orderId: String,
     @Schema(
         description = "Name of the host system which made the order.",
