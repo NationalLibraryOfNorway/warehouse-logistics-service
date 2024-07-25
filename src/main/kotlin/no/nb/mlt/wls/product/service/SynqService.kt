@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.product.service
 
+import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -47,6 +48,4 @@ class SynqService {
             )
         }
     }
-
-    data class SynqError(val errorCode: Int, val errorText: String)
 }

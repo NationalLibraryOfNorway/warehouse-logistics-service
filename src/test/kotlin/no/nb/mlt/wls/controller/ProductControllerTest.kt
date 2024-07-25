@@ -8,6 +8,7 @@ import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.controller.ProductController
 import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.repository.ProductRepository
@@ -57,7 +58,7 @@ class ProductControllerTest {
         // Assumes responses from SynQ is CREATED, as this in reality requires integration testing
         every {
             synqService.createProduct(any())
-        } returns ResponseEntity(SynqService.SynqError(0, ""), HttpStatus.CREATED)
+        } returns ResponseEntity(SynqError(0, ""), HttpStatus.CREATED)
 
         webTestClient.post()
             .uri("/product")
