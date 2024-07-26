@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.service
 
 import no.nb.mlt.wls.core.data.synq.SynqError
+import no.nb.mlt.wls.order.payloads.SynqOrder
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -22,8 +23,11 @@ class SynqOrderService {
     fun createOrder(payload: SynqOrderPayload): ResponseEntity<SynqError> {
         val uri = URI.create("$baseUrl/orders/batch")
 
+        // Wrap the order in the way SynQ likes it
+        val orders = SynqOrder(listOf(payload))
+
         try {
-            return restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), SynqError::class.java)
+            return restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(orders), SynqError::class.java)
         } catch (e: HttpClientErrorException) {
             val errorBody = e.getResponseBodyAs(SynqError::class.java)
 
