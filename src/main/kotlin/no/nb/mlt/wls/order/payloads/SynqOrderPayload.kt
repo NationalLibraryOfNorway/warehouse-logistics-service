@@ -33,7 +33,8 @@ data class SynqOrderPayload(
     )
 
     enum class SynqOrderType(private val type: String) {
-        STANDARD("Standard");
+        // FIXME - Update Serialization so that the enum can stay capitalized
+        Standard("Standard");
 
         @JsonValue
         override fun toString(): String {
@@ -95,13 +96,13 @@ fun Order.toSynqPayload() =
 
 fun SynqOrderPayload.SynqOrderType.toOrderType(): OrderType =
     when (this) {
-        SynqOrderPayload.SynqOrderType.STANDARD -> OrderType.LOAN // TODO: Arbitrary mapping, need to discuss it with the team
+        SynqOrderPayload.SynqOrderType.Standard -> OrderType.LOAN // TODO: Arbitrary mapping, need to discuss it with the team
     }
 
 fun OrderType.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
     when (this) {
-        OrderType.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD // TODO: Since mock api defined more types than Synq has we map both to standard
-        OrderType.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
+        OrderType.LOAN -> SynqOrderPayload.SynqOrderType.Standard // TODO: Since mock api defined more types than Synq has we map both to standard
+        OrderType.DIGITIZATION -> SynqOrderPayload.SynqOrderType.Standard
     }
 
 // TODO - Improve this
