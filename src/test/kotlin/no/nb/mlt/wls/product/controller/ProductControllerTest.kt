@@ -8,8 +8,6 @@ import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.order.repository.OrderRepository
-import no.nb.mlt.wls.order.service.SynqOrderService
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.repository.ProductRepository
 import no.nb.mlt.wls.product.service.ProductService
@@ -30,7 +28,7 @@ import java.net.URI
 
 @EnableTestcontainers
 @ExtendWith(MockKExtension::class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = ["synq.path.base=http://localhost:9999"])
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EnableMongoRepositories("no.nb.mlt.wls")
 @AutoConfigureWebTestClient
 class ProductControllerTest(
