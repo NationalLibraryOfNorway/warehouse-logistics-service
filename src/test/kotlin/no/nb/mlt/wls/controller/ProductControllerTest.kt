@@ -15,9 +15,14 @@ import no.nb.mlt.wls.product.repository.ProductRepository
 import no.nb.mlt.wls.product.service.ProductService
 import no.nb.mlt.wls.product.service.SynqService
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.FilterType
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -25,10 +30,22 @@ import org.springframework.http.ResponseEntity
 import org.springframework.test.web.reactive.server.WebTestClient
 
 @EnableTestcontainers
-@SpringBootTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@AutoConfigureWebTestClient
+@WebFluxTest(
+    controllers = [ProductController::class],
+    includeFilters = [
+        ComponentScan.Filter(
+            value = [ProductService::class],
+            type = FilterType.ASSIGNABLE_TYPE
+        )
+    ]
+)
 @EnableMongoRepositories("no.nb.mlt.wls.product.repository")
+@AutoConfigureDataMongo
 @ExtendWith(MockKExtension::class)
 class ProductControllerTest {
+    @Autowired
     @MockkBean
     private lateinit var synqService: SynqService
 
@@ -50,11 +67,12 @@ class ProductControllerTest {
 
     @Test
     fun saveProductTest() {
-        populateDb(repository)
         val webTestClient: WebTestClient =
             WebTestClient
                 .bindToController(ProductController(ProductService(repository, synqService)))
                 .build()
+
+        populateDb(repository)
         // Assumes responses from SynQ is CREATED, as this in reality requires integration testing
         every {
             synqService.createProduct(any())
