@@ -8,52 +8,56 @@ import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.controller.ProductController
-import no.nb.mlt.wls.product.model.Product
-import no.nb.mlt.wls.product.repository.ProductRepository
+import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.service.ProductService
-import no.nb.mlt.wls.product.service.SynqService
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.FilterType
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.test.context.support.WithMockUser
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.test.web.reactive.server.WebTestClient
 
 @EnableTestcontainers
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@AutoConfigureWebTestClient
-@WebFluxTest(
-    controllers = [ProductController::class],
-    includeFilters = [
-        ComponentScan.Filter(
-            value = [ProductService::class],
-            type = FilterType.ASSIGNABLE_TYPE
-        )
-    ]
-)
-@EnableMongoRepositories("no.nb.mlt.wls.product.repository")
 @AutoConfigureDataMongo
 @ExtendWith(MockKExtension::class)
-class ProductControllerTest {
-    @Autowired
+@WebFluxTest(ProductController::class)
+@EnableMongoRepositories("no.nb.mlt.wls.product.repository")
+class ProductControllerTest(
+    @Autowired val webTestClient: WebTestClient
+) {
     @MockkBean
-    private lateinit var synqService: SynqService
+    private lateinit var productService: ProductService
 
-    @Autowired
-    lateinit var repository: ProductRepository
+    @Test
+    @WithMockUser
+    fun `createProduct with valid payload creates product`() {
+        every {
+            productService.save(testProductPayload)
+        } returns ResponseEntity(testProductPayload, HttpStatus.CREATED)
 
-    val testProduct =
-        Product(
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .uri("/product")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testProductPayload)
+            .exchange()
+            .expectStatus().isCreated
+    }
+
+// /////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////// Test Help //////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
+
+    private val testProductPayload =
+        ApiProductPayload(
             hostName = HostName.AXIELL,
             hostId = "mlt-2048",
             productCategory = "BOOK",
@@ -64,41 +68,4 @@ class ProductControllerTest {
             preferredEnvironment = Environment.NONE,
             owner = Owner.NB
         )
-
-    @Test
-    fun saveProductTest() {
-        val webTestClient: WebTestClient =
-            WebTestClient
-                .bindToController(ProductController(ProductService(repository, synqService)))
-                .build()
-
-        populateDb(repository)
-        // Assumes responses from SynQ is CREATED, as this in reality requires integration testing
-        every {
-            synqService.createProduct(any())
-        } returns ResponseEntity(SynqError(0, ""), HttpStatus.CREATED)
-
-        webTestClient.post()
-            .uri("/product")
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testProduct)
-            .exchange()
-            .expectStatus().isCreated
-    }
-
-    fun populateDb(repository: ProductRepository) {
-        repository.save(
-            Product(
-                hostName = HostName.AXIELL,
-                hostId = "product-12346",
-                productCategory = "BOOK",
-                description = "Tyv etter loven",
-                packaging = Packaging.NONE,
-                location = "SYNQ_WAREHOUSE",
-                quantity = 1.0,
-                preferredEnvironment = Environment.NONE,
-                owner = Owner.NB
-            )
-        )
-    }
 }
