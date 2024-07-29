@@ -2,11 +2,11 @@ package no.nb.mlt.wls.product.payloads
 
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.core.data.synq.SynqOwner
+import no.nb.mlt.wls.core.data.synq.toOwner
+import no.nb.mlt.wls.core.data.synq.toSynqOwner
 import no.nb.mlt.wls.product.model.Product
-import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqOwner
-import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqOwner.NB
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.OBJ
@@ -26,13 +26,9 @@ data class SynqProductPayload(
         ESK
     }
 
-    enum class SynqOwner {
-        NB
-    }
+    data class Barcode(val barcodeId: String)
 
-    class Barcode(val barcodeId: String)
-
-    class ProductUom(val uomId: SynqPackaging)
+    data class ProductUom(val uomId: SynqPackaging)
 }
 
 // unused
@@ -65,16 +61,6 @@ fun SynqPackaging.toPackaging(): Packaging =
     when (this) {
         OBJ -> Packaging.NONE
         ESK -> Packaging.BOX
-    }
-
-fun SynqOwner.toOwner(): Owner =
-    when (this) {
-        NB -> Owner.NB
-    }
-
-fun Owner.toSynqOwner(): SynqOwner =
-    when (this) {
-        Owner.NB -> NB
     }
 
 fun Packaging.toSynqPackaging(): SynqPackaging =

@@ -11,15 +11,15 @@ import no.nb.mlt.wls.product.model.Product
 @Schema(
     description = "Payload for registering a product in Hermes WLS, and appropriate storage system for the product.",
     example = """
-        {
-            "hostId": "mlt-12345",
-            "hostName": "AXIELL",
-            "description": "Tyven, tyven skal du hete",
-            "productCategory": "BOOK",
-            "preferredEnvironment": "NONE",
-            "packaging": "NONE",
-            "owner": "NB"
-        }
+    {
+      "hostId": "mlt-12345",
+      "hostName": "AXIELL",
+      "description": "Tyven, tyven skal du hete",
+      "productCategory": "BOOK",
+      "preferredEnvironment": "NONE",
+      "packaging": "NONE",
+      "owner": "NB"
+    }
     """
 )
 data class ApiProductPayload(
