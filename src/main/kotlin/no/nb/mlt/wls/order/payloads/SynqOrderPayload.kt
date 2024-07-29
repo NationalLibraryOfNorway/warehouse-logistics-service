@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.payloads
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.synq.SynqOwner
 import no.nb.mlt.wls.core.data.synq.toOwner
@@ -24,7 +25,7 @@ data class SynqOrderPayload(
     val orderLine: List<OrderLine>
 ) {
     data class OrderLine(
-        // This must start at 1, it can NOT be zero
+        @Min(1)
         val orderLineNumber: Int,
         val productId: String,
         val quantityOrdered: Double
