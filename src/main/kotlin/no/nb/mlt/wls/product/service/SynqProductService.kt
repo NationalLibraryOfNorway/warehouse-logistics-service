@@ -13,7 +13,7 @@ import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
 @Service
-class SynqService {
+class SynqProductService {
     val restTemplate: RestTemplate = RestTemplate()
 
     @Value("\${synq.path.base}")
