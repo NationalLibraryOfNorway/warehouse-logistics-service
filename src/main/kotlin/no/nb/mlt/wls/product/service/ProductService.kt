@@ -16,7 +16,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 @Service
-class ProductService(val db: ProductRepository, val synqService: SynqService) {
+class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
     fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
         // Check if the payload is valid and throw an exception if it is not
         throwIfInvalidPayload(payload)
@@ -34,15 +34,15 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
         val product = payload.toProduct().copy(quantity = 0.0, location = null)
 
         // Product service should create the product in the storage system, and return error message if it fails
-        if (synqService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
+        if (synqProductService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
             return ResponseEntity.ok().build()
         }
 
         // Product service should save the product in the database, and return 500 if it fails
         try {
-            db.save(payload.toProduct())
+            db.save(product)
         } catch (e: Exception) {
-            throw ServerErrorException("Failed to save product in database, but created in storage system", e)
+            throw ServerErrorException("Failed to save product in the database, but created in the storage system", e)
         }
 
         // Product service should return a 201 response if the product was created with created product in response body
@@ -60,11 +60,6 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
 
         if (payload.productCategory.isBlank()) {
             throw ServerWebInputException("The product's category is required, and it cannot be blank")
-        }
-
-        // Quantity has to be a whole number, despite some storage systems supporting floating points
-        if (payload.quantity != null && floor(payload.quantity) != ceil(payload.quantity)) {
-            throw ServerWebInputException("The product's quantity has to be a whole number")
         }
     }
 
