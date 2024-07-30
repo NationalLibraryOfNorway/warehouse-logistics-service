@@ -4,7 +4,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.core.data.Environment
+import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
@@ -25,18 +25,12 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.test.context.support.WithMockUser
-import org.springframework.security.test.context.support.WithUserDetails
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.test.web.reactive.server.returnResult
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
@@ -151,7 +145,8 @@ class ProductControllerTest(
             synqProductService.createProduct(any())
         }.throws(
             ServerErrorException(
-                "Failed to create product in SynQ, the storage system responded with error code: '1002' and error text: 'Unknown product category TEST.'",
+                "Failed to create product in SynQ, the storage system responded with " +
+                    "error code: '1002' and error text: 'Unknown product category TEST.'",
                 HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
             )
         )
@@ -176,7 +171,7 @@ class ProductControllerTest(
             hostName = HostName.AXIELL,
             description = "Ringenes Herre samling",
             productCategory = "BOOK",
-            preferredEnvironment = Environment.NONE,
+            preferredEnvironment = NONE,
             packaging = Packaging.BOX,
             owner = Owner.NB,
             location = "SYNQ_WAREHOUSE",
@@ -190,7 +185,7 @@ class ProductControllerTest(
             hostName = HostName.AXIELL,
             description = "Tyv etter loven",
             productCategory = "BOOK",
-            preferredEnvironment = Environment.NONE,
+            preferredEnvironment = NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
             location = "SYNQ_WAREHOUSE",
@@ -206,7 +201,7 @@ class ProductControllerTest(
                 hostName = HostName.AXIELL,
                 description = "Tyv etter loven",
                 productCategory = "BOOK",
-                preferredEnvironment = Environment.NONE,
+                preferredEnvironment = NONE,
                 packaging = Packaging.NONE,
                 owner = Owner.NB,
                 location = "SYNQ_WAREHOUSE",

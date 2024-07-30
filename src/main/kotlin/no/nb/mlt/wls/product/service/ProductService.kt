@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
-import kotlin.math.ceil
-import kotlin.math.floor
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
