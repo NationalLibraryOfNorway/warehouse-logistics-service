@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.payloads
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.synq.SynqOwner
@@ -32,9 +33,9 @@ data class SynqOrderPayload(
     )
 
     enum class SynqOrderType(private val type: String) {
-        // FIXME - Update Serialization so that the enum can stay capitalized
-        Standard("Standard") ;
+        STANDARD("Standard");
 
+        @JsonValue
         override fun toString(): String {
             return type
         }
@@ -94,13 +95,13 @@ fun Order.toSynqPayload() =
 
 fun SynqOrderPayload.SynqOrderType.toOrderType(): OrderType =
     when (this) {
-        SynqOrderPayload.SynqOrderType.Standard -> OrderType.LOAN // TODO: Arbitrary mapping, need to discuss it with the team
+        SynqOrderPayload.SynqOrderType.STANDARD -> OrderType.LOAN // TODO: Arbitrary mapping, need to discuss it with the team
     }
 
 fun OrderType.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
     when (this) {
-        OrderType.LOAN -> SynqOrderPayload.SynqOrderType.Standard // TODO: Since mock api defined more types than Synq has we map both to standard
-        OrderType.DIGITIZATION -> SynqOrderPayload.SynqOrderType.Standard
+        OrderType.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD // TODO: Since mock api defined more types than Synq has we map both to standard
+        OrderType.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
     }
 
 // TODO - Improve this
