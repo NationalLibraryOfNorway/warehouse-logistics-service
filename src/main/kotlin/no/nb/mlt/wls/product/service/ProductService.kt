@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.product.service
 
+import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
@@ -15,7 +16,7 @@ import org.springframework.web.server.ServerWebInputException
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
-    fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
+    suspend fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
         // Check if the payload is valid and throw an exception if it is not
         throwIfInvalidPayload(payload)
 
@@ -61,10 +62,10 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         }
     }
 
-    fun getByHostNameAndId(
+    suspend fun getByHostNameAndId(
         hostName: HostName,
         name: String
     ): Product? {
-        return db.findByHostNameAndHostId(hostName, name)
+        return db.findByHostNameAndHostId(hostName, name).awaitSingle()
     }
 }
