@@ -10,6 +10,7 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
+import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
 import no.nb.mlt.wls.product.service.ProductService
 import no.nb.mlt.wls.product.service.SynqProductService
@@ -195,18 +196,6 @@ class ProductControllerTest(
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         repository.deleteAll()
-        repository.save(
-            Product(
-                hostId = "product-12346",
-                hostName = HostName.AXIELL,
-                description = "Tyv etter loven",
-                productCategory = "BOOK",
-                preferredEnvironment = NONE,
-                packaging = Packaging.NONE,
-                owner = Owner.NB,
-                location = "SYNQ_WAREHOUSE",
-                quantity = 1.0
-            )
-        )
+        repository.save(duplicateProductPayload.toProduct())
     }
 }
