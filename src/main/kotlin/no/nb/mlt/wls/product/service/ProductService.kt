@@ -16,7 +16,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 @Service
-class ProductService(val db: ProductRepository, val synqService: SynqService) {
+class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
     fun save(payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
         // Check if the payload is valid and throw an exception if it is not
         throwIfInvalidPayload(payload)
@@ -34,7 +34,7 @@ class ProductService(val db: ProductRepository, val synqService: SynqService) {
         val product = payload.toProduct().copy(quantity = 0.0, location = null)
 
         // Product service should create the product in the storage system, and return error message if it fails
-        if (synqService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
+        if (synqProductService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
             return ResponseEntity.ok().build()
         }
 
