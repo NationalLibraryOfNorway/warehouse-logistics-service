@@ -17,11 +17,56 @@
   <description>Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs (National Library of Norway) catalogues and
     storage systems
   </description>
+  <url>https://wls-api.nb.no/</url>
+
+  <licenses>
+    <license>
+      <name>MIT</name>
+      <url>https://opensource.org/license/mit</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <organization>
+    <name>National Library of Norway</name>
+    <url>https://nb.no/</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>daniels</id>
+      <name>Daniel Aaron Salwerowicz</name>
+      <email>daniel.salwerowicz@nb.no</email>
+      <url>https://www.nb.no/ansatte/daniel-aaron-salwerowicz/</url>
+      <organization>National Library of Norway</organization>
+      <organizationUrl>https://nb.no/</organizationUrl>
+      <roles>
+        <role>Application Developer</role>
+      </roles>
+      <timezone>Europe/Oslo</timezone>
+      <properties>
+        <picUrl>https://www.nb.no/content/uploads/2023/10/000000_daniel_aaron-salwerowicz_xxx-1-scaled-e1710506056252.jpg</picUrl>
+      </properties>
+    </developer>
+    <developer>
+      <id>noaha</id>
+      <name>Noah Bjerkli Aanonli</name>
+      <email>noah.aanonli@nb.no</email>
+      <url>https://www.nb.no/ansatte/noah-bjerkli-aanonli/</url>
+      <organization>National Library of Norway</organization>
+      <organizationUrl>https://nb.no/</organizationUrl>
+      <roles>
+        <role>Advisor</role>
+      </roles>
+      <timezone>Europe/Oslo</timezone>
+    </developer>
+
+  </developers>
 
   <properties>
     <java.version>21</java.version>
     <kotlin.version>2.0.0</kotlin.version>
-    <openapi.version>2.5.0</openapi.version>
+    <openapi.version>2.6.0</openapi.version>
     <spotless.version>2.43.0</spotless.version>
     <spring.cloud.version>2023.0.1</spring.cloud.version>
     <testcontainers.version>1.19.8</testcontainers.version>
@@ -136,6 +181,7 @@
       <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <dependencyManagement>
@@ -211,6 +257,7 @@
           </kotlin>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
 
