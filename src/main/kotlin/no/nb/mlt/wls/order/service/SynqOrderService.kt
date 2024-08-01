@@ -26,23 +26,26 @@ class SynqOrderService(
         // Wrap the order in the way SynQ likes it
         val orders = SynqOrder(listOf(payload))
 
-        try {
-            return webClient
-                .post()
-                .uri(uri)
-                .body(BodyInserters.fromValue(orders))
-                .retrieve()
-                .bodyToMono(SynqError::class.java)
-        } catch (e: HttpClientErrorException) {
-            val errorBody = e.getResponseBodyAs(SynqError::class.java)
+        return webClient
+            .post()
+            .uri(uri)
+            .body(BodyInserters.fromValue(orders))
+            .retrieve()
+            .bodyToMono(SynqError::class.java)
+            .onErrorMap {
+                if (it is HttpClientErrorException) {
+                    val errorBody = it.getResponseBodyAs(SynqError::class.java)
 
-            throw ServerErrorException(
-                "Failed to create product in SynQ, the storage system responded with error code: " +
-                    "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
-                    "and error text: " +
-                    "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
-                e
-            )
-        }
+                    throw ServerErrorException(
+                        "Failed to create product in SynQ, the storage system responded with error code: " +
+                            "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
+                            "and error text: " +
+                            "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
+                        it
+                    )
+                }
+                it
+            }
+            .log()
     }
 }

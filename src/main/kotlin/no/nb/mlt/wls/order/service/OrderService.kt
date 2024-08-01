@@ -1,37 +1,50 @@
 package no.nb.mlt.wls.order.service
 
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
+import java.time.Duration
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
-    suspend fun createOrder(payload: ApiOrderPayload): Mono<ApiOrderPayload> {
+    suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
         val existingOrder =
-            db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+            Mono.just(payload)
+                .flatMap {
+                    db.getByHostNameAndHostOrderId(it.hostName, it.orderId)
+                }
+                .log()
                 .awaitFirstOrNull()
 
         if (existingOrder != null) {
-            return Mono.just(existingOrder.toApiOrderPayload())
+            return ResponseEntity.ok(existingOrder.toApiOrderPayload())
         }
 
-        return synqService.createOrder(payload.toOrder().toSynqPayload())
-            .doOnError {
-                throw ServerErrorException("Failed to create order in storage system", it)
-            }
-            .doOnSuccess {
-                try {
-                    db.save(payload.toOrder())
-                } catch (e: Exception) {
-                    throw ServerErrorException("Failed to save product in database, but created in storage system", e)
+        val newOrder =
+            Mono.just(payload)
+                .map {
+                    synqService.createOrder(payload.toOrder().toSynqPayload())
                 }
-            }
-            .then(Mono.just(payload))
+                .awaitSingle()
+                .timeout(Duration.ofSeconds(6))
+                .doOnError {
+                    throw ServerErrorException("Failed to create order in storage system", it)
+                }
+                .then(Mono.just(payload.toOrder()))
+                .flatMap {
+                    db.save(it)
+                }
+                .log()
+                .awaitSingle()
+        return ResponseEntity.status(HttpStatus.CREATED).body(newOrder.toApiOrderPayload())
     }
 }
