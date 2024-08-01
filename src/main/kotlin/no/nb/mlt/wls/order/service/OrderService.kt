@@ -22,11 +22,10 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .flatMap {
                     db.getByHostNameAndHostOrderId(it.hostName, it.orderId)
                 }
-                .log()
                 .awaitFirstOrNull()
 
         if (existingOrder != null) {
-            return ResponseEntity.ok(existingOrder.toApiOrderPayload())
+            return ResponseEntity.badRequest().build()
         }
 
         val newOrder =
@@ -43,7 +42,6 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .flatMap {
                     db.save(it)
                 }
-                .log()
                 .awaitSingle()
         return ResponseEntity.status(HttpStatus.CREATED).body(newOrder.toApiOrderPayload())
     }
