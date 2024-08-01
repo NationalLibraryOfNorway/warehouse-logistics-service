@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.product.service
 
+import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
@@ -23,9 +24,9 @@ class SynqProductService {
         val uri = URI.create("$baseUrl/nbproducts")
         try {
             return restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), SynqError::class.java)
-        } catch (e: HttpClientErrorException) {
+        } catch (exception: HttpClientErrorException) {
             // Get SynQ error from the response body if possible
-            val errorBody = e.getResponseBodyAs(SynqError::class.java)
+            val errorBody = exception.getResponseBodyAs(SynqError::class.java)
 
             // SynQ will return an error if there is a duplicate, which is ok
             if (errorBody != null && errorBody.errorText.contains("Duplicate product")) {
@@ -43,10 +44,8 @@ class SynqProductService {
                     "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
                     "and error text: " +
                     "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
-                e
+                exception
             )
         }
     }
-
-    data class SynqError(val errorCode: Int, val errorText: String)
 }
