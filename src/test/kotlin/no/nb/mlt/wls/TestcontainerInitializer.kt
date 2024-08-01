@@ -18,7 +18,7 @@ class TestcontainerInitializer : ApplicationContextInitializer<ConfigurableAppli
 
     override fun initialize(applicationContext: ConfigurableApplicationContext) {
         TestPropertyValues.of("spring.data.mongodb.uri=" + MongoContainer.replicaSetUrl).applyTo(applicationContext)
-        // Not a real path, it's there to make tests happy
-        TestPropertyValues.of("synq.path.base=/synq").applyTo(applicationContext)
+        // Temporary solution while we are working on implementing a test container for SynQ
+        TestPropertyValues.of("synq.path.base=http://dummycatalog.nb.no/synq/resources").applyTo(applicationContext)
     }
 }

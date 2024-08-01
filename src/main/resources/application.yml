@@ -39,7 +39,6 @@ springdoc:
   # Don't show actuator endpoints in Swagger, they are on different port
   show-actuator: false
 
-
 logging:
   level:
     # Set the logging level for the web package to debug

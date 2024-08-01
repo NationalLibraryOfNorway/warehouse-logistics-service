@@ -24,9 +24,9 @@ class SynqProductService {
         val uri = URI.create("$baseUrl/nbproducts")
         try {
             return restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), SynqError::class.java)
-        } catch (e: HttpClientErrorException) {
+        } catch (exception: HttpClientErrorException) {
             // Get SynQ error from the response body if possible
-            val errorBody = e.getResponseBodyAs(SynqError::class.java)
+            val errorBody = exception.getResponseBodyAs(SynqError::class.java)
 
             // SynQ will return an error if there is a duplicate, which is ok
             if (errorBody != null && errorBody.errorText.contains("Duplicate product")) {
@@ -44,7 +44,7 @@ class SynqProductService {
                     "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
                     "and error text: " +
                     "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
-                e
+                exception
             )
         }
     }

@@ -31,7 +31,9 @@ class SecurityConfig {
                 authorize("/actuator", permitAll)
                 authorize("/actuator/**", permitAll)
                 authorize("/v1/product", hasAuthority("SCOPE_wls-product"))
+                authorize("/product", hasAuthority("SCOPE_wls-product"))
                 authorize("/v1/order", hasAuthority("SCOPE_wls-order"))
+                authorize("/order", hasAuthority("SCOPE_wls-order"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {

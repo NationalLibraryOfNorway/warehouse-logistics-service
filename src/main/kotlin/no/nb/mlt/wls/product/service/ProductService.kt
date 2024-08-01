@@ -12,8 +12,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
-import kotlin.math.ceil
-import kotlin.math.floor
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
@@ -40,9 +38,9 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
 
         // Product service should save the product in the database, and return 500 if it fails
         try {
-            db.save(payload.toProduct())
+            db.save(product)
         } catch (e: Exception) {
-            throw ServerErrorException("Failed to save product in database, but created in storage system", e)
+            throw ServerErrorException("Failed to save product in the database, but created in the storage system", e)
         }
 
         // Product service should return a 201 response if the product was created with created product in response body
@@ -60,11 +58,6 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
 
         if (payload.productCategory.isBlank()) {
             throw ServerWebInputException("The product's category is required, and it cannot be blank")
-        }
-
-        // Quantity has to be a whole number, despite some storage systems supporting floating points
-        if (payload.quantity != null && floor(payload.quantity) != ceil(payload.quantity)) {
-            throw ServerWebInputException("The product's quantity has to be a whole number")
         }
     }
 
