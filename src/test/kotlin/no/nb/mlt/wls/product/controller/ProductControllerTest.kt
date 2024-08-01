@@ -8,7 +8,6 @@ import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
