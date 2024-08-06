@@ -26,7 +26,7 @@ data class SynqProductPayload(
         ESK
     }
 
-    data class Barcode(val barcodeId: String)
+    data class Barcode(val barcodeId: String, val barcodeDesc: String)
 
     data class ProductUom(val uomId: SynqPackaging)
 }
@@ -45,11 +45,12 @@ fun SynqProductPayload.toProduct() =
         owner = owner.toOwner()
     )
 
+// FIXME - metadata for barcode is lost
 fun Product.toSynqPayload() =
     SynqProductPayload(
         productId = hostId,
         owner = owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(hostId),
+        barcode = SynqProductPayload.Barcode(hostId, "barcode"),
         description = description,
         productCategory = productCategory,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
