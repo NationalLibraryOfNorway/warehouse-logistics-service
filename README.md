@@ -112,14 +112,14 @@ docker pull harbor.nb.no/mlt/wls:<TAG>
 With the image either built or pulled, it can be run using the following command:
 
 ```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE='dev' harbor.nb.no/mlt/wls:<TAG>
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE='local-dev' harbor.nb.no/mlt/wls:<TAG>
 ```
 
 ### Using an IDE
 
 For local development and testing an IDE like [IntelliJ IDEA](https://www.jetbrains.com/idea/) is recommended.
 Its default Spring run configuration for the application works well.
-To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `dev`.
+To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `local-dev`.
 In case you can't/won't use local Keycloak instance, then provide the `KEYCLOAK_ISSUER_URI` variable (see below) and set the `SPRING_PROFILES_ACTIVE` variable to `stage`.
 Keycloak in `dev` and `stage` is set up with a test client `wls`.
 
@@ -224,7 +224,7 @@ Although it's better to run them on your machine before pushing as it will save 
 The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
-- `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `dev` or `stage` for testing authentication (optional, default is `pipeline`)
+- `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev` or `stage` for testing authentication (optional, default is `pipeline`)
 - `MONGODB_USERNAME`: Is the username used for connecting to MongoDB (required)
 - `MONGODB_PASSWORD`: Is the password used for connecting to MongoDB (required)
 - `MONGODB_DATABASE`: Is the name of the database that Hermes should use (required)
