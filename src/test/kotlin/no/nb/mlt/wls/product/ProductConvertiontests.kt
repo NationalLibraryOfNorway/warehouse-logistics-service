@@ -11,6 +11,7 @@ import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import no.nb.mlt.wls.product.payloads.toApiPayload
 import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.payloads.toSynqPayload
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ProductConvertiontests {
@@ -55,52 +56,52 @@ class ProductConvertiontests {
     @Test
     fun `product converts to payload`() {
         val payload = testProduct.toApiPayload()
-        assert(payload.hostId == testProductPayload.hostId)
-        assert(payload.hostName == testProductPayload.hostName)
-        assert(payload.description == testProductPayload.description)
-        assert(payload.productCategory == testProductPayload.productCategory)
-        assert(payload.preferredEnvironment == testProductPayload.preferredEnvironment)
-        assert(payload.packaging == testProductPayload.packaging)
-        assert(payload.owner == testProductPayload.owner)
-        assert(payload.location == testProductPayload.location)
-        assert(payload.quantity == testProductPayload.quantity)
+        assertThat(payload.hostId).isEqualTo(testProductPayload.hostId)
+        assertThat(payload.hostName).isEqualTo(testProductPayload.hostName)
+        assertThat(payload.description).isEqualTo(testProductPayload.description)
+        assertThat(payload.productCategory).isEqualTo(testProductPayload.productCategory)
+        assertThat(payload.preferredEnvironment).isEqualTo(testProductPayload.preferredEnvironment)
+        assertThat(payload.packaging).isEqualTo(testProductPayload.packaging)
+        assertThat(payload.owner).isEqualTo(testProductPayload.owner)
+        assertThat(payload.location).isEqualTo(testProductPayload.location)
+        assertThat(payload.quantity).isEqualTo(testProductPayload.quantity)
     }
 
     @Test
     fun `product converts to SynQ payload`() {
         val synqPayload = testProduct.toSynqPayload()
-        assert(synqPayload.hostName == testSynqPayload.hostName)
-        assert(synqPayload.productId == testSynqPayload.productId)
-        assert(synqPayload.productUom.uomId == testSynqPayload.productUom.uomId)
-        assert(synqPayload.productCategory == testSynqPayload.productCategory)
-        assert(synqPayload.barcode.barcodeId == testSynqPayload.barcode.barcodeId)
-        assert(synqPayload.owner == testSynqPayload.owner)
-        assert(synqPayload.description == testSynqPayload.description)
+        assertThat(synqPayload.hostName).isEqualTo(testSynqPayload.hostName)
+        assertThat(synqPayload.productId).isEqualTo(testSynqPayload.productId)
+        assertThat(synqPayload.productUom.uomId).isEqualTo(testSynqPayload.productUom.uomId)
+        assertThat(synqPayload.productCategory).isEqualTo(testSynqPayload.productCategory)
+        assertThat(synqPayload.barcode.barcodeId).isEqualTo(testSynqPayload.barcode.barcodeId)
+        assertThat(synqPayload.owner).isEqualTo(testSynqPayload.owner)
+        assertThat(synqPayload.description).isEqualTo(testSynqPayload.description)
     }
 
     @Test
     fun `payload converts to product`() {
         val product = testProductPayload.toProduct()
-        assert(product.hostId == testProduct.hostId)
-        assert(product.hostName == testProduct.hostName)
-        assert(product.description == testProduct.description)
-        assert(product.productCategory == testProduct.productCategory)
-        assert(product.preferredEnvironment == testProduct.preferredEnvironment)
-        assert(product.packaging == testProduct.packaging)
-        assert(product.owner == testProduct.owner)
-        assert(product.location == testProduct.location)
-        assert(product.quantity == testProduct.quantity)
+        assertThat(product.hostId).isEqualTo(testProduct.hostId)
+        assertThat(product.hostName).isEqualTo(testProduct.hostName)
+        assertThat(product.description).isEqualTo(testProduct.description)
+        assertThat(product.productCategory).isEqualTo(testProduct.productCategory)
+        assertThat(product.preferredEnvironment).isEqualTo(testProduct.preferredEnvironment)
+        assertThat(product.packaging).isEqualTo(testProduct.packaging)
+        assertThat(product.owner).isEqualTo(testProduct.owner)
+        assertThat(product.location).isEqualTo(testProduct.location)
+        assertThat(product.quantity).isEqualTo(testProduct.quantity)
     }
 
     @Test
     fun `payload converts to SynQ payload`() {
         val synq = testProductPayload.toProduct().toSynqPayload()
-        assert(synq.hostName == testSynqPayload.hostName)
-        assert(synq.productId == testSynqPayload.productId)
-        assert(synq.productUom.uomId == testSynqPayload.productUom.uomId)
-        assert(synq.productCategory == testSynqPayload.productCategory)
-        assert(synq.barcode.barcodeId == testSynqPayload.barcode.barcodeId)
-        assert(synq.owner == testSynqPayload.owner)
-        assert(synq.description == testSynqPayload.description)
+        assertThat(synq.hostName).isEqualTo(testSynqPayload.hostName)
+        assertThat(synq.productId).isEqualTo(testSynqPayload.productId)
+        assertThat(synq.productUom.uomId).isEqualTo(testSynqPayload.productUom.uomId)
+        assertThat(synq.productCategory).isEqualTo(testSynqPayload.productCategory)
+        assertThat(synq.barcode.barcodeId).isEqualTo(testSynqPayload.barcode.barcodeId)
+        assertThat(synq.owner).isEqualTo(testSynqPayload.owner)
+        assertThat(synq.description).isEqualTo(testSynqPayload.description)
     }
 }
