@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.product.service
 
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
@@ -38,11 +39,11 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         }
 
         // Product service should save the product in the database, and return 500 if it fails
-        try {
-            db.save(product)
-        } catch (e: Exception) {
-            throw ServerErrorException("Failed to save product in the database, but created in the storage system", e)
-        }
+        db.save(product)
+            .onErrorMap {
+                throw ServerErrorException("Failed to save product in the database, but created in the storage system", it)
+            }
+            .awaitSingle()
 
         // Product service should return a 201 response if the product was created with created product in response body
         return ResponseEntity.status(HttpStatus.CREATED).body(product.toApiPayload())
@@ -66,6 +67,6 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         hostName: HostName,
         name: String
     ): Product? {
-        return db.findByHostNameAndHostId(hostName, name).awaitSingle()
+        return db.findByHostNameAndHostId(hostName, name).awaitSingleOrNull()
     }
 }

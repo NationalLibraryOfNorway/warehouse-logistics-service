@@ -35,6 +35,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
+// FIXME - Should respect couroutines
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient
