@@ -4,6 +4,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.runBlocking
 import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus.OK
 import org.springframework.http.ResponseEntity
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
+import reactor.core.publisher.Mono
 import java.net.URI
 
 @TestInstance(PER_CLASS)
@@ -59,29 +61,32 @@ class ProductServiceTest {
 
     @Test
     fun `save called with existing product, returns existing product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns tpp.toProduct()
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.just(tpp.toProduct())
 
-        val response = cut.save(tpp)
+        runBlocking {
+            val response = cut.save(tpp)
 
-        assertThat(response.body).isEqualTo(tpp)
-        assertThat(response.statusCode).isEqualTo(OK)
+            assertThat(response.body).isEqualTo(tpp)
+            assertThat(response.statusCode).isEqualTo(OK)
+        }
     }
 
     @Test
     fun `save called with product that SynQ says exists, returns without a product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns null
-        every { synq.createProduct(any()) } returns ResponseEntity.ok().build()
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.ok().build()
 
-        val response = cut.save(tpp)
-
-        assertThat(response.body).isNull()
-        assertThat(response.statusCode).isEqualTo(OK)
+        runBlocking {
+            val response = cut.save(tpp)
+            assertThat(response.body).isNull()
+            assertThat(response.statusCode).isEqualTo(OK)
+        }
     }
 
     @Test
     fun `save when synq fails handles it gracefully`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns null
-        every { synq.createProduct(any()) } throws
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+        every { runBlocking { synq.createProduct(any()) } } throws
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with error code: '420' and error text: 'Blaze it LMAO'",
                 Exception("420 Blaze it")
@@ -92,8 +97,8 @@ class ProductServiceTest {
 
     @Test
     fun `save when DB fails handles it gracefully`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns null
-        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.never()
+        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } throws Exception("DB is down")
 
         assertExceptionThrownWithMessage(tpp, "Failed to save product in the database", ServerErrorException::class.java)
@@ -101,15 +106,17 @@ class ProductServiceTest {
 
     @Test
     fun `save with no errors returns created product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns null
-        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
-        every { db.save(any()) } returns tpp.toProduct()
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.created(URI.create("")).build()
+        every { db.save(any()) } returns Mono.just(tpp.toProduct())
 
-        val response = cut.save(tpp)
-        val cleanedProduct = tpp.copy(quantity = 0.0, location = null)
+        runBlocking {
+            val response = cut.save(tpp)
+            val cleanedProduct = tpp.copy(quantity = 0.0, location = null)
 
-        assertThat(response.body).isEqualTo(cleanedProduct)
-        assertThat(response.statusCode).isEqualTo(CREATED)
+            assertThat(response.body).isEqualTo(cleanedProduct)
+            assertThat(response.statusCode).isEqualTo(CREATED)
+        }
     }
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -135,6 +142,6 @@ class ProductServiceTest {
         message: String,
         exception: Class<T>
     ) = assertThatExceptionOfType(exception).isThrownBy {
-        cut.save(payload)
+        runBlocking { cut.save(payload) }
     }.withMessageContaining(message)
 }

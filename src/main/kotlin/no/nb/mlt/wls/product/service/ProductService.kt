@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
+import java.time.Duration
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
@@ -67,6 +68,6 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         hostName: HostName,
         name: String
     ): Product? {
-        return db.findByHostNameAndHostId(hostName, name).awaitSingleOrNull()
+        return db.findByHostNameAndHostId(hostName, name).timeout(Duration.ofSeconds(6)).awaitSingleOrNull()
     }
 }
