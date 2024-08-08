@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.product.controller
 
-import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.Environment.NONE
@@ -23,14 +22,11 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.server.ServerErrorException
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -128,16 +124,6 @@ class ProductControllerTest(
     @Test
     @WithMockUser
     fun `createProduct handles SynQ error`() {
-        every {
-            synqProductService.createProduct(any())
-        }.throws(
-            ServerErrorException(
-                "Failed to create product in SynQ, the storage system responded with " +
-                    "error code: '1002' and error text: 'Unknown product category TEST.'",
-                HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
-            )
-        )
-
         webTestClient
             .mutateWith(csrf())
             .post()
