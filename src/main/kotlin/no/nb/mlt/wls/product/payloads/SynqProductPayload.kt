@@ -26,7 +26,7 @@ data class SynqProductPayload(
         ESK
     }
 
-    data class Barcode(val barcodeId: String, val barcodeDesc: String)
+    data class Barcode(val barcodeId: String)
 
     data class ProductUom(val uomId: SynqPackaging)
 }
@@ -50,7 +50,7 @@ fun Product.toSynqPayload() =
     SynqProductPayload(
         productId = hostId,
         owner = owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(hostId, "barcode"),
+        barcode = SynqProductPayload.Barcode(hostId),
         description = description,
         productCategory = productCategory,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),

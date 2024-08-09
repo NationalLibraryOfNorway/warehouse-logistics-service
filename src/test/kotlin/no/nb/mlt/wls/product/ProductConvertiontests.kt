@@ -45,7 +45,7 @@ class ProductConvertiontests {
         SynqProductPayload(
             productId = "mlt-test-1234",
             owner = SynqOwner.NB,
-            barcode = SynqProductPayload.Barcode("mlt-test-1234", "barcode"),
+            barcode = SynqProductPayload.Barcode("mlt-test-1234"),
             description = "Tyven skal du hete",
             productCategory = "NONE",
             productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
