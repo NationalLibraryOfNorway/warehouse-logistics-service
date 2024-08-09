@@ -2,6 +2,7 @@ package no.nb.mlt.wls.product.service
 
 import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,9 +14,9 @@ import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
 @Service
-class SynqProductService {
-    val webClient: WebClient = WebClient.builder().build()
-
+class SynqProductService(
+    @Autowired val webClient: WebClient
+) {
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
