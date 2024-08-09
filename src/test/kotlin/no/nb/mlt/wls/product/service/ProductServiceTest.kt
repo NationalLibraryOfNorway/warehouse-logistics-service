@@ -74,7 +74,7 @@ class ProductServiceTest {
     @Test
     fun `save called with product that SynQ says exists, returns without a product`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.ok().build()
+        every { synq.createProduct(any()) } returns ResponseEntity.ok().build()
 
         runBlocking {
             val response = cut.save(tpp)
@@ -86,7 +86,7 @@ class ProductServiceTest {
     @Test
     fun `save when synq fails handles it gracefully`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { runBlocking { synq.createProduct(any()) } } throws
+        every { synq.createProduct(any()) } throws
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with error code: '420' and error text: 'Blaze it LMAO'",
                 Exception("420 Blaze it")
@@ -98,7 +98,7 @@ class ProductServiceTest {
     @Test
     fun `save when DB fails handles it gracefully`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.never()
-        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.created(URI.create("")).build()
+        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } throws Exception("DB is down")
 
         assertExceptionThrownWithMessage(tpp, "Failed to save product in the database", ServerErrorException::class.java)
@@ -107,7 +107,7 @@ class ProductServiceTest {
     @Test
     fun `save with no errors returns created product`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { runBlocking { synq.createProduct(any()) } } returns ResponseEntity.created(URI.create("")).build()
+        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } returns Mono.just(tpp.toProduct())
 
         runBlocking {

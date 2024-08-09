@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
@@ -22,7 +21,7 @@ class SynqOrderService(
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
-    suspend fun createOrder(payload: SynqOrderPayload): ResponseEntity<SynqError> {
+    fun createOrder(payload: SynqOrderPayload): ResponseEntity<SynqError> {
         val uri = URI.create("$baseUrl/orders/batch")
 
         // Wrap the order in the way SynQ likes it
@@ -35,7 +34,8 @@ class SynqOrderService(
                     .uri(uri)
                     .body(BodyInserters.fromValue(orders))
                     .retrieve()
-                    .awaitBody<SynqError>(),
+                    .bodyToMono(SynqError::class.java)
+                    .block(),
                 HttpStatus.CREATED
             )
         } catch (exception: HttpClientErrorException) {

@@ -69,7 +69,7 @@ class ProductControllerTest(
     @WithMockUser
     fun `createProduct with valid payload creates product`() {
         every {
-            runBlocking { synqProductService.createProduct(any()) }
+            synqProductService.createProduct(any())
         } returns ResponseEntity.created(URI.create("")).build()
 
         webTestClient
@@ -131,7 +131,7 @@ class ProductControllerTest(
     @WithMockUser
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
         every {
-            runBlocking { synqProductService.createProduct(any()) }
+            synqProductService.createProduct(any())
         } returns ResponseEntity.badRequest().body(SynqError(400, "Duplicate product"))
 
         webTestClient
@@ -148,7 +148,7 @@ class ProductControllerTest(
     @WithMockUser
     fun `createProduct handles SynQ error`() {
         every {
-            runBlocking { synqProductService.createProduct(any()) }
+            synqProductService.createProduct(any())
         }.throws(
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with " +

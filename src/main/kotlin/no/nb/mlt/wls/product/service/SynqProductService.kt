@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
@@ -20,7 +19,7 @@ class SynqProductService {
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
-    suspend fun createProduct(payload: SynqProductPayload): ResponseEntity<SynqError> {
+    fun createProduct(payload: SynqProductPayload): ResponseEntity<SynqError> {
         // NOTE - Could trust validation from product service? Or should this have some SynQ specific validation?
         val uri = URI.create("$baseUrl/nbproducts")
         try {
@@ -30,7 +29,8 @@ class SynqProductService {
                     .uri(uri)
                     .body(BodyInserters.fromValue(payload))
                     .retrieve()
-                    .awaitBody<SynqError>(),
+                    .bodyToMono(SynqError::class.java)
+                    .block(),
                 HttpStatus.CREATED
             )
         } catch (exception: HttpClientErrorException) {
