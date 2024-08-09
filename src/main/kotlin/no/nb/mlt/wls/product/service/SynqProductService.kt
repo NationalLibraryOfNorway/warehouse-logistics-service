@@ -2,20 +2,21 @@ package no.nb.mlt.wls.product.service
 
 import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.BodyInserters
+import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
 @Service
-class SynqProductService {
-    val restTemplate: RestTemplate = RestTemplate()
-
+class SynqProductService(
+    @Autowired val webClient: WebClient
+) {
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
@@ -23,7 +24,16 @@ class SynqProductService {
         // NOTE - Could trust validation from product service? Or should this have some SynQ specific validation?
         val uri = URI.create("$baseUrl/nbproducts")
         try {
-            return restTemplate.exchange(uri, HttpMethod.POST, HttpEntity(payload), SynqError::class.java)
+            return ResponseEntity(
+                webClient
+                    .post()
+                    .uri(uri)
+                    .body(BodyInserters.fromValue(payload))
+                    .retrieve()
+                    .bodyToMono(SynqError::class.java)
+                    .block(),
+                HttpStatus.CREATED
+            )
         } catch (exception: HttpClientErrorException) {
             // Get SynQ error from the response body if possible
             val errorBody = exception.getResponseBodyAs(SynqError::class.java)

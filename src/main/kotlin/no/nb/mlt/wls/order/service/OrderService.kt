@@ -1,5 +1,8 @@
 package no.nb.mlt.wls.order.service
 
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
@@ -12,25 +15,25 @@ import org.springframework.web.server.ServerErrorException
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
-    fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
-        // TODO - Order validation?
+    suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+        val existingOrder = getByHostNameAndHostOrderId(payload)
 
-        val existingOrder = db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
         if (existingOrder != null) {
-            return ResponseEntity.ok(existingOrder.toApiOrderPayload())
-        }
-
-        val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
-        if (!synqResponse.statusCode.is2xxSuccessful) {
-            return ResponseEntity.internalServerError().build()
+            return ResponseEntity.badRequest().build()
         }
 
         try {
-            db.save(payload.toOrder())
+            // TODO - Handle?
+            val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
+            // Return what the database saved, as it could contain changes
+            val order = db.save(payload.toOrder()).awaitSingle()
+            return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
         } catch (e: Exception) {
-            throw ServerErrorException("Failed to save product in database, but created in storage system", e)
+            throw ServerErrorException("Failed to create order in storage system", e)
         }
+    }
 
-        return ResponseEntity.status(HttpStatus.CREATED).build()
+    suspend fun getByHostNameAndHostOrderId(payload: ApiOrderPayload): Order? {
+        return db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId).awaitSingleOrNull()
     }
 }

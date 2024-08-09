@@ -3,11 +3,14 @@ package no.nb.mlt.wls.product.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.runBlocking
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
@@ -35,6 +38,7 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
+// FIXME - Should respect couroutines
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient
@@ -76,12 +80,14 @@ class ProductControllerTest(
             .exchange()
             .expectStatus().isCreated
 
-        val product = repository.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId)
+        runBlocking {
+            val product = repository.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId).awaitSingle()
 
-        assertThat(product)
-            .isNotNull
-            .extracting("description", "location", "quantity")
-            .containsExactly(testProductPayload.description, null, 0.0)
+            assertThat(product)
+                .isNotNull
+                .extracting("description", "location", "quantity")
+                .containsExactly(testProductPayload.description, null, 0.0)
+        }
     }
 
     @Test
@@ -126,7 +132,7 @@ class ProductControllerTest(
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
         every {
             synqProductService.createProduct(any())
-        } returns ResponseEntity.ok().build()
+        } returns ResponseEntity.badRequest().body(SynqError(400, "Duplicate product"))
 
         webTestClient
             .mutateWith(csrf())
@@ -194,7 +200,8 @@ class ProductControllerTest(
 
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
-        repository.deleteAll()
-        repository.save(duplicateProductPayload.toProduct())
+        runBlocking {
+            repository.deleteAll().then(repository.save(duplicateProductPayload.toProduct())).awaitSingle()
+        }
     }
 }

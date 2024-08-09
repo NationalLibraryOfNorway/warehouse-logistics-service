@@ -33,7 +33,8 @@ class OrderController(val orderService: OrderService) {
             responseCode = "400",
             description =
                 """Order payload is invalid and was not created.
-                Error message contains information about the invalid fields.""",
+                An empty error message means the order already exists with the current ID.
+                Otherwise, the error message contains information about the invalid fields.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -48,7 +49,7 @@ class OrderController(val orderService: OrderService) {
         )
     )
     @PostMapping("/order/batch/create")
-    fun createOrder(
+    suspend fun createOrder(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
 }
