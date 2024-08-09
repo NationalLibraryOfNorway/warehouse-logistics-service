@@ -71,7 +71,7 @@ spring:
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
   path:
-    base: http://dummycatalog.nb.no/synq/resources
+    base: http://localhost:8181/synq/resources
 
 ---
 

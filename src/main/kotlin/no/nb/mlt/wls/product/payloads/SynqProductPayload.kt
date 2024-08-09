@@ -45,6 +45,7 @@ fun SynqProductPayload.toProduct() =
         owner = owner.toOwner()
     )
 
+// FIXME - metadata for barcode is lost
 fun Product.toSynqPayload() =
     SynqProductPayload(
         productId = hostId,
