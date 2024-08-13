@@ -44,6 +44,11 @@ logging:
     # Set the logging level for the web package to debug
     web: debug
 
+# Set a dummycatalog base path to SynQ for testing purposes
+synq:
+  path:
+    base: http://localhost:8181/synq/resources
+
 ---
 
 # This is the configuration for the local-dev profile
