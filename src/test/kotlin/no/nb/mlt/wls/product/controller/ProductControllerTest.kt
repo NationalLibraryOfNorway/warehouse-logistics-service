@@ -10,7 +10,6 @@ import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
@@ -130,9 +129,10 @@ class ProductControllerTest(
     @Test
     @WithMockUser
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
+        // SynqService converts an error to return OK if it finds a duplicate product
         every {
             synqProductService.createProduct(any())
-        } returns ResponseEntity.badRequest().body(SynqError(400, "Duplicate product"))
+        } returns ResponseEntity.ok().build()
 
         webTestClient
             .mutateWith(csrf())
