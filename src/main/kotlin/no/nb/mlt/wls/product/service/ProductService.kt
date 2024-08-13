@@ -68,6 +68,10 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         hostName: HostName,
         name: String
     ): Product? {
-        return db.findByHostNameAndHostId(hostName, name).timeout(Duration.ofSeconds(6)).awaitSingleOrNull()
+        // REVIEW - Can probably be improved to be more graceful
+        return db.findByHostNameAndHostId(hostName, name)
+            .timeout(Duration.ofSeconds(6))
+            .onErrorComplete()
+            .awaitSingleOrNull()
     }
 }

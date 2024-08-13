@@ -95,11 +95,12 @@ class ProductServiceTest {
         assertExceptionThrownWithMessage(tpp, "error code: '420' and error text: 'Blaze it LMAO'", ServerErrorException::class.java)
     }
 
+    @Suppress("ReactiveStreamsUnusedPublisher")
     @Test
     fun `save when DB fails handles it gracefully`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.never()
         every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
-        every { db.save(any()) } throws Exception("DB is down")
+        every { db.save(any()) } returns Mono.error(Exception("DB is down"))
 
         assertExceptionThrownWithMessage(tpp, "Failed to save product in the database", ServerErrorException::class.java)
     }
