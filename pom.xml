@@ -77,7 +77,7 @@
     <kotlin.compiler.apiVersion>2.0</kotlin.compiler.apiVersion>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
-
+    <kotlin.logging.version>7.0.0</kotlin.logging.version>
   </properties>
 
   <dependencies>
@@ -98,7 +98,7 @@
 
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-mongodb</artifactId>
+      <artifactId>spring-boot-starter-data-mongodb-reactive</artifactId>
     </dependency>
 
     <dependency>
@@ -181,6 +181,12 @@
       <version>${mockk.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.github.oshai</groupId>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>${kotlin.logging.version}</version>
+    </dependency>
+
 
   </dependencies>
 
