@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.order.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.order.model.Order
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import java.time.Duration
 import java.util.concurrent.TimeoutException
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
@@ -44,7 +47,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 if (it is TimeoutException) {
-                    // TODO - Log
+                    logger.error(it, { "Timed out while fetching from WLS database" })
                 }
             }
             .onErrorComplete(TimeoutException::class.java)

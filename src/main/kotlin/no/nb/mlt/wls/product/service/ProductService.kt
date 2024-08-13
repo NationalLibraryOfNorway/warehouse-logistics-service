@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.product.service
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.core.data.HostName
@@ -16,6 +17,8 @@ import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
 import java.util.concurrent.TimeoutException
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
@@ -75,7 +78,7 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 if (it is TimeoutException) {
-                    // TODO - Log
+                    logger.error(it, { "Timed out while fetching from WLS database" })
                 }
             }
             .onErrorComplete(TimeoutException::class.java)
