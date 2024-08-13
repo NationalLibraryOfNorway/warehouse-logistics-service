@@ -25,6 +25,7 @@ import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import reactor.core.publisher.Mono
 import java.net.URI
+import java.util.concurrent.TimeoutException
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
@@ -98,7 +99,7 @@ class ProductServiceTest {
     @Suppress("ReactiveStreamsUnusedPublisher")
     @Test
     fun `save when DB fails handles it gracefully`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.never()
+        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.error(TimeoutException())
         every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } returns Mono.error(Exception("DB is down"))
 
