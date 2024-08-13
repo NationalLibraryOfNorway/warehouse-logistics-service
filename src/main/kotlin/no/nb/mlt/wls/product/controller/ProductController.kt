@@ -77,7 +77,7 @@ class ProductController(val productService: ProductService) {
         ]
     )
     @PostMapping("/product")
-    fun createProduct(
+    suspend fun createProduct(
         @RequestBody payload: ApiProductPayload
     ): ResponseEntity<ApiProductPayload> = productService.save(payload)
 }
