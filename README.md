@@ -96,7 +96,7 @@ docker buildx build --platform linux/amd64 -t wls:latest docker/
 - When building the Docker image outside of NLNs network the build will fail, as it won't be able to access internal Harbor instance.
   In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-alpine` and build the image locally.
 - If you are outside of NLNs network your tests will fail, as an image for the dummy SynQ server is required for tests.
-  There is currently no replacement available for this.
+  There is currently no replacement available for this, except for building the image for Dummy SynQ manually and pointing to it in places where it's used.
 - Do not attempt to push the image to Harbor manually, as it will fail.
   The image is built and pushed to Harbor automatically by the CI/CD pipeline.
 
@@ -226,7 +226,7 @@ Although it's better to run them on your machine before pushing as it will save 
 The following environment variables are relevant to configuring the application:
 
 - `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (required)
-- `KEYCLOAK_TOKEN_AUD`: Is used to set the audience for which Keycloak server the application intends to authenticate from (required)
+- `KEYCLOAK_TOKEN_AUD`: Is used to set the audience of the Keycloak JWT token, it must match with the issued token audience value, which is different between environments (required)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev` or `stage` for testing authentication (optional, default is `pipeline`)
 - `MONGODB_USERNAME`: Is the username used for connecting to MongoDB (required)
 - `MONGODB_PASSWORD`: Is the password used for connecting to MongoDB (required)
