@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
+import java.util.concurrent.TimeoutException
 
 @Service
 class ProductService(val db: ProductRepository, val synqProductService: SynqProductService) {
@@ -41,6 +42,7 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
 
         // Product service should save the product in the database, and return 500 if it fails
         db.save(product)
+            .timeout(Duration.ofSeconds(6))
             .onErrorMap {
                 throw ServerErrorException("Failed to save product in the database, but created in the storage system", it)
             }
@@ -68,10 +70,15 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         hostName: HostName,
         name: String
     ): Product? {
-        // REVIEW - Can probably be improved to be more graceful
+        // TODO - See if timeouts can be made configurable
         return db.findByHostNameAndHostId(hostName, name)
-            .timeout(Duration.ofSeconds(6))
-            .onErrorComplete()
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                if (it is TimeoutException) {
+                    // TODO - Log
+                }
+            }
+            .onErrorComplete(TimeoutException::class.java)
             .awaitSingleOrNull()
     }
 }

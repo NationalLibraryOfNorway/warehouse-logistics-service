@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
+import java.time.Duration
+import java.util.concurrent.TimeoutException
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
@@ -23,10 +25,13 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         }
 
         try {
-            // TODO - Handle?
+            // TODO - Usages?
             val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
             // Return what the database saved, as it could contain changes
-            val order = db.save(payload.toOrder()).awaitSingle()
+            val order =
+                db.save(payload.toOrder())
+                    .timeout(Duration.ofSeconds(6))
+                    .awaitSingle()
             return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
         } catch (e: Exception) {
             throw ServerErrorException("Failed to create order in storage system", e)
@@ -34,6 +39,15 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     }
 
     suspend fun getByHostNameAndHostOrderId(payload: ApiOrderPayload): Order? {
-        return db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId).awaitSingleOrNull()
+        // TODO - See if timeouts can be made configurable
+        return db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                if (it is TimeoutException) {
+                    // TODO - Log
+                }
+            }
+            .onErrorComplete(TimeoutException::class.java)
+            .awaitSingleOrNull()
     }
 }
