@@ -2,6 +2,7 @@ package no.nb.mlt.wls.product.service
 
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.core.data.synq.SynqError
+import no.nb.mlt.wls.core.data.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -38,21 +39,9 @@ class SynqProductService(
                     Mono.error(error)
                 }
             }
-            .onErrorMap(WebClientResponseException::class.java) { transformSynqError(it) }
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .onErrorReturn(DuplicateProductException::class.java, ResponseEntity.ok().build())
             .awaitSingle()
-    }
-
-    fun transformSynqError(error: WebClientResponseException): ServerErrorException {
-        val errorBody = error.getResponseBodyAs(SynqError::class.java)
-
-        return ServerErrorException(
-            "Failed to create product in SynQ, the storage system responded with error code: " +
-                "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
-                "and error text: " +
-                "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
-            error
-        )
     }
 }
 
