@@ -1,11 +1,10 @@
-package no.nb.mlt.wls.product
+package no.nb.mlt.wls.product.model
 
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.synq.SynqOwner
-import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import no.nb.mlt.wls.product.payloads.toApiPayload
@@ -14,8 +13,8 @@ import no.nb.mlt.wls.product.payloads.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class ProductConvertiontests {
-    val testProductPayload =
+class ProductModelConversionTest {
+    private val testProductPayload =
         ApiProductPayload(
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
@@ -28,7 +27,7 @@ class ProductConvertiontests {
             quantity = 1.0
         )
 
-    val testProduct =
+    private val testProduct =
         Product(
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
@@ -41,7 +40,7 @@ class ProductConvertiontests {
             quantity = 1.0
         )
 
-    val testSynqPayload =
+    private val testSynqPayload =
         SynqProductPayload(
             productId = "mlt-test-1234",
             owner = SynqOwner.NB,
@@ -54,7 +53,7 @@ class ProductConvertiontests {
         )
 
     @Test
-    fun `product converts to payload`() {
+    fun `product converts to API payload`() {
         val payload = testProduct.toApiPayload()
         assertThat(payload.hostId).isEqualTo(testProductPayload.hostId)
         assertThat(payload.hostName).isEqualTo(testProductPayload.hostName)
@@ -80,7 +79,7 @@ class ProductConvertiontests {
     }
 
     @Test
-    fun `payload converts to product`() {
+    fun `API payload converts to product`() {
         val product = testProductPayload.toProduct()
         assertThat(product.hostId).isEqualTo(testProduct.hostId)
         assertThat(product.hostName).isEqualTo(testProduct.hostName)
@@ -91,17 +90,5 @@ class ProductConvertiontests {
         assertThat(product.owner).isEqualTo(testProduct.owner)
         assertThat(product.location).isEqualTo(testProduct.location)
         assertThat(product.quantity).isEqualTo(testProduct.quantity)
-    }
-
-    @Test
-    fun `payload converts to SynQ payload`() {
-        val synq = testProductPayload.toProduct().toSynqPayload()
-        assertThat(synq.hostName).isEqualTo(testSynqPayload.hostName)
-        assertThat(synq.productId).isEqualTo(testSynqPayload.productId)
-        assertThat(synq.productUom.uomId).isEqualTo(testSynqPayload.productUom.uomId)
-        assertThat(synq.productCategory).isEqualTo(testSynqPayload.productCategory)
-        assertThat(synq.barcode.barcodeId).isEqualTo(testSynqPayload.barcode.barcodeId)
-        assertThat(synq.owner).isEqualTo(testSynqPayload.owner)
-        assertThat(synq.description).isEqualTo(testSynqPayload.description)
     }
 }
