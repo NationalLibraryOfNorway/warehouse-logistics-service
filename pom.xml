@@ -113,6 +113,12 @@
     </dependency>
 
     <dependency>
+      <groupId>io.github.oshai</groupId>
+      <artifactId>kotlin-logging-jvm</artifactId>
+      <version>${kotlin.logging.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-kotlin</artifactId>
     </dependency>
@@ -182,9 +188,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.github.oshai</groupId>
-      <artifactId>kotlin-logging-jvm</artifactId>
-      <version>${kotlin.logging.version}</version>
+      <groupId>org.jetbrains.kotlinx</groupId>
+      <artifactId>kotlinx-coroutines-test</artifactId>
+      <scope>test</scope>
     </dependency>
 
 

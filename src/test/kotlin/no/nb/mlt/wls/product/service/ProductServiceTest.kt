@@ -1,10 +1,12 @@
 package no.nb.mlt.wls.product.service
 
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
@@ -61,33 +63,31 @@ class ProductServiceTest {
     }
 
     @Test
-    fun `save called with existing product, returns existing product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.just(tpp.toProduct())
+    fun `save called with existing product, returns existing product`() =
+        runTest {
+            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.just(tpp.toProduct())
 
-        runBlocking {
             val response = cut.save(tpp)
 
             assertThat(response.body).isEqualTo(tpp)
             assertThat(response.statusCode).isEqualTo(OK)
         }
-    }
 
     @Test
-    fun `save called with product that SynQ says exists, returns without a product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { synq.createProduct(any()) } returns ResponseEntity.ok().build()
+    fun `save called with product that SynQ says exists, returns without a product`() =
+        runTest {
+            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+            coEvery { synq.createProduct(any()) } returns ResponseEntity.ok().build()
 
-        runBlocking {
             val response = cut.save(tpp)
             assertThat(response.body).isNull()
             assertThat(response.statusCode).isEqualTo(OK)
         }
-    }
 
     @Test
     fun `save when synq fails handles it gracefully`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { synq.createProduct(any()) } throws
+        coEvery { synq.createProduct(any()) } throws
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with error code: '420' and error text: 'Blaze it LMAO'",
                 Exception("420 Blaze it")
@@ -100,26 +100,25 @@ class ProductServiceTest {
     @Test
     fun `save when DB fails handles it gracefully`() {
         every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.error(TimeoutException())
-        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
+        coEvery { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } returns Mono.error(Exception("DB is down"))
 
         assertExceptionThrownWithMessage(tpp, "Failed to save product in the database", ServerErrorException::class.java)
     }
 
     @Test
-    fun `save with no errors returns created product`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
-        every { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
-        every { db.save(any()) } returns Mono.just(tpp.toProduct())
+    fun `save with no errors returns created product`() =
+        runTest {
+            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+            coEvery { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
+            every { db.save(any()) } returns Mono.just(tpp.toProduct())
 
-        runBlocking {
             val response = cut.save(tpp)
             val cleanedProduct = tpp.copy(quantity = 0.0, location = null)
 
             assertThat(response.body).isEqualTo(cleanedProduct)
             assertThat(response.statusCode).isEqualTo(CREATED)
         }
-    }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////

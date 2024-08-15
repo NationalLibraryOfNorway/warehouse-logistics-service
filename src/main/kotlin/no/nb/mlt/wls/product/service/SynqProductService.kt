@@ -1,17 +1,17 @@
 package no.nb.mlt.wls.product.service
 
+import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.core.data.synq.SynqError
-import no.nb.mlt.wls.product.exceptions.DuplicateProductException
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.server.ServerErrorException
+import reactor.core.publisher.Mono
 import java.net.URI
 
 @Service
@@ -21,7 +21,7 @@ class SynqProductService(
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
-    fun createProduct(payload: SynqProductPayload): ResponseEntity<SynqError> {
+    suspend fun createProduct(payload: SynqProductPayload): ResponseEntity<SynqError> {
         // NOTE - Could trust validation from product service? Or should this have some SynQ specific validation?
         val uri = URI.create("$baseUrl/nbproducts")
         return webClient
@@ -30,38 +30,30 @@ class SynqProductService(
             .body(BodyInserters.fromValue(payload))
             .retrieve()
             .toEntity(SynqError::class.java)
-            .onErrorMap {
-                if (it is HttpClientErrorException) {
-                    val errorBody = it.getResponseBodyAs(SynqError::class.java)
-                    if (errorBody != null && errorBody.errorText.contains("Duplicate product")) {
-                        DuplicateProductException()
-                    }
-                    transformSynqError(it)
+            .onErrorResume(WebClientResponseException::class.java) { error ->
+                val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
+                if (errorText != null && errorText.contains("Duplicate product")) {
+                    Mono.error(DuplicateProductException(error))
+                } else {
+                    Mono.error(error)
                 }
-                it
             }
-            .onErrorMap(WebClientResponseException::class.java, { transformSynqError(it) })
+            .onErrorMap(WebClientResponseException::class.java) { transformSynqError(it) }
             .onErrorReturn(DuplicateProductException::class.java, ResponseEntity.ok().build())
-            .block()!!
+            .awaitSingle()
     }
 
-    fun transformSynqError(t: Throwable): ServerErrorException {
-        var errorBody: SynqError? = null
-
-        if (t is WebClientResponseException) {
-            errorBody = t.getResponseBodyAs(SynqError::class.java)
-        }
-
-        if (t is WebClientResponseException) {
-            errorBody = t.getResponseBodyAs(SynqError::class.java)
-        }
+    fun transformSynqError(error: WebClientResponseException): ServerErrorException {
+        val errorBody = error.getResponseBodyAs(SynqError::class.java)
 
         return ServerErrorException(
             "Failed to create product in SynQ, the storage system responded with error code: " +
                 "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
                 "and error text: " +
                 "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
-            t
+            error
         )
     }
 }
+
+class DuplicateProductException(override val cause: Throwable) : ServerErrorException("Product already exists in SynQ", cause)
