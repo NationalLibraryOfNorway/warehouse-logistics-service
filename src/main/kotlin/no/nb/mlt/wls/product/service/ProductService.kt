@@ -3,8 +3,6 @@ package no.nb.mlt.wls.product.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.product.model.Product
 import no.nb.mlt.wls.product.payloads.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.toApiPayload
 import no.nb.mlt.wls.product.payloads.toProduct
@@ -26,8 +24,18 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         // Check if the payload is valid and throw an exception if it is not
         throwIfInvalidPayload(payload)
 
+        // TODO - See if timeouts can be made configurable
         // Product service should check if product already exists, and return a 200 response if it does
-        val existingProduct = getByHostNameAndId(payload.hostName, payload.hostId)
+        val existingProduct =
+            db.findByHostNameAndHostId(payload.hostName, payload.hostId)
+                .timeout(Duration.ofSeconds(8))
+                .onErrorMap(TimeoutException::class.java) {
+                    logger.error(it) {
+                        "Timed out while fetching from WLS database. Payload: $payload"
+                    }
+                    ServerErrorException("Failed to save product in the database", it)
+                }
+                .awaitSingleOrNull()
         if (existingProduct != null) {
             return ResponseEntity.ok(existingProduct.toApiPayload())
         }
@@ -67,20 +75,5 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         if (payload.productCategory.isBlank()) {
             throw ServerWebInputException("The product's category is required, and it cannot be blank")
         }
-    }
-
-    suspend fun getByHostNameAndId(
-        hostName: HostName,
-        name: String
-    ): Product? {
-        // TODO - See if timeouts can be made configurable
-        return db.findByHostNameAndHostId(hostName, name)
-            .timeout(Duration.ofSeconds(8))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while fetching from WLS database"
-                }
-            }
-            .awaitSingleOrNull()
     }
 }
