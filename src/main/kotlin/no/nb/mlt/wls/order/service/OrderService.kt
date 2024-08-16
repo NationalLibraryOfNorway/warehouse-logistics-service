@@ -3,7 +3,6 @@ package no.nb.mlt.wls.order.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
@@ -21,7 +20,16 @@ private val logger = KotlinLogging.logger {}
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
-        val existingOrder = getByHostNameAndHostOrderId(payload)
+        val existingOrder =
+            db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+                .timeout(Duration.ofSeconds(8))
+                .onErrorMap(TimeoutException::class.java) {
+                    logger.error(it) {
+                        "Timed out while fetching from WLS database. Relevant payload: $payload"
+                    }
+                    ServerErrorException("Failed to create the order in storage system", it)
+                }
+                .awaitSingleOrNull()
 
         if (existingOrder != null) {
             return ResponseEntity.badRequest().build()
@@ -39,17 +47,5 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .awaitSingle()
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
-    }
-
-    suspend fun getByHostNameAndHostOrderId(payload: ApiOrderPayload): Order? {
-        // TODO - See if timeouts can be made configurable
-        return db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
-            .timeout(Duration.ofSeconds(8))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while fetching from WLS database. Relevant payload: $payload"
-                }
-            }
-            .awaitSingleOrNull()
     }
 }
