@@ -50,7 +50,6 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                     "Timed out while fetching from WLS database. Relevant payload: $payload"
                 }
             }
-            .onErrorComplete(TimeoutException::class.java)
             .awaitSingleOrNull()
     }
 }

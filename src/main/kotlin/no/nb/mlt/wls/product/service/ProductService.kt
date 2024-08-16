@@ -47,7 +47,7 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         db.save(product)
             .timeout(Duration.ofSeconds(6))
             .onErrorMap {
-                throw ServerErrorException("Failed to save product in the database, but created in the storage system", it)
+                ServerErrorException("Failed to save product in the database, but created in the storage system", it)
             }
             .awaitSingle()
 
@@ -76,12 +76,11 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         // TODO - See if timeouts can be made configurable
         return db.findByHostNameAndHostId(hostName, name)
             .timeout(Duration.ofSeconds(8))
-            .doOnError {
-                if (it is TimeoutException) {
-                    logger.error(it, { "Timed out while fetching from WLS database" })
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching from WLS database"
                 }
             }
-            .onErrorComplete(TimeoutException::class.java)
             .awaitSingleOrNull()
     }
 }
