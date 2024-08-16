@@ -1,10 +1,11 @@
 package no.nb.mlt.wls.product.controller
 
 import com.ninjasquad.springmockk.MockkBean
-import io.mockk.every
+import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
@@ -37,7 +38,6 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.server.ServerErrorException
 import java.net.URI
 
-// FIXME - Should respect couroutines
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient
@@ -66,20 +66,20 @@ class ProductControllerTest(
 
     @Test
     @WithMockUser
-    fun `createProduct with valid payload creates product`() {
-        every {
-            synqProductService.createProduct(any())
-        } returns ResponseEntity.created(URI.create("")).build()
+    fun `createProduct with valid payload creates product`() =
+        runTest {
+            coEvery {
+                synqProductService.createProduct(any())
+            } returns ResponseEntity.created(URI.create("")).build()
 
-        webTestClient
-            .mutateWith(csrf())
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testProductPayload)
-            .exchange()
-            .expectStatus().isCreated
+            webTestClient
+                .mutateWith(csrf())
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testProductPayload)
+                .exchange()
+                .expectStatus().isCreated
 
-        runBlocking {
             val product = repository.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId).awaitSingle()
 
             assertThat(product)
@@ -87,7 +87,6 @@ class ProductControllerTest(
                 .extracting("description", "location", "quantity")
                 .containsExactly(testProductPayload.description, null, 0.0)
         }
-    }
 
     @Test
     @WithMockUser
@@ -130,7 +129,7 @@ class ProductControllerTest(
     @WithMockUser
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
         // SynqService converts an error to return OK if it finds a duplicate product
-        every {
+        coEvery {
             synqProductService.createProduct(any())
         } returns ResponseEntity.ok().build()
 
@@ -147,7 +146,7 @@ class ProductControllerTest(
     @Test
     @WithMockUser
     fun `createProduct handles SynQ error`() {
-        every {
+        coEvery {
             synqProductService.createProduct(any())
         }.throws(
             ServerErrorException(
