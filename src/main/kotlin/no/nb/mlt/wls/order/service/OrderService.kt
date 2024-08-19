@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ServerErrorException
+import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 
@@ -20,6 +21,8 @@ private val logger = KotlinLogging.logger {}
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidPayload(payload)
+
         val existingOrder =
             db.getByHostNameAndHostOrderId(payload.hostName, payload.orderId)
                 .timeout(Duration.ofSeconds(8))
@@ -47,5 +50,17 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .awaitSingle()
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
+    }
+
+    private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
+        if (payload.orderId.isBlank()) {
+            throw ServerWebInputException("The order's orderId is required, and can not be blank")
+        }
+        if (payload.hostOrderId.isBlank()) {
+            throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
+        }
+        if (payload.productLine.isEmpty()) {
+            throw ServerWebInputException("The order does not contain any product lines, and is therefore invalid")
+        }
     }
 }

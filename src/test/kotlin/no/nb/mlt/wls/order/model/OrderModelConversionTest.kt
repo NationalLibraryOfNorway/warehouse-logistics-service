@@ -22,14 +22,15 @@ class OrderModelConversionTest {
             productLine = listOf(ProductLine("hostProductId", OrderLineStatus.NOT_STARTED)),
             orderType = OrderType.LOAN,
             owner = Owner.NB,
-            receiver = OrderReceiver(
-                name = "name",
-                address = "address",
-                postalCode = "postalCode",
-                city = "city",
-                phoneNumber = "phoneNumber",
-                location = "location"
-            ),
+            receiver =
+                OrderReceiver(
+                    name = "name",
+                    address = "address",
+                    postalCode = "postalCode",
+                    city = "city",
+                    phoneNumber = "phoneNumber",
+                    location = "location"
+                ),
             callbackUrl = "callbackUrl"
         )
 
@@ -41,14 +42,15 @@ class OrderModelConversionTest {
             productLine = listOf(ProductLine("hostProductId", OrderLineStatus.NOT_STARTED)),
             orderType = OrderType.LOAN,
             owner = Owner.NB,
-            receiver = OrderReceiver(
-                name = "name",
-                address = "address",
-                postalCode = "postalCode",
-                city = "city",
-                phoneNumber = "phoneNumber",
-                location = "location"
-            ),
+            receiver =
+                OrderReceiver(
+                    name = "name",
+                    address = "address",
+                    postalCode = "postalCode",
+                    city = "city",
+                    phoneNumber = "phoneNumber",
+                    location = "location"
+                ),
             callbackUrl = "callbackUrl"
         )
 
