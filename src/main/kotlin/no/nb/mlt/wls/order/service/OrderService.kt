@@ -38,7 +38,12 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             return ResponseEntity.badRequest().build()
         }
 
-        synqService.createOrder(payload.toOrder().toSynqPayload())
+        // Handle any edge-cases
+        val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
+        if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.CREATED)) {
+            throw ServerErrorException("Unexpected error with SynQ", null)
+        }
+
         // Return what the database saved, as it could contain changes
         val order =
             db.save(payload.toOrder())
