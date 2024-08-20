@@ -30,7 +30,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                     logger.error(it) {
                         "Timed out while fetching from WLS database. Relevant payload: $payload"
                     }
-                    ServerErrorException("Failed to create the order in storage system", it)
+                    ServerErrorException("Failed while checking if order already exists in the database", it)
                 }
                 .awaitSingleOrNull()
 
@@ -50,7 +50,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .timeout(Duration.ofSeconds(6))
                 .onErrorMap(TimeoutException::class.java) {
                     logger.error { "Saving order timed out for payload: %s".format(payload.toString()) }
-                    ServerErrorException("Failed to create the order in storage system", it)
+                    ServerErrorException("Failed to save the order in the database", it)
                 }
                 .awaitSingle()
 
