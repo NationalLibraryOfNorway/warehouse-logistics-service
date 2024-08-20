@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono
 
 @Repository
 interface OrderRepository : ReactiveMongoRepository<Order, String> {
-    fun getByHostNameAndHostOrderId(
+    fun findByHostNameAndHostOrderId(
         hostName: HostName,
         hostOrderId: String
     ): Mono<Order>
