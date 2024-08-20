@@ -38,8 +38,9 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             return ResponseEntity.badRequest().build()
         }
 
-        // Handle any edge-cases
         val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
+        // If SynQ didn't throw an error, but returned something that wasn't a new order,
+        // then it is likely some error or edge-case
         if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.CREATED)) {
             throw ServerErrorException("Unexpected error with SynQ", null)
         }
