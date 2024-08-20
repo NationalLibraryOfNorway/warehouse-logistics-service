@@ -26,8 +26,29 @@ class OrderController(val orderService: OrderService) {
     )
     @ApiResponses(
         ApiResponse(
+            responseCode = "200",
+            description = """Order with given 'hostName' and 'hostOrderId' already exists in the system.
+                No new order was created, neither was the old order updated.
+                Existing order information is returned for inspection.
+                In rare cases the response body may be empty, that can happen if Hermes WLS does not
+                have the information about the order stored in its database and is unable to retrieve
+                the existing order information from the storage system.""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
             responseCode = "201",
-            description = "Created order for specified products to appropriate systems"
+            description = "Created order for specified products to appropriate systems",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "400",
