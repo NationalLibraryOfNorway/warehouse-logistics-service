@@ -26,9 +26,13 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         val existingOrder =
             db.findByHostNameAndHostOrderId(payload.hostName, payload.orderId)
                 .timeout(Duration.ofSeconds(8))
-                .onErrorMap(TimeoutException::class.java) {
-                    logger.error(it) {
-                        "Timed out while fetching from WLS database. Relevant payload: $payload"
+                .onErrorMap {
+                    if (it is TimeoutException) {
+                        logger.error(it) {
+                            "Timed out while fetching from WLS database. Relevant payload: $payload"
+                        }
+                    } else {
+                        logger.error(it) { "Unexpected error for $payload" }
                     }
                     ServerErrorException("Failed while checking if order already exists in the database", it)
                 }
