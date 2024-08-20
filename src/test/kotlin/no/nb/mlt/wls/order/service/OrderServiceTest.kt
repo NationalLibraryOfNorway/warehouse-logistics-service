@@ -79,7 +79,7 @@ class OrderServiceTest {
     }
 
     @Test
-    fun `save called when synq fails is handled gracefully`() {
+    fun `save called when SynQ fails is handled gracefully`() {
         every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.empty()
         coEvery { synq.createOrder(any()) } throws ServerErrorException("Unexpected error", null)
 
