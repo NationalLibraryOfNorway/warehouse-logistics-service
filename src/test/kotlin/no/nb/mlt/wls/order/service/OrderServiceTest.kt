@@ -93,7 +93,7 @@ class OrderServiceTest {
     @Test
     fun `save called when db is down is handled gracefully`() {
         runTest {
-            every { db.findByHostNameAndHostOrderId(any(), any()) } returns Mono.never()
+            every { db.findByHostNameAndHostOrderId(any(), any()) } returns Mono.error(Exception("db is down"))
 
             assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
                 runBlocking {

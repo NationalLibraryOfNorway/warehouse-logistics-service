@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
+import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.order.model.OrderLineStatus
 import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus
@@ -109,6 +110,18 @@ class OrderControllerTest(
     @Test
     @WithMockUser
     fun `createOrder handles SynQ error`() {
+        coEvery {
+            synqOrderService.createOrder(any())
+        } returns ResponseEntity.internalServerError().body(SynqError(9001, "Unexpected error"))
+
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .uri("/batch/create")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload)
+            .exchange()
+            .expectStatus().is5xxServerError
     }
 
 // /////////////////////////////////////////////////////////////////////////////
