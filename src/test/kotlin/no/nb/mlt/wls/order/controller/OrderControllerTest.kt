@@ -36,6 +36,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import java.net.URI
 
 @EnableTestcontainers
@@ -92,19 +93,57 @@ class OrderControllerTest(
     @Test
     @WithMockUser
     fun `createOrder with duplicate payload returns OK`() {
-        // How to handle this? OK or error?
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .uri("/batch/create")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(duplicateOrderPayload)
+            .exchange()
+            .expectStatus().isOk
+            .expectBody<ApiOrderPayload>()
+            .consumeWith { response ->
+                assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
+                assertThat(response.responseBody?.hostName).isEqualTo(duplicateOrderPayload.hostName)
+                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
+            }
     }
 
     @Test
     @WithMockUser
     fun `createOrder payload with different data but same ID returns DB entry`() {
-        // How to handle this? OK or error?
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .uri("/batch/create")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(
+                duplicateOrderPayload.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
+            )
+            .exchange()
+            .expectStatus().isOk
+            .expectBody<ApiOrderPayload>()
+            .consumeWith { response ->
+                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
+            }
     }
 
     @Test
     @WithMockUser
-    fun `createOrder where SynQ says it's a duplicate returns OK`() {
-        // How to handle this? OK or error?
+    fun `createOrder where SynQ says it's a duplicate returns OK`() { // SynqService converts an error to return OK if it finds a duplicate product
+        coEvery {
+            synqOrderService.createOrder(any())
+        } returns ResponseEntity.ok().build()
+
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .uri("/batch/create")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload)
+            .exchange()
+            .expectStatus().isOk
+            .expectBody().isEmpty
     }
 
     @Test
