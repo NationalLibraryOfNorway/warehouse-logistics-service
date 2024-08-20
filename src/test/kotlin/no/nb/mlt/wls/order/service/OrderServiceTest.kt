@@ -50,9 +50,14 @@ class OrderServiceTest {
 
     @Test
     fun `save called with payload missing hostOrderId throws`() {
-        assertExceptionThrownWithMessage(top.copy(hostOrderId = ""), "The order's hostOrderId is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(top.copy(hostOrderId = "\t\n"), "The order's hostOrderId is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(top.copy(hostOrderId = "      "), "The order's hostOrderId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(top.copy(hostOrderId = ""), "hostOrderId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(top.copy(hostOrderId = "\t\n"), "hostOrderId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(top.copy(hostOrderId = "      "), "hostOrderId is required", ServerWebInputException::class.java)
+    }
+
+    @Test
+    fun `save with payload missing product lines throws`() {
+        assertExceptionThrownWithMessage(top.copy(productLine = listOf()), "must contain product lines", ServerWebInputException::class.java)
     }
 
     @Test
@@ -87,11 +92,13 @@ class OrderServiceTest {
 
     @Test
     fun `save called when db is down is handled gracefully`() {
-        every { db.findByHostNameAndHostOrderId(any(), any()) } returns Mono.never()
+        runTest {
+            every { db.findByHostNameAndHostOrderId(any(), any()) } returns Mono.never()
 
-        assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
-            runBlocking {
-                cut.createOrder(top)
+            assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
+                runBlocking {
+                    cut.createOrder(top)
+                }
             }
         }
     }

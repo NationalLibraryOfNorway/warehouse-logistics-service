@@ -66,7 +66,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
         }
         if (payload.productLine.isEmpty()) {
-            throw ServerWebInputException("The order does not contain any product lines, and is therefore invalid")
+            throw ServerWebInputException("The order must contain product lines")
         }
     }
 }
