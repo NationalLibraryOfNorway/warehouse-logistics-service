@@ -36,6 +36,7 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
                     ServerErrorException("Failed to save product in the database", it)
                 }
                 .awaitSingleOrNull()
+
         if (existingProduct != null) {
             return ResponseEntity.ok(existingProduct.toApiPayload())
         }
@@ -47,8 +48,14 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
         val product = payload.toProduct().copy(quantity = 0.0, location = null)
 
         // Product service should create the product in the storage system, and return error message if it fails
-        if (synqProductService.createProduct(product.toSynqPayload()).statusCode.isSameCodeAs(HttpStatus.OK)) {
+        val synqResponse = synqProductService.createProduct(product.toSynqPayload())
+        // If SynQ returned a 200 OK then it means it exists from before, and we can return empty response (since we don't have any order info)
+        if (synqResponse.statusCode.isSameCodeAs(HttpStatus.OK)) {
             return ResponseEntity.ok().build()
+        }
+        // If SynQ returned anything else than 200 or 201 it's an error
+        if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.CREATED)) {
+            throw ServerErrorException("Unexpected error with SynQ", null)
         }
 
         // Product service should save the product in the database, and return 500 if it fails

@@ -39,12 +39,15 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .awaitSingleOrNull()
 
         if (existingOrder != null) {
-            return ResponseEntity.badRequest().build()
+            return ResponseEntity.ok(existingOrder.toApiOrderPayload())
         }
 
         val synqResponse = synqService.createOrder(payload.toOrder().toSynqPayload())
-        // If SynQ didn't throw an error, but returned something that wasn't a new order,
-        // then it is likely some error or edge-case
+        // If SynQ returned a 200 OK then it means it exists from before, and we can return empty response (since we don't have any order info)
+        if (synqResponse.statusCode.isSameCodeAs(HttpStatus.OK)) {
+            return ResponseEntity.ok().build()
+        }
+        // If SynQ returned anything else than 200 or 201 it's an error
         if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.CREATED)) {
             throw ServerErrorException("Unexpected error with SynQ", null)
         }

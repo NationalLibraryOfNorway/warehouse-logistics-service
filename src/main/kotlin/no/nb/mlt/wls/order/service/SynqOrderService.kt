@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.server.ServerErrorException
+import reactor.core.publisher.Mono
 import java.net.URI
 
 @Service
@@ -33,9 +35,18 @@ class SynqOrderService(
             .body(BodyInserters.fromValue(orders))
             .retrieve()
             .toEntity(SynqError::class.java)
-            .onErrorMap(WebClientResponseException::class.java) {
-                createServerError(it)
+            .onErrorResume(WebClientResponseException::class.java) { error ->
+                val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
+                if (errorText != null && errorText.contains("Duplicate order")) {
+                    Mono.error(DuplicateOrderException(error))
+                } else {
+                    Mono.error(error)
+                }
             }
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            .onErrorReturn(DuplicateOrderException::class.java, ResponseEntity.ok().build())
             .awaitSingle()
     }
 }
+
+class DuplicateOrderException(override val cause: Throwable) : ServerErrorException("Order already exists in SynQ", cause)
