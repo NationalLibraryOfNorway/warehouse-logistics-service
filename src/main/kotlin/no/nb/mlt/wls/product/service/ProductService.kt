@@ -49,13 +49,13 @@ class ProductService(val db: ProductRepository, val synqProductService: SynqProd
 
         // Product service should create the product in the storage system, and return error message if it fails
         val synqResponse = synqProductService.createProduct(product.toSynqPayload())
-        // If SynQ didn't throw an error, but returned 4xx/5xx, then it is likely some error or edge-case we haven't handled
-        if (synqResponse.statusCode.is4xxClientError || synqResponse.statusCode.is5xxServerError) {
-            throw ServerErrorException("Unexpected error with SynQ", null)
-        }
         // If SynQ returned a 200 OK then it means it exists from before, and we can return empty response (since we don't have any order info)
         if (synqResponse.statusCode.isSameCodeAs(HttpStatus.OK)) {
             return ResponseEntity.ok().build()
+        }
+        // If SynQ returned anything else than 200 or 201 it's an error
+        if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.CREATED)) {
+            throw ServerErrorException("Unexpected error with SynQ", null)
         }
 
         // Product service should save the product in the database, and return 500 if it fails
