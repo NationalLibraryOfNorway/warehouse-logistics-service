@@ -20,8 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 class ProductController(val productService: ProductService) {
     @Operation(
         summary = "Register a product in the storage system",
-        description = """
-            Register data about the product in Hermes WLS and appropriate storage system,
+        description = """Register data about the product in Hermes WLS and appropriate storage system,
             so that the physical product can be placed in the physical storage.
             NOTE: When registering new product quantity and location are set to default values (0.0 and null).
             Hence you should not provide these values in the payload, or at least know they will be overwritten."""
@@ -30,8 +29,7 @@ class ProductController(val productService: ProductService) {
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = """
-                    Product with given 'hostName' and 'hostId' already exists in the system.
+                description = """Product with given 'hostName' and 'hostId' already exists in the system.
                     No new product was created, neither was the old product updated.
                     Existing product information is returned for inspection.
                     In rare cases the response body may be empty, that can happen if Hermes WLS
@@ -46,8 +44,7 @@ class ProductController(val productService: ProductService) {
             ),
             ApiResponse(
                 responseCode = "201",
-                description = """
-                    Product payload is valid and the product information was registered successfully.
+                description = """Product payload is valid and the product information was registered successfully.
                     Product was created in the appropriate storage system.
                     New product information is returned for inspection.""",
                 content = [
@@ -59,8 +56,7 @@ class ProductController(val productService: ProductService) {
             ),
             ApiResponse(
                 responseCode = "400",
-                description = """
-                    Product payload is invalid and no new product was created.
+                description = """Product payload is invalid and no new product was created.
                     Error message contains information about the invalid fields.""",
                 content = [Content(schema = Schema())]
             ),

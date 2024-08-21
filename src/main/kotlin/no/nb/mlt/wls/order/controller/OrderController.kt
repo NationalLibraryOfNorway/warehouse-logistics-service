@@ -52,8 +52,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "400",
-            description =
-                """Order payload is invalid and was not created.
+            description = """Order payload is invalid and was not created.
                 An empty error message means the order already exists with the current ID.
                 Otherwise, the error message contains information about the invalid fields.""",
             content = [Content(schema = Schema())]
