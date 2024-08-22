@@ -11,6 +11,7 @@ import no.nb.mlt.wls.order.repository.OrderRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
@@ -63,6 +64,34 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .awaitSingle()
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
+    }
+
+    suspend fun updateOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidPayload(payload)
+
+        val existingOrder =
+            db.findByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+                .timeout(Duration.ofSeconds(8))
+                .onErrorMap {
+                    if (it is TimeoutException) {
+                        logger.error(it) {
+                            "Timed out while fetching from WLS database. Relevant payload: $payload"
+                        }
+                    } else {
+                        logger.error(it) { "Unexpected error for $payload" }
+                    }
+                    ServerErrorException("Failed while checking if order already exists in the database", it)
+                }
+                .awaitSingleOrNull()
+
+        if (existingOrder == null) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Order with id $payload.hostOrderId from $payload.hostName does not exist in the database"
+            )
+        }
+
+        TODO("Implement SynQ integration")
     }
 
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {

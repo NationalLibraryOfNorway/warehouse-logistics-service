@@ -72,4 +72,8 @@ class OrderController(val orderService: OrderService) {
     suspend fun createOrder(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
+
+    suspend fun updateOrder(
+        @RequestBody payload: ApiOrderPayload
+    ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload)
 }
