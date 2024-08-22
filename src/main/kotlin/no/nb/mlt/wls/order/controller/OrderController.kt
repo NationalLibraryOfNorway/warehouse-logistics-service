@@ -6,9 +6,14 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,8 +26,7 @@ class OrderController(val orderService: OrderService) {
     @Operation(
         summary = "Creates an order for products from the storage system",
         description = """Creates an order for specified products to appropriate storage systems via Hermes WLS.
-            Orders are automatically sent to the systems that own the respective product(s).
-        """
+            Orders are automatically sent to the systems that own the respective product(s)."""
     )
     @ApiResponses(
         ApiResponse(
@@ -68,8 +72,41 @@ class OrderController(val orderService: OrderService) {
             content = [Content(schema = Schema())]
         )
     )
-    @PostMapping("/order/batch/create")
+    @PostMapping("/order")
     suspend fun createOrder(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
+
+    @Operation(
+        summary = "Deletes an order from the storage system",
+        description = """Deletes an order from the appropriate storage systems via Hermes WLS.
+            To delete an order it must have a status of "NOT_STARTED".
+            Additionally the caller must "own", e.g. be the creator of the order."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Order with given 'hostName' and 'hostOrderId' was deleted from the system.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized order products."
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid 'Authorization' header is missing from the request,
+                    or the caller is not authorized to delete the order."""
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Order with given 'hostName' and 'hostOrderId' does not exist in the system."
+        )
+    )
+    @DeleteMapping("/order/{hostName}/{hostOrderId}")
+    suspend fun deleteOrder(
+        @PathVariable hostName: HostName,
+        @PathVariable hostOrderId: String,
+        @AuthenticationPrincipal caller: Jwt
+    ): ResponseEntity<String> = orderService.deleteOrder(hostName, hostOrderId, caller.subject.uppercase())
 }

@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.service
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.core.data.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.order.payloads.SynqOrder
@@ -45,6 +46,21 @@ class SynqOrderService(
             }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .onErrorReturn(DuplicateOrderException::class.java, ResponseEntity.ok().build())
+            .awaitSingle()
+    }
+
+    suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): ResponseEntity<SynqError> {
+        val uri = URI.create("$baseUrl/orders/$hostName/$hostOrderId")
+
+        return webClient
+            .delete()
+            .uri(uri)
+            .retrieve()
+            .toEntity(SynqError::class.java)
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) } // TODO: FIXME TEXT IS WRONG!!!
             .awaitSingle()
     }
 }
