@@ -77,6 +77,37 @@ class OrderController(val orderService: OrderService) {
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
 
+    @Operation(
+        summary = "Gets an order from the storage system",
+        description = "Checks if a specified order exists within Hermes WLS."
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Order with given 'hostName' and 'hostOrderId' exists in the system.",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Some field was invalid in your request. The error message contains information about the invalid fields.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to request orders.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        )
+    )
     @GetMapping("/order/{hostName}/{hostOrderId}")
     suspend fun getOrder(
         @PathVariable("hostName") hostName: HostName,
