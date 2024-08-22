@@ -24,7 +24,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         throwIfInvalidPayload(payload)
 
         val existingOrder =
-            db.findByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+            db.findByHostNameAndHostOrderId(payload.hostName, payload.hostOrderId)
                 .timeout(Duration.ofSeconds(8))
                 .onErrorMap {
                     if (it is TimeoutException) {

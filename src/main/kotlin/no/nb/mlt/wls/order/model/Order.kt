@@ -88,32 +88,20 @@ data class OrderReceiver(
     val phoneNumber: String?
 )
 
-enum class OrderStatus(private val status: String) {
-    NOT_STARTED("Not started"),
-    IN_PROGRESS("In progress"),
-    COMPLETED("Completed"),
-    DELETED("Deleted");
-
-    override fun toString(): String {
-        return status
-    }
+enum class OrderStatus {
+    NOT_STARTED,
+    IN_PROGRESS,
+    COMPLETED,
+    DELETED
 }
 
-enum class OrderLineStatus(private val status: String) {
-    NOT_STARTED("Not started"),
-    PICKED("Picked"),
-    FAILED("Failed");
-
-    override fun toString(): String {
-        return status
-    }
+enum class OrderLineStatus {
+    NOT_STARTED,
+    PICKED,
+    FAILED
 }
 
-enum class OrderType(private val type: String) {
-    LOAN("Loan"),
-    DIGITIZATION("Digitization") ;
-
-    override fun toString(): String {
-        return type
-    }
+enum class OrderType {
+    LOAN,
+    DIGITIZATION
 }
