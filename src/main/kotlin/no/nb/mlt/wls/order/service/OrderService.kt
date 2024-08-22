@@ -3,14 +3,18 @@ package no.nb.mlt.wls.order.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
+import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
@@ -75,5 +79,21 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         if (payload.productLine.isEmpty()) {
             throw ServerWebInputException("The order must contain product lines")
         }
+    }
+
+    suspend fun getOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): ResponseEntity<Order> {
+        val order =
+            db.findByHostNameAndHostOrderId(hostName, hostOrderId)
+                .onErrorMap(IncorrectResultSizeDataAccessException::class.java) {
+                    TODO("Handle duplicate order ID's somehow")
+                }
+                .awaitSingleOrNull()
+        if (order != null) {
+            return ResponseEntity.ok(order)
+        }
+        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order with id $hostOrderId from $hostName was not found")
     }
 }

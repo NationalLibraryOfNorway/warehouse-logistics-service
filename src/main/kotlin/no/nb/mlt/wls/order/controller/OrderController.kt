@@ -6,9 +6,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -72,4 +76,10 @@ class OrderController(val orderService: OrderService) {
     suspend fun createOrder(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
+
+    @GetMapping("/order/{hostName}/{hostOrderId}")
+    suspend fun getOrder(
+        @PathVariable("hostName") hostName: HostName,
+        @PathVariable("hostOrderId") hostOrderId: String
+    ): ResponseEntity<Order> = orderService.getOrder(hostName, hostOrderId)
 }
