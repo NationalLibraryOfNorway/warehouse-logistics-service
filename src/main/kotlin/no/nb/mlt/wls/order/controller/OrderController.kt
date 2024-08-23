@@ -10,6 +10,7 @@ import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -73,6 +74,7 @@ class OrderController(val orderService: OrderService) {
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
 
+    @PutMapping("/order")
     suspend fun updateOrder(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload)

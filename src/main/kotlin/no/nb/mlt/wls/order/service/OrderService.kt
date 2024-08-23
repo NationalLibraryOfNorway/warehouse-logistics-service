@@ -91,7 +91,8 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             )
         }
 
-        TODO("Implement SynQ integration")
+        val response = synqService.updateOrder(payload)
+        TODO("Update internal database with response")
     }
 
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
