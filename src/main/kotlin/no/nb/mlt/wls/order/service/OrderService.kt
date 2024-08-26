@@ -3,6 +3,7 @@ package no.nb.mlt.wls.order.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
@@ -89,6 +90,10 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 HttpStatus.BAD_REQUEST,
                 "Order with id $payload.hostOrderId from $payload.hostName does not exist in the database"
             )
+        }
+
+        if (existingOrder.status != OrderStatus.NOT_STARTED) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Order is already being processed, and can not be edited")
         }
 
         synqService.updateOrder(payload)
