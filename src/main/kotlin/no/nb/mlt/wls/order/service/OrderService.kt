@@ -91,8 +91,14 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
             )
         }
 
-        val response = synqService.updateOrder(payload)
-        TODO("Update internal database with response")
+        synqService.updateOrder(payload)
+
+        // Saving here will override the existing order, as the id's match
+        val updatedOrder =
+            db.save(payload.toOrder())
+                .awaitSingle()
+
+        return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }
 
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {

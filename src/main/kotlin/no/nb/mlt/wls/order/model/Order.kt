@@ -4,11 +4,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
+import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "orders")
 data class Order(
     val hostName: HostName,
+    @Id
     val hostOrderId: String,
     val status: OrderStatus,
     val productLine: List<ProductLine>,
