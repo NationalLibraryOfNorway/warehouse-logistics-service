@@ -39,6 +39,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import java.net.URI
 
+// FIXME - Correctly handle JWT in tests
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient

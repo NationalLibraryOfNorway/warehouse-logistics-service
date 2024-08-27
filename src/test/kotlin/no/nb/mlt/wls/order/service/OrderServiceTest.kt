@@ -29,6 +29,7 @@ import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import reactor.core.publisher.Mono
 
+// FIXME - Handle client used in test more gracefully
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
 class OrderServiceTest {
@@ -64,7 +65,7 @@ class OrderServiceTest {
     fun `save when order exists throws`() {
         runTest {
             every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.just(top.toOrder())
-            assertThat(cut.createOrder(top).statusCode.is4xxClientError)
+            assertThat(cut.createOrder("axiell", top).statusCode.is4xxClientError)
         }
     }
 
@@ -85,7 +86,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
             runBlocking {
-                cut.createOrder(top)
+                cut.createOrder("axiell", top)
             }
         }
     }
@@ -97,7 +98,7 @@ class OrderServiceTest {
 
             assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
                 runBlocking {
-                    cut.createOrder(top)
+                    cut.createOrder("axiell", top)
                 }
             }
         }
@@ -110,7 +111,7 @@ class OrderServiceTest {
             coEvery { synq.createOrder(any()) } returns ResponseEntity(HttpStatus.CREATED)
             every { db.save(any()) } returns Mono.just(top.toOrder())
 
-            assertThat(cut.createOrder(top).statusCode.is2xxSuccessful)
+            assertThat(cut.createOrder("axiell", top).statusCode.is2xxSuccessful)
         }
     }
 
@@ -145,6 +146,6 @@ class OrderServiceTest {
         message: String,
         exception: Class<T>
     ) = assertThatExceptionOfType(exception).isThrownBy {
-        runBlocking { cut.createOrder(payload) }
+        runBlocking { cut.createOrder("axiell", payload) }
     }.withMessageContaining(message)
 }

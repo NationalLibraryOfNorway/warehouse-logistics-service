@@ -4,15 +4,16 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.order.controller.OrderController
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
-import org.springframework.dao.IncorrectResultSizeDataAccessException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
@@ -24,7 +25,14 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
-    suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+    /**
+     * Creates an order within the WLS database, and sends it to the appropriate storage systems
+     */
+    suspend fun createOrder(
+        hostName: String,
+        payload: ApiOrderPayload
+    ): ResponseEntity<ApiOrderPayload> {
+        OrderController.throwIfHostInvalid(hostName, payload.hostName)
         throwIfInvalidPayload(payload)
 
         val existingOrder =
@@ -73,6 +81,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
      * Gets an order from the WLS database
      */
     suspend fun getOrder(
+        jwt: JwtAuthenticationToken,
         hostName: HostName,
         hostOrderId: String
     ): ResponseEntity<Order> {
