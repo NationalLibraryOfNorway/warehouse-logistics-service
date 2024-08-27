@@ -95,13 +95,21 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         if (existingOrder.status != OrderStatus.NOT_STARTED) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Order is already being processed, and can not be edited")
         }
-
         synqService.updateOrder(payload)
 
         // Saving here will override the existing order, as the id's match
         val updatedOrder =
-            db.save(payload.toOrder())
-                .awaitSingle()
+            db.save(
+                existingOrder.copy(
+                    hostOrderId = payload.hostOrderId,
+                    hostName = payload.hostName,
+                    productLine = payload.productLine,
+                    orderType = payload.orderType,
+                    owner = payload.owner,
+                    receiver = payload.receiver,
+                    callbackUrl = payload.callbackUrl
+                )
+            ).awaitSingle()
 
         return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }

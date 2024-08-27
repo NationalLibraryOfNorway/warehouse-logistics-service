@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
+import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
@@ -12,6 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 @Document(collection = "orders")
 data class Order(
     @Id
+    private val id: ObjectId = ObjectId(),
     val hostOrderId: String,
     val hostName: HostName,
     val status: OrderStatus,
