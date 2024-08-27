@@ -69,6 +69,22 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
     }
 
+    /**
+     * Gets an order from the WLS database
+     */
+    suspend fun getOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): ResponseEntity<Order> {
+        val order =
+            db.findByHostNameAndHostOrderId(hostName, hostOrderId)
+                .awaitSingleOrNull()
+        if (order != null) {
+            return ResponseEntity.ok(order)
+        }
+        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order with id $hostOrderId from $hostName was not found")
+    }
+
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
         if (payload.orderId.isBlank()) {
             throw ServerWebInputException("The order's orderId is required, and can not be blank")
@@ -79,21 +95,5 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         if (payload.productLine.isEmpty()) {
             throw ServerWebInputException("The order must contain product lines")
         }
-    }
-
-    suspend fun getOrder(
-        hostName: HostName,
-        hostOrderId: String
-    ): ResponseEntity<Order> {
-        val order =
-            db.findByHostNameAndHostOrderId(hostName, hostOrderId)
-                .onErrorMap(IncorrectResultSizeDataAccessException::class.java) {
-                    TODO("Handle duplicate order ID's somehow")
-                }
-                .awaitSingleOrNull()
-        if (order != null) {
-            return ResponseEntity.ok(order)
-        }
-        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order with id $hostOrderId from $hostName was not found")
     }
 }
