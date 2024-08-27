@@ -54,7 +54,7 @@ class OrderController(val orderService: OrderService) {
         ApiResponse(
             responseCode = "400",
             description = """Order payload is invalid and was not updated.
-                This error is produced if the order specified does not exist.
+                An empty error message means the order already exists with the current ID.
                 Otherwise, the error message contains information about the invalid fields.""",
             content = [Content(schema = Schema())]
         ),
@@ -75,27 +75,11 @@ class OrderController(val orderService: OrderService) {
     ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
 
     @Operation(
-        summary = "Updates an existing order in the storage system",
+        summary = "Updates an existing order in the storage system(s)",
         description = """Updates a specified order to the various storage systems via Hermes WLS.
-            If the storage systems support it, updates are also sent to them for processing the respective product(s).
         """
     )
     @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = """Order with given 'hostName' and 'hostOrderId' already exists in the system.
-                No new order was created, neither was the old order updated.
-                Existing order information is returned for inspection.
-                In rare cases the response body may be empty, that can happen if Hermes WLS does not
-                have the information about the order stored in its database and is unable to retrieve
-                the existing order information from the storage system.""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ApiOrderPayload::class)
-                )
-            ]
-        ),
         ApiResponse(
             responseCode = "200",
             description = "The order was updated with the new products, and sent to appropriate systems",
@@ -109,7 +93,8 @@ class OrderController(val orderService: OrderService) {
         ApiResponse(
             responseCode = "400",
             description = """Order payload is invalid and the order was not updated.
-                The error message contains information about the invalid fields.""",
+                This error is also produced if the order specified does not exist.
+                Otherwise, the error message contains information about the invalid fields.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -120,6 +105,11 @@ class OrderController(val orderService: OrderService) {
         ApiResponse(
             responseCode = "403",
             description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "409",
+            description = "The order is already being processed, and can not be edited at this point.",
             content = [Content(schema = Schema())]
         )
     )
