@@ -18,7 +18,6 @@ import no.nb.mlt.wls.order.model.ProductLine
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.repository.OrderRepository
-import no.nb.mlt.wls.order.service.OrderService
 import no.nb.mlt.wls.order.service.SynqOrderService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -30,16 +29,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import java.net.URI
 
-// FIXME - Correctly handle JWT in tests
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient
@@ -47,18 +48,22 @@ import java.net.URI
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
-    @Autowired val repository: OrderRepository
+    @Autowired val repository: OrderRepository,
+    @Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
     private lateinit var synqOrderService: SynqOrderService
 
     private lateinit var webTestClient: WebTestClient
 
+    val clientName: String = HostName.AXIELL.name
+
     @BeforeEach
     fun setUp() {
         webTestClient =
             WebTestClient
-                .bindToController(OrderController(OrderService(repository, synqOrderService)))
+                .bindToApplicationContext(applicationContext)
+                .apply(springSecurity())
                 .configureClient()
                 .baseUrl("/v1/order")
                 .build()
@@ -67,7 +72,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder with valid payload creates order`() =
         runTest {
             coEvery {
@@ -76,6 +80,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(clientName) })
                 .post()
                 .uri("/batch/create")
                 .accept(MediaType.APPLICATION_JSON)
@@ -92,10 +97,10 @@ class OrderControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `createOrder with duplicate payload returns OK`() {
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
@@ -111,10 +116,10 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
@@ -138,6 +143,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
@@ -156,6 +162,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)

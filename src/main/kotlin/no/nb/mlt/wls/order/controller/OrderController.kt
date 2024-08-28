@@ -118,8 +118,9 @@ class OrderController(val orderService: OrderService) {
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @PathVariable("hostName") hostName: HostName,
         @PathVariable("hostOrderId") hostOrderId: String
-    ): ResponseEntity<Order> = orderService.getOrder(jwt, hostName, hostOrderId)
+    ): ResponseEntity<Order> = orderService.getOrder(jwt.name, hostName, hostOrderId)
 
+    // TODO - Move this into a utility class
     companion object {
         fun throwIfHostInvalid(
             clientName: String,

@@ -13,7 +13,6 @@ import no.nb.mlt.wls.order.payloads.toSynqPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
@@ -29,10 +28,10 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
      * Creates an order within the WLS database, and sends it to the appropriate storage systems
      */
     suspend fun createOrder(
-        hostName: String,
+        clientName: String,
         payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        OrderController.throwIfHostInvalid(hostName, payload.hostName)
+        OrderController.throwIfHostInvalid(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
 
         val existingOrder =
@@ -81,10 +80,11 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
      * Gets an order from the WLS database
      */
     suspend fun getOrder(
-        jwt: JwtAuthenticationToken,
+        clientName: String,
         hostName: HostName,
         hostOrderId: String
     ): ResponseEntity<Order> {
+        OrderController.throwIfHostInvalid(clientName, hostName)
         val order =
             db.findByHostNameAndHostOrderId(hostName, hostOrderId)
                 .awaitSingleOrNull()
