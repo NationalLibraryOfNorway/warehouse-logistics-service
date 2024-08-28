@@ -4,7 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.order.controller.OrderController
+import no.nb.mlt.wls.core.data.throwIfInvalidClientName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
@@ -31,7 +31,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         clientName: String,
         payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        OrderController.throwIfHostInvalid(clientName, payload.hostName)
+        throwIfInvalidClientName(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
 
         val existingOrder =
@@ -84,7 +84,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         hostName: HostName,
         hostOrderId: String
     ): ResponseEntity<Order> {
-        OrderController.throwIfHostInvalid(clientName, hostName)
+        throwIfInvalidClientName(clientName, hostName)
         val order =
             db.findByHostNameAndHostOrderId(hostName, hostOrderId)
                 .awaitSingleOrNull()

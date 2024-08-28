@@ -10,7 +10,6 @@ import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping(path = ["", "/v1"])
@@ -119,15 +117,4 @@ class OrderController(val orderService: OrderService) {
         @PathVariable("hostName") hostName: HostName,
         @PathVariable("hostOrderId") hostOrderId: String
     ): ResponseEntity<Order> = orderService.getOrder(jwt.name, hostName, hostOrderId)
-
-    // TODO - Move this into a utility class
-    companion object {
-        fun throwIfHostInvalid(
-            clientName: String,
-            hostName: HostName
-        ) {
-            if (clientName.uppercase() == hostName.toString().uppercase()) return
-            throw ResponseStatusException(HttpStatus.FORBIDDEN, "You can only view orders for ${hostName.toString().uppercase()}")
-        }
-    }
 }
