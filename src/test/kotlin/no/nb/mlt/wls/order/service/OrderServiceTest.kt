@@ -29,7 +29,7 @@ import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import reactor.core.publisher.Mono
 
-// FIXME - Handle client used in test more gracefully
+@Suppress("ReactiveStreamsUnusedPublisher")
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
 class OrderServiceTest {
@@ -65,7 +65,7 @@ class OrderServiceTest {
     fun `save when order exists throws`() {
         runTest {
             every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.just(top.toOrder())
-            assertThat(cut.createOrder("axiell", top).statusCode.is4xxClientError)
+            assertThat(cut.createOrder(testClientName, top).statusCode.is4xxClientError)
         }
     }
 
@@ -86,7 +86,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
             runBlocking {
-                cut.createOrder("axiell", top)
+                cut.createOrder(testClientName, top)
             }
         }
     }
@@ -98,7 +98,7 @@ class OrderServiceTest {
 
             assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
                 runBlocking {
-                    cut.createOrder("axiell", top)
+                    cut.createOrder(testClientName, top)
                 }
             }
         }
@@ -111,7 +111,7 @@ class OrderServiceTest {
             coEvery { synq.createOrder(any()) } returns ResponseEntity(HttpStatus.CREATED)
             every { db.save(any()) } returns Mono.just(top.toOrder())
 
-            assertThat(cut.createOrder("axiell", top).statusCode.is2xxSuccessful)
+            assertThat(cut.createOrder(testClientName, top).statusCode.is2xxSuccessful)
         }
     }
 
@@ -141,11 +141,13 @@ class OrderServiceTest {
             callbackUrl = "callbackUrl"
         )
 
+    private val testClientName = HostName.AXIELL.name
+
     private fun <T : Throwable> assertExceptionThrownWithMessage(
         payload: ApiOrderPayload,
         message: String,
         exception: Class<T>
     ) = assertThatExceptionOfType(exception).isThrownBy {
-        runBlocking { cut.createOrder("axiell", payload) }
+        runBlocking { cut.createOrder(testClientName, payload) }
     }.withMessageContaining(message)
 }
