@@ -7,11 +7,13 @@ import no.nb.mlt.wls.order.payloads.SynqOrder
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
 import java.net.URI
@@ -36,8 +38,11 @@ class SynqOrderService(
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorResume(WebClientResponseException::class.java) { error ->
-                val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
-                if (errorText != null && errorText.contains("Duplicate order")) {
+                val synqError = error.getResponseBodyAs(SynqError::class.java) ?: throw createServerError(error)
+                if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
+                    throw ResponseStatusException(HttpStatus.NOT_FOUND, synqError.errorText)
+                }
+                if (synqError.errorText.contains("Duplicate order")) {
                     Mono.error(DuplicateOrderException(error))
                 } else {
                     Mono.error(error)

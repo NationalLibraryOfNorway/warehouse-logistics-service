@@ -3,6 +3,9 @@ package no.nb.mlt.wls.order.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.core.data.throwIfInvalidClientName
+import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
@@ -11,6 +14,7 @@ import no.nb.mlt.wls.order.repository.OrderRepository
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
@@ -20,11 +24,18 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
-    suspend fun createOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+    /**
+     * Creates an order within the WLS database, and sends it to the appropriate storage systems
+     */
+    suspend fun createOrder(
+        clientName: String,
+        payload: ApiOrderPayload
+    ): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidClientName(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
 
         val existingOrder =
-            db.findByHostNameAndHostOrderId(payload.hostName, payload.orderId)
+            db.findByHostNameAndHostOrderId(payload.hostName, payload.hostOrderId)
                 .timeout(Duration.ofSeconds(8))
                 .onErrorMap {
                     if (it is TimeoutException) {
@@ -63,6 +74,24 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .awaitSingle()
 
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
+    }
+
+    /**
+     * Gets an order from the WLS database
+     */
+    suspend fun getOrder(
+        clientName: String,
+        hostName: HostName,
+        hostOrderId: String
+    ): ResponseEntity<Order> {
+        throwIfInvalidClientName(clientName, hostName)
+        val order =
+            db.findByHostNameAndHostOrderId(hostName, hostOrderId)
+                .awaitSingleOrNull()
+        if (order != null) {
+            return ResponseEntity.ok(order)
+        }
+        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order with id $hostOrderId from $hostName was not found")
     }
 
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
