@@ -4,12 +4,18 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
+import org.bson.types.ObjectId
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
+@CompoundIndex(unique = true, def = "{'hostName':1,'hostOrderId':1}")
 @Document(collection = "orders")
 data class Order(
-    val hostName: HostName,
+    @Id
+    private val id: ObjectId = ObjectId(),
     val hostOrderId: String,
+    val hostName: HostName,
     val status: OrderStatus,
     val productLine: List<ProductLine>,
     val orderType: OrderType,
@@ -35,7 +41,7 @@ data class ProductLine(
     val hostId: String,
     @Schema(
         description = "Current status of the order line.",
-        examples = [ "NOT_STARTED", "PICKED", "FAILED" ],
+        examples = ["NOT_STARTED", "PICKED", "FAILED"],
         defaultValue = "NOT_STARTED",
         accessMode = READ_ONLY
     )

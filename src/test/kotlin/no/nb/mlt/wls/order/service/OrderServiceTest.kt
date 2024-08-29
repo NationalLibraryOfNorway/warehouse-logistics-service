@@ -15,6 +15,7 @@ import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.model.OrderType
 import no.nb.mlt.wls.order.model.ProductLine
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.repository.OrderRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import org.springframework.web.server.ServerWebInputException
 import reactor.core.publisher.Mono
@@ -65,7 +67,7 @@ class OrderServiceTest {
     fun `save when order exists throws`() {
         runTest {
             every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.just(top.toOrder())
-            assertThat(cut.createOrder(testClientName, top).statusCode.is4xxClientError)
+            assertThat(cut.createOrder(tcn, top).statusCode.is4xxClientError)
         }
     }
 
@@ -86,7 +88,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
             runBlocking {
-                cut.createOrder(testClientName, top)
+                cut.createOrder(tcn, top)
             }
         }
     }
@@ -98,7 +100,7 @@ class OrderServiceTest {
 
             assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
                 runBlocking {
-                    cut.createOrder(testClientName, top)
+                    cut.createOrder(tcn, top)
                 }
             }
         }
@@ -111,7 +113,65 @@ class OrderServiceTest {
             coEvery { synq.createOrder(any()) } returns ResponseEntity(HttpStatus.CREATED)
             every { db.save(any()) } returns Mono.just(top.toOrder())
 
-            assertThat(cut.createOrder(testClientName, top).statusCode.is2xxSuccessful)
+            assertThat(cut.createOrder(tcn, top).statusCode.is2xxSuccessful)
+        }
+    }
+
+    @Test
+    fun `update existing order with no errors returns ok`() {
+        runTest {
+            every { db.findByHostNameAndHostOrderId(nop.hostName, nop.hostOrderId) } returns Mono.just(top.toOrder())
+            coEvery { synq.updateOrder(any()) } returns ResponseEntity.ok().build()
+            every { db.save(any()) } returns Mono.just(top.toOrder())
+
+            assertThat(cut.updateOrder(nop, tcn).statusCode.is2xxSuccessful)
+        }
+    }
+
+    @Test
+    fun `update order which doesn't exist throws`() {
+        every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.empty()
+
+        assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
+            runTest {
+                cut.updateOrder(nop, tcn)
+            }
+        }.withMessageContaining("does not exist")
+    }
+
+    @Test
+    fun `update order which is being processed is conflict`() {
+        every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns
+            Mono.just(
+                top.toOrder().copy(status = OrderStatus.IN_PROGRESS)
+            )
+        coEvery { synq.updateOrder(any()) } returns ResponseEntity.notFound().build()
+
+        assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
+            runTest {
+                cut.updateOrder(nop, tcn)
+            }
+        }.withMessageContaining("409 CONFLICT")
+    }
+
+    @Test
+    fun `update order which you don't own throws`() {
+        assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
+            runBlocking {
+                cut.updateOrder(nop, "Alma")
+            }
+        }.withMessageContaining("403 FORBIDDEN")
+    }
+
+    @Test
+    fun `update order which doesn't exist in synq throws`() {
+        every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.just(top.toOrder())
+        coEvery { synq.updateOrder(any()) } throws ServerErrorException("Not found", null)
+
+        assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
+            runTest {
+                cut.updateOrder(nop, tcn)
+            }
         }
     }
 
@@ -141,13 +201,35 @@ class OrderServiceTest {
             callbackUrl = "callbackUrl"
         )
 
-    private val testClientName = HostName.AXIELL.name
+    // Will be used in most tests (nop = new order payload)
+    private val nop =
+        ApiUpdateOrderPayload(
+            hostName = HostName.AXIELL,
+            hostOrderId = "axiell-order-69",
+            productLine = listOf(ProductLine("mlt-420", OrderLineStatus.NOT_STARTED)),
+            orderType = OrderType.LOAN,
+            receiver =
+                OrderReceiver(
+                    name = "name",
+                    address = "address",
+                    postalCode = "postalCode",
+                    city = "city",
+                    phoneNumber = "phoneNumber",
+                    location = "location"
+                ),
+            callbackUrl = "callbackUrl"
+        )
+
+    /**
+     * tcn = test client name
+     */
+    private val tcn = HostName.AXIELL.name
 
     private fun <T : Throwable> assertExceptionThrownWithMessage(
         payload: ApiOrderPayload,
         message: String,
         exception: Class<T>
     ) = assertThatExceptionOfType(exception).isThrownBy {
-        runBlocking { cut.createOrder(testClientName, payload) }
+        runBlocking { cut.createOrder(tcn, payload) }
     }.withMessageContaining(message)
 }
