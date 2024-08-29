@@ -8,6 +8,8 @@ import no.nb.mlt.wls.core.data.throwIfInvalidClientName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
+import no.nb.mlt.wls.order.payloads.throwIfInvalidPayload
 import no.nb.mlt.wls.order.payloads.toApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
@@ -17,7 +19,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
-import org.springframework.web.server.ServerWebInputException
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 
@@ -64,7 +65,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     }
 
     suspend fun updateOrder(
-        payload: ApiOrderPayload,
+        payload: ApiUpdateOrderPayload,
         clientName: String
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(clientName, payload.hostName)
@@ -90,7 +91,6 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                     hostName = payload.hostName,
                     productLine = payload.productLine,
                     orderType = payload.orderType,
-                    owner = payload.owner,
                     receiver = payload.receiver,
                     callbackUrl = payload.callbackUrl
                 )
@@ -136,17 +136,5 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 ServerErrorException("Failed while checking if order already exists in the database", it)
             }
             .awaitSingleOrNull()
-    }
-
-    private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
-        if (payload.orderId.isBlank()) {
-            throw ServerWebInputException("The order's orderId is required, and can not be blank")
-        }
-        if (payload.hostOrderId.isBlank()) {
-            throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
-        }
-        if (payload.productLine.isEmpty()) {
-            throw ServerWebInputException("The order must contain product lines")
-        }
     }
 }

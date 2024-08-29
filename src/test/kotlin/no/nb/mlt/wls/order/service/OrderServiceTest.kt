@@ -15,6 +15,7 @@ import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.model.OrderType
 import no.nb.mlt.wls.order.model.ProductLine
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.repository.OrderRepository
 import org.assertj.core.api.Assertions.assertThat
@@ -119,9 +120,9 @@ class OrderServiceTest {
     @Test
     fun `update existing order with no errors returns ok`() {
         runTest {
-            every { db.findByHostNameAndHostOrderId(top.hostName, top.hostOrderId) } returns Mono.just(top.toOrder())
+            every { db.findByHostNameAndHostOrderId(nop.hostName, nop.hostOrderId) } returns Mono.just(top.toOrder())
             coEvery { synq.updateOrder(any()) } returns ResponseEntity.ok().build()
-            every { db.save(any()) } returns Mono.just(nop.toOrder())
+            every { db.save(any()) } returns Mono.just(top.toOrder())
 
             assertThat(cut.updateOrder(nop, tcn).statusCode.is2xxSuccessful)
         }
@@ -202,14 +203,11 @@ class OrderServiceTest {
 
     // Will be used in most tests (nop = new order payload)
     private val nop =
-        ApiOrderPayload(
-            orderId = "axiell-order-69",
+        ApiUpdateOrderPayload(
             hostName = HostName.AXIELL,
             hostOrderId = "axiell-order-69",
-            status = OrderStatus.NOT_STARTED,
             productLine = listOf(ProductLine("mlt-420", OrderLineStatus.NOT_STARTED)),
             orderType = OrderType.LOAN,
-            owner = Owner.NB,
             receiver =
                 OrderReceiver(
                     name = "name",

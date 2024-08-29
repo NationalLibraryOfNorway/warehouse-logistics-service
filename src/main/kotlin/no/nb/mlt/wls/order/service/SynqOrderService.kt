@@ -3,7 +3,7 @@ package no.nb.mlt.wls.order.service
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.core.data.synq.SynqError.Companion.createServerError
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.payloads.SynqOrder
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
@@ -56,7 +56,7 @@ class SynqOrderService(
             .awaitSingle()
     }
 
-    suspend fun updateOrder(payload: ApiOrderPayload): ResponseEntity<SynqError> {
+    suspend fun updateOrder(payload: ApiUpdateOrderPayload): ResponseEntity<SynqError> {
         val uri = URI.create("$baseUrl/orders/batch")
 
         val orders = SynqOrder(listOf(payload.toOrder().toSynqPayload()))

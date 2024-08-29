@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -161,6 +162,6 @@ class OrderController(val orderService: OrderService) {
     @PutMapping("/order")
     suspend fun updateOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiOrderPayload
+        @RequestBody payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload, jwt.name)
 }
