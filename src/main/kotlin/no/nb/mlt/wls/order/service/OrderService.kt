@@ -87,8 +87,6 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         val updatedOrder =
             db.save(
                 existingOrder.copy(
-                    hostOrderId = payload.hostOrderId,
-                    hostName = payload.hostName,
                     productLine = payload.productLine,
                     orderType = payload.orderType,
                     receiver = payload.receiver,
