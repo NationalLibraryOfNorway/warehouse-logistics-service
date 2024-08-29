@@ -160,6 +160,7 @@ class OrderController(val orderService: OrderService) {
     )
     @PutMapping("/order")
     suspend fun updateOrder(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
-    ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload)
+    ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload, jwt.name)
 }

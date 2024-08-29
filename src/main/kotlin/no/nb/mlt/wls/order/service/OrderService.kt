@@ -34,21 +34,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
-
-        val existingOrder =
-            db.findByHostNameAndHostOrderId(payload.hostName, payload.hostOrderId)
-                .timeout(Duration.ofSeconds(8))
-                .onErrorMap {
-                    if (it is TimeoutException) {
-                        logger.error(it) {
-                            "Timed out while fetching from WLS database. Relevant payload: $payload"
-                        }
-                    } else {
-                        logger.error(it) { "Unexpected error for $payload" }
-                    }
-                    ServerErrorException("Failed while checking if order already exists in the database", it)
-                }
-                .awaitSingleOrNull()
+        val existingOrder = findOrderInDb(payload.hostName, payload.hostOrderId)
 
         if (existingOrder != null) {
             return ResponseEntity.ok(existingOrder.toApiOrderPayload())
@@ -77,30 +63,19 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         return ResponseEntity.status(HttpStatus.CREATED).body(order.toApiOrderPayload())
     }
 
-    suspend fun updateOrder(payload: ApiOrderPayload): ResponseEntity<ApiOrderPayload> {
+    suspend fun updateOrder(
+        payload: ApiOrderPayload,
+        clientName: String
+    ): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidClientName(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
 
         val existingOrder =
-            db.findByHostNameAndHostOrderId(payload.hostName, payload.orderId)
-                .timeout(Duration.ofSeconds(8))
-                .onErrorMap {
-                    if (it is TimeoutException) {
-                        logger.error(it) {
-                            "Timed out while fetching from WLS database. Relevant payload: $payload"
-                        }
-                    } else {
-                        logger.error(it) { "Unexpected error for $payload" }
-                    }
-                    ServerErrorException("Failed while checking if order already exists in the database", it)
-                }
-                .awaitSingleOrNull()
-
-        if (existingOrder == null) {
-            throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Order with id $payload.hostOrderId from $payload.hostName does not exist in the database"
-            )
-        }
+            findOrderInDb(payload.hostName, payload.hostOrderId)
+                ?: throw ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Order with id $payload.hostOrderId from $payload.hostName does not exist in the database"
+                )
 
         if (existingOrder.status != OrderStatus.NOT_STARTED) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Order is already being processed, and can not be edited")
@@ -134,12 +109,33 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
     ): ResponseEntity<Order> {
         throwIfInvalidClientName(clientName, hostName)
         val order =
-            db.findByHostNameAndHostOrderId(hostName, hostOrderId)
-                .awaitSingleOrNull()
-        if (order != null) {
-            return ResponseEntity.ok(order)
-        }
-        throw ResponseStatusException(HttpStatus.NOT_FOUND, "Order with id $hostOrderId from $hostName was not found")
+            findOrderInDb(hostName, hostOrderId) ?: throw ResponseStatusException(
+                HttpStatus.NOT_FOUND,
+                "Order with id $hostOrderId from $hostName was not found"
+            )
+        return ResponseEntity.ok(order)
+    }
+
+    /**
+     * Query the WLS database if an order exists
+     */
+    private suspend fun findOrderInDb(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order? {
+        return db.findByHostNameAndHostOrderId(hostName, hostOrderId)
+            .timeout(Duration.ofSeconds(8))
+            .onErrorMap {
+                if (it is TimeoutException) {
+                    logger.error(it) {
+                        "Timed out while fetching order $hostOrderId from WLS database. Owner: $hostName"
+                    }
+                } else {
+                    logger.error(it) { "Unexpected error for getting $hostOrderId from $hostName" }
+                }
+                ServerErrorException("Failed while checking if order already exists in the database", it)
+            }
+            .awaitSingleOrNull()
     }
 
     private fun throwIfInvalidPayload(payload: ApiOrderPayload) {
