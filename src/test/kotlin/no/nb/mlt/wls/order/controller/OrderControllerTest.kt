@@ -18,6 +18,7 @@ import no.nb.mlt.wls.order.model.OrderType
 import no.nb.mlt.wls.order.model.ProductLine
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
+import no.nb.mlt.wls.order.payloads.toUpdateOrderPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
 import no.nb.mlt.wls.order.service.SynqOrderService
 import org.assertj.core.api.Assertions.assertThat
@@ -32,6 +33,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
@@ -160,6 +162,100 @@ class OrderControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
+            .exchange()
+            .expectStatus().is5xxServerError
+    }
+
+    @Test
+    fun `getOrder returns the order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .get()
+            .uri("/order/{hostName}/{hostOrderId}", clientName, duplicateOrderPayload.hostOrderId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(ApiOrderPayload::class.java)
+    }
+
+    @Test
+    fun `getOrder for wrong client throws`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .get()
+            .uri("/order/{hostName}/{hostOrderId}", "ALMA", duplicateOrderPayload.hostOrderId)
+            .exchange()
+            .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `updateOrder with valid payload updates order`() {
+        val testPayload =
+            testOrderPayload.toOrder().toUpdateOrderPayload()
+                .copy(
+                    productLine =
+                        listOf(
+                            ProductLine("mlt-420", OrderLineStatus.NOT_STARTED),
+                            ProductLine("mlt-421", OrderLineStatus.NOT_STARTED)
+                        )
+                )
+
+        // TODO - Check list elements
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .put()
+            .uri("/order")
+            .bodyValue(testPayload)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isOk
+    }
+
+    @Test
+    fun `updateOrder when order is being processed errors`() {
+        val testPayload = testOrderPayload.copy(orderId = "mlt-test-order-processing", status = OrderStatus.IN_PROGRESS)
+        val testUpdatePayload = testPayload.toOrder().toUpdateOrderPayload().copy(orderType = OrderType.DIGITIZATION)
+        runTest {
+            repository.save(testPayload.toOrder()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(clientName) })
+                .put()
+                .uri("/order")
+                .bodyValue(testUpdatePayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+        }
+    }
+
+    // FIXME - Spec?
+    @Test
+    fun `deleteOrder when valid deletes order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .delete()
+            .uri("/order")
+            .exchange()
+            .expectStatus().is2xxSuccessful
+    }
+
+    @Test
+    fun `deleteOrder handles synq error`() {
+        coEvery {
+            // FIXME - deleteOrder call
+            synqOrderService.createOrder(any())
+        } returns ResponseEntity.badRequest().build()
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .delete()
+            .uri("/order")
             .exchange()
             .expectStatus().is5xxServerError
     }
