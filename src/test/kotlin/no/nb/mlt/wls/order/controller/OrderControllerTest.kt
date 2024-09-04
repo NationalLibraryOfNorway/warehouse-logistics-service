@@ -29,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.MOCK
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
@@ -46,7 +46,7 @@ import java.net.URI
 @AutoConfigureWebTestClient
 @ExtendWith(MockKExtension::class)
 @EnableMongoRepositories("no.nb.mlt.wls")
-@SpringBootTest(webEnvironment = MOCK)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
     @Autowired val repository: OrderRepository,
     @Autowired val applicationContext: ApplicationContext
@@ -55,6 +55,8 @@ class OrderControllerTest(
     private lateinit var synqOrderService: SynqOrderService
 
     private lateinit var webTestClient: WebTestClient
+
+    val clientName: String = HostName.AXIELL.name
 
     @BeforeEach
     fun setUp() {
@@ -78,7 +80,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject("axiell") })
+                .mutateWith(mockJwt().jwt { it.subject(clientName) })
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
@@ -97,7 +99,7 @@ class OrderControllerTest(
     fun `createOrder with duplicate payload returns OK`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("axiell") })
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateOrderPayload)
@@ -115,7 +117,7 @@ class OrderControllerTest(
     fun `createOrder payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("axiell") })
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
@@ -137,7 +139,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("axiell") })
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
@@ -154,7 +156,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("axiell") })
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)

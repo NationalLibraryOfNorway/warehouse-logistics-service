@@ -7,14 +7,18 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -74,8 +78,92 @@ class OrderController(val orderService: OrderService) {
     )
     @PostMapping("/order")
     suspend fun createOrder(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
-    ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload)
+    ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload, jwt.name)
+
+    @Operation(
+        summary = "Gets an order from the storage system",
+        description = "Checks if a specified order exists within Hermes WLS."
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Order with given 'hostName' and 'hostOrderId' exists in the system.",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Some field was invalid in your request. The error message contains information about the invalid fields.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to request orders.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        )
+    )
+    @GetMapping("/order/{hostName}/{hostOrderId}")
+    suspend fun getOrder(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @PathVariable("hostName") hostName: HostName,
+        @PathVariable("hostOrderId") hostOrderId: String
+    ): ResponseEntity<Order> = orderService.getOrder(jwt.name, hostName, hostOrderId)
+
+    @Operation(
+        summary = "Updates an existing order in the storage system(s)",
+        description = """Updates a specified order to the various storage systems via Hermes WLS.
+        """
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "The order was updated with the new products, and sent to appropriate systems",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Order payload is invalid and the order was not updated.
+                This error is also produced if the order specified does not exist.
+                Otherwise, the error message contains information about the invalid fields.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized order products.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "409",
+            description = "The order is already being processed, and can not be edited at this point.",
+            content = [Content(schema = Schema())]
+        )
+    )
+    @PutMapping("/order")
+    suspend fun updateOrder(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @RequestBody payload: ApiUpdateOrderPayload
+    ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload, jwt.name)
 
     @Operation(
         summary = "Deletes an order from the storage system",

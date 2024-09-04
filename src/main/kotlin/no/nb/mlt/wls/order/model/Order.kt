@@ -41,7 +41,7 @@ data class ProductLine(
     val hostId: String,
     @Schema(
         description = "Current status of the order line.",
-        examples = [ "NOT_STARTED", "PICKED", "FAILED" ],
+        examples = ["NOT_STARTED", "PICKED", "FAILED"],
         defaultValue = "NOT_STARTED",
         accessMode = READ_ONLY
     )

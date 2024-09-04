@@ -3,7 +3,6 @@ package no.nb.mlt.wls.order.payloads
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus
@@ -15,10 +14,8 @@ import org.springframework.web.server.ServerWebInputException
     description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
     example = """
     {
-      "orderId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       "hostName": "AXIELL",
       "hostOrderId": "mlt-12345-order",
-      "status": "NOT_STARTED",
       "productLine": [
         {
           "hostId": "mlt-12345",
@@ -26,7 +23,6 @@ import org.springframework.web.server.ServerWebInputException
         }
       ],
       "orderType": "LOAN",
-      "owner": "NB",
       "receiver": {
         "name": "Doug Dimmadome",
         "location": "Doug Dimmadome's office in the Dimmsdale Dimmadome",
@@ -39,14 +35,7 @@ import org.springframework.web.server.ServerWebInputException
     }
     """
 )
-data class ApiOrderPayload(
-    // TODO: I don't see why we need this, but it was in the mock API
-    @Schema(
-        description = "Order ID in the database(?)",
-        example = "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        accessMode = READ_ONLY
-    )
-    val orderId: String,
+data class ApiUpdateOrderPayload(
     @Schema(
         description = "Name of the host system which made the order.",
         examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
@@ -58,11 +47,6 @@ data class ApiOrderPayload(
     )
     val hostOrderId: String,
     @Schema(
-        description = "Current status of the order as a whole.",
-        examples = [ "NOT_STARTED", "IN_PROGRESS", "COMPLETED", "DELETED" ]
-    )
-    val status: OrderStatus?,
-    @Schema(
         description = "List of products in the order, also called order lines, or product lines.",
         accessMode = READ_ONLY
     )
@@ -72,12 +56,6 @@ data class ApiOrderPayload(
         examples = [ "LOAN", "DIGITIZATION" ]
     )
     val orderType: OrderType,
-    @Schema(
-        description = "Who's the owner of the material in the order.",
-        examples = [ "NB", "ARKIVVERKET" ],
-        accessMode = READ_ONLY
-    )
-    val owner: Owner?,
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
@@ -89,35 +67,40 @@ data class ApiOrderPayload(
     val callbackUrl: String
 )
 
-fun ApiOrderPayload.toOrder() =
+fun ApiOrderPayload.toUpdateOrderPayload() =
+    ApiUpdateOrderPayload(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        productLine = productLine,
+        orderType = orderType,
+        receiver = receiver,
+        callbackUrl = callbackUrl
+    )
+
+fun ApiUpdateOrderPayload.toOrder() =
     Order(
-        hostName = hostName,
         hostOrderId = hostOrderId,
-        status = status ?: OrderStatus.NOT_STARTED,
+        hostName = hostName,
+        status = OrderStatus.NOT_STARTED,
         productLine = productLine,
         orderType = orderType,
-        owner = owner,
+        // TODO - validate if this is ok to do
+        owner = null,
         receiver = receiver,
         callbackUrl = callbackUrl
     )
 
-fun Order.toApiOrderPayload() =
-    ApiOrderPayload(
-        orderId = hostOrderId,
+fun Order.toUpdateOrderPayload() =
+    ApiUpdateOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
-        status = status,
         productLine = productLine,
         orderType = orderType,
-        owner = owner,
         receiver = receiver,
         callbackUrl = callbackUrl
     )
 
-fun throwIfInvalidPayload(payload: ApiOrderPayload) {
-    if (payload.orderId.isBlank()) {
-        throw ServerWebInputException("The order's orderId is required, and can not be blank")
-    }
+fun throwIfInvalidPayload(payload: ApiUpdateOrderPayload) {
     if (payload.hostOrderId.isBlank()) {
         throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
     }
