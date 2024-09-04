@@ -4,10 +4,16 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
+import org.bson.types.ObjectId
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
+@CompoundIndex(unique = true, def = "{'hostName':1,'hostOrderId':1}")
 @Document(collection = "orders")
 data class Order(
+    @Id
+    private val id: ObjectId = ObjectId(),
     val hostName: HostName,
     val hostOrderId: String,
     val status: OrderStatus,

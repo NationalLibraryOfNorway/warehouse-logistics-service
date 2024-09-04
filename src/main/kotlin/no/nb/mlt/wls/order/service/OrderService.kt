@@ -120,13 +120,13 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
                 .body("Failed to delete order in SynQ, error from synq: ${synqResponse.body}")
         }
 
-        db.delete(order)
+        db.deleteByHostNameAndHostOrderId(hostName, hostOrderId)
             .timeout(Duration.ofSeconds(6))
             .onErrorMap {
                 logger.error(it) { "Failed to delete order with hostName: $hostName and hostOrderId: $hostOrderId" }
                 ServerErrorException("Failed to delete order in the database", it)
             }
-            .awaitSingle()
+            .awaitSingleOrNull()
 
         return ResponseEntity.ok().build()
     }

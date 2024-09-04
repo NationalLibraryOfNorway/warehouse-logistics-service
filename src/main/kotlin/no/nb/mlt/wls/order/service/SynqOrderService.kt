@@ -6,33 +6,35 @@ import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.core.data.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.order.payloads.SynqOrder
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
+import org.springdoc.core.service.GenericResponseService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.toEntity
 import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
 import java.net.URI
 
 @Service
 class SynqOrderService(
-    @Autowired val webClient: WebClient
+    @Autowired val webClient: WebClient,
+    responseBuilder: GenericResponseService
 ) {
     @Value("\${synq.path.base}")
     lateinit var baseUrl: String
 
     suspend fun createOrder(payload: SynqOrderPayload): ResponseEntity<SynqError> {
-        val uri = URI.create("$baseUrl/orders/batch")
-
         // Wrap the order in the way SynQ likes it
         val orders = SynqOrder(listOf(payload))
 
         return webClient
             .post()
-            .uri(uri)
+            .uri(URI.create("$baseUrl/orders/batch"))
             .body(BodyInserters.fromValue(orders))
             .retrieve()
             .toEntity(SynqError::class.java)
@@ -53,15 +55,19 @@ class SynqOrderService(
         hostName: HostName,
         hostOrderId: String
     ): ResponseEntity<SynqError> {
-        val uri = URI.create("$baseUrl/orders/$hostName/$hostOrderId")
-
         return webClient
             .delete()
-            .uri(uri)
-            .retrieve()
-            .toEntity(SynqError::class.java)
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) } // TODO: FIXME TEXT IS WRONG!!!
+            .uri(URI.create("$baseUrl/orders/$hostName/$hostOrderId"))
+            .exchangeToMono { response ->
+                if (response.statusCode().isSameCodeAs(HttpStatus.OK)) {
+                    response.toEntity<SynqError>()
+                } else {
+                    response.createError()
+                }
+            }
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
+        return ResponseEntity.ok(SynqError(200, "OK"))
     }
 }
 

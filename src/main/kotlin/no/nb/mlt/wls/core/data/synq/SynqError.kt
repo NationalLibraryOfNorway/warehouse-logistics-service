@@ -16,10 +16,13 @@ data class SynqError(val errorCode: Int, val errorText: String) {
             val errorBody = error.getResponseBodyAs(SynqError::class.java)
 
             return ServerErrorException(
-                "Failed to create product in SynQ, the storage system responded with error code: " +
-                    "'${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}' " +
-                    "and error text: " +
-                    "'${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'",
+                """
+                While communicating with SynQ API, an error occurred with code:
+                '${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}'
+                and error text:
+                '${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'.
+                A copy of the original exception is attached to this error.
+                """.trimIndent(),
                 error
             )
         }

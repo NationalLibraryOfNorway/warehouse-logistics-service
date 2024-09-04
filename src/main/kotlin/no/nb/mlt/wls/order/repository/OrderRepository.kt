@@ -12,4 +12,9 @@ interface OrderRepository : ReactiveMongoRepository<Order, String> {
         hostName: HostName,
         hostOrderId: String
     ): Mono<Order>
+
+    fun deleteByHostNameAndHostOrderId(
+        hostName: HostName,
+        hostOrderId: String
+    ): Mono<Void>
 }

@@ -4,6 +4,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
@@ -18,7 +19,6 @@ import no.nb.mlt.wls.order.model.ProductLine
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.repository.OrderRepository
-import no.nb.mlt.wls.order.service.OrderService
 import no.nb.mlt.wls.order.service.SynqOrderService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -29,12 +29,14 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.MOCK
+import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import java.net.URI
@@ -44,9 +46,10 @@ import java.net.URI
 @AutoConfigureWebTestClient
 @ExtendWith(MockKExtension::class)
 @EnableMongoRepositories("no.nb.mlt.wls")
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(webEnvironment = MOCK)
 class OrderControllerTest(
-    @Autowired val repository: OrderRepository
+    @Autowired val repository: OrderRepository,
+    @Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
     private lateinit var synqOrderService: SynqOrderService
@@ -57,7 +60,8 @@ class OrderControllerTest(
     fun setUp() {
         webTestClient =
             WebTestClient
-                .bindToController(OrderController(OrderService(repository, synqOrderService)))
+                .bindToApplicationContext(applicationContext)
+                .apply(springSecurity())
                 .configureClient()
                 .baseUrl("/v1/order")
                 .build()
@@ -66,7 +70,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder with valid payload creates order`() =
         runTest {
             coEvery {
@@ -75,8 +78,8 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject("axiell") })
                 .post()
-                .uri("/batch/create")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
                 .exchange()
@@ -91,12 +94,11 @@ class OrderControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `createOrder with duplicate payload returns OK`() {
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject("axiell") })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateOrderPayload)
             .exchange()
@@ -110,12 +112,11 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject("axiell") })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateOrderPayload.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
@@ -129,7 +130,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder where SynQ says it's a duplicate returns OK`() { // SynqService converts an error to return OK if it finds a duplicate product
         coEvery {
             synqOrderService.createOrder(any())
@@ -137,8 +137,8 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject("axiell") })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
@@ -147,7 +147,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder handles SynQ error`() {
         coEvery {
             synqOrderService.createOrder(any())
@@ -155,13 +154,34 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject("axiell") })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
             .expectStatus().is5xxServerError
     }
+
+    @Test
+    fun `deleteOrder with valid data deletes order`() =
+        runTest {
+            coEvery {
+                synqOrderService.deleteOrder(any(), any())
+            } returns ResponseEntity.ok().build()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject("axiell") })
+                .delete()
+                .uri("/${duplicateOrderPayload.hostName}/${duplicateOrderPayload.hostOrderId}")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk
+
+            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
+
+            assertThat(order).isNull()
+        }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////

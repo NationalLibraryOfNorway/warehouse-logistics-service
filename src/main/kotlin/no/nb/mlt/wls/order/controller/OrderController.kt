@@ -11,7 +11,7 @@ import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.jwt.Jwt
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -107,6 +107,8 @@ class OrderController(val orderService: OrderService) {
     suspend fun deleteOrder(
         @PathVariable hostName: HostName,
         @PathVariable hostOrderId: String,
-        @AuthenticationPrincipal caller: Jwt
-    ): ResponseEntity<String> = orderService.deleteOrder(hostName, hostOrderId, caller.subject.uppercase())
+        @AuthenticationPrincipal caller: JwtAuthenticationToken
+    ): ResponseEntity<String> {
+        return orderService.deleteOrder(hostName, hostOrderId, caller.name.uppercase())
+    }
 }
