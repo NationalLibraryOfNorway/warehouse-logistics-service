@@ -247,33 +247,6 @@ class OrderControllerTest(
         }
     }
 
-    // FIXME - use delete endpoint when merged into main
-    @Test
-    fun `deleteOrder when valid deletes order`() {
-//        webTestClient
-//            .mutateWith(csrf())
-//            .mutateWith(mockJwt().jwt { it.subject(clientName) })
-//            .delete()
-//            .exchange()
-//            .expectStatus().is2xxSuccessful
-        assertThat(true)
-    }
-
-    // FIXME - use delete endpoint when merged into main
-    @Test
-    fun `deleteOrder handles synq error`() {
-//        coEvery {
-//            synqOrderService.createOrder(any())
-//        } returns ResponseEntity.badRequest().build()
-//        webTestClient
-//            .mutateWith(csrf())
-//            .mutateWith(mockJwt().jwt { it.subject(clientName) })
-//            .delete()
-//            .exchange()
-//            .expectStatus().is5xxServerError
-        assertThat(true)
-    }
-
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
@@ -285,15 +258,30 @@ class OrderControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().jwt { it.subject("axiell") })
                 .delete()
-                .uri("/${duplicateOrderPayload.hostName}/${duplicateOrderPayload.hostOrderId}")
+                .uri("/${dop.hostName}/${dop.hostOrderId}")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk
 
-            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
+            val order = repository.findByHostNameAndHostOrderId(dop.hostName, dop.hostOrderId).awaitSingleOrNull()
 
             assertThat(order).isNull()
         }
+
+    @Test
+    fun `deleteOrder handles synq error`() {
+        coEvery {
+            synqOrderService.deleteOrder(any(), any())
+        } returns ResponseEntity.internalServerError().build()
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .delete()
+            .uri("/${dop.hostName}/${dop.hostOrderId}")
+            .exchange()
+            .expectStatus().is5xxServerError
+        assertThat(true)
+    }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
