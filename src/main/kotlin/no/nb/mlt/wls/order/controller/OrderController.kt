@@ -14,6 +14,7 @@ import no.nb.mlt.wls.order.service.OrderService
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -29,8 +30,7 @@ class OrderController(val orderService: OrderService) {
     @Operation(
         summary = "Creates an order for products from the storage system",
         description = """Creates an order for specified products to appropriate storage systems via Hermes WLS.
-            Orders are automatically sent to the systems that own the respective product(s).
-        """
+            Orders are automatically sent to the systems that own the respective product(s)."""
     )
     @ApiResponses(
         ApiResponse(
@@ -67,7 +67,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized order products.",
+            description = "Client sending the request is not authorized to order products.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -76,11 +76,11 @@ class OrderController(val orderService: OrderService) {
             content = [Content(schema = Schema())]
         )
     )
-    @PostMapping("/order/batch/create")
+    @PostMapping("/order")
     suspend fun createOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
-    ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(jwt.name, payload)
+    ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload, jwt.name)
 
     @Operation(
         summary = "Gets an order from the storage system",
@@ -104,7 +104,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to request orders.",
+            description = "Client sending the request is not authorized to request orders, or this order does not belong to them.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -145,7 +145,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized order products.",
+            description = "Client sending the request is not authorized to update orders, or this order does not belong to them.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -164,4 +164,39 @@ class OrderController(val orderService: OrderService) {
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload, jwt.name)
+
+    @Operation(
+        summary = "Deletes an order from the storage system",
+        description = """Deletes an order from the appropriate storage systems via Hermes WLS.
+            To delete an order it must have a status of "NOT_STARTED".
+            Additionally the caller must "own", e.g. be the creator of the order."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Order with given 'hostName' and 'hostOrderId' was deleted from the system.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to delete orders, or this order does not belong to them."
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid 'Authorization' header is missing from the request,
+                    or the caller is not authorized to delete the order."""
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "Order with given 'hostName' and 'hostOrderId' does not exist in the system."
+        )
+    )
+    @DeleteMapping("/order/{hostName}/{hostOrderId}")
+    suspend fun deleteOrder(
+        @PathVariable hostName: HostName,
+        @PathVariable hostOrderId: String,
+        @AuthenticationPrincipal caller: JwtAuthenticationToken
+    ): ResponseEntity<String> {
+        return orderService.deleteOrder(hostName, hostOrderId, caller.name.uppercase())
+    }
 }

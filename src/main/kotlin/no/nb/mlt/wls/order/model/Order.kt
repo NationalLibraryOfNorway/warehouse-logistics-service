@@ -14,8 +14,8 @@ import org.springframework.data.mongodb.core.mapping.Document
 data class Order(
     @Id
     private val id: ObjectId = ObjectId(),
-    val hostOrderId: String,
     val hostName: HostName,
+    val hostOrderId: String,
     val status: OrderStatus,
     val productLine: List<ProductLine>,
     val orderType: OrderType,

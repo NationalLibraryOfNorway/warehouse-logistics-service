@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.service
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.synq.SynqError
 import no.nb.mlt.wls.core.data.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.toEntity
 import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
@@ -29,14 +31,12 @@ class SynqOrderService(
     lateinit var baseUrl: String
 
     suspend fun createOrder(payload: SynqOrderPayload): ResponseEntity<SynqError> {
-        val uri = URI.create("$baseUrl/orders/batch")
-
         // Wrap the order in the way SynQ likes it
         val orders = SynqOrder(listOf(payload))
 
         return webClient
             .post()
-            .uri(uri)
+            .uri(URI.create("$baseUrl/orders/batch"))
             .body(BodyInserters.fromValue(orders))
             .retrieve()
             .toEntity(SynqError::class.java)
@@ -57,17 +57,35 @@ class SynqOrderService(
     }
 
     suspend fun updateOrder(payload: ApiUpdateOrderPayload): ResponseEntity<SynqError> {
-        val uri = URI.create("$baseUrl/orders/batch")
-
+        // TODO - Should maybe just get a regular SynqOrderPayload here instead of converting it?
+        // If anything the regular order service should do the conversion either at call site or somewhere else
         val orders = SynqOrder(listOf(payload.toOrder().toSynqPayload()))
 
         // TODO - Extend error handling
         return webClient
             .put()
-            .uri(uri)
+            .uri(URI.create("$baseUrl/orders/batch"))
             .bodyValue(orders)
             .retrieve()
             .toEntity(SynqError::class.java)
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            .awaitSingle()
+    }
+
+    suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): ResponseEntity<SynqError> {
+        return webClient
+            .delete()
+            .uri(URI.create("$baseUrl/orders/$hostName/$hostOrderId"))
+            .exchangeToMono { response ->
+                if (response.statusCode().isSameCodeAs(HttpStatus.OK)) {
+                    response.toEntity<SynqError>()
+                } else {
+                    response.createError()
+                }
+            }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }

@@ -4,6 +4,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
@@ -33,7 +34,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -82,7 +82,6 @@ class OrderControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().jwt { it.subject(clientName) })
                 .post()
-                .uri("/batch/create")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
                 .exchange()
@@ -102,7 +101,6 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateOrderPayload)
             .exchange()
@@ -121,7 +119,6 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateOrderPayload.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
@@ -135,7 +132,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder where SynQ says it's a duplicate returns OK`() { // SynqService converts an error to return OK if it finds a duplicate product
         coEvery {
             synqOrderService.createOrder(any())
@@ -145,7 +141,6 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
@@ -154,7 +149,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder handles SynQ error`() {
         coEvery {
             synqOrderService.createOrder(any())
@@ -164,12 +158,32 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .post()
-            .uri("/batch/create")
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
             .expectStatus().is5xxServerError
     }
+
+    @Test
+    fun `deleteOrder with valid data deletes order`() =
+        runTest {
+            coEvery {
+                synqOrderService.deleteOrder(any(), any())
+            } returns ResponseEntity.ok().build()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject("axiell") })
+                .delete()
+                .uri("/${duplicateOrderPayload.hostName}/${duplicateOrderPayload.hostOrderId}")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk
+
+            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
+
+            assertThat(order).isNull()
+        }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////

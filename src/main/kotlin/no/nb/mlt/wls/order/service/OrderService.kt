@@ -30,11 +30,12 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
      * Creates an order within the WLS database, and sends it to the appropriate storage systems
      */
     suspend fun createOrder(
-        clientName: String,
-        payload: ApiOrderPayload
+        payload: ApiOrderPayload,
+        clientName: String
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(clientName, payload.hostName)
         throwIfInvalidPayload(payload)
+
         val existingOrder = findOrderInDb(payload.hostName, payload.hostOrderId)
 
         if (existingOrder != null) {
@@ -97,42 +98,80 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }
 
-    /**
-     * Gets an order from the WLS database
-     */
     suspend fun getOrder(
         clientName: String,
         hostName: HostName,
         hostOrderId: String
     ): ResponseEntity<Order> {
         throwIfInvalidClientName(clientName, hostName)
+
         val order =
             findOrderInDb(hostName, hostOrderId) ?: throw ResponseStatusException(
                 HttpStatus.NOT_FOUND,
                 "Order with id $hostOrderId from $hostName was not found"
             )
+
         return ResponseEntity.ok(order)
     }
 
-    /**
-     * Query the WLS database if an order exists
-     */
+    suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String,
+        clientName: String
+    ): ResponseEntity<String> {
+        throwIfInvalidClientName(clientName, hostName)
+
+        if (hostOrderId.isBlank()) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("The order's hostOrderId is required, and can not be blank")
+        }
+
+        val order =
+            findOrderInDb(hostName, hostOrderId)
+                ?: return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body("Cannot find order with hostName: $hostName and hostOrderId: $hostOrderId")
+
+        if (order.status != OrderStatus.NOT_STARTED) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("Order with hostName: $hostName and hostOrderId: $hostOrderId has status: ${order.status}, and can not be deleted")
+        }
+
+        val synqResponse = synqService.deleteOrder(hostName, hostOrderId)
+
+        if (!synqResponse.statusCode.isSameCodeAs(HttpStatus.OK)) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to delete order in SynQ, error from synq: ${synqResponse.body}")
+        }
+
+        db.deleteByHostNameAndHostOrderId(hostName, hostOrderId)
+            .timeout(Duration.ofSeconds(6))
+            .onErrorMap {
+                logger.error(it) { "Failed to delete order with hostName: $hostName and hostOrderId: $hostOrderId" }
+                ServerErrorException("Failed to delete order in the database", it)
+            }
+            .awaitSingleOrNull()
+
+        return ResponseEntity.ok().build()
+    }
+
     private suspend fun findOrderInDb(
         hostName: HostName,
         hostOrderId: String
-    ): Order? {
-        return db.findByHostNameAndHostOrderId(hostName, hostOrderId)
-            .timeout(Duration.ofSeconds(8))
-            .onErrorMap {
-                if (it is TimeoutException) {
-                    logger.error(it) {
-                        "Timed out while fetching order $hostOrderId from WLS database. Owner: $hostName"
-                    }
-                } else {
-                    logger.error(it) { "Unexpected error for getting $hostOrderId from $hostName" }
+    ) = db.findByHostNameAndHostOrderId(hostName, hostOrderId)
+        .timeout(Duration.ofSeconds(8))
+        .onErrorMap {
+            if (it is TimeoutException) {
+                logger.error(it) {
+                    "Timed out while fetching order from WLS database. HostName: $hostName, hostOrderId: $hostOrderId"
                 }
-                ServerErrorException("Failed while checking if order already exists in the database", it)
+            } else {
+                logger.error(it) { "Unexpected error while fetching order with HostName: $hostName, hostOrderId: $hostOrderId" }
             }
-            .awaitSingleOrNull()
-    }
+            ServerErrorException("Failed while checking if order already exists in the database", it)
+        }
+        .awaitSingleOrNull()
 }
