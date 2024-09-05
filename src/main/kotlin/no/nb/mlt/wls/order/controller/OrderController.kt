@@ -67,7 +67,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized order products.",
+            description = "Client sending the request is not authorized to order products.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -104,7 +104,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to request orders.",
+            description = "Client sending the request is not authorized to request orders, or this order does not belong to them.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -145,7 +145,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized order products.",
+            description = "Client sending the request is not authorized to update orders, or this order does not belong to them.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -179,7 +179,7 @@ class OrderController(val orderService: OrderService) {
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized order products."
+            description = "Client sending the request is not authorized to delete orders, or this order does not belong to them."
         ),
         ApiResponse(
             responseCode = "403",
