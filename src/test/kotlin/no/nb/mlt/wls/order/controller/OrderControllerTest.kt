@@ -258,7 +258,7 @@ class OrderControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().jwt { it.subject("axiell") })
                 .delete()
-                .uri("/${dop.hostName}/${dop.hostOrderId}")
+                .uri("/{hostName}/{hostOrderId}")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk
@@ -277,7 +277,7 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(clientName) })
             .delete()
-            .uri("/${dop.hostName}/${dop.hostOrderId}")
+            .uri("/{hostName}/{hostOrderId}", dop.hostName, dop.hostOrderId)
             .exchange()
             .expectStatus().is5xxServerError
         assertThat(true)
