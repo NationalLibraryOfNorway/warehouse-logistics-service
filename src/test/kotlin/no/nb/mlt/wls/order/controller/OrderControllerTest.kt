@@ -59,7 +59,7 @@ class OrderControllerTest(
 
     private lateinit var webTestClient: WebTestClient
 
-    val clientName: String = HostName.AXIELL.name
+    val client: String = HostName.AXIELL.name
 
     @BeforeEach
     fun setUp() {
@@ -83,7 +83,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(clientName) })
+                .mutateWith(mockJwt().jwt { it.subject(client) })
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
@@ -102,17 +102,17 @@ class OrderControllerTest(
     fun `createOrder with duplicate payload returns OK`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(dop)
+            .bodyValue(duplicateOrderPayload)
             .exchange()
             .expectStatus().isOk
             .expectBody<ApiOrderPayload>()
             .consumeWith { response ->
-                assertThat(response.responseBody?.hostOrderId).isEqualTo(dop.hostOrderId)
-                assertThat(response.responseBody?.hostName).isEqualTo(dop.hostName)
-                assertThat(response.responseBody?.productLine).isEqualTo(dop.productLine)
+                assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
+                assertThat(response.responseBody?.hostName).isEqualTo(duplicateOrderPayload.hostName)
+                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
             }
     }
 
@@ -120,17 +120,17 @@ class OrderControllerTest(
     fun `createOrder payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
-                dop.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
+                duplicateOrderPayload.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
             )
             .exchange()
             .expectStatus().isOk
             .expectBody<ApiOrderPayload>()
             .consumeWith { response ->
-                assertThat(response.responseBody?.productLine).isEqualTo(dop.productLine)
+                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
             }
     }
 
@@ -142,7 +142,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
@@ -159,7 +159,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
@@ -167,21 +167,21 @@ class OrderControllerTest(
             .expectStatus().is5xxServerError
     }
 
-    // TODO - Should this endpoint really be returning Orders directly?
+    // FIXME - Endpoint should be returning DTO instead of direct Orders
     @Test
     fun `getOrder returns the order`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .get()
-            .uri("/{hostName}/{hostOrderId}", dop.hostName, dop.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isOk
             .expectBody(Order::class.java)
             .consumeWith { response ->
-                assertThat(response?.responseBody?.hostOrderId.equals(dop.hostOrderId))
-                assertThat(response?.responseBody?.status?.equals(dop.status))
+                assertThat(response?.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
+                assertThat(response?.responseBody?.status?.equals(duplicateOrderPayload.status))
             }
     }
 
@@ -191,7 +191,7 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject("ALMA") })
             .get()
-            .uri("/{hostName}/{hostOrderId}", dop.hostName, dop.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .exchange()
             .expectStatus().isForbidden
     }
@@ -203,7 +203,7 @@ class OrderControllerTest(
         } returns ResponseEntity.ok().build()
 
         val testPayload =
-            dop.toOrder().toUpdateOrderPayload()
+            duplicateOrderPayload.toOrder().toUpdateOrderPayload()
                 .copy(
                     productLine =
                         listOf(
@@ -214,7 +214,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .put()
             .bodyValue(testPayload)
             .accept(MediaType.APPLICATION_JSON)
@@ -238,7 +238,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(clientName) })
+                .mutateWith(mockJwt().jwt { it.subject(client) })
                 .put()
                 .bodyValue(testUpdatePayload)
                 .accept(MediaType.APPLICATION_JSON)
@@ -258,12 +258,12 @@ class OrderControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().jwt { it.subject("axiell") })
                 .delete()
-                .uri("/{hostName}/{hostOrderId}")
+                .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk
 
-            val order = repository.findByHostNameAndHostOrderId(dop.hostName, dop.hostOrderId).awaitSingleOrNull()
+            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
 
             assertThat(order).isNull()
         }
@@ -275,9 +275,9 @@ class OrderControllerTest(
         } returns ResponseEntity.internalServerError().build()
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(clientName) })
+            .mutateWith(mockJwt().jwt { it.subject(client) })
             .delete()
-            .uri("/{hostName}/{hostOrderId}", dop.hostName, dop.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .exchange()
             .expectStatus().is5xxServerError
         assertThat(true)
@@ -287,7 +287,9 @@ class OrderControllerTest(
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    // Will be used in most tests
+    /**
+     * Payload which is used in most tests
+     */
     private val testOrderPayload =
         ApiOrderPayload(
             orderId = "axiell-order-69",
@@ -309,9 +311,10 @@ class OrderControllerTest(
             callbackUrl = "callbackUrl"
         )
 
-    // dop = Duplicate Order Payload
-    // Will exist in the database
-    private val dop =
+    /**
+     * Payload which will exist in the database
+     */
+    private val duplicateOrderPayload =
         ApiOrderPayload(
             orderId = "order-123456",
             hostName = HostName.AXIELL,
@@ -335,7 +338,7 @@ class OrderControllerTest(
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         runBlocking {
-            repository.deleteAll().then(repository.save(dop.toOrder())).awaitSingle()
+            repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder())).awaitSingle()
         }
     }
 }

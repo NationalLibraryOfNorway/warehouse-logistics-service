@@ -120,11 +120,11 @@ class OrderServiceTest {
     @Test
     fun `update existing order with no errors returns ok`() {
         runTest {
-            every { db.findByHostNameAndHostOrderId(uop.hostName, uop.hostOrderId) } returns Mono.just(op.toOrder())
+            every { db.findByHostNameAndHostOrderId(updateOrderPayload.hostName, updateOrderPayload.hostOrderId) } returns Mono.just(op.toOrder())
             coEvery { synq.updateOrder(any()) } returns ResponseEntity.ok().build()
             every { db.save(any()) } returns Mono.just(op.toOrder())
 
-            assertThat(cut.updateOrder(uop, client).statusCode.is2xxSuccessful)
+            assertThat(cut.updateOrder(updateOrderPayload, client).statusCode.is2xxSuccessful)
         }
     }
 
@@ -134,7 +134,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
             runTest {
-                cut.updateOrder(uop, client)
+                cut.updateOrder(updateOrderPayload, client)
             }
         }.withMessageContaining("does not exist")
     }
@@ -149,7 +149,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
             runTest {
-                cut.updateOrder(uop, client)
+                cut.updateOrder(updateOrderPayload, client)
             }
         }.withMessageContaining("409 CONFLICT")
     }
@@ -158,7 +158,7 @@ class OrderServiceTest {
     fun `update order which you don't own throws`() {
         assertThatExceptionOfType(ResponseStatusException::class.java).isThrownBy {
             runBlocking {
-                cut.updateOrder(uop, "Alma")
+                cut.updateOrder(updateOrderPayload, "Alma")
             }
         }.withMessageContaining("403 FORBIDDEN")
     }
@@ -170,7 +170,7 @@ class OrderServiceTest {
 
         assertThatExceptionOfType(ServerErrorException::class.java).isThrownBy {
             runTest {
-                cut.updateOrder(uop, client)
+                cut.updateOrder(updateOrderPayload, client)
             }
         }
     }
@@ -205,9 +205,9 @@ class OrderServiceTest {
         )
 
     /**
-     * Used for testing order update functionality (uop = update order payload)
+     * Used for testing order update functionality
      */
-    private val uop =
+    private val updateOrderPayload =
         ApiUpdateOrderPayload(
             hostName = HostName.AXIELL,
             hostOrderId = "axiell-order-69",

@@ -43,78 +43,99 @@ class ProductServiceTest {
 
     @Test
     fun `save called with payload missing hostId throws`() {
-        assertExceptionThrownWithMessage(tpp.copy(hostId = ""), "hostId is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(hostId = "\t\n"), "hostId is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(hostId = "      "), "hostId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload.copy(hostId = ""), "hostId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload.copy(hostId = "\t\n"), "hostId is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload.copy(hostId = "      "), "hostId is required", ServerWebInputException::class.java)
     }
 
     @Test
     fun `save called with payload missing description throws`() {
-        assertExceptionThrownWithMessage(tpp.copy(description = ""), "description is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(description = "\t\n"), "description is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(description = "      "), "description is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload.copy(description = ""), "description is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(
+            testProductPayload.copy(description = "\t\n"),
+            "description is required",
+            ServerWebInputException::class.java
+        )
+        assertExceptionThrownWithMessage(
+            testProductPayload.copy(description = "      "),
+            "description is required",
+            ServerWebInputException::class.java
+        )
     }
 
     @Test
     fun `save called with payload missing productCategory throws`() {
-        assertExceptionThrownWithMessage(tpp.copy(productCategory = ""), "category is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(productCategory = "\t\n"), "category is required", ServerWebInputException::class.java)
-        assertExceptionThrownWithMessage(tpp.copy(productCategory = "      "), "category is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload.copy(productCategory = ""), "category is required", ServerWebInputException::class.java)
+        assertExceptionThrownWithMessage(
+            testProductPayload.copy(productCategory = "\t\n"),
+            "category is required",
+            ServerWebInputException::class.java
+        )
+        assertExceptionThrownWithMessage(
+            testProductPayload.copy(productCategory = "      "),
+            "category is required",
+            ServerWebInputException::class.java
+        )
     }
 
     @Test
     fun `save called with existing product, returns existing product`() =
         runTest {
-            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.just(tpp.toProduct())
+            every {
+                db.findByHostNameAndHostId(
+                    testProductPayload.hostName,
+                    testProductPayload.hostId
+                )
+            } returns Mono.just(testProductPayload.toProduct())
 
-            val response = cut.save(tpp)
+            val response = cut.save(testProductPayload)
 
-            assertThat(response.body).isEqualTo(tpp)
+            assertThat(response.body).isEqualTo(testProductPayload)
             assertThat(response.statusCode).isEqualTo(OK)
         }
 
     @Test
     fun `save called with product that SynQ says exists, returns without a product`() =
         runTest {
-            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+            every { db.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId) } returns Mono.empty()
             coEvery { synq.createProduct(any()) } returns ResponseEntity.ok().build()
 
-            val response = cut.save(tpp)
+            val response = cut.save(testProductPayload)
             assertThat(response.body).isNull()
             assertThat(response.statusCode).isEqualTo(OK)
         }
 
     @Test
     fun `save when synq fails handles it gracefully`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+        every { db.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId) } returns Mono.empty()
         coEvery { synq.createProduct(any()) } throws
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with error code: '420' and error text: 'Blaze it LMAO'",
                 Exception("420 Blaze it")
             )
 
-        assertExceptionThrownWithMessage(tpp, "error code: '420' and error text: 'Blaze it LMAO'", ServerErrorException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload, "error code: '420' and error text: 'Blaze it LMAO'", ServerErrorException::class.java)
     }
 
     @Suppress("ReactiveStreamsUnusedPublisher")
     @Test
     fun `save when DB fails handles it gracefully`() {
-        every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.error(TimeoutException())
+        every { db.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId) } returns Mono.error(TimeoutException())
         coEvery { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
         every { db.save(any()) } returns Mono.error(Exception("DB is down"))
 
-        assertExceptionThrownWithMessage(tpp, "Failed to save product in the database", ServerErrorException::class.java)
+        assertExceptionThrownWithMessage(testProductPayload, "Failed to save product in the database", ServerErrorException::class.java)
     }
 
     @Test
     fun `save with no errors returns created product`() =
         runTest {
-            every { db.findByHostNameAndHostId(tpp.hostName, tpp.hostId) } returns Mono.empty()
+            every { db.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId) } returns Mono.empty()
             coEvery { synq.createProduct(any()) } returns ResponseEntity.created(URI.create("")).build()
-            every { db.save(any()) } returns Mono.just(tpp.toProduct())
+            every { db.save(any()) } returns Mono.just(testProductPayload.toProduct())
 
-            val response = cut.save(tpp)
-            val cleanedProduct = tpp.copy(quantity = 0.0, location = null)
+            val response = cut.save(testProductPayload)
+            val cleanedProduct = testProductPayload.copy(quantity = 0.0, location = null)
 
             assertThat(response.body).isEqualTo(cleanedProduct)
             assertThat(response.statusCode).isEqualTo(CREATED)
@@ -124,8 +145,8 @@ class ProductServiceTest {
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    // Will be used in most tests (tpp = test product payload)
-    private val tpp =
+    // Will be used in most tests
+    private val testProductPayload =
         ApiProductPayload(
             hostId = "mlt-420",
             hostName = HostName.AXIELL,
