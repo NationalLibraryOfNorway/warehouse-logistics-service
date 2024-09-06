@@ -169,7 +169,9 @@ class ProductControllerTest(
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    // Will be used in most tests
+    /**
+     * Payload which will be used in most tests
+     */
     private val testProductPayload =
         ApiProductPayload(
             hostId = "mlt-420",
@@ -183,7 +185,9 @@ class ProductControllerTest(
             quantity = 1.0
         )
 
-    // Will exist in the database
+    /**
+     * Payload which will exist in the database
+     */
     private val duplicateProductPayload =
         ApiProductPayload(
             hostId = "product-12346",
