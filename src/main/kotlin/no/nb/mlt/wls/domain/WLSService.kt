@@ -3,11 +3,11 @@ package no.nb.mlt.wls.domain
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.domain.drivenPorts.ItemRepository
-import no.nb.mlt.wls.domain.drivenPorts.StorageSystemFacade
-import no.nb.mlt.wls.domain.drivingPorts.AddNewItem
-import no.nb.mlt.wls.domain.drivingPorts.ItemMetadata
-import no.nb.mlt.wls.domain.drivingPorts.toItem
+import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.toItem
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 

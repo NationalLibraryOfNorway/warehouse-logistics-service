@@ -9,8 +9,8 @@ import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.domain.Item
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
-import no.nb.mlt.wls.product.payloads.SynqProductPayload
-import no.nb.mlt.wls.product.payloads.toSynqPayload
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
+import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

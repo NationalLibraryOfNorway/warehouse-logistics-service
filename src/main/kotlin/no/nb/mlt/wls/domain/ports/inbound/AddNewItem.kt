@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain.drivingPorts
+package no.nb.mlt.wls.domain.ports.inbound
 
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName

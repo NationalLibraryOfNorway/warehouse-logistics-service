@@ -1,10 +1,13 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.domain.Item
-import no.nb.mlt.wls.domain.drivenPorts.StorageSystemFacade
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.infrastructure.synq.SynqError.Companion.createServerError
-import no.nb.mlt.wls.product.payloads.toSynqPayload
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters
@@ -41,3 +44,21 @@ class SynqAdapter(
             .awaitSingle()
     }
 }
+
+fun Item.toSynqPayload() =
+    SynqProductPayload(
+        productId = hostId,
+        owner = owner.toSynqOwner(),
+        barcode = SynqProductPayload.Barcode(hostId),
+        description = description,
+        productCategory = productCategory,
+        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
+        confidential = false,
+        hostName = hostName.toString()
+    )
+
+fun Packaging.toSynqPackaging(): SynqPackaging =
+    when (this) {
+        Packaging.NONE -> OBJ
+        Packaging.BOX -> ESK
+    }

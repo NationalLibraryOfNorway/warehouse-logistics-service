@@ -7,7 +7,7 @@ import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.domain.Item
-import no.nb.mlt.wls.domain.drivingPorts.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 
 @Schema(
     description = "Payload for registering a product in Hermes WLS, and appropriate storage system for the product.",
