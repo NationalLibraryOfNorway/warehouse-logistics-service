@@ -10,7 +10,7 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.synq.SynqError
+import no.nb.mlt.wls.infrastructure.synq.SynqError
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderLineStatus
 import no.nb.mlt.wls.order.model.OrderReceiver

@@ -1,7 +1,9 @@
 package no.nb.mlt.wls.domain.drivenPorts
 
 import no.nb.mlt.wls.domain.Item
+import no.nb.mlt.wls.infrastructure.synq.SynqError
 
 interface StorageSystemFacade {
-    fun createItem(item: Item)
+    @Throws(SynqError.StorageSystemException::class)
+    suspend fun createItem(item: Item)
 }

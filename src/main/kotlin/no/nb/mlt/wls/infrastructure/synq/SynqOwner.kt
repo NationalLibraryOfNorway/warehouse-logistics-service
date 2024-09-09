@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.core.data.synq
+package no.nb.mlt.wls.infrastructure.synq
 
 import no.nb.mlt.wls.core.data.Owner
 

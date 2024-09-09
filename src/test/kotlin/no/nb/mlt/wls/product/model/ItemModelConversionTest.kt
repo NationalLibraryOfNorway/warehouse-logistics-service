@@ -1,15 +1,15 @@
 package no.nb.mlt.wls.product.model
 
+import no.nb.mlt.wls.application.restApi.ApiProductPayload
+import no.nb.mlt.wls.application.restApi.toApiPayload
+import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.synq.SynqOwner
 import no.nb.mlt.wls.domain.Item
-import no.nb.mlt.wls.application.restApi.ApiProductPayload
+import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
-import no.nb.mlt.wls.application.restApi.toApiPayload
-import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.product.payloads.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

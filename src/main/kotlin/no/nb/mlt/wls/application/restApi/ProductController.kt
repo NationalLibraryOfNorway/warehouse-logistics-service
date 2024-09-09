@@ -76,11 +76,12 @@ class ProductController(
         ]
     )
     @PostMapping("/product")
-    suspend fun createProduct(@RequestBody payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
+    suspend fun createProduct(
+        @RequestBody payload: ApiProductPayload
+    ): ResponseEntity<ApiProductPayload> {
         throwIfInvalidPayload(payload)
-        val product = payload.toProduct()
-        addNewItem.addItem(product)
-        return ResponseEntity(product.toApiPayload(), HttpStatus.OK)
+        val item = addNewItem.addItem(payload.toItemMetadata())
+        return ResponseEntity(item.toApiPayload(), HttpStatus.CREATED)
     }
 
     private fun throwIfInvalidPayload(payload: ApiProductPayload) {

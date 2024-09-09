@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.synq.SynqOwner
-import no.nb.mlt.wls.core.data.synq.toOwner
-import no.nb.mlt.wls.core.data.synq.toSynqOwner
+import no.nb.mlt.wls.infrastructure.synq.SynqOwner
+import no.nb.mlt.wls.infrastructure.synq.toOwner
+import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus

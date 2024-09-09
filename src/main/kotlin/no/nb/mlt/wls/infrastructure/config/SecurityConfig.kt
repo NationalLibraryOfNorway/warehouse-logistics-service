@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.core.config
+package no.nb.mlt.wls.infrastructure.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean

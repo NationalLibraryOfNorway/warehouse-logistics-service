@@ -3,10 +3,10 @@ package no.nb.mlt.wls.product.payloads
 import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.core.data.synq.SynqOwner
-import no.nb.mlt.wls.core.data.synq.toOwner
-import no.nb.mlt.wls.core.data.synq.toSynqOwner
 import no.nb.mlt.wls.domain.Item
+import no.nb.mlt.wls.infrastructure.synq.SynqOwner
+import no.nb.mlt.wls.infrastructure.synq.toOwner
+import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.OBJ

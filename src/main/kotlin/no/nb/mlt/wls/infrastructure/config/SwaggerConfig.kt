@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.core.config
+package no.nb.mlt.wls.infrastructure.config
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow

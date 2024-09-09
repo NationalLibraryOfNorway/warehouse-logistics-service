@@ -7,13 +7,13 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
+import no.nb.mlt.wls.application.restApi.ApiProductPayload
+import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.application.restApi.ApiProductPayload
-import no.nb.mlt.wls.application.restApi.toProduct
-import no.nb.mlt.wls.product.repository.ProductRepository
+import no.nb.mlt.wls.infrastructure.repository.ItemMongoRepository
 import no.nb.mlt.wls.product.service.SynqProductService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -44,7 +44,7 @@ import java.net.URI
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ItemControllerTest(
-    @Autowired val repository: ProductRepository
+    @Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
     private lateinit var synqProductService: SynqProductService
