@@ -16,7 +16,7 @@ private val logger = KotlinLogging.logger {}
 class WLSService(
     private val itemRepository: ItemRepository,
     private val storageSystemFacade: StorageSystemFacade
-): AddNewItem {
+) : AddNewItem {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         val existingItem =
             itemRepository.getItem(itemMetadata.hostName, itemMetadata.hostId)

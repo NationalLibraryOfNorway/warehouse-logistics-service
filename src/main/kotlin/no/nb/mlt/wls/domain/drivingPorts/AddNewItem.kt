@@ -20,7 +20,10 @@ data class ItemMetadata(
     val owner: Owner
 )
 
-fun ItemMetadata.toItem(quantity: Double? = 0.0, location: String? = null) = Item(
+fun ItemMetadata.toItem(
+    quantity: Double? = 0.0,
+    location: String? = null
+) = Item(
     this.hostId,
     this.hostName,
     this.description,
