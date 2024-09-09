@@ -34,5 +34,3 @@ fun ItemMetadata.toItem(
     location,
     quantity
 )
-
-// create a runtime exception for timeout when fetching item from database
