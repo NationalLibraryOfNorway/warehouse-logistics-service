@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.infrastructure.repository
 
-import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.domain.HostName
 import no.nb.mlt.wls.domain.Item
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository

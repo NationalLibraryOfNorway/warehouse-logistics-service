@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.order.repository
 
-import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.domain.HostName
 import no.nb.mlt.wls.order.model.Order
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.stereotype.Repository

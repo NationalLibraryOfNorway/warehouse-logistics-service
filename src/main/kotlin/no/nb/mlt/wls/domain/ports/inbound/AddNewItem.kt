@@ -1,9 +1,9 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
-import no.nb.mlt.wls.core.data.Environment
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.domain.Environment
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.Packaging
 import no.nb.mlt.wls.domain.Item
 
 interface AddNewItem {

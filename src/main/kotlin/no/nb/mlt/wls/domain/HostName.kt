@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.core.data
+package no.nb.mlt.wls.domain
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException

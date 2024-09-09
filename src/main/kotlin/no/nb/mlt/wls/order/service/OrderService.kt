@@ -3,8 +3,8 @@ package no.nb.mlt.wls.order.service
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.throwIfInvalidClientName
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.throwIfInvalidClientName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload

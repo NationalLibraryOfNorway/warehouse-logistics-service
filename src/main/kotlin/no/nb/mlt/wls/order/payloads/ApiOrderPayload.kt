@@ -2,8 +2,8 @@ package no.nb.mlt.wls.order.payloads
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus

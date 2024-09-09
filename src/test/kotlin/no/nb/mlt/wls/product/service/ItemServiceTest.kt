@@ -9,10 +9,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.application.restApi.ApiProductPayload
 import no.nb.mlt.wls.application.restApi.toProduct
-import no.nb.mlt.wls.core.data.Environment.NONE
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.domain.Environment.NONE
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.Packaging
 import no.nb.mlt.wls.infrastructure.repository.ItemMongoRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType

@@ -3,7 +3,7 @@ package no.nb.mlt.wls.order.payloads
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
-import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.domain.HostName
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toOwner
 import no.nb.mlt.wls.infrastructure.synq.toSynqOwner

@@ -2,8 +2,8 @@ package no.nb.mlt.wls.order.model
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex

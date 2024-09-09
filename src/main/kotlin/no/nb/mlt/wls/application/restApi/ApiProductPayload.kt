@@ -2,10 +2,10 @@ package no.nb.mlt.wls.application.restApi
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.core.data.Environment
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.Packaging
+import no.nb.mlt.wls.domain.Environment
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.Packaging
 import no.nb.mlt.wls.domain.Item
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 

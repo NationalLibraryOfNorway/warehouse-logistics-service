@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
+import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.Owner
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.order.payloads.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload

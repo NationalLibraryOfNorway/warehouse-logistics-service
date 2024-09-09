@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.order.service
 
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.core.data.HostName
+import no.nb.mlt.wls.domain.HostName
 import no.nb.mlt.wls.infrastructure.synq.SynqError
 import no.nb.mlt.wls.infrastructure.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
