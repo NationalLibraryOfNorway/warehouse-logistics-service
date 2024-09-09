@@ -5,15 +5,16 @@ import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.synq.SynqOwner
-import no.nb.mlt.wls.product.payloads.ApiProductPayload
+import no.nb.mlt.wls.domain.Item
+import no.nb.mlt.wls.application.restApi.ApiProductPayload
 import no.nb.mlt.wls.product.payloads.SynqProductPayload
-import no.nb.mlt.wls.product.payloads.toApiPayload
-import no.nb.mlt.wls.product.payloads.toProduct
+import no.nb.mlt.wls.application.restApi.toApiPayload
+import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.product.payloads.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class ProductModelConversionTest {
+class ItemModelConversionTest {
     private val testProductPayload =
         ApiProductPayload(
             hostId = "mlt-test-1234",
@@ -27,8 +28,8 @@ class ProductModelConversionTest {
             quantity = 1.0
         )
 
-    private val testProduct =
-        Product(
+    private val testItem =
+        Item(
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
@@ -54,7 +55,7 @@ class ProductModelConversionTest {
 
     @Test
     fun `product converts to API payload`() {
-        val payload = testProduct.toApiPayload()
+        val payload = testItem.toApiPayload()
         assertThat(payload.hostId).isEqualTo(testProductPayload.hostId)
         assertThat(payload.hostName).isEqualTo(testProductPayload.hostName)
         assertThat(payload.description).isEqualTo(testProductPayload.description)
@@ -68,7 +69,7 @@ class ProductModelConversionTest {
 
     @Test
     fun `product converts to SynQ payload`() {
-        val synqPayload = testProduct.toSynqPayload()
+        val synqPayload = testItem.toSynqPayload()
         assertThat(synqPayload.hostName).isEqualTo(testSynqPayload.hostName)
         assertThat(synqPayload.productId).isEqualTo(testSynqPayload.productId)
         assertThat(synqPayload.productUom.uomId).isEqualTo(testSynqPayload.productUom.uomId)
@@ -81,14 +82,14 @@ class ProductModelConversionTest {
     @Test
     fun `API payload converts to product`() {
         val product = testProductPayload.toProduct()
-        assertThat(product.hostId).isEqualTo(testProduct.hostId)
-        assertThat(product.hostName).isEqualTo(testProduct.hostName)
-        assertThat(product.description).isEqualTo(testProduct.description)
-        assertThat(product.productCategory).isEqualTo(testProduct.productCategory)
-        assertThat(product.preferredEnvironment).isEqualTo(testProduct.preferredEnvironment)
-        assertThat(product.packaging).isEqualTo(testProduct.packaging)
-        assertThat(product.owner).isEqualTo(testProduct.owner)
-        assertThat(product.location).isEqualTo(testProduct.location)
-        assertThat(product.quantity).isEqualTo(testProduct.quantity)
+        assertThat(product.hostId).isEqualTo(testItem.hostId)
+        assertThat(product.hostName).isEqualTo(testItem.hostName)
+        assertThat(product.description).isEqualTo(testItem.description)
+        assertThat(product.productCategory).isEqualTo(testItem.productCategory)
+        assertThat(product.preferredEnvironment).isEqualTo(testItem.preferredEnvironment)
+        assertThat(product.packaging).isEqualTo(testItem.packaging)
+        assertThat(product.owner).isEqualTo(testItem.owner)
+        assertThat(product.location).isEqualTo(testItem.location)
+        assertThat(product.quantity).isEqualTo(testItem.quantity)
     }
 }

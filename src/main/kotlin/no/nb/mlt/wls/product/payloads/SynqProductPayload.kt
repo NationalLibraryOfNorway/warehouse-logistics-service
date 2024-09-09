@@ -6,7 +6,7 @@ import no.nb.mlt.wls.core.data.Packaging
 import no.nb.mlt.wls.core.data.synq.SynqOwner
 import no.nb.mlt.wls.core.data.synq.toOwner
 import no.nb.mlt.wls.core.data.synq.toSynqOwner
-import no.nb.mlt.wls.product.model.Product
+import no.nb.mlt.wls.domain.Item
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.product.payloads.SynqProductPayload.SynqPackaging.OBJ
@@ -33,7 +33,7 @@ data class SynqProductPayload(
 
 // unused
 fun SynqProductPayload.toProduct() =
-    Product(
+    Item(
         hostName = HostName.valueOf(hostName),
         hostId = barcode.barcodeId,
         productCategory = productCategory,
@@ -45,7 +45,7 @@ fun SynqProductPayload.toProduct() =
         owner = owner.toOwner()
     )
 
-fun Product.toSynqPayload() =
+fun Item.toSynqPayload() =
     SynqProductPayload(
         productId = hostId,
         owner = owner.toSynqOwner(),

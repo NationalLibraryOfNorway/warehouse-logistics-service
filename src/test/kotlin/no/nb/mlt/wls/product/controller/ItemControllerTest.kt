@@ -11,10 +11,9 @@ import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.product.payloads.ApiProductPayload
-import no.nb.mlt.wls.product.payloads.toProduct
+import no.nb.mlt.wls.application.restApi.ApiProductPayload
+import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
-import no.nb.mlt.wls.product.service.ProductService
 import no.nb.mlt.wls.product.service.SynqProductService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -44,7 +43,7 @@ import java.net.URI
 @ExtendWith(MockKExtension::class)
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class ProductControllerTest(
+class ItemControllerTest(
     @Autowired val repository: ProductRepository
 ) {
     @MockkBean

@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.product.payloads
+package no.nb.mlt.wls.application.restApi
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
@@ -6,7 +6,7 @@ import no.nb.mlt.wls.core.data.Environment
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.product.model.Product
+import no.nb.mlt.wls.domain.Item
 
 @Schema(
     description = "Payload for registering a product in Hermes WLS, and appropriate storage system for the product.",
@@ -83,7 +83,7 @@ data class ApiProductPayload(
 )
 
 fun ApiProductPayload.toProduct() =
-    Product(
+    Item(
         hostId = hostId,
         hostName = hostName,
         description = description,
@@ -95,7 +95,7 @@ fun ApiProductPayload.toProduct() =
         quantity = quantity
     )
 
-fun Product.toApiPayload() =
+fun Item.toApiPayload() =
     ApiProductPayload(
         hostId = hostId,
         hostName = hostName,

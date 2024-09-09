@@ -11,8 +11,8 @@ import no.nb.mlt.wls.core.data.Environment.NONE
 import no.nb.mlt.wls.core.data.HostName
 import no.nb.mlt.wls.core.data.Owner
 import no.nb.mlt.wls.core.data.Packaging
-import no.nb.mlt.wls.product.payloads.ApiProductPayload
-import no.nb.mlt.wls.product.payloads.toProduct
+import no.nb.mlt.wls.application.restApi.ApiProductPayload
+import no.nb.mlt.wls.application.restApi.toProduct
 import no.nb.mlt.wls.product.repository.ProductRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException
 
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
-class ProductServiceTest {
+class ItemServiceTest {
     @MockK
     private lateinit var db: ProductRepository
 

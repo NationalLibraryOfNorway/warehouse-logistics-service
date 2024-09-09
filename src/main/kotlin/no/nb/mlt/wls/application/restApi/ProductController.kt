@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.product.controller
+package no.nb.mlt.wls.application.restApi
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -6,18 +6,21 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.product.payloads.ApiProductPayload
-import no.nb.mlt.wls.product.service.ProductService
+import no.nb.mlt.wls.domain.drivingPorts.AddNewItem
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ServerWebInputException
 
 @RestController
 @RequestMapping(path = ["", "/v1"])
 @Tag(name = "Product Controller", description = "API for managing products in Hermes WLS")
-class ProductController(val productService: ProductService) {
+class ProductController(
+    private val addNewItem: AddNewItem
+) {
     @Operation(
         summary = "Register a product in the storage system",
         description = """Register data about the product in Hermes WLS and appropriate storage system,
@@ -73,7 +76,24 @@ class ProductController(val productService: ProductService) {
         ]
     )
     @PostMapping("/product")
-    suspend fun createProduct(
-        @RequestBody payload: ApiProductPayload
-    ): ResponseEntity<ApiProductPayload> = productService.save(payload)
+    suspend fun createProduct(@RequestBody payload: ApiProductPayload): ResponseEntity<ApiProductPayload> {
+        throwIfInvalidPayload(payload)
+        val product = payload.toProduct()
+        addNewItem.addItem(product)
+        return ResponseEntity(product.toApiPayload(), HttpStatus.OK)
+    }
+
+    private fun throwIfInvalidPayload(payload: ApiProductPayload) {
+        if (payload.hostId.isBlank()) {
+            throw ServerWebInputException("The product's hostId is required, and it cannot be blank")
+        }
+
+        if (payload.description.isBlank()) {
+            throw ServerWebInputException("The product's description is required, and it cannot be blank")
+        }
+
+        if (payload.productCategory.isBlank()) {
+            throw ServerWebInputException("The product's category is required, and it cannot be blank")
+        }
+    }
 }
