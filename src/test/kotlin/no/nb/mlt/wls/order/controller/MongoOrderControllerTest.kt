@@ -167,7 +167,7 @@ class MongoOrderControllerTest(
             .expectStatus().is5xxServerError
     }
 
-    // FIXME - Endpoint should be returning DTO instead of direct Orders
+    // FIXME - Endpoint now returns DTO instead of direct Orders, which breaks this test
     @Test
     fun `getOrder returns the order`() {
         webTestClient
