@@ -1,18 +1,18 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
-import no.nb.mlt.wls.order.payloads.toApiOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
+import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-class OrderModelConversionTest {
+class MongoOrderModelConversionTest {
     private val testApiOrderPayload =
         ApiOrderPayload(
             orderId = "hostOrderId",

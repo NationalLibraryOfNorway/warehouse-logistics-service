@@ -1,13 +1,14 @@
+/*
 package no.nb.mlt.wls.order.service
 
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.HostName
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.infrastructure.synq.SynqError
 import no.nb.mlt.wls.infrastructure.synq.SynqError.Companion.createServerError
-import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
+import no.nb.mlt.wls.application.restapi.order.ApiUpdateOrderPayload
 import no.nb.mlt.wls.order.payloads.SynqOrder
 import no.nb.mlt.wls.order.payloads.SynqOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
+import no.nb.mlt.wls.application.restapi.order.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -92,3 +93,4 @@ class SynqOrderService(
 }
 
 class DuplicateOrderException(override val cause: Throwable) : ServerErrorException("Order already exists in SynQ", cause)
+*/

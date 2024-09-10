@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain
+package no.nb.mlt.wls.domain.model
 
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
@@ -7,7 +7,7 @@ enum class HostName {
     AXIELL
 }
 
-fun throwIfInvalidClientName(
+fun throwIfInvalidClientName (
     clientName: String,
     hostName: HostName
 ) {

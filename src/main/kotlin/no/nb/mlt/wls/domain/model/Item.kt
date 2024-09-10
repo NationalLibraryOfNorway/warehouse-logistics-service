@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain
+package no.nb.mlt.wls.domain.model
 
 data class Item(
     val hostId: String,

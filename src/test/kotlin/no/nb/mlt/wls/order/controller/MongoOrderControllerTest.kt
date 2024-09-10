@@ -8,8 +8,8 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.infrastructure.synq.SynqError
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderLineStatus
@@ -17,9 +17,9 @@ import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.model.OrderType
 import no.nb.mlt.wls.order.model.ProductLine
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
-import no.nb.mlt.wls.order.payloads.toUpdateOrderPayload
+import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.application.restapi.order.toUpdateOrderPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
 import no.nb.mlt.wls.order.service.SynqOrderService
 import org.assertj.core.api.Assertions.assertThat
@@ -50,7 +50,7 @@ import java.net.URI
 @ExtendWith(MockKExtension::class)
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class OrderControllerTest(
+class MongoOrderControllerTest(
     @Autowired val repository: OrderRepository,
     @Autowired val applicationContext: ApplicationContext
 ) {

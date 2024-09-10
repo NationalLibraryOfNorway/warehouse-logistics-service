@@ -3,11 +3,20 @@ package no.nb.mlt.wls.domain
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
+import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.toItem
+import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 
@@ -15,8 +24,9 @@ private val logger = KotlinLogging.logger {}
 
 class WLSService(
     private val itemRepository: ItemRepository,
+    private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade
-) : AddNewItem {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         val existingItem =
             itemRepository.getItem(itemMetadata.hostName, itemMetadata.hostId)
@@ -46,5 +56,28 @@ class WLSService(
                 }
             }
             .awaitSingle()
+    }
+
+    override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
+        TODO("Not refactored yet")
+    }
+
+    override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
+        TODO("Not refactored yet")
+    }
+
+    override suspend fun updateOrder(
+        hostName: HostName,
+        hostOrderId: String,
+        orderItems: List<Order.OrderItem>,
+        orderType: Order.Type,
+        receiver: Order.Receiver,
+        callbackUrl: String
+    ): Order {
+        TODO("Not refactored yet")
+    }
+
+    override suspend fun getOrder(hostName: HostName, hostOrderId: String): Order {
+        TODO("Not refactored yet")
     }
 }

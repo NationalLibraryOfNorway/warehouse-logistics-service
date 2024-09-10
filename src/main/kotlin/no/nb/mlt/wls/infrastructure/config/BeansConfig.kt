@@ -1,7 +1,8 @@
 package no.nb.mlt.wls.infrastructure.config
 
 import no.nb.mlt.wls.domain.WLSService
-import no.nb.mlt.wls.infrastructure.repository.ItemRepositoryMongoAdapter
+import no.nb.mlt.wls.infrastructure.repositories.item.ItemRepositoryMongoAdapter
+import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -13,6 +14,7 @@ class BeansConfig {
     fun addNewItem(
         synqAdapter: SynqAdapter,
         webClient: WebClient,
-        itemMongoAdapter: ItemRepositoryMongoAdapter
-    ) = WLSService(itemMongoAdapter, synqAdapter)
+        itemMongoAdapter: ItemRepositoryMongoAdapter,
+        orderMongoAdapter: MongoOrderRepositoryAdapter
+    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter)
 }

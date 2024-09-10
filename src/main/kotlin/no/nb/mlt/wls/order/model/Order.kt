@@ -2,8 +2,9 @@ package no.nb.mlt.wls.order.model
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Owner
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -45,7 +46,7 @@ data class ProductLine(
         defaultValue = "NOT_STARTED",
         accessMode = READ_ONLY
     )
-    val status: OrderLineStatus?
+    val status: Order.OrderItem.Status?
 )
 
 @Schema(

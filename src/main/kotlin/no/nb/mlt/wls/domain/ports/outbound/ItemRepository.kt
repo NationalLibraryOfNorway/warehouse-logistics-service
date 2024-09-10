@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Item
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import reactor.core.publisher.Mono
 
 interface ItemRepository {

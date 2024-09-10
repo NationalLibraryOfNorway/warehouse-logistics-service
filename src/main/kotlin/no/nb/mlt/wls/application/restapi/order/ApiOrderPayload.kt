@@ -1,13 +1,10 @@
-package no.nb.mlt.wls.order.payloads
+package no.nb.mlt.wls.application.restapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Owner
-import no.nb.mlt.wls.order.model.Order
-import no.nb.mlt.wls.order.model.OrderReceiver
-import no.nb.mlt.wls.order.model.OrderStatus
-import no.nb.mlt.wls.order.model.OrderType
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.order.model.ProductLine
 import org.springframework.web.server.ServerWebInputException
 
@@ -49,7 +46,7 @@ data class ApiOrderPayload(
     val orderId: String,
     @Schema(
         description = "Name of the host system which made the order.",
-        examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
     val hostName: HostName,
     @Schema(
@@ -59,9 +56,9 @@ data class ApiOrderPayload(
     val hostOrderId: String,
     @Schema(
         description = "Current status of the order as a whole.",
-        examples = [ "NOT_STARTED", "IN_PROGRESS", "COMPLETED", "DELETED" ]
+        examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "DELETED"]
     )
-    val status: OrderStatus?,
+    val status: Order.Status?,
     @Schema(
         description = "List of products in the order, also called order lines, or product lines.",
         accessMode = READ_ONLY
@@ -71,7 +68,7 @@ data class ApiOrderPayload(
         description = "Describes what type of order this is",
         examples = [ "LOAN", "DIGITIZATION" ]
     )
-    val orderType: OrderType,
+    val orderType: Order.Type,
     @Schema(
         description = "Who's the owner of the material in the order.",
         examples = [ "NB", "ARKIVVERKET" ],
@@ -81,7 +78,7 @@ data class ApiOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: OrderReceiver,
+    val receiver: Order.Receiver,
     @Schema(
         description = "URL to send a callback to when the order is completed.",
         example = "https://example.com/send/callback/here"
@@ -89,32 +86,22 @@ data class ApiOrderPayload(
     val callbackUrl: String
 )
 
-fun ApiOrderPayload.toOrder() =
-    Order(
-        hostName = hostName,
-        hostOrderId = hostOrderId,
-        status = status ?: OrderStatus.NOT_STARTED,
-        productLine = productLine,
-        orderType = orderType,
-        owner = owner,
-        receiver = receiver,
-        callbackUrl = callbackUrl
-    )
-
 fun Order.toApiOrderPayload() =
     ApiOrderPayload(
         orderId = hostOrderId,
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
-        productLine = productLine,
+        productLine = this.productLine.map {
+            ProductLine(it.hostId, it.status)
+        },
         orderType = orderType,
         owner = owner,
         receiver = receiver,
         callbackUrl = callbackUrl
     )
 
-fun throwIfInvalidPayload(payload: ApiOrderPayload) {
+fun throwIfInvalid(payload: ApiOrderPayload) {
     if (payload.orderId.isBlank()) {
         throw ServerWebInputException("The order's orderId is required, and can not be blank")
     }

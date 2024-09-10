@@ -1,17 +1,18 @@
+/*
 package no.nb.mlt.wls.order.service
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.throwIfInvalidClientName
+import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.ApiUpdateOrderPayload
+import no.nb.mlt.wls.application.restapi.order.throwIfInvalid
+import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.order.model.Order
 import no.nb.mlt.wls.order.model.OrderStatus
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
-import no.nb.mlt.wls.order.payloads.throwIfInvalidPayload
-import no.nb.mlt.wls.order.payloads.toApiOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import no.nb.mlt.wls.order.repository.OrderRepository
 import org.springframework.http.HttpStatus
@@ -26,15 +27,17 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
-    /**
+    */
+/**
      * Creates an order within the WLS database, and sends it to the appropriate storage systems
-     */
+     *//*
+
     suspend fun createOrder(
         payload: ApiOrderPayload,
         clientName: String
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(clientName, payload.hostName)
-        throwIfInvalidPayload(payload)
+        throwIfInvalid(payload)
 
         val existingOrder = findOrderInDb(payload.hostName, payload.hostOrderId)
 
@@ -70,7 +73,7 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         clientName: String
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(clientName, payload.hostName)
-        throwIfInvalidPayload(payload)
+        throwIfInvalid(payload)
 
         val existingOrder =
             findOrderInDb(payload.hostName, payload.hostOrderId)
@@ -175,3 +178,4 @@ class OrderService(val db: OrderRepository, val synqService: SynqOrderService) {
         }
         .awaitSingleOrNull()
 }
+*/

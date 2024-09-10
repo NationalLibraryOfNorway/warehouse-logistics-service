@@ -7,16 +7,16 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.order.model.OrderLineStatus
 import no.nb.mlt.wls.order.model.OrderReceiver
 import no.nb.mlt.wls.order.model.OrderStatus
 import no.nb.mlt.wls.order.model.OrderType
 import no.nb.mlt.wls.order.model.ProductLine
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
+import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.ApiUpdateOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toOrder
 import no.nb.mlt.wls.order.repository.OrderRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono
 @Suppress("ReactiveStreamsUnusedPublisher")
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
-class OrderServiceTest {
+class MongoOrderServiceTest {
     @MockK
     private lateinit var db: OrderRepository
 

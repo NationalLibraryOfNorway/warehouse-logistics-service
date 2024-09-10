@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.order.controller
+package no.nb.mlt.wls.application.restapi.order
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -6,11 +6,15 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.domain.HostName
-import no.nb.mlt.wls.order.model.Order
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.ApiUpdateOrderPayload
-import no.nb.mlt.wls.order.service.OrderService
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
+import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
@@ -22,11 +26,17 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping(path = ["", "/v1"])
 @Tag(name = "Order Controller", description = "API for ordering products via Hermes WLS")
-class OrderController(val orderService: OrderService) {
+class OrderController(
+    private val createOrder: CreateOrder,
+    private val getOrder: GetOrder,
+    private val deleteOrder: DeleteOrder,
+    private val updateOrder: UpdateOrder
+) {
     @Operation(
         summary = "Creates an order for products from the storage system",
         description = """Creates an order for specified products to appropriate storage systems via Hermes WLS.
@@ -80,7 +90,37 @@ class OrderController(val orderService: OrderService) {
     suspend fun createOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
-    ): ResponseEntity<ApiOrderPayload> = orderService.createOrder(payload, jwt.name)
+    ): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidClientName(jwt.name, payload.hostName)
+        throwIfInvalid(payload)
+
+        // Return 200 OK and existing order if it exists
+        getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(it.toApiOrderPayload())
+        }
+
+        val createdOrder = createOrder.createOrder(
+            CreateOrderDTO(
+                hostName = payload.hostName,
+                hostOrderId = payload.hostOrderId,
+                orderItems = payload.productLine.map {
+                    CreateOrderDTO.OrderItem(
+                        it.hostId
+                    )
+                },
+                orderType = payload.orderType,
+                owner = payload.owner,
+                receiver = payload.receiver,
+                callbackUrl = payload.callbackUrl
+            )
+        )
+
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(createdOrder.toApiOrderPayload())
+    }
 
     @Operation(
         summary = "Gets an order from the storage system",
@@ -111,14 +151,31 @@ class OrderController(val orderService: OrderService) {
             responseCode = "403",
             description = "A valid 'Authorization' header is missing from the request.",
             content = [Content(schema = Schema())]
-        )
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = "The order with hostname and hostOrderId does not exist in the system.",
+            content = [Content(schema = Schema())]
+        ),
+
     )
     @GetMapping("/order/{hostName}/{hostOrderId}")
     suspend fun getOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @PathVariable("hostName") hostName: HostName,
         @PathVariable("hostOrderId") hostOrderId: String
-    ): ResponseEntity<Order> = orderService.getOrder(jwt.name, hostName, hostOrderId)
+    ): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidClientName(jwt.name, hostName)
+
+        try {
+            val order = getOrder.getOrder(hostName, hostOrderId)
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(order.toApiOrderPayload())
+        } catch (e: OrderNotFoundException) {
+            return ResponseEntity.notFound().build()
+        }
+    }
 
     @Operation(
         summary = "Updates an existing order in the storage system(s)",
@@ -163,7 +220,28 @@ class OrderController(val orderService: OrderService) {
     suspend fun updateOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiUpdateOrderPayload
-    ): ResponseEntity<ApiOrderPayload> = orderService.updateOrder(payload, jwt.name)
+    ): ResponseEntity<ApiOrderPayload> {
+        throwIfInvalidClientName(jwt.name, payload.hostName)
+        payload.throwIfInvalid()
+
+        try {
+            val updatedOrder = updateOrder.updateOrder(
+                payload.hostName,
+                payload.hostOrderId,
+                payload.productLine.map {
+                    Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                },
+                payload.orderType,
+                payload.receiver,
+                payload.callbackUrl
+            )
+
+            return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
+        } catch (e: OrderNotFoundException) {
+            return ResponseEntity.notFound().build()
+        }
+
+    }
 
     @Operation(
         summary = "Deletes an order from the storage system",
@@ -197,6 +275,31 @@ class OrderController(val orderService: OrderService) {
         @PathVariable hostOrderId: String,
         @AuthenticationPrincipal caller: JwtAuthenticationToken
     ): ResponseEntity<String> {
-        return orderService.deleteOrder(hostName, hostOrderId, caller.name.uppercase())
+        if (hostOrderId.isBlank()) {
+            return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body("The order's hostOrderId is required, and can not be blank")
+        }
+
+        throwIfInvalidClientName(caller.name, hostName)
+
+        try {
+            deleteOrder.deleteOrder(hostName, hostOrderId)
+        } catch (e: OrderNotFoundException) {
+            return ResponseEntity.notFound().build()
+        }
+
+        return ResponseEntity.ok().build()
+    }
+
+    fun throwIfInvalidClientName(
+        clientName: String,
+        hostName: HostName
+    ) {
+        if (clientName.uppercase() == hostName.name) return
+        throw ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "You do not have access to view resources owned by $hostName"
+        )
     }
 }

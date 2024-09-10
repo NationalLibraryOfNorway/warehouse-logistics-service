@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
-import no.nb.mlt.wls.domain.Owner
+import no.nb.mlt.wls.domain.model.Owner
 
 enum class SynqOwner {
     NB

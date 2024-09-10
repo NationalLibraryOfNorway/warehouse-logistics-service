@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.Packaging
-import no.nb.mlt.wls.domain.Item
+import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.infrastructure.synq.SynqError.Companion.createServerError
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
