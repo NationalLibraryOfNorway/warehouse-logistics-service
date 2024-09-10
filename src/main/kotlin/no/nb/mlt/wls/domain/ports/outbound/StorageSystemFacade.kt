@@ -1,9 +1,11 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.infrastructure.synq.SynqError
 
 interface StorageSystemFacade {
     @Throws(SynqError.StorageSystemException::class)
     suspend fun createItem(item: Item)
+    suspend fun createOrder(order: Order)
 }

@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
@@ -12,8 +13,10 @@ import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.toItem
+import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
@@ -59,7 +62,9 @@ class WLSService(
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
-        TODO("Not refactored yet")
+        val order = orderRepository.createOrder(orderDTO.toOrder()).awaitFirst()
+        storageSystemFacade.createOrder(orderDTO.toOrder())
+        return order
     }
 
     override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
@@ -78,6 +83,16 @@ class WLSService(
     }
 
     override suspend fun getOrder(hostName: HostName, hostOrderId: String): Order {
-        TODO("Not refactored yet")
+        val x = orderRepository.getOrder(hostName, hostOrderId)
+            // TODO - See if timeouts can be made configurable
+            .timeout(Duration.ofSeconds(8))
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching from WLS database. Order ID: $hostOrderId, Host: $hostName"
+                }
+            }
+            .awaitSingleOrNull()
+
+        return x ?: throw OrderNotFoundException("Order not found")
     }
 }

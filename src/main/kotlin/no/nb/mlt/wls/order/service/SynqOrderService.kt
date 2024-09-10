@@ -92,5 +92,4 @@ class SynqOrderService(
     }
 }
 
-class DuplicateOrderException(override val cause: Throwable) : ServerErrorException("Order already exists in SynQ", cause)
 */

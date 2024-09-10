@@ -30,6 +30,8 @@ data class SynqError(val errorCode: Int, val errorText: String) {
 
     class DuplicateProductException(override val cause: Throwable) : ServerErrorException("Product already exists in SynQ", cause)
 
+    class DuplicateOrderException(override val cause: Throwable) : ServerErrorException("Order already exists in SynQ", cause)
+
     // TODO - Move out of here
     class StorageSystemException(message: String, error: WebClientResponseException) : RuntimeException(message, error)
 }

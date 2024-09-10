@@ -95,10 +95,15 @@ class OrderController(
         throwIfInvalid(payload)
 
         // Return 200 OK and existing order if it exists
-        getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
-            return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(it.toApiOrderPayload())
+        // TODO - Benchmark
+        try {
+            getOrder.getOrder(payload.hostName, payload.hostOrderId).let {
+                return ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(it.toApiOrderPayload())
+            }
+        } catch (_: OrderNotFoundException) {
+            // no-op
         }
 
         val createdOrder = createOrder.createOrder(

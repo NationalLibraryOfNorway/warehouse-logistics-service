@@ -8,7 +8,7 @@ interface CreateOrder {
     suspend fun createOrder(orderDTO: CreateOrderDTO): Order
 }
 
-data class CreateOrderDTO (
+data class CreateOrderDTO(
     val hostName: HostName,
     val hostOrderId: String,
     val orderItems: List<OrderItem>,
@@ -17,7 +17,22 @@ data class CreateOrderDTO (
     val receiver: Order.Receiver,
     val callbackUrl: String
 ) {
-    data class OrderItem (
+    data class OrderItem(
         val hostId: String
+    )
+}
+
+fun CreateOrderDTO.toOrder(): Order {
+    return Order(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        status = Order.Status.NOT_STARTED,
+        productLine = orderItems.map {
+            Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+        },
+        orderType = orderType,
+        owner = owner,
+        receiver = receiver,
+        callbackUrl = callbackUrl
     )
 }

@@ -22,3 +22,29 @@ data class MongoOrder(
     val receiver: Order.Receiver,
     val callbackUrl: String
 )
+
+fun Order.toMongoOrder(): MongoOrder {
+    return MongoOrder(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        status = status,
+        productLine = productLine,
+        orderType = orderType,
+        owner = owner,
+        receiver = receiver,
+        callbackUrl = callbackUrl
+    )
+}
+
+fun MongoOrder.toOrder(): Order {
+    return Order(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        status = status,
+        productLine = productLine,
+        orderType = orderType,
+        owner = owner,
+        receiver = receiver,
+        callbackUrl = callbackUrl
+    )
+}
