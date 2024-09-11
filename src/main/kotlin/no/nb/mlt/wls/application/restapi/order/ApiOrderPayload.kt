@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
-import no.nb.mlt.wls.order.model.ProductLine
 import org.springframework.web.server.ServerWebInputException
 
 @Schema(
@@ -63,15 +62,15 @@ data class ApiOrderPayload(
         description = "List of products in the order, also called order lines, or product lines.",
         accessMode = READ_ONLY
     )
-    val productLine: List<ProductLine>,
+    val productLine: List<Order.OrderItem>,
     @Schema(
         description = "Describes what type of order this is",
-        examples = [ "LOAN", "DIGITIZATION" ]
+        examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
     @Schema(
         description = "Who's the owner of the material in the order.",
-        examples = [ "NB", "ARKIVVERKET" ],
+        examples = ["NB", "ARKIVVERKET"],
         accessMode = READ_ONLY
     )
     val owner: Owner?,
@@ -92,14 +91,25 @@ fun Order.toApiOrderPayload() =
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
-        productLine = this.productLine.map {
-            ProductLine(it.hostId, it.status)
-        },
+        productLine = this.productLine,
         orderType = orderType,
         owner = owner,
         receiver = receiver,
         callbackUrl = callbackUrl
     )
+
+fun ApiOrderPayload.toOrder(): Order = Order(
+    hostName = hostName,
+    hostOrderId = hostOrderId,
+    status = status ?: Order.Status.NOT_STARTED,
+    productLine = productLine.map {
+        Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+    },
+    orderType = orderType,
+    owner = owner,
+    receiver = receiver,
+    callbackUrl = callbackUrl
+)
 
 fun throwIfInvalid(payload: ApiOrderPayload) {
     if (payload.orderId.isBlank()) {

@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
@@ -62,13 +61,14 @@ class WLSService(
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
-        val order = orderRepository.createOrder(orderDTO.toOrder()).awaitFirst()
+        val order = orderRepository.createOrder(orderDTO.toOrder())
         storageSystemFacade.createOrder(orderDTO.toOrder())
         return order
     }
 
     override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
-        TODO("Not refactored yet")
+        storageSystemFacade.deleteOrder(hostName, hostOrderId)
+        orderRepository.deleteOrder(hostName, hostOrderId)
     }
 
     override suspend fun updateOrder(
@@ -82,17 +82,7 @@ class WLSService(
         TODO("Not refactored yet")
     }
 
-    override suspend fun getOrder(hostName: HostName, hostOrderId: String): Order {
-        val x = orderRepository.getOrder(hostName, hostOrderId)
-            // TODO - See if timeouts can be made configurable
-            .timeout(Duration.ofSeconds(8))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while fetching from WLS database. Order ID: $hostOrderId, Host: $hostName"
-                }
-            }
-            .awaitSingleOrNull()
-
-        return x ?: throw OrderNotFoundException("Order not found")
+    override suspend fun getOrder(hostName: HostName, hostOrderId: String): Order? {
+        return orderRepository.getOrder(hostName, hostOrderId)
     }
 }

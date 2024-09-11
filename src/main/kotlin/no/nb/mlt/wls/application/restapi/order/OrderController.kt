@@ -95,15 +95,10 @@ class OrderController(
         throwIfInvalid(payload)
 
         // Return 200 OK and existing order if it exists
-        // TODO - Benchmark
-        try {
-            getOrder.getOrder(payload.hostName, payload.hostOrderId).let {
-                return ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(it.toApiOrderPayload())
-            }
-        } catch (_: OrderNotFoundException) {
-            // no-op
+        getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(it.toApiOrderPayload())
         }
 
         val createdOrder = createOrder.createOrder(
@@ -163,7 +158,7 @@ class OrderController(
             content = [Content(schema = Schema())]
         ),
 
-    )
+        )
     @GetMapping("/order/{hostName}/{hostOrderId}")
     suspend fun getOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
@@ -172,14 +167,11 @@ class OrderController(
     ): ResponseEntity<ApiOrderPayload> {
         throwIfInvalidClientName(jwt.name, hostName)
 
-        try {
-            val order = getOrder.getOrder(hostName, hostOrderId)
-            return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(order.toApiOrderPayload())
-        } catch (e: OrderNotFoundException) {
-            return ResponseEntity.notFound().build()
-        }
+        val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(order.toApiOrderPayload())
     }
 
     @Operation(
@@ -285,7 +277,6 @@ class OrderController(
                 .status(HttpStatus.BAD_REQUEST)
                 .body("The order's hostOrderId is required, and can not be blank")
         }
-
         throwIfInvalidClientName(caller.name, hostName)
 
         try {

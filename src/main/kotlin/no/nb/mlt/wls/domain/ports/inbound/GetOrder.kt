@@ -6,5 +6,5 @@ import kotlin.jvm.Throws
 
 interface GetOrder {
     @Throws(OrderNotFoundException::class)
-    suspend fun getOrder(hostName: HostName, hostOrderId: String): Order
+    suspend fun getOrder(hostName: HostName, hostOrderId: String): Order?
 }

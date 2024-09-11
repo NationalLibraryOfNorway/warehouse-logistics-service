@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
@@ -72,6 +73,16 @@ class SynqAdapter(
             }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .onErrorReturn(SynqError.DuplicateOrderException::class.java, ResponseEntity.ok().build())
+            .awaitSingle()
+    }
+
+    override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
+        webClient
+            .delete()
+            .uri(URI.create("$baseUrl/orders/$hostName/$hostOrderId"))
+            .retrieve()
+            .toEntity(SynqError::class.java)
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
 }
