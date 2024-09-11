@@ -8,13 +8,15 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.restapi.product.ApiProductPayload
-import no.nb.mlt.wls.application.restapi.product.toProduct
+import no.nb.mlt.wls.application.restapi.product.toItem
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
-import no.nb.mlt.wls.product.service.SynqProductService
+import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
+import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,17 +27,16 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.server.ServerErrorException
-import java.net.URI
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -44,10 +45,11 @@ import java.net.URI
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ItemControllerTest(
+    @Autowired val applicationContext: ApplicationContext,
     @Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
-    private lateinit var synqProductService: SynqProductService
+    private lateinit var synqFacade: SynqAdapter
 
     private lateinit var webTestClient: WebTestClient
 
@@ -55,7 +57,7 @@ class ItemControllerTest(
     fun setUp() {
         webTestClient =
             WebTestClient
-                .bindToController(ProductController(ProductService(repository, synqProductService)))
+                .bindToApplicationContext(applicationContext)
                 .configureClient()
                 .baseUrl("/v1/product")
                 .build()
@@ -68,8 +70,8 @@ class ItemControllerTest(
     fun `createProduct with valid payload creates product`() =
         runTest {
             coEvery {
-                synqProductService.createProduct(any())
-            } returns ResponseEntity.created(URI.create("")).build()
+                synqFacade.createItem(any())
+            }.answers {  }
 
             webTestClient
                 .mutateWith(csrf())
@@ -90,6 +92,10 @@ class ItemControllerTest(
     @Test
     @WithMockUser
     fun `createProduct with duplicate payload returns OK`() {
+        coEvery {
+            synqFacade.createItem(any())
+        }.answers {  }
+
         webTestClient
             .mutateWith(csrf())
             .post()
@@ -127,11 +133,11 @@ class ItemControllerTest(
     @Test
     @WithMockUser
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
-        // SynqService converts an error to return OK if it finds a duplicate product
         coEvery {
-            synqProductService.createProduct(any())
-        } returns ResponseEntity.ok().build()
+            synqFacade.createItem(any())
+        }.answers {  }
 
+        // SynqService converts an error to return OK if it finds a duplicate product
         webTestClient
             .mutateWith(csrf())
             .post()
@@ -146,7 +152,7 @@ class ItemControllerTest(
     @WithMockUser
     fun `createProduct handles SynQ error`() {
         coEvery {
-            synqProductService.createProduct(any())
+            synqFacade.createItem(any())
         }.throws(
             ServerErrorException(
                 "Failed to create product in SynQ, the storage system responded with " +
@@ -203,7 +209,7 @@ class ItemControllerTest(
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         runBlocking {
-            repository.deleteAll().then(repository.save(duplicateProductPayload.toProduct())).awaitSingle()
+            repository.deleteAll().then(repository.save(duplicateProductPayload.toItem().toMongoItem())).awaitSingle()
         }
     }
 }

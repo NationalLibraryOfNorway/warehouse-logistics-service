@@ -83,7 +83,7 @@ data class ApiProductPayload(
     val quantity: Double?
 )
 
-fun ApiProductPayload.toProduct() =
+fun ApiProductPayload.toItem() =
     Item(
         hostId = hostId,
         hostName = hostName,

@@ -34,26 +34,4 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
     ): Mono<MongoItem>
 }
 
-private fun Item.toMongoItem() = MongoItem(
-    this.hostId,
-    this.hostName,
-    this.description,
-    this.productCategory,
-    this.preferredEnvironment,
-    this.packaging,
-    this.owner,
-    this.location,
-    this.quantity
-)
 
-private fun MongoItem.toItem() = Item(
-    this.hostId,
-    this.hostName,
-    this.description,
-    this.productCategory,
-    this.preferredEnvironment,
-    this.packaging,
-    this.owner,
-    this.location,
-    this.quantity
-)

@@ -2,7 +2,7 @@ package no.nb.mlt.wls.product.model
 
 import no.nb.mlt.wls.application.restapi.product.ApiProductPayload
 import no.nb.mlt.wls.application.restapi.product.toApiPayload
-import no.nb.mlt.wls.application.restapi.product.toProduct
+import no.nb.mlt.wls.application.restapi.product.toItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
@@ -81,7 +81,7 @@ class ItemModelConversionTest {
 
     @Test
     fun `API payload converts to product`() {
-        val product = testProductPayload.toProduct()
+        val product = testProductPayload.toItem()
         assertThat(product.hostId).isEqualTo(testItem.hostId)
         assertThat(product.hostName).isEqualTo(testItem.hostName)
         assertThat(product.description).isEqualTo(testItem.description)

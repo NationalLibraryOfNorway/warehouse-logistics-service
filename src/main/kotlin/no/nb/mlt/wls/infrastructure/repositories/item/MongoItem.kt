@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import org.springframework.data.mongodb.core.mapping.Document
@@ -17,4 +18,28 @@ data class MongoItem(
     val owner: Owner,
     val location: String?,
     val quantity: Double?
+)
+
+fun Item.toMongoItem() = MongoItem(
+    this.hostId,
+    this.hostName,
+    this.description,
+    this.productCategory,
+    this.preferredEnvironment,
+    this.packaging,
+    this.owner,
+    this.location,
+    this.quantity
+)
+
+fun MongoItem.toItem() = Item(
+    this.hostId,
+    this.hostName,
+    this.description,
+    this.productCategory,
+    this.preferredEnvironment,
+    this.packaging,
+    this.owner,
+    this.location,
+    this.quantity
 )
