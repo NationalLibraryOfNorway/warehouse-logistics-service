@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.product.model
 
-import no.nb.mlt.wls.application.restapi.product.ApiProductPayload
-import no.nb.mlt.wls.application.restapi.product.toApiPayload
-import no.nb.mlt.wls.application.restapi.product.toItem
+import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.restapi.item.toApiPayload
+import no.nb.mlt.wls.application.restapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 
 class ItemModelConversionTest {
     private val testProductPayload =
-        ApiProductPayload(
+        ApiItemPayload(
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",

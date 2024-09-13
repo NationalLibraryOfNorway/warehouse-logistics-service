@@ -120,7 +120,10 @@ class WLSService(
         return orderRepository.getOrder(hostName, hostOrderId)
     }
 
-    override suspend fun getItem(hostName: HostName, hostId: String): Item? {
+    override suspend fun getItem(
+        hostName: HostName,
+        hostId: String
+    ): Item? {
         return itemRepository.getItem(hostName, hostId)
     }
 }

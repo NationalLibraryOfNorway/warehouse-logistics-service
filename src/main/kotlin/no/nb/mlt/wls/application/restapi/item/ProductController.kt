@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.product
+package no.nb.mlt.wls.application.restapi.item
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -43,7 +43,7 @@ class ProductController(
                 content = [
                     Content(
                         mediaType = "application/json",
-                        schema = Schema(implementation = ApiProductPayload::class)
+                        schema = Schema(implementation = ApiItemPayload::class)
                     )
                 ]
             ),
@@ -55,7 +55,7 @@ class ProductController(
                 content = [
                     Content(
                         mediaType = "application/json",
-                        schema = Schema(implementation = ApiProductPayload::class)
+                        schema = Schema(implementation = ApiItemPayload::class)
                     )
                 ]
             ),
@@ -79,8 +79,8 @@ class ProductController(
     )
     @PostMapping("/product")
     suspend fun createProduct(
-        @RequestBody payload: ApiProductPayload
-    ): ResponseEntity<ApiProductPayload> {
+        @RequestBody payload: ApiItemPayload
+    ): ResponseEntity<ApiItemPayload> {
         throwIfInvalidPayload(payload)
         getItem.getItem(payload.hostName, payload.hostId)?.let {
             return ResponseEntity.ok(it.toApiPayload())
@@ -90,7 +90,7 @@ class ProductController(
         return ResponseEntity(item.toApiPayload(), HttpStatus.CREATED)
     }
 
-    private fun throwIfInvalidPayload(payload: ApiProductPayload) {
+    private fun throwIfInvalidPayload(payload: ApiItemPayload) {
         if (payload.hostId.isBlank()) {
             throw ServerWebInputException("The product's hostId is required, and it cannot be blank")
         }

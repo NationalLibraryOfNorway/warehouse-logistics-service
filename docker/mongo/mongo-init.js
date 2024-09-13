@@ -12,9 +12,9 @@ db.createUser(
         roles: [{ role: 'readWrite', db: 'wls' }],
     },
 );
-db.createCollection('products');
+db.createCollection('items');
 
-db.products.insertOne({
+db.items.insertOne({
     "hostName": "AXIELL",
     "hostId": "product-12345",
     "category": "BOOK",
@@ -24,7 +24,7 @@ db.products.insertOne({
     "quantity": 1,
     "preferredEnvironment": "NONE",
     "owner": "NB",
-    "_class": "no.nb.mlt.wls.product.model.Product"
+    "_class": "no.nb.mlt.wls.domain.model.Item"
 })
 
 print('END #################################################################');

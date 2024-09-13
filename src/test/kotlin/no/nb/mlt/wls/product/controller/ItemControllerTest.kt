@@ -7,8 +7,8 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.restapi.product.ApiProductPayload
-import no.nb.mlt.wls.application.restapi.product.toItem
+import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.restapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
@@ -102,7 +102,7 @@ class ItemControllerTest(
             .bodyValue(duplicateProductPayload)
             .exchange()
             .expectStatus().isOk
-            .expectBody<ApiProductPayload>()
+            .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 assertThat(response.responseBody?.hostId).isEqualTo(duplicateProductPayload.hostId)
                 assertThat(response.responseBody?.hostName).isEqualTo(duplicateProductPayload.hostName)
@@ -122,7 +122,7 @@ class ItemControllerTest(
             )
             .exchange()
             .expectStatus().isOk
-            .expectBody<ApiProductPayload>()
+            .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 // This value is different in payload, response value should be the same as in DB
                 assertThat(response.responseBody?.description).isEqualTo(duplicateProductPayload.description)
@@ -177,7 +177,7 @@ class ItemControllerTest(
      * Payload which will be used in most tests
      */
     private val testProductPayload =
-        ApiProductPayload(
+        ApiItemPayload(
             hostId = "mlt-420",
             hostName = HostName.AXIELL,
             description = "Ringenes Herre samling",
@@ -193,7 +193,7 @@ class ItemControllerTest(
      * Payload which will exist in the database
      */
     private val duplicateProductPayload =
-        ApiProductPayload(
+        ApiItemPayload(
             hostId = "product-12346",
             hostName = HostName.AXIELL,
             description = "Tyv etter loven",

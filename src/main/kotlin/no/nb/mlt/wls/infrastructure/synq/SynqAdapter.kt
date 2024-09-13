@@ -35,13 +35,13 @@ class SynqAdapter(
             .onErrorResume(WebClientResponseException::class.java) { error ->
                 val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
                 if (errorText != null && errorText.contains("Duplicate product")) {
-                    Mono.error(SynqError.DuplicateProductException(error))
+                    Mono.error(SynqError.DuplicateItemException(error))
                 } else {
                     Mono.error(error)
                 }
             }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
-            .onErrorComplete(SynqError.DuplicateProductException::class.java)
+            .onErrorComplete(SynqError.DuplicateItemException::class.java)
             .awaitSingle()
     }
 

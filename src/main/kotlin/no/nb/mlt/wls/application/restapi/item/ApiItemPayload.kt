@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.product
+package no.nb.mlt.wls.application.restapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
@@ -23,7 +23,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
     }
     """
 )
-data class ApiProductPayload(
+data class ApiItemPayload(
     @Schema(
         description = "The product ID from the host system, usually a barcode or an equivalent ID.",
         example = "mlt-12345"
@@ -83,7 +83,7 @@ data class ApiProductPayload(
     val quantity: Double?
 )
 
-fun ApiProductPayload.toItem() =
+fun ApiItemPayload.toItem() =
     Item(
         hostId = hostId,
         hostName = hostName,
@@ -97,7 +97,7 @@ fun ApiProductPayload.toItem() =
     )
 
 fun Item.toApiPayload() =
-    ApiProductPayload(
+    ApiItemPayload(
         hostId = hostId,
         hostName = hostName,
         description = description,
@@ -109,7 +109,7 @@ fun Item.toApiPayload() =
         quantity = quantity
     )
 
-fun ApiProductPayload.toItemMetadata(): ItemMetadata =
+fun ApiItemPayload.toItemMetadata(): ItemMetadata =
     ItemMetadata(
         hostId = hostId,
         hostName = hostName,
