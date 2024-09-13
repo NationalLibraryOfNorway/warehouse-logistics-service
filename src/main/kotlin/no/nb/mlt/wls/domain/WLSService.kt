@@ -2,7 +2,6 @@ package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -10,6 +9,7 @@ import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -32,22 +32,11 @@ class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
-        val existingItem =
-            itemRepository.getItem(itemMetadata.hostName, itemMetadata.hostId)
-                // TODO - See if timeouts can be made configurable
-                .timeout(Duration.ofSeconds(8))
-                .doOnError(TimeoutException::class.java) {
-                    logger.error(it) {
-                        "Timed out while fetching from WLS database. item: $itemMetadata"
-                    }
-                }
-                .awaitSingleOrNull()
-
-        if (existingItem != null) {
-            logger.info { "Item already exists: $existingItem" }
-            return existingItem
+        getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
+            logger.info { "Item already exists: $it" }
+            return it
         }
 
         val item = itemMetadata.toItem()
@@ -129,5 +118,9 @@ class WLSService(
         hostOrderId: String
     ): Order? {
         return orderRepository.getOrder(hostName, hostOrderId)
+    }
+
+    override suspend fun getItem(hostName: HostName, hostId: String): Item? {
+        return itemRepository.getItem(hostName, hostId)
     }
 }

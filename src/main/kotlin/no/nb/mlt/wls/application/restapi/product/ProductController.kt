@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,7 +20,8 @@ import org.springframework.web.server.ServerWebInputException
 @RequestMapping(path = ["", "/v1"])
 @Tag(name = "Product Controller", description = "API for managing products in Hermes WLS")
 class ProductController(
-    private val addNewItem: AddNewItem
+    private val addNewItem: AddNewItem,
+    private val getItem: GetItem
 ) {
     @Operation(
         summary = "Register a product in the storage system",
@@ -80,6 +82,10 @@ class ProductController(
         @RequestBody payload: ApiProductPayload
     ): ResponseEntity<ApiProductPayload> {
         throwIfInvalidPayload(payload)
+        getItem.getItem(payload.hostName, payload.hostId)?.let {
+            return ResponseEntity.ok(it.toApiPayload())
+        }
+
         val item = addNewItem.addItem(payload.toItemMetadata())
         return ResponseEntity(item.toApiPayload(), HttpStatus.CREATED)
     }

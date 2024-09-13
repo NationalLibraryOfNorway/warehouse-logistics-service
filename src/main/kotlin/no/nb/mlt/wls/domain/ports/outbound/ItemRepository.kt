@@ -5,10 +5,10 @@ import no.nb.mlt.wls.domain.model.Item
 import reactor.core.publisher.Mono
 
 interface ItemRepository {
-    fun getItem(
+    suspend fun getItem(
         hostName: HostName,
         hostId: String
-    ): Mono<Item>
+    ): Item?
 
     fun createItem(item: Item): Mono<Item>
 

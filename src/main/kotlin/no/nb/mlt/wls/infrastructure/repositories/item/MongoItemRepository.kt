@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.outbound.ItemId
@@ -20,13 +21,20 @@ private val logger = KotlinLogging.logger {}
 class ItemRepositoryMongoAdapter(
     private val mongoRepo: ItemMongoRepository
 ) : ItemRepository {
-    override fun getItem(
+    override suspend fun getItem(
         hostName: HostName,
         hostId: String
-    ): Mono<Item> {
+    ): Item? {
         return mongoRepo
             .findByHostNameAndHostId(hostName, hostId)
             .map(MongoItem::toItem)
+            .timeout(Duration.ofSeconds(8))
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching from WLS database. hostName: $hostName, hostId: $hostId"
+                }
+            }
+            .awaitSingleOrNull()
     }
 
     override fun createItem(item: Item): Mono<Item> {
