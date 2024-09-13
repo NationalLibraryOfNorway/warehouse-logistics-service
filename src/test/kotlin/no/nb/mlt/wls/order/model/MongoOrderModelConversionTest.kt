@@ -1,12 +1,13 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Owner
-import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.SynqOrderPayload
 import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
 import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.synq.SynqOwner
+import no.nb.mlt.wls.order.payloads.SynqOrderPayload
 import no.nb.mlt.wls.order.payloads.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,12 +19,12 @@ class MongoOrderModelConversionTest {
             orderId = "hostOrderId",
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
-            status = OrderStatus.NOT_STARTED,
-            productLine = listOf(ProductLine("hostProductId", OrderLineStatus.NOT_STARTED)),
-            orderType = OrderType.LOAN,
+            status = Order.Status.NOT_STARTED,
+            productLine = listOf(),
+            orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-                OrderReceiver(
+                Order.Receiver(
                     name = "name",
                     address = "address",
                     postalCode = "postalCode",
@@ -38,12 +39,12 @@ class MongoOrderModelConversionTest {
         Order(
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
-            status = OrderStatus.NOT_STARTED,
-            productLine = listOf(ProductLine("hostProductId", OrderLineStatus.NOT_STARTED)),
-            orderType = OrderType.LOAN,
+            status = Order.Status.NOT_STARTED,
+            productLine = listOf(Order.OrderItem("hostProductId", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-                OrderReceiver(
+                Order.Receiver(
                     name = "name",
                     address = "address",
                     postalCode = "postalCode",

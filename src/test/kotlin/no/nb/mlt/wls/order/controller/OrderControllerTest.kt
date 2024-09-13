@@ -91,7 +91,7 @@ class OrderControllerTest(
             assertThat(order)
                 .isNotNull
                 .extracting("callbackUrl", "status")
-                .containsExactly("callbackUrl", Order.OrderItem.Status.NOT_STARTED)
+                .containsExactly("callbackUrl", Order.Status.NOT_STARTED)
         }
 
     @Test

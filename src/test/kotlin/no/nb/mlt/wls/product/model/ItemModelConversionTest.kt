@@ -5,9 +5,9 @@ import no.nb.mlt.wls.application.restapi.product.toApiPayload
 import no.nb.mlt.wls.application.restapi.product.toItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload

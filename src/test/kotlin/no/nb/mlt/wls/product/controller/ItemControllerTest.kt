@@ -13,7 +13,6 @@ import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
@@ -71,7 +70,7 @@ class ItemControllerTest(
         runTest {
             coEvery {
                 synqFacade.createItem(any())
-            }.answers {  }
+            }.answers { }
 
             webTestClient
                 .mutateWith(csrf())
@@ -94,7 +93,7 @@ class ItemControllerTest(
     fun `createProduct with duplicate payload returns OK`() {
         coEvery {
             synqFacade.createItem(any())
-        }.answers {  }
+        }.answers { }
 
         webTestClient
             .mutateWith(csrf())
@@ -135,7 +134,7 @@ class ItemControllerTest(
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
         coEvery {
             synqFacade.createItem(any())
-        }.answers {  }
+        }.answers { }
 
         // SynqService converts an error to return OK if it finds a duplicate product
         webTestClient
