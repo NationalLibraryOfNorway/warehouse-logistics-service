@@ -27,9 +27,10 @@ fun CreateOrderDTO.toOrder(): Order {
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = Order.Status.NOT_STARTED,
-        productLine = orderItems.map {
-            Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-        },
+        productLine =
+            orderItems.map {
+                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+            },
         orderType = orderType,
         owner = owner,
         receiver = receiver,

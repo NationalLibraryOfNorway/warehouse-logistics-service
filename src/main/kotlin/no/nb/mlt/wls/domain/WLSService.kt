@@ -13,9 +13,13 @@ import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
@@ -61,12 +65,31 @@ class WLSService(
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
+        orderRepository.getOrder(orderDTO.hostName, orderDTO.hostOrderId)?.let {
+            logger.info { "Order already exists: $it" }
+            return it
+        }
+
+        val itemIds = orderDTO.orderItems.map { ItemId(orderDTO.hostName, it.hostId) }
+        if (!itemRepository.doesAllItemsExist(itemIds)) {
+            throw ValidationException("All order items in order must exist")
+        }
+
+        try {
+            storageSystemFacade.createOrder(orderDTO.toOrder())
+        } catch (e: DuplicateResourceException) {
+            // TODO: Should we recover by updating the DB?
+            throw ServerException("Order already exists in storage system but not in DB", e)
+        }
+
         val order = orderRepository.createOrder(orderDTO.toOrder())
-        storageSystemFacade.createOrder(orderDTO.toOrder())
         return order
     }
 
-    override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
+    override suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ) {
         storageSystemFacade.deleteOrder(hostName, hostOrderId)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
@@ -74,15 +97,37 @@ class WLSService(
     override suspend fun updateOrder(
         hostName: HostName,
         hostOrderId: String,
-        orderItems: List<Order.OrderItem>,
+        itemHostIds: List<String>,
         orderType: Order.Type,
         receiver: Order.Receiver,
         callbackUrl: String
     ): Order {
-        TODO("Not refactored yet")
+        val itemIds = itemHostIds.map { ItemId(hostName, it) }
+        if (!itemRepository.doesAllItemsExist(itemIds)) {
+            throw ValidationException("All order items in order must exist")
+        }
+
+        val order =
+            getOrder(
+                hostName,
+                hostOrderId
+            ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+        val updatedOrder =
+            order
+                .setProductLines(itemHostIds)
+                .setCallbackUrl(callbackUrl)
+                .setOrderType(orderType)
+                .setReceiver(receiver)
+
+        val result = storageSystemFacade.updateOrder(updatedOrder)
+        return orderRepository.updateOrder(result)
     }
 
-    override suspend fun getOrder(hostName: HostName, hostOrderId: String): Order? {
+    override suspend fun getOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order? {
         return orderRepository.getOrder(hostName, hostOrderId)
     }
 }

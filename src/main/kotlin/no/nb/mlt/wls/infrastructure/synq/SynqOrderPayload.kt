@@ -1,11 +1,14 @@
-package no.nb.mlt.wls.order.payloads
+package no.nb.mlt.wls.infrastructure.synq
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.infrastructure.synq.SynqOwner
-import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
+import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
 import java.time.LocalDateTime
 
 data class SynqOrderPayload(
@@ -17,7 +20,9 @@ data class SynqOrderPayload(
     val orderDate: LocalDateTime,
     val priority: Int,
     val owner: SynqOwner,
-    val orderLine: List<OrderLine>
+    val orderLine: List<OrderLine>,
+    val customer: String? = null,
+    val shippingAddress: ShippingAddress? = null
 ) {
     data class OrderLine(
         @Min(1)
@@ -25,6 +30,21 @@ data class SynqOrderPayload(
         val productId: String,
         val quantityOrdered: Double
     )
+
+    data class ShippingAddress(
+        val address: Address?
+    ) {
+        data class Address(
+            val contactPerson: String? = null,
+            val addressLine1: String? = null,
+            val city: String? = null,
+            val state: String? = null,
+            val postalCode: String? = null,
+            val country: String? = null,
+            val phoneNumber: String? = null,
+            val email: String? = null
+        )
+    }
 
     enum class SynqOrderType(private val type: String) {
         STANDARD("Standard");
@@ -54,8 +74,39 @@ fun Order.toSynqPayload() =
                     productId = it.hostId,
                     quantityOrdered = 1.0
                 )
-            }
+            },
+        customer = receiver.name,
+        shippingAddress = receiver.toShippingAddress()
     )
+
+fun Order.Receiver.toShippingAddress(): SynqOrderPayload.ShippingAddress =
+    SynqOrderPayload.ShippingAddress(
+        SynqOrderPayload.ShippingAddress.Address(
+            contactPerson = name,
+            addressLine1 = address,
+            city = city,
+            postalCode = postalCode,
+            phoneNumber = phoneNumber
+        )
+    )
+
+fun Item.toSynqPayload() =
+    SynqProductPayload(
+        productId = hostId,
+        owner = owner.toSynqOwner(),
+        barcode = SynqProductPayload.Barcode(hostId),
+        description = description,
+        productCategory = productCategory,
+        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
+        confidential = false,
+        hostName = hostName.toString()
+    )
+
+fun Packaging.toSynqPackaging(): SynqPackaging =
+    when (this) {
+        Packaging.NONE -> OBJ
+        Packaging.BOX -> ESK
+    }
 
 fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
     when (this) {

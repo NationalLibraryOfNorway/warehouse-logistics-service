@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.application.restapi.ErrorMessage
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
@@ -73,7 +73,12 @@ class OrderController(
             description = """Order payload is invalid and was not created.
                 An empty error message means the order already exists with the current ID.
                 Otherwise, the error message contains information about the invalid fields.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
@@ -101,21 +106,23 @@ class OrderController(
                 .body(it.toApiOrderPayload())
         }
 
-        val createdOrder = createOrder.createOrder(
-            CreateOrderDTO(
-                hostName = payload.hostName,
-                hostOrderId = payload.hostOrderId,
-                orderItems = payload.productLine.map {
-                    CreateOrderDTO.OrderItem(
-                        it.hostId
-                    )
-                },
-                orderType = payload.orderType,
-                owner = payload.owner,
-                receiver = payload.receiver,
-                callbackUrl = payload.callbackUrl
+        val createdOrder =
+            createOrder.createOrder(
+                CreateOrderDTO(
+                    hostName = payload.hostName,
+                    hostOrderId = payload.hostOrderId,
+                    orderItems =
+                        payload.productLine.map {
+                            CreateOrderDTO.OrderItem(
+                                it.hostId
+                            )
+                        },
+                    orderType = payload.orderType,
+                    owner = payload.owner,
+                    receiver = payload.receiver,
+                    callbackUrl = payload.callbackUrl
+                )
             )
-        )
 
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -156,9 +163,8 @@ class OrderController(
             responseCode = "404",
             description = "The order with hostname and hostOrderId does not exist in the system.",
             content = [Content(schema = Schema())]
-        ),
-
         )
+    )
     @GetMapping("/order/{hostName}/{hostOrderId}")
     suspend fun getOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
@@ -221,23 +227,17 @@ class OrderController(
         throwIfInvalidClientName(jwt.name, payload.hostName)
         payload.throwIfInvalid()
 
-        try {
-            val updatedOrder = updateOrder.updateOrder(
-                payload.hostName,
-                payload.hostOrderId,
-                payload.productLine.map {
-                    Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-                },
-                payload.orderType,
-                payload.receiver,
-                payload.callbackUrl
+        val updatedOrder =
+            updateOrder.updateOrder(
+                hostName = payload.hostName,
+                hostOrderId = payload.hostOrderId,
+                itemHostIds = payload.productLine.map { it.hostId },
+                orderType = payload.orderType,
+                receiver = payload.receiver,
+                callbackUrl = payload.callbackUrl
             )
 
-            return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
-        } catch (e: OrderNotFoundException) {
-            return ResponseEntity.notFound().build()
-        }
-
+        return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }
 
     @Operation(
@@ -292,7 +292,7 @@ class OrderController(
         clientName: String,
         hostName: HostName
     ) {
-        if (clientName.uppercase() == hostName.name) return
+        if (clientName == "wls" || clientName.uppercase() == hostName.name) return
         throw ResponseStatusException(
             HttpStatus.FORBIDDEN,
             "You do not have access to view resources owned by $hostName"

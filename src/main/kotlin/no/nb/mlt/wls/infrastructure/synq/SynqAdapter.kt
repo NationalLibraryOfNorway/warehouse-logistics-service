@@ -4,21 +4,16 @@ import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import no.nb.mlt.wls.infrastructure.synq.SynqError.Companion.createServerError
-import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
-import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
-import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
-import no.nb.mlt.wls.order.payloads.SynqOrder
-import no.nb.mlt.wls.order.payloads.toSynqPayload
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
 import java.net.URI
 
@@ -66,17 +61,19 @@ class SynqAdapter(
                     throw OrderNotFoundException(synqError.errorText)
                 }
                 if (synqError.errorText.contains("Duplicate order")) {
-                    Mono.error(SynqError.DuplicateOrderException(error))
+                    Mono.error(DuplicateResourceException("errorCode: ${synqError.errorCode}, errorText: ${synqError.errorText}", error))
                 } else {
                     Mono.error(error)
                 }
             }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
-            .onErrorReturn(SynqError.DuplicateOrderException::class.java, ResponseEntity.ok().build())
             .awaitSingle()
     }
 
-    override suspend fun deleteOrder(hostName: HostName, hostOrderId: String) {
+    override suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ) {
         webClient
             .delete()
             .uri(URI.create("$baseUrl/orders/$hostName/$hostOrderId"))
@@ -85,22 +82,36 @@ class SynqAdapter(
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
+
+    override suspend fun updateOrder(order: Order): Order {
+        return webClient
+            .put()
+            .uri(URI.create("$baseUrl/orders/batch"))
+            .body(BodyInserters.fromValue(SynqOrder(listOf(order.toSynqPayload()))))
+            .retrieve()
+            .toBodilessEntity()
+            .map { order }
+            .onErrorMap(WebClientResponseException::class.java, ::createServerError)
+            .awaitSingle()
+    }
 }
 
-fun Item.toSynqPayload() =
-    SynqProductPayload(
-        productId = hostId,
-        owner = owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(hostId),
-        description = description,
-        productCategory = productCategory,
-        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
-        confidential = false,
-        hostName = hostName.toString()
-    )
+/**
+ * Converts a WebClient error into a ServerErrorException.
+ * This is used for propagating error data to the client.
+ * @see ServerErrorException
+ */
+fun createServerError(error: WebClientResponseException): StorageSystemException {
+    val errorBody = error.getResponseBodyAs(SynqError::class.java)
 
-fun Packaging.toSynqPackaging(): SynqPackaging =
-    when (this) {
-        Packaging.NONE -> OBJ
-        Packaging.BOX -> ESK
-    }
+    return StorageSystemException(
+        """
+        While communicating with SynQ API, an error occurred with code:
+        '${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}'
+        and error text:
+        '${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'.
+        A copy of the original exception is attached to this error.
+        """.trimIndent(),
+        error
+    )
+}

@@ -3,21 +3,28 @@ package no.nb.mlt.wls.order.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
+import no.nb.mlt.wls.application.restapi.ErrorMessage
 import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
 import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
+import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
+import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
-import no.nb.mlt.wls.infrastructure.synq.SynqError.StorageSystemException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -39,6 +46,7 @@ import org.springframework.security.test.web.reactive.server.SecurityMockServerC
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Flux
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -48,6 +56,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
     @Autowired val repository: OrderMongoRepository,
+    @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
@@ -86,12 +95,14 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
-            val order = repository.findByHostNameAndHostOrderId(testOrderPayload.hostName, testOrderPayload.hostOrderId).awaitSingle()
+            val order =
+                repository.findByHostNameAndHostOrderId(testOrderPayload.hostName, testOrderPayload.hostOrderId)
+                    .awaitSingle()
 
             assertThat(order)
                 .isNotNull
                 .extracting("callbackUrl", "status")
-                .containsExactly("callbackUrl", Order.Status.NOT_STARTED)
+                .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
 
     @Test
@@ -120,7 +131,15 @@ class OrderControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
-                duplicateOrderPayload.copy(productLine = listOf(Order.OrderItem("AAAAAAAAA", Order.OrderItem.Status.PICKED)))
+                duplicateOrderPayload.copy(
+                    productLine =
+                        listOf(
+                            Order.OrderItem(
+                                "AAAAAAAAA",
+                                Order.OrderItem.Status.PICKED
+                            )
+                        )
+                )
             )
             .exchange()
             .expectStatus().isOk
@@ -131,10 +150,10 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `createOrder where SynQ says it's a duplicate returns OK`() { // SynqService converts an error to return OK if it finds a duplicate product
+    fun `createOrder where SynQ says it's a duplicate but we don't have it in the DB returns Server error`() {
         coEvery {
             synqAdapter.createOrder(any())
-        } answers {}
+        } throws (DuplicateResourceException("Order already exists"))
 
         webTestClient
             .mutateWith(csrf())
@@ -143,18 +162,19 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
-            .expectStatus().isOk
-            .expectBody().isEmpty
+            .expectStatus().is5xxServerError
+            .expectBody<ErrorMessage>()
     }
 
     @Test
     fun `createOrder handles SynQ error`() {
         coEvery {
             synqAdapter.createOrder(any())
-        } throws StorageSystemException(
-            "Unexpected error",
-            WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-        )
+        } throws
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
 
         webTestClient
             .mutateWith(csrf())
@@ -197,19 +217,20 @@ class OrderControllerTest(
 
     @Test
     fun `updateOrder with valid payload updates order`() {
-        coEvery {
-            synqAdapter.createOrder(any())
-        } answers {}
-
         val testPayload =
             duplicateOrderPayload.toOrder()
                 .copy(
+                    receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
+                    callbackUrl = "https://newCallbackUrl.com",
                     productLine =
-                    listOf(
-                        Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED),
-                        Order.OrderItem("mlt-421", Order.OrderItem.Status.NOT_STARTED)
-                    )
+                        listOf(
+                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
+                        )
                 )
+
+        coEvery {
+            synqAdapter.updateOrder(any())
+        } answers { testPayload }
 
         webTestClient
             .mutateWith(csrf())
@@ -225,7 +246,32 @@ class OrderControllerTest(
                 products?.map {
                     assertThat(testPayload.productLine.contains(it))
                 }
+                assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
+                assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
             }
+    }
+
+    @Test
+    fun `updateOrder when order lines doesn't exists returns status 400`() {
+        val testPayload =
+            testOrderPayload.copy(
+                orderId = "mlt-test-order-processing",
+                status = Order.Status.IN_PROGRESS,
+                productLine = listOf(Order.OrderItem("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
+            )
+        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        runTest {
+            repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) })
+                .put()
+                .bodyValue(testUpdatePayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+        }
     }
 
     @Test
@@ -247,6 +293,25 @@ class OrderControllerTest(
     }
 
     @Test
+    fun `updateOrder when order does not exists returns status 400 BAD REQUEST`() {
+        val testPayload =
+            testOrderPayload.copy(
+                orderId = "humbug"
+            )
+
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) })
+                .put()
+                .bodyValue(testPayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
@@ -262,7 +327,11 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isOk
 
-            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
+            val order =
+                repository.findByHostNameAndHostOrderId(
+                    duplicateOrderPayload.hostName,
+                    duplicateOrderPayload.hostOrderId
+                ).awaitSingleOrNull()
 
             assertThat(order).isNull()
         }
@@ -271,10 +340,12 @@ class OrderControllerTest(
     fun `deleteOrder handles synq error`() {
         coEvery {
             synqAdapter.deleteOrder(any(), any())
-        } throws (StorageSystemException(
-            "Unexpected error",
-            WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-        ))
+        } throws (
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
+        )
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) })
@@ -303,15 +374,15 @@ class OrderControllerTest(
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-            Order.Receiver(
-                name = "name",
-                address = "address",
-                postalCode = "postalCode",
-                city = "city",
-                phoneNumber = "phoneNumber",
-                location = "location"
-            ),
-            callbackUrl = "callbackUrl"
+                Order.Receiver(
+                    name = "name",
+                    address = "address",
+                    postalCode = "postalCode",
+                    city = "city",
+                    phoneNumber = "phoneNumber",
+                    location = "location"
+                ),
+            callbackUrl = "https://callbackUrl.com"
         )
 
     /**
@@ -328,21 +399,45 @@ class OrderControllerTest(
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-            Order.Receiver(
-                name = "name",
-                address = "address",
-                postalCode = "postalCode",
-                city = "city",
-                phoneNumber = "phoneNumber",
-                location = "location"
-            ),
-            callbackUrl = "callbackUrl"
+                Order.Receiver(
+                    name = "name",
+                    address = "address",
+                    postalCode = "postalCode",
+                    city = "city",
+                    phoneNumber = "phoneNumber",
+                    location = "location"
+                ),
+            callbackUrl = "https://callbackUrl.com"
         )
 
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         runBlocking {
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
+
+            // Create all items in testOrderPayload and duplicateOrderPayload in the database
+            val allProducts = testOrderPayload.productLine + duplicateOrderPayload.productLine
+            itemMongoRepository
+                .deleteAll()
+                .thenMany(
+                    Flux.fromIterable(
+                        allProducts.map {
+                            MongoItem(
+                                hostId = it.hostId,
+                                hostName = testOrderPayload.hostName,
+                                description = "description",
+                                productCategory = "productCategory",
+                                preferredEnvironment = Environment.NONE,
+                                packaging = Packaging.NONE,
+                                owner = Owner.NB,
+                                location = "null",
+                                quantity = 1.0
+                            )
+                        }
+                    )
+                )
+                .flatMap { itemMongoRepository.save(it) }
+                .awaitLast()
         }
     }
 }

@@ -20,26 +20,28 @@ data class MongoItem(
     val quantity: Double?
 )
 
-fun Item.toMongoItem() = MongoItem(
-    this.hostId,
-    this.hostName,
-    this.description,
-    this.productCategory,
-    this.preferredEnvironment,
-    this.packaging,
-    this.owner,
-    this.location,
-    this.quantity
-)
+fun Item.toMongoItem() =
+    MongoItem(
+        this.hostId,
+        this.hostName,
+        this.description,
+        this.productCategory,
+        this.preferredEnvironment,
+        this.packaging,
+        this.owner,
+        this.location,
+        this.quantity
+    )
 
-fun MongoItem.toItem() = Item(
-    this.hostId,
-    this.hostName,
-    this.description,
-    this.productCategory,
-    this.preferredEnvironment,
-    this.packaging,
-    this.owner,
-    this.location,
-    this.quantity
-)
+fun MongoItem.toItem() =
+    Item(
+        this.hostId,
+        this.hostName,
+        this.description,
+        this.productCategory,
+        this.preferredEnvironment,
+        this.packaging,
+        this.owner,
+        this.location,
+        this.quantity
+    )

@@ -11,4 +11,8 @@ interface ItemRepository {
     ): Mono<Item>
 
     fun createItem(item: Item): Mono<Item>
+
+    suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean
 }
+
+data class ItemId(val hostName: HostName, val hostId: String)

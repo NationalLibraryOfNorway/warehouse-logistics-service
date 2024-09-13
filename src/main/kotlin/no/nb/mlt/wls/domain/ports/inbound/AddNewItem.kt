@@ -2,9 +2,9 @@ package no.nb.mlt.wls.domain.ports.inbound
 
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.Item
 
 interface AddNewItem {
     suspend fun addItem(itemMetadata: ItemMetadata): Item

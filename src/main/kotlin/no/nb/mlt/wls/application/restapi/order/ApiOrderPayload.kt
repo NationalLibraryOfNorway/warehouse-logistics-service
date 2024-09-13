@@ -98,18 +98,20 @@ fun Order.toApiOrderPayload() =
         callbackUrl = callbackUrl
     )
 
-fun ApiOrderPayload.toOrder(): Order = Order(
-    hostName = hostName,
-    hostOrderId = hostOrderId,
-    status = status ?: Order.Status.NOT_STARTED,
-    productLine = productLine.map {
-        Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-    },
-    orderType = orderType,
-    owner = owner,
-    receiver = receiver,
-    callbackUrl = callbackUrl
-)
+fun ApiOrderPayload.toOrder(): Order =
+    Order(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        status = status ?: Order.Status.NOT_STARTED,
+        productLine =
+            productLine.map {
+                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+            },
+        orderType = orderType,
+        owner = owner,
+        receiver = receiver,
+        callbackUrl = callbackUrl
+    )
 
 fun throwIfInvalid(payload: ApiOrderPayload) {
     if (payload.orderId.isBlank()) {

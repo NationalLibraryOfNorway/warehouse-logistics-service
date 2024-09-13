@@ -5,5 +5,8 @@ import kotlin.jvm.Throws
 
 interface DeleteOrder {
     @Throws(OrderNotFoundException::class)
-    suspend fun deleteOrder(hostName: HostName, hostOrderId: String)
+    suspend fun deleteOrder(
+        hostName: HostName,
+        hostOrderId: String
+    )
 }

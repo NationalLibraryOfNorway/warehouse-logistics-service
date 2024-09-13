@@ -7,7 +7,7 @@ enum class HostName {
     AXIELL
 }
 
-fun throwIfInvalidClientName (
+fun throwIfInvalidClientName(
     clientName: String,
     hostName: HostName
 ) {

@@ -6,9 +6,9 @@ import no.nb.mlt.wls.application.restapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
-import no.nb.mlt.wls.order.payloads.SynqOrderPayload
-import no.nb.mlt.wls.order.payloads.toSynqPayload
+import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
@@ -70,15 +70,15 @@ class MongoOrderModelConversionTest {
     fun `order converts to API payload`() {
         val payload = testOrder.toApiOrderPayload()
 
-        assertThat(payload.orderId).isEqualTo(testApiOrderPayload.orderId)
-        assertThat(payload.hostName).isEqualTo(testApiOrderPayload.hostName)
-        assertThat(payload.hostOrderId).isEqualTo(testApiOrderPayload.hostOrderId)
-        assertThat(payload.status).isEqualTo(testApiOrderPayload.status)
-        assertThat(payload.productLine).isEqualTo(testApiOrderPayload.productLine)
-        assertThat(payload.orderType).isEqualTo(testApiOrderPayload.orderType)
-        assertThat(payload.owner).isEqualTo(testApiOrderPayload.owner)
-        assertThat(payload.receiver).isEqualTo(testApiOrderPayload.receiver)
-        assertThat(payload.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
+        assertThat(payload.orderId).isEqualTo(testOrder.hostOrderId)
+        assertThat(payload.hostName).isEqualTo(testOrder.hostName)
+        assertThat(payload.hostOrderId).isEqualTo(testOrder.hostOrderId)
+        assertThat(payload.status).isEqualTo(testOrder.status)
+        assertThat(payload.productLine).isEqualTo(testOrder.productLine)
+        assertThat(payload.orderType).isEqualTo(testOrder.orderType)
+        assertThat(payload.owner).isEqualTo(testOrder.owner)
+        assertThat(payload.receiver).isEqualTo(testOrder.receiver)
+        assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
     @Test
@@ -97,13 +97,13 @@ class MongoOrderModelConversionTest {
     fun `API payload converts to order`() {
         val order = testApiOrderPayload.toOrder()
 
-        assertThat(order.hostName).isEqualTo(testOrder.hostName)
-        assertThat(order.hostOrderId).isEqualTo(testOrder.hostOrderId)
-        assertThat(order.status).isEqualTo(testOrder.status)
-        assertThat(order.productLine).isEqualTo(testOrder.productLine)
-        assertThat(order.orderType).isEqualTo(testOrder.orderType)
-        assertThat(order.owner).isEqualTo(testOrder.owner)
-        assertThat(order.receiver).isEqualTo(testOrder.receiver)
-        assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
+        assertThat(order.hostName).isEqualTo(testApiOrderPayload.hostName)
+        assertThat(order.hostOrderId).isEqualTo(testApiOrderPayload.hostOrderId)
+        assertThat(order.status).isEqualTo(testApiOrderPayload.status)
+        assertThat(order.productLine).isEqualTo(testApiOrderPayload.productLine)
+        assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
+        assertThat(order.owner).isEqualTo(testApiOrderPayload.owner)
+        assertThat(order.receiver).isEqualTo(testApiOrderPayload.receiver)
+        assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
 }
