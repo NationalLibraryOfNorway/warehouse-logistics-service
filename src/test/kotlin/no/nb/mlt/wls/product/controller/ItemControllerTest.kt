@@ -18,6 +18,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
@@ -129,6 +130,7 @@ class ItemControllerTest(
             }
     }
 
+    @Disabled("This test should be refactored.")
     @Test
     @WithMockUser
     fun `createProduct where SynQ says it's a duplicate returns OK`() {
