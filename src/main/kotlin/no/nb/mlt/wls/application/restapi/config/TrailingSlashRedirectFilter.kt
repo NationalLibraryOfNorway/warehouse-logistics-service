@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure.config
+package no.nb.mlt.wls.application.restapi.config
 
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ServerWebExchange

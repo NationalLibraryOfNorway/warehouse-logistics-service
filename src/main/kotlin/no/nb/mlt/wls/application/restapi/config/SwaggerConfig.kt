@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure.config
+package no.nb.mlt.wls.application.restapi.config
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
