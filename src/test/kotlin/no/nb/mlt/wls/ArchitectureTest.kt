@@ -10,7 +10,6 @@ import org.junit.jupiter.api.TestInstance
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AnalyzeClasses(packages = ["no.nb.mlt.wls"])
 internal class ArchitectureTest {
-
     @ArchTest
     fun `The domain model does not have any outgoing dependencies`(javaClasses: JavaClasses) {
         noClasses()
@@ -21,7 +20,6 @@ internal class ArchitectureTest {
             .resideInAnyPackage("no.nb.mlt.wls.infrastructure..", "no.nb.mlt.wls.application..")
             .check(javaClasses)
     }
-
 
     @ArchTest
     fun `The application layer does not access any adapters`(javaClasses: JavaClasses) {
