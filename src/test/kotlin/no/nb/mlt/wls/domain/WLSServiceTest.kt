@@ -14,9 +14,11 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -44,17 +46,18 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
-            val order = cut.addItem(
-                ItemMetadata(
-                    hostId = testItem.hostId,
-                    hostName = testItem.hostName,
-                    description = testItem.description,
-                    productCategory = testItem.productCategory,
-                    preferredEnvironment = testItem.preferredEnvironment,
-                    packaging = testItem.packaging,
-                    owner = testItem.owner,
+            val order =
+                cut.addItem(
+                    ItemMetadata(
+                        hostId = testItem.hostId,
+                        hostName = testItem.hostName,
+                        description = testItem.description,
+                        productCategory = testItem.productCategory,
+                        preferredEnvironment = testItem.preferredEnvironment,
+                        packaging = testItem.packaging,
+                        owner = testItem.owner
+                    )
                 )
-            )
 
             assertThat(order).isEqualTo(expectedItem)
             coVerify(exactly = 1) { itemRepoMock.createItem(any()) }
@@ -72,24 +75,24 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
 
         runTest {
-            val item = cut.addItem(
-                ItemMetadata(
-                    hostId = testItem.hostId,
-                    hostName = testItem.hostName,
-                    description = testItem.description,
-                    productCategory = testItem.productCategory,
-                    preferredEnvironment = testItem.preferredEnvironment,
-                    packaging = testItem.packaging,
-                    owner = testItem.owner,
+            val item =
+                cut.addItem(
+                    ItemMetadata(
+                        hostId = testItem.hostId,
+                        hostName = testItem.hostName,
+                        description = testItem.description,
+                        productCategory = testItem.productCategory,
+                        preferredEnvironment = testItem.preferredEnvironment,
+                        packaging = testItem.packaging,
+                        owner = testItem.owner
+                    )
                 )
-            )
 
             assertThat(item).isEqualTo(testItem)
 
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
             coVerify(exactly = 0) { storageSystemRepoMock.createItem(any()) }
         }
-
     }
 
     @Test
@@ -144,9 +147,10 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
-            val order = cut.createOrder(
-                testOrder.toCreateOrderDTO().copy(callbackUrl = "https://newurl.com")
-            )
+            val order =
+                cut.createOrder(
+                    testOrder.toCreateOrderDTO().copy(callbackUrl = "https://newurl.com")
+                )
 
             assertThat(order).isEqualTo(testOrder)
             assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
@@ -171,15 +175,126 @@ class WLSServiceTest {
         }
     }
 
-    // Test delete order when order exists
+    @Test
+    fun `deleteOrder should complete when order exists`() {
+        coJustRun { orderRepoMock.deleteOrder(any(), any()) }
+        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
 
-    // Test delete order when order does not exist
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
 
-    // Test update order when order exists
+        runTest {
+            cut.deleteOrder(HostName.AXIELL, "12345")
+            coVerify(exactly = 1) { orderRepoMock.deleteOrder(any(), any()) }
+            coVerify(exactly = 1) { storageSystemRepoMock.deleteOrder(any(), any()) }
+        }
+    }
 
-    // Test update order when order does not exist
+    @Test
+    fun `deleteOrder should fail when order does not exist in storage system`() {
+        coEvery { storageSystemRepoMock.deleteOrder(any(), any()) } throws StorageSystemException("Order not found", null)
+        coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
-    // Test update order when order items do not exist
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+
+        runTest {
+            assertThrows<StorageSystemException> {
+                cut.deleteOrder(HostName.AXIELL, "12345")
+            }
+            coVerify(exactly = 1) { storageSystemRepoMock.deleteOrder(any(), any()) }
+            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any(), any()) }
+        }
+    }
+
+    @Test
+    fun `deleteOrder should fail when order does not exist in WLS database`() {
+        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
+        coEvery { orderRepoMock.deleteOrder(any(), any()) } throws OrderNotFoundException("Order not found")
+
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+
+        runTest {
+            assertThrows<OrderNotFoundException> {
+                cut.deleteOrder(HostName.AXIELL, "12345")
+            }
+            coVerify(exactly = 1) { storageSystemRepoMock.deleteOrder(any(), any()) }
+            coVerify(exactly = 1) { orderRepoMock.deleteOrder(any(), any()) }
+        }
+    }
+
+    @Test
+    fun `updateOrder with valid items should complete`() {
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { true }
+        coEvery { orderRepoMock.getOrder(any(), any()) } answers { testOrder.copy() }
+        coEvery { storageSystemRepoMock.updateOrder(any()) } answers { updatedOrder }
+        coEvery { orderRepoMock.updateOrder(any()) } answers { updatedOrder }
+
+        runTest {
+            val order =
+                cut.updateOrder(
+                    HostName.AXIELL,
+                    "12345",
+                    listOf("mlt-420", "mlt-421"),
+                    Order.Type.LOAN,
+                    Order.Receiver("name", "location", null, null, null, null),
+                    "https://example.com"
+                )
+
+            assertThat(order).isEqualTo(updatedOrder)
+            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { storageSystemRepoMock.updateOrder(any()) }
+            coVerify(exactly = 1) { orderRepoMock.updateOrder(any()) }
+        }
+    }
+
+    @Test
+    fun `updateOrder should fail when order does not exist`() {
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+
+        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { true }
+        coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
+
+        runTest {
+            assertThrows<OrderNotFoundException> {
+                cut.updateOrder(
+                    HostName.AXIELL,
+                    "12345",
+                    listOf("mlt-420", "mlt-421"),
+                    testOrder.orderType,
+                    testOrder.receiver,
+                    testOrder.callbackUrl
+                )
+            }
+            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
+            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+        }
+    }
+
+    @Test
+    fun `updateOrder should fail when items do not exist`() {
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { false }
+
+        runTest {
+            assertThrows<ValidationException> {
+                cut.updateOrder(
+                    HostName.AXIELL,
+                    "12345",
+                    listOf("mlt-420", "mlt-421"),
+                    testOrder.orderType,
+                    testOrder.receiver,
+                    testOrder.callbackUrl
+                )
+            }
+            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
+            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+        }
+    }
 
     @Test
     fun `getOrder should return requested order when it exists in DB`() {
@@ -205,44 +320,56 @@ class WLSServiceTest {
         }
     }
 
-    private val testItem = Item(
-        hostName = HostName.AXIELL,
-        hostId = "12345",
-        description = "Tyven, tyven skal du hete",
-        productCategory = "BOOK",
-        preferredEnvironment = Environment.NONE,
-        packaging = Packaging.NONE,
-        owner = Owner.NB,
-        location = null,
-        quantity = null
-    )
+    private val testItem =
+        Item(
+            hostName = HostName.AXIELL,
+            hostId = "12345",
+            description = "Tyven, tyven skal du hete",
+            productCategory = "BOOK",
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            owner = Owner.NB,
+            location = null,
+            quantity = null
+        )
 
-    private val testOrder = Order(
-        hostName = HostName.AXIELL,
-        hostOrderId = "12345",
-        status = Order.Status.NOT_STARTED,
-        productLine = listOf(),
-        orderType = Order.Type.LOAN,
-        owner = Owner.NB,
-        receiver = Order.Receiver(
-            name = "Kåre",
-            address = "Kåres gate 1",
-            postalCode = "1234",
-            city = "Kåresby",
-            location = "Kåresplass",
-            phoneNumber = "99999999"
-        ),
-        callbackUrl = "http://callback.url/path"
-    )
+    private val testOrder =
+        Order(
+            hostName = HostName.AXIELL,
+            hostOrderId = "12345",
+            status = Order.Status.NOT_STARTED,
+            productLine = listOf(),
+            orderType = Order.Type.LOAN,
+            owner = Owner.NB,
+            receiver =
+                Order.Receiver(
+                    name = "Kåre",
+                    address = "Kåres gate 1",
+                    postalCode = "1234",
+                    city = "Kåresby",
+                    location = "Kåresplass",
+                    phoneNumber = "99999999"
+                ),
+            callbackUrl = "http://callback.url/path"
+        )
 
-    private fun Order.toCreateOrderDTO() = CreateOrderDTO(
-        hostName = testOrder.hostName,
-        hostOrderId = testOrder.hostOrderId,
-        orderItems = testOrder.productLine.map { CreateOrderDTO.OrderItem(it.hostId) },
-        orderType = testOrder.orderType,
-        owner = testOrder.owner,
-        receiver = testOrder.receiver,
-        callbackUrl = testOrder.callbackUrl
-    )
+    private val updatedOrder =
+        testOrder.copy(
+            productLine =
+                listOf(
+                    Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED),
+                    Order.OrderItem("mlt-421", Order.OrderItem.Status.NOT_STARTED)
+                )
+        )
 
+    private fun Order.toCreateOrderDTO() =
+        CreateOrderDTO(
+            hostName = testOrder.hostName,
+            hostOrderId = testOrder.hostOrderId,
+            orderItems = testOrder.productLine.map { CreateOrderDTO.OrderItem(it.hostId) },
+            orderType = testOrder.orderType,
+            owner = testOrder.owner,
+            receiver = testOrder.receiver,
+            callbackUrl = testOrder.callbackUrl
+        )
 }
