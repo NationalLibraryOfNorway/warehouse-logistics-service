@@ -3,25 +3,28 @@ package no.nb.mlt.wls.order.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.core.data.HostName
-import no.nb.mlt.wls.core.data.Owner
-import no.nb.mlt.wls.core.data.synq.SynqError
-import no.nb.mlt.wls.order.model.Order
-import no.nb.mlt.wls.order.model.OrderLineStatus
-import no.nb.mlt.wls.order.model.OrderReceiver
-import no.nb.mlt.wls.order.model.OrderStatus
-import no.nb.mlt.wls.order.model.OrderType
-import no.nb.mlt.wls.order.model.ProductLine
-import no.nb.mlt.wls.order.payloads.ApiOrderPayload
-import no.nb.mlt.wls.order.payloads.toOrder
-import no.nb.mlt.wls.order.payloads.toUpdateOrderPayload
-import no.nb.mlt.wls.order.repository.OrderRepository
-import no.nb.mlt.wls.order.service.SynqOrderService
+import no.nb.mlt.wls.application.restapi.ErrorMessage
+import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.domain.model.Environment
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
+import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
+import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
+import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
+import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -34,15 +37,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import java.net.URI
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import reactor.core.publisher.Flux
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -51,11 +55,12 @@ import java.net.URI
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
-    @Autowired val repository: OrderRepository,
+    @Autowired val repository: OrderMongoRepository,
+    @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
-    private lateinit var synqOrderService: SynqOrderService
+    private lateinit var synqAdapter: SynqAdapter
 
     private lateinit var webTestClient: WebTestClient
 
@@ -78,8 +83,8 @@ class OrderControllerTest(
     fun `createOrder with valid payload creates order`() =
         runTest {
             coEvery {
-                synqOrderService.createOrder(any())
-            } returns ResponseEntity.created(URI.create("")).build()
+                synqAdapter.createOrder(any())
+            } answers {}
 
             webTestClient
                 .mutateWith(csrf())
@@ -90,12 +95,14 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
-            val order = repository.findByHostNameAndHostOrderId(testOrderPayload.hostName, testOrderPayload.hostOrderId).awaitSingle()
+            val order =
+                repository.findByHostNameAndHostOrderId(testOrderPayload.hostName, testOrderPayload.hostOrderId)
+                    .awaitSingle()
 
             assertThat(order)
                 .isNotNull
                 .extracting("callbackUrl", "status")
-                .containsExactly("callbackUrl", OrderStatus.NOT_STARTED)
+                .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
 
     @Test
@@ -124,7 +131,15 @@ class OrderControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
-                duplicateOrderPayload.copy(productLine = listOf(ProductLine("AAAAAAAAA", OrderLineStatus.PICKED)))
+                duplicateOrderPayload.copy(
+                    productLine =
+                        listOf(
+                            Order.OrderItem(
+                                "AAAAAAAAA",
+                                Order.OrderItem.Status.PICKED
+                            )
+                        )
+                )
             )
             .exchange()
             .expectStatus().isOk
@@ -135,10 +150,10 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `createOrder where SynQ says it's a duplicate returns OK`() { // SynqService converts an error to return OK if it finds a duplicate product
+    fun `createOrder where SynQ says it's a duplicate but we don't have it in the DB returns Server error`() {
         coEvery {
-            synqOrderService.createOrder(any())
-        } returns ResponseEntity.ok().build()
+            synqAdapter.createOrder(any())
+        } throws (DuplicateResourceException("Order already exists"))
 
         webTestClient
             .mutateWith(csrf())
@@ -147,15 +162,19 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
             .exchange()
-            .expectStatus().isOk
-            .expectBody().isEmpty
+            .expectStatus().is5xxServerError
+            .expectBody<ErrorMessage>()
     }
 
     @Test
     fun `createOrder handles SynQ error`() {
         coEvery {
-            synqOrderService.createOrder(any())
-        } returns ResponseEntity.internalServerError().body(SynqError(9001, "Unexpected error"))
+            synqAdapter.createOrder(any())
+        } throws
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
 
         webTestClient
             .mutateWith(csrf())
@@ -167,7 +186,7 @@ class OrderControllerTest(
             .expectStatus().is5xxServerError
     }
 
-    // FIXME - Endpoint should be returning DTO instead of direct Orders
+    // FIXME - Endpoint now returns DTO instead of direct Orders, which breaks this test
     @Test
     fun `getOrder returns the order`() {
         webTestClient
@@ -198,19 +217,20 @@ class OrderControllerTest(
 
     @Test
     fun `updateOrder with valid payload updates order`() {
-        coEvery {
-            synqOrderService.updateOrder(any())
-        } returns ResponseEntity.ok().build()
-
         val testPayload =
-            duplicateOrderPayload.toOrder().toUpdateOrderPayload()
+            duplicateOrderPayload.toOrder()
                 .copy(
+                    receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
+                    callbackUrl = "https://newCallbackUrl.com",
                     productLine =
                         listOf(
-                            ProductLine("mlt-420", OrderLineStatus.NOT_STARTED),
-                            ProductLine("mlt-421", OrderLineStatus.NOT_STARTED)
+                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
                         )
                 )
+
+        coEvery {
+            synqAdapter.updateOrder(any())
+        } answers { testPayload }
 
         webTestClient
             .mutateWith(csrf())
@@ -226,15 +246,40 @@ class OrderControllerTest(
                 products?.map {
                     assertThat(testPayload.productLine.contains(it))
                 }
+                assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
+                assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
             }
     }
 
     @Test
-    fun `updateOrder when order is being processed errors`() {
-        val testPayload = testOrderPayload.copy(orderId = "mlt-test-order-processing", status = OrderStatus.IN_PROGRESS)
-        val testUpdatePayload = testPayload.toOrder().toUpdateOrderPayload().copy(orderType = OrderType.DIGITIZATION)
+    fun `updateOrder when order lines doesn't exists returns status 400`() {
+        val testPayload =
+            testOrderPayload.copy(
+                orderId = "mlt-test-order-processing",
+                status = Order.Status.IN_PROGRESS,
+                productLine = listOf(Order.OrderItem("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
+            )
+        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
-            repository.save(testPayload.toOrder()).awaitSingle()
+            repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) })
+                .put()
+                .bodyValue(testUpdatePayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @Test
+    fun `updateOrder when order is being processed errors`() {
+        val testPayload = testOrderPayload.copy(orderId = "mlt-test-order-processing", status = Order.Status.IN_PROGRESS)
+        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        runTest {
+            repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
 
             webTestClient
                 .mutateWith(csrf())
@@ -248,11 +293,30 @@ class OrderControllerTest(
     }
 
     @Test
+    fun `updateOrder when order does not exists returns status 400 BAD REQUEST`() {
+        val testPayload =
+            testOrderPayload.copy(
+                orderId = "humbug"
+            )
+
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) })
+                .put()
+                .bodyValue(testPayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
-                synqOrderService.deleteOrder(any(), any())
-            } returns ResponseEntity.ok().build()
+                synqAdapter.deleteOrder(any(), any())
+            } answers {}
 
             webTestClient
                 .mutateWith(csrf())
@@ -263,7 +327,11 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isOk
 
-            val order = repository.findByHostNameAndHostOrderId(duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId).awaitSingleOrNull()
+            val order =
+                repository.findByHostNameAndHostOrderId(
+                    duplicateOrderPayload.hostName,
+                    duplicateOrderPayload.hostOrderId
+                ).awaitSingleOrNull()
 
             assertThat(order).isNull()
         }
@@ -271,8 +339,13 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder handles synq error`() {
         coEvery {
-            synqOrderService.deleteOrder(any(), any())
-        } returns ResponseEntity.internalServerError().build()
+            synqAdapter.deleteOrder(any(), any())
+        } throws (
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
+        )
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) })
@@ -290,17 +363,18 @@ class OrderControllerTest(
     /**
      * Payload which is used in most tests
      */
+
     private val testOrderPayload =
         ApiOrderPayload(
-            orderId = "axiell-order-69",
+            orderId = "order-360720",
             hostName = HostName.AXIELL,
-            hostOrderId = "axiell-order-69",
-            status = OrderStatus.NOT_STARTED,
-            productLine = listOf(ProductLine("mlt-420", OrderLineStatus.NOT_STARTED)),
-            orderType = OrderType.LOAN,
+            hostOrderId = "order-360720",
+            status = Order.Status.NOT_STARTED,
+            productLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-                OrderReceiver(
+                Order.Receiver(
                     name = "name",
                     address = "address",
                     postalCode = "postalCode",
@@ -308,23 +382,24 @@ class OrderControllerTest(
                     phoneNumber = "phoneNumber",
                     location = "location"
                 ),
-            callbackUrl = "callbackUrl"
+            callbackUrl = "https://callbackUrl.com"
         )
 
     /**
      * Payload which will exist in the database
      */
+
     private val duplicateOrderPayload =
         ApiOrderPayload(
             orderId = "order-123456",
             hostName = HostName.AXIELL,
             hostOrderId = "order-123456",
-            status = OrderStatus.NOT_STARTED,
-            productLine = listOf(ProductLine("product-123456", OrderLineStatus.NOT_STARTED)),
-            orderType = OrderType.LOAN,
+            status = Order.Status.NOT_STARTED,
+            productLine = listOf(Order.OrderItem("product-123456", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-                OrderReceiver(
+                Order.Receiver(
                     name = "name",
                     address = "address",
                     postalCode = "postalCode",
@@ -332,13 +407,37 @@ class OrderControllerTest(
                     phoneNumber = "phoneNumber",
                     location = "location"
                 ),
-            callbackUrl = "callbackUrl"
+            callbackUrl = "https://callbackUrl.com"
         )
 
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         runBlocking {
-            repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder())).awaitSingle()
+            repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
+
+            // Create all items in testOrderPayload and duplicateOrderPayload in the database
+            val allProducts = testOrderPayload.productLine + duplicateOrderPayload.productLine
+            itemMongoRepository
+                .deleteAll()
+                .thenMany(
+                    Flux.fromIterable(
+                        allProducts.map {
+                            MongoItem(
+                                hostId = it.hostId,
+                                hostName = testOrderPayload.hostName,
+                                description = "description",
+                                productCategory = "productCategory",
+                                preferredEnvironment = Environment.NONE,
+                                packaging = Packaging.NONE,
+                                owner = Owner.NB,
+                                location = "null",
+                                quantity = 1.0
+                            )
+                        }
+                    )
+                )
+                .flatMap { itemMongoRepository.save(it) }
+                .awaitLast()
         }
     }
 }
