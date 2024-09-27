@@ -26,10 +26,6 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    address = "address",
-                    postalCode = "postalCode",
-                    city = "city",
-                    phoneNumber = "phoneNumber",
                     location = "location"
                 ),
             callbackUrl = "callbackUrl"
@@ -46,10 +42,6 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    address = "address",
-                    postalCode = "postalCode",
-                    city = "city",
-                    phoneNumber = "phoneNumber",
                     location = "location"
                 ),
             callbackUrl = "callbackUrl"
