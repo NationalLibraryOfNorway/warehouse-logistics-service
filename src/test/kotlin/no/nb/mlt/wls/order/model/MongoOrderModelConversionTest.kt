@@ -61,7 +61,7 @@ class MongoOrderModelConversionTest {
             orderType = SynqOrderPayload.SynqOrderType.STANDARD,
             dispatchDate = LocalDateTime.now(),
             orderDate = LocalDateTime.now(),
-            priority = 1,
+            priority = 5,
             owner = SynqOwner.NB,
             orderLine = listOf(SynqOrderPayload.OrderLine(1, "hostProductId", 1.0))
         )
