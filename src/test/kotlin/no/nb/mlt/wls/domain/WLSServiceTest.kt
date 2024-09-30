@@ -344,7 +344,7 @@ class WLSServiceTest {
             receiver =
                 Order.Receiver(
                     name = "Kåre",
-                    location = "Kåresplass"
+                    address = "Kåresplass"
                 ),
             callbackUrl = "http://callback.url/path"
         )

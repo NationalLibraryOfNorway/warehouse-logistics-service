@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Item
@@ -21,7 +22,8 @@ data class SynqOrderPayload(
     val priority: Int,
     val owner: SynqOwner,
     val orderLine: List<OrderLine>,
-    val customer: String? = null
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    val shippingAddress: ShippingAddress? = null
 ) {
     data class OrderLine(
         @Min(1)
@@ -38,6 +40,17 @@ data class SynqOrderPayload(
             return type
         }
     }
+}
+
+data class ShippingAddress(
+    val address: Address?
+) {
+    data class Address(
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val contactPerson: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val addressLine1: String? = null
+    )
 }
 
 fun Order.toSynqPayload() =
@@ -59,7 +72,13 @@ fun Order.toSynqPayload() =
                     quantityOrdered = 1.0
                 )
             },
-        customer = receiver.name
+        shippingAddress =
+            ShippingAddress(
+                ShippingAddress.Address(
+                    receiver.name,
+                    receiver.address
+                )
+            )
     )
 
 fun Item.toSynqPayload() =

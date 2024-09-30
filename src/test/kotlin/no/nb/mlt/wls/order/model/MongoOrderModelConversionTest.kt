@@ -26,7 +26,7 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    location = "location"
+                    address = "location"
                 ),
             callbackUrl = "callbackUrl"
         )
@@ -42,7 +42,7 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    location = "location"
+                    address = "location"
                 ),
             callbackUrl = "callbackUrl"
         )

@@ -376,7 +376,7 @@ class OrderControllerTest(
             receiver =
                 Order.Receiver(
                     name = "name",
-                    location = "location"
+                    address = "location"
                 ),
             callbackUrl = "https://callbackUrl.com"
         )
@@ -397,7 +397,7 @@ class OrderControllerTest(
             receiver =
                 Order.Receiver(
                     name = "name",
-                    location = "location"
+                    address = "location"
                 ),
             callbackUrl = "https://callbackUrl.com"
         )
