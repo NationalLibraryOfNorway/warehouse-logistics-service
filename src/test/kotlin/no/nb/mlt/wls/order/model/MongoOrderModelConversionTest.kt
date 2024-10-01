@@ -6,6 +6,7 @@ import no.nb.mlt.wls.application.restapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
@@ -55,7 +56,16 @@ class MongoOrderModelConversionTest {
             orderDate = LocalDateTime.now(),
             priority = 5,
             owner = SynqOwner.NB,
-            orderLine = listOf(SynqOrderPayload.OrderLine(1, "hostProductId", 1.0))
+            orderLine =
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "hostProductId", 1.0)
+                ),
+            shippingAddress =
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
+                )
         )
 
     @Test
