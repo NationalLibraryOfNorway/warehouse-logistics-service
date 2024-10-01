@@ -236,7 +236,7 @@ class WLSServiceTest {
                     "12345",
                     listOf("mlt-420", "mlt-421"),
                     Order.Type.LOAN,
-                    Order.Receiver("name", "location"),
+                    Order.Receiver("name", "address"),
                     "https://example.com"
                 )
 

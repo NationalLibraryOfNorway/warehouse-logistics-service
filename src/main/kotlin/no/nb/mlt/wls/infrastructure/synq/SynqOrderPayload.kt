@@ -42,7 +42,7 @@ data class SynqOrderPayload(
 }
 
 data class ShippingAddress(
-    val address: Address?
+    val address: Address
 ) {
     data class Address(
         val contactPerson: String,
