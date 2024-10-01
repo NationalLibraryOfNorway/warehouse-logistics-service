@@ -22,8 +22,7 @@ data class SynqOrderPayload(
     val priority: Int,
     val owner: SynqOwner,
     val orderLine: List<OrderLine>,
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    val shippingAddress: ShippingAddress? = null
+    val shippingAddress: ShippingAddress
 ) {
     data class OrderLine(
         @Min(1)
@@ -46,8 +45,7 @@ data class ShippingAddress(
     val address: Address?
 ) {
     data class Address(
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        val contactPerson: String? = null,
+        val contactPerson: String,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine1: String? = null
     )
