@@ -13,6 +13,13 @@ interface ItemRepository {
     fun createItem(item: Item): Mono<Item>
 
     suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean
+
+    fun moveItem(
+        hostId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Mono<Item>
 }
 
 data class ItemId(val hostName: HostName, val hostId: String)

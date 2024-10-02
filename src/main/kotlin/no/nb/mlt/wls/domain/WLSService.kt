@@ -12,6 +12,8 @@ import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
@@ -32,7 +34,7 @@ class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, MoveItem {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
@@ -51,6 +53,16 @@ class WLSService(
                 }
             }
             .awaitSingle()
+    }
+
+    override suspend fun moveItem(
+        hostId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Item {
+        val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
+        return itemRepository.moveItem(item.hostId, item.hostName, quantity, location).awaitSingle()
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {

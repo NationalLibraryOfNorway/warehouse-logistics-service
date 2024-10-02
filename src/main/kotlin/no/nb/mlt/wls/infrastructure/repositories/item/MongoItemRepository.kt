@@ -9,6 +9,7 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
+import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Mono
@@ -55,6 +56,17 @@ class ItemRepositoryMongoAdapter(
             }
             .awaitSingle()
     }
+
+    override fun moveItem(
+        hostId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Mono<Item> {
+        return mongoRepo
+            .findAndUpdateItemByHostNameAndId(hostId, hostName, quantity, location)
+            .map(MongoItem::toItem)
+    }
 }
 
 @Repository
@@ -66,4 +78,13 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
 
     @Query(count = true, value = "{ '\$or': ?0 }")
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
+
+    @Query("{hostName: ?0, hostOrderId: ?1}")
+    @Update("{'\$set':{quantity: ?2,location: ?3}}")
+    fun findAndUpdateItemByHostNameAndId(
+        hostOrderId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Mono<MongoItem>
 }
