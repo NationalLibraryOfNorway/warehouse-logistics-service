@@ -306,7 +306,7 @@ class WLSServiceTest {
                     "12345",
                     listOf("mlt-420", "mlt-421"),
                     Order.Type.LOAN,
-                    Order.Receiver("name", "location", null, null, null, null),
+                    Order.Receiver("name", "address"),
                     "https://example.com"
                 )
 
@@ -414,11 +414,7 @@ class WLSServiceTest {
             receiver =
                 Order.Receiver(
                     name = "Kåre",
-                    address = "Kåres gate 1",
-                    postalCode = "1234",
-                    city = "Kåresby",
-                    location = "Kåresplass",
-                    phoneNumber = "99999999"
+                    address = "Kåresplass"
                 ),
             callbackUrl = "http://callback.url/path"
         )
