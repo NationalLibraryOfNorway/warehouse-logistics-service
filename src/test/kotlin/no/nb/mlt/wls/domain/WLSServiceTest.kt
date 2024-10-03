@@ -120,7 +120,6 @@ class WLSServiceTest {
         }
     }
 
-    @Suppress("ReactiveStreamsUnusedPublisher")
     @Test
     fun `moveItem should return when item successfully moves`() {
         val expectedItem =
