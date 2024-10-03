@@ -9,10 +9,10 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.restapi.ErrorMessage
-import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.application.hostapi.ErrorMessage
+import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order

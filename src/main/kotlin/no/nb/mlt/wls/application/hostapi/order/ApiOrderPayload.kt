@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.order
+package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
@@ -59,7 +59,7 @@ data class ApiOrderPayload(
     )
     val status: Order.Status?,
     @Schema(
-        description = "List of products in the order, also called order lines, or product lines.",
+        description = "List of products in the order, also called order lines.",
         accessMode = READ_ONLY
     )
     val productLine: List<Order.OrderItem>,

@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.config
+package no.nb.mlt.wls.application.hostapi.config
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
@@ -8,6 +8,7 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
+import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -51,5 +52,23 @@ class SwaggerConfig {
             .addSecurityItem(
                 SecurityRequirement().addList("clientCredentials")
             )
+    }
+
+    @Bean
+    fun hostApi(): GroupedOpenApi {
+        return GroupedOpenApi.builder()
+            .group("Host API")
+            .displayName("Host API for catalogues")
+            .pathsToMatch("/v1/**")
+            .build()
+    }
+
+    @Bean
+    fun synqApi(): GroupedOpenApi {
+        return GroupedOpenApi.builder()
+            .group("SynQ API")
+            .displayName("SynQ updates port for Hermes WLS")
+            .pathsToMatch("/synq/v1/**")
+            .build()
     }
 }

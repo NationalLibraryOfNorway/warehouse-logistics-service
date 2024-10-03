@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.product.model
 
-import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.restapi.item.toApiPayload
-import no.nb.mlt.wls.application.restapi.item.toItem
+import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.hostapi.item.toApiPayload
+import no.nb.mlt.wls.application.hostapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item

@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.item
+package no.nb.mlt.wls.application.hostapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY

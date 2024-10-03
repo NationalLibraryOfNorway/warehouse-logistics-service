@@ -13,6 +13,7 @@ import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -32,7 +33,7 @@ class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
@@ -125,5 +126,14 @@ class WLSService(
         hostId: String
     ): Item? {
         return itemRepository.getItem(hostName, hostId)
+    }
+
+    override suspend fun updateOrderStatus(hostName: HostName, hostOrderId: String, status: Order.Status): Order? {
+        val order = orderRepository.getOrder(hostName, hostOrderId)
+            ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+        val result = storageSystemFacade.updateOrder(order.copy(status = status))
+
+        return orderRepository.updateOrder(result)
     }
 }

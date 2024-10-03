@@ -7,8 +7,8 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.restapi.item.toItem
+import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.hostapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner

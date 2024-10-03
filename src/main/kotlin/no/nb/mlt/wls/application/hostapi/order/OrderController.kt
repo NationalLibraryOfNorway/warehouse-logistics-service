@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.order
+package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.application.restapi.ErrorMessage
+import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
 @RestController
-@RequestMapping(path = ["", "/v1"])
+@RequestMapping(path = [ "/v1"])
 @Tag(name = "Order Controller", description = "API for ordering products via Hermes WLS")
 class OrderController(
     private val createOrder: CreateOrder,

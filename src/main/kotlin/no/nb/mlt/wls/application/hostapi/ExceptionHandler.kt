@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi
+package no.nb.mlt.wls.application.hostapi
 
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException

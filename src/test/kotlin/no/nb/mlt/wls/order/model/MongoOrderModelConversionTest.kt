@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
