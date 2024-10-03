@@ -62,7 +62,7 @@ class WLSService(
         location: String
     ): Item {
         val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
-        return itemRepository.moveItem(item.hostId, item.hostName, quantity, location).awaitSingle()
+        return itemRepository.moveItem(item.hostId, item.hostName, quantity, location)
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {

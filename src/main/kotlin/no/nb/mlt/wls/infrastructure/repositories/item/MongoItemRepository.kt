@@ -5,7 +5,9 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemId
+import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
@@ -57,15 +59,28 @@ class ItemRepositoryMongoAdapter(
             .awaitSingle()
     }
 
-    override fun moveItem(
+    override suspend fun moveItem(
         hostId: String,
         hostName: HostName,
         quantity: Double,
         location: String
-    ): Mono<Item> {
-        return mongoRepo
-            .findAndUpdateItemByHostNameAndId(hostId, hostName, quantity, location)
-            .map(MongoItem::toItem)
+    ): Item {
+        mongoRepo
+            .findAndUpdateItemByHostNameAndHostId(hostId, hostName, quantity, location)
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while updating Item. Order ID: $hostId, Host: $hostName"
+                    } else {
+                        "Error while updating order"
+                    }
+                }
+            }
+            .onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
+            .awaitSingleOrNull() ?: ItemNotFoundException("Item with host ID $hostId for $hostName does not exist in WLS database")
+
+        return getItem(hostName, hostId)!!
     }
 }
 
@@ -81,10 +96,10 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
 
     @Query("{hostName: ?0, hostOrderId: ?1}")
     @Update("{'\$set':{quantity: ?2,location: ?3}}")
-    fun findAndUpdateItemByHostNameAndId(
+    fun findAndUpdateItemByHostNameAndHostId(
         hostOrderId: String,
         hostName: HostName,
         quantity: Double,
         location: String
-    ): Mono<MongoItem>
+    ): Mono<Void>
 }

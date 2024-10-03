@@ -14,12 +14,14 @@ interface ItemRepository {
 
     suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean
 
-    fun moveItem(
+    suspend fun moveItem(
         hostId: String,
         hostName: HostName,
         quantity: Double,
         location: String
-    ): Mono<Item>
+    ): Item
 }
 
 data class ItemId(val hostName: HostName, val hostId: String)
+
+class ItemMovingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
