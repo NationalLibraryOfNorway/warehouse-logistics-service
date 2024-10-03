@@ -158,6 +158,38 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `moveItem throws when count is invalid`() {
+        coEvery { itemRepoMock.moveItem(any(), any(), -1.0, any()) } throws ValidationException("Location cannot be blank")
+
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        runTest {
+            assertThrows<RuntimeException> {
+                cut.moveItem(testItem.hostId, testItem.hostName, -1.0, "   ")
+            }
+
+            coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
+            coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+        }
+    }
+
+    @Test
+    fun `moveItem throws when location is blank`() {
+        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ValidationException("Item not found")
+
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        runTest {
+            assertThrows<RuntimeException> {
+                cut.moveItem(testItem.hostId, testItem.hostName, 1.0, " ")
+            }
+
+            coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
+            coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+        }
+    }
+
+    @Test
     fun `createOrder should save order in db and storage system`() {
         val expectedOrder = testOrder.copy()
 
