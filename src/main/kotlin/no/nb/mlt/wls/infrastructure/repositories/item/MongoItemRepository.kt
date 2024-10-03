@@ -44,7 +44,7 @@ class ItemRepositoryMongoAdapter(
         return mongoRepo.save(item.toMongoItem()).map(MongoItem::toItem)
     }
 
-    override suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean {
+    override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean {
         return mongoRepo.countItemsMatchingIds(ids)
             .map {
                 logger.debug { "Counted items matching ids: $ids, count: $it" }

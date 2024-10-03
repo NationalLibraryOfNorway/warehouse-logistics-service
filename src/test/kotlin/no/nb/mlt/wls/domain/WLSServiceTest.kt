@@ -162,7 +162,7 @@ class WLSServiceTest {
         val expectedOrder = testOrder.copy()
 
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
-        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { true }
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.createOrder(any()) } answers { expectedOrder }
         coJustRun { storageSystemRepoMock.createOrder(any()) }
 
@@ -201,7 +201,7 @@ class WLSServiceTest {
     @Test
     fun `createOrder should fail if some of the items does not exist`() {
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
-        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { false }
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
@@ -262,7 +262,7 @@ class WLSServiceTest {
     @Test
     fun `updateOrder with valid items should complete`() {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
-        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { true }
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { testOrder.copy() }
         coEvery { storageSystemRepoMock.updateOrder(any()) } answers { updatedOrder }
         coEvery { orderRepoMock.updateOrder(any()) } answers { updatedOrder }
@@ -279,7 +279,7 @@ class WLSServiceTest {
                 )
 
             assertThat(order).isEqualTo(updatedOrder)
-            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 1) { storageSystemRepoMock.updateOrder(any()) }
             coVerify(exactly = 1) { orderRepoMock.updateOrder(any()) }
@@ -290,7 +290,7 @@ class WLSServiceTest {
     fun `updateOrder should fail when order does not exist`() {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
 
-        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { true }
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
         runTest {
@@ -304,7 +304,7 @@ class WLSServiceTest {
                     testOrder.callbackUrl
                 )
             }
-            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
             coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
@@ -314,7 +314,7 @@ class WLSServiceTest {
     @Test
     fun `updateOrder should fail when items do not exist`() {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
-        coEvery { itemRepoMock.doesAllItemsExist(any()) } answers { false }
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
 
         runTest {
             assertThrows<ValidationException> {
@@ -327,7 +327,7 @@ class WLSServiceTest {
                     testOrder.callbackUrl
                 )
             }
-            coVerify(exactly = 1) { itemRepoMock.doesAllItemsExist(any()) }
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
             coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }

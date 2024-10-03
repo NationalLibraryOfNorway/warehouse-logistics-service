@@ -78,7 +78,7 @@ class WLSService(
         }
 
         val itemIds = orderDTO.orderItems.map { ItemId(orderDTO.hostName, it.hostId) }
-        if (!itemRepository.doesAllItemsExist(itemIds)) {
+        if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
 
@@ -110,7 +110,7 @@ class WLSService(
         callbackUrl: String
     ): Order {
         val itemIds = itemHostIds.map { ItemId(hostName, it) }
-        if (!itemRepository.doesAllItemsExist(itemIds)) {
+        if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
 

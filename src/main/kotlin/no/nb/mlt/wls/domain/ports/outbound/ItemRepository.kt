@@ -12,7 +12,7 @@ interface ItemRepository {
 
     fun createItem(item: Item): Mono<Item>
 
-    suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean
+    suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
 
     suspend fun moveItem(
         hostId: String,
