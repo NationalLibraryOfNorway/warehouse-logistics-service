@@ -164,7 +164,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
             assertThrows<RuntimeException> {
-                cut.moveItem(testItem.hostId, testItem.hostName, -1.0, "   ")
+                cut.moveItem(testItem.hostId, testItem.hostName, -1.0, "Somewhere nice")
             }
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
