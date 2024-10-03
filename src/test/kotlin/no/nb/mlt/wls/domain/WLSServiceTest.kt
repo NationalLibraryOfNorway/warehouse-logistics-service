@@ -14,6 +14,7 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -46,7 +47,7 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
-            val order =
+            val itemResult =
                 cut.addItem(
                     ItemMetadata(
                         hostId = testItem.hostId,
@@ -59,7 +60,7 @@ class WLSServiceTest {
                     )
                 )
 
-            assertThat(order).isEqualTo(expectedItem)
+            assertThat(itemResult).isEqualTo(expectedItem)
             coVerify(exactly = 1) { itemRepoMock.createItem(any()) }
             coVerify(exactly = 1) { storageSystemRepoMock.createItem(any()) }
         }
@@ -75,7 +76,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
 
         runTest {
-            val item =
+            val newItem =
                 cut.addItem(
                     ItemMetadata(
                         hostId = testItem.hostId,
@@ -88,7 +89,7 @@ class WLSServiceTest {
                     )
                 )
 
-            assertThat(item).isEqualTo(testItem)
+            assertThat(newItem).isEqualTo(testItem)
 
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
             coVerify(exactly = 0) { storageSystemRepoMock.createItem(any()) }
@@ -103,8 +104,8 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
-            val order = cut.getItem(HostName.AXIELL, "12345")
-            assertThat(order).isEqualTo(expectedItem)
+            val itemResult = cut.getItem(HostName.AXIELL, "12345")
+            assertThat(itemResult).isEqualTo(expectedItem)
         }
     }
 
@@ -114,8 +115,46 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
         runTest {
-            val order = cut.getItem(HostName.AXIELL, "12345")
-            assertThat(order).isEqualTo(null)
+            val itemResult = cut.getItem(HostName.AXIELL, "12345")
+            assertThat(itemResult).isEqualTo(null)
+        }
+    }
+
+    @Suppress("ReactiveStreamsUnusedPublisher")
+    @Test
+    fun `moveItem should return when item successfully moves`() {
+        val expectedItem =
+            testItem.copy(
+                location = "Somewhere nice",
+                quantity = 1.0
+            )
+        coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
+        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
+
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        runTest {
+            val movedItem = cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
+            assertThat(movedItem).isEqualTo(expectedItem)
+
+            coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
+            coVerify(exactly = 1) { itemRepoMock.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+        }
+    }
+
+    @Test
+    fun `moveItem should fail when item does not exist`() {
+        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ItemNotFoundException("Item not found")
+
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        runTest {
+            assertThrows<RuntimeException> {
+                cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
+            }
+
+            coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
+            coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
         }
     }
 
