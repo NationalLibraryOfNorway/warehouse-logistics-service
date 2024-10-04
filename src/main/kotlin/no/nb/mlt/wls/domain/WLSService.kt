@@ -131,6 +131,23 @@ class WLSService(
         return orderRepository.updateOrder(result)
     }
 
+    override suspend fun updateOrderStatus(
+        hostName: HostName,
+        hostOrderId: String,
+        status: String
+    ): Order {
+        val order =
+            getOrder(
+                hostName,
+                hostOrderId
+            ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+        val updatedOrder = order.setStatus(Order.Status.valueOf(status))
+
+        val result = storageSystemFacade.updateOrder(updatedOrder)
+        return orderRepository.updateOrder(result)
+    }
+
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String

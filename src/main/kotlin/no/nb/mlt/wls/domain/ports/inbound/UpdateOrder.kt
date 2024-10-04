@@ -15,6 +15,14 @@ interface UpdateOrder {
         receiver: Order.Receiver,
         callbackUrl: String
     ): Order
+
+    // TODO - Should this be split off into its own use-case/interface?
+    @Throws(OrderNotFoundException::class)
+    suspend fun updateOrderStatus(
+        hostName: HostName,
+        hostOrderId: String,
+        status: String
+    ): Order
 }
 
 class IllegalOrderStateException(override val message: String, cause: Throwable? = null) : RuntimeException(message, cause)

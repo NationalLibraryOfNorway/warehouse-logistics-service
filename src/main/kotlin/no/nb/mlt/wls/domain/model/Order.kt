@@ -63,6 +63,10 @@ data class Order(
         return this.copy(orderType = orderType)
     }
 
+    fun setStatus(status: Status): Order {
+        return this.copy(status = status)
+    }
+
     fun setCallbackUrl(callbackUrl: String): Order {
         throwIfInvalidUrl(callbackUrl)
 

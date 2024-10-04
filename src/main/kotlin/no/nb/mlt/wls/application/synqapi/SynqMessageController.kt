@@ -12,15 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-// TODO - Repackage
 @RestController
 @RequestMapping("/synq/v1")
 class SynqMessageController(
-//    private val updateItem: UpdateItem,
-    private val updateOrder: UpdateOrder
+    val updateOrder: UpdateOrder
 ) {
     @PutMapping("/order-update/{owner}/{orderId}")
-    fun handleStatusUpdate(
+    suspend fun handleStatusUpdate(
         @PathVariable owner: String,
         @PathVariable orderId: String,
         @RequestBody payload: OrderStatusUpdate,
@@ -28,7 +26,7 @@ class SynqMessageController(
     ) {
         println("Hello world! Order update received")
         println(payload)
-        TODO("update the order")
+        updateOrder.updateOrderStatus(payload.hostName, orderId, payload.status)
     }
 
     @PutMapping("/pick-update/{owner}/{orderId}")
