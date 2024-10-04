@@ -17,6 +17,4 @@ interface UpdateOrder {
     ): Order
 }
 
-class ValidationException(override val message: String, cause: Throwable? = null) : RuntimeException(message, cause)
-
 class IllegalOrderStateException(override val message: String, cause: Throwable? = null) : RuntimeException(message, cause)
