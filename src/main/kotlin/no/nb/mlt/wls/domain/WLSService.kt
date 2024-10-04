@@ -19,6 +19,7 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
+import no.nb.mlt.wls.domain.ports.outbound.CallbackHandler
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -32,7 +33,8 @@ private val logger = KotlinLogging.logger {}
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val storageSystemFacade: StorageSystemFacade
+    private val storageSystemFacade: StorageSystemFacade,
+    private val callbackHandler: CallbackHandler
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
@@ -132,8 +134,6 @@ class WLSService(
         val order = orderRepository.getOrder(hostName, hostOrderId)
             ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
 
-        val result = storageSystemFacade.updateOrder(order.copy(status = status))
-
-        return orderRepository.updateOrder(result)
+        return orderRepository.updateOrder(order.copy(status = status))
     }
 }

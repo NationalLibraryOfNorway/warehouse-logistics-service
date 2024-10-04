@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.hostapi.config
+package no.nb.mlt.wls.application.synqapi.config
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
@@ -9,11 +9,11 @@ import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import org.springdoc.core.models.GroupedOpenApi
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Primary
 
-@Configuration
+@Configuration("SynqSwaggerConfig")
 @SecurityScheme(
     name = "clientCredentials",
     type = SecuritySchemeType.OAUTH2,
@@ -27,22 +27,19 @@ import org.springframework.context.annotation.Primary
         )
 )
 class SwaggerConfig {
-    @Bean
-    @Primary
+    @Bean("synqOpenApi")
     fun openApi(): OpenAPI {
         return OpenAPI()
             .info(
                 Info()
-                    .title("Hermes WLS (Warehouse and Logistics Service) middleware")
+                    .title("SynQ updates port for Hermes WLS")
                     .description(
                         """
                         Hermes is developed by the MLT (Warehouse and Logistics team) at the National Library of Norway (NLN).
                         Hermes facilitates communication between the NLN's storage systems and the cataloging systems.
-                        Hermes' name is inspired by the Greek deity Hermes, who was the herald of the gods.
-
-                        Applications that need to use Hermes must authenticate with a JWT token.
-                        They can get it from the NLN's instance of Keycloak with help of a Service Account client.
-                        If you are unsure how to do this, please contact the MLT team for help.
+                        This submodule of Hermes is responsible for receiving product and order updates from SynQ.
+                        Hermes will then use these to convert the updates into a format that can be used by the rest of the system.
+                        And send these updates along to appropriate catalogs and update internal item and order information.
                         """.trimIndent()
                     ).contact(
                         Contact()
@@ -56,12 +53,12 @@ class SwaggerConfig {
             )
     }
 
-    @Bean
-    fun hostApi(): GroupedOpenApi {
+    @Bean("synqApi")
+    fun synqApi(): GroupedOpenApi {
         return GroupedOpenApi.builder()
-            .group("Host API")
-            .displayName("Host API for catalogues")
-            .pathsToMatch("/v1/**")
+            .group("SynQ API")
+            .displayName("SynQ updates port for Hermes WLS")
+            .pathsToMatch("/synq/v1/**")
             .build()
     }
 }

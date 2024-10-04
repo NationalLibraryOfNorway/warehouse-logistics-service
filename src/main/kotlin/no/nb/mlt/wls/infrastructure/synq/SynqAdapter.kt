@@ -29,7 +29,7 @@ class SynqAdapter(
         webClient
             .post()
             .uri(uri)
-            .body(BodyInserters.fromValue(item.toSynqPayload()))
+            .bodyValue(item.toSynqPayload())
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorResume(WebClientResponseException::class.java) { error ->
@@ -52,7 +52,7 @@ class SynqAdapter(
         webClient
             .post()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .body(BodyInserters.fromValue(orders))
+            .bodyValue(orders)
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorResume(WebClientResponseException::class.java) { error ->
@@ -87,7 +87,7 @@ class SynqAdapter(
         return webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .body(BodyInserters.fromValue(SynqOrder(listOf(order.toSynqPayload()))))
+            .bodyValue(SynqOrder(listOf(order.toSynqPayload())))
             .retrieve()
             .toBodilessEntity()
             .map { order }

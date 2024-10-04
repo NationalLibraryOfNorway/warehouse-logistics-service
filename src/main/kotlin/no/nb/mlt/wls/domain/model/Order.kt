@@ -123,7 +123,8 @@ data class Order(
         NOT_STARTED,
         IN_PROGRESS,
         COMPLETED,
-        DELETED
+        DELETED,
+        RETURNED
     }
 
     enum class Type {

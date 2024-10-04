@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.hostapi.config
+package no.nb.mlt.wls.application.synqapi.config
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -12,29 +12,28 @@ import org.springframework.security.config.web.server.invoke
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtDecoders
 import org.springframework.security.web.server.SecurityWebFilterChain
+import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 
-@Configuration
+@Configuration("SynqSecurityConfig")
 @Profile("!pipeline")
 @EnableWebFluxSecurity
 class SecurityConfig {
     @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     val issuerUri: String = ""
 
-    @Bean
-    @Order(Ordered.LOWEST_PRECEDENCE)
-    fun hostSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
+    @Bean("synqSecurityFilterChain")
+    @Order(Ordered.HIGHEST_PRECEDENCE)
+    fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http {
+            securityMatcher(PathPatternParserServerWebExchangeMatcher("/synq/v1/**"))
             csrf { }
             authorizeExchange {
-                authorize("/api-docs", permitAll)
-                authorize("/api-docs/**", permitAll)
-                authorize("/swagger", permitAll)
-                authorize("/swagger/**", permitAll)
-                authorize("/webjars/swagger-ui/**", permitAll)
-                authorize("/actuator", permitAll)
-                authorize("/actuator/**", permitAll)
-                authorize("/v1/product", hasAuthority("SCOPE_wls-product"))
-                authorize("/v1/order", hasAuthority("SCOPE_wls-order"))
+                authorize("/synq/api-docs", permitAll)
+                authorize("/synq/api-docs/**", permitAll)
+                authorize("/synq/swagger", permitAll)
+                authorize("/synq/swagger/**", permitAll)
+                authorize("/synq/webjars/swagger-ui/**", permitAll)
+                authorize("/synq/v1/**", hasAuthority("SCOPE_wls-synq"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
@@ -43,8 +42,8 @@ class SecurityConfig {
         }
     }
 
-    @Bean
-    @Order(Ordered.LOWEST_PRECEDENCE)
+    @Bean("synqJwtDecoder")
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     fun jwtDecoder(): JwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri)
 
 }
