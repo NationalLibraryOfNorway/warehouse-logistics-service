@@ -1,5 +1,8 @@
-package no.nb.mlt.wls.application.restapi
+package no.nb.mlt.wls.application.synqapi
 
+import no.nb.mlt.wls.application.restapi.ItemUpdate
+import no.nb.mlt.wls.application.restapi.OrderPickedConfirmation
+import no.nb.mlt.wls.application.restapi.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
