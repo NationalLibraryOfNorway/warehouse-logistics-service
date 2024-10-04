@@ -25,11 +25,7 @@ import org.springframework.web.server.ServerWebInputException
       "owner": "NB",
       "receiver": {
         "name": "Doug Dimmadome",
-        "location": "Doug Dimmadome's office in the Dimmsdale Dimmadome",
-        "address": "Dimmsdale Dimmadome",
-        "city": "Dimmsdale",
-        "postalCode": "69-420",
-        "phoneNum": "+47 666 69 420"
+        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
       },
       "callbackUrl": "https://example.com/send/callback/here"
     }

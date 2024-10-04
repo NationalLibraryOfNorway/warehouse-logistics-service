@@ -112,11 +112,7 @@ data class Order(
 
     data class Receiver(
         val name: String,
-        val location: String,
-        val address: String?,
-        val city: String?,
-        val postalCode: String?,
-        val phoneNumber: String?
+        val address: String?
     )
 
     enum class Status {

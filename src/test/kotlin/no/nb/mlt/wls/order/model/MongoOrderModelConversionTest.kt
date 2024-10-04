@@ -6,6 +6,7 @@ import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
@@ -26,11 +27,7 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    address = "address",
-                    postalCode = "postalCode",
-                    city = "city",
-                    phoneNumber = "phoneNumber",
-                    location = "location"
+                    address = "address"
                 ),
             callbackUrl = "callbackUrl"
         )
@@ -46,11 +43,7 @@ class MongoOrderModelConversionTest {
             receiver =
                 Order.Receiver(
                     name = "name",
-                    address = "address",
-                    postalCode = "postalCode",
-                    city = "city",
-                    phoneNumber = "phoneNumber",
-                    location = "location"
+                    address = "address"
                 ),
             callbackUrl = "callbackUrl"
         )
@@ -61,9 +54,18 @@ class MongoOrderModelConversionTest {
             orderType = SynqOrderPayload.SynqOrderType.STANDARD,
             dispatchDate = LocalDateTime.now(),
             orderDate = LocalDateTime.now(),
-            priority = 1,
+            priority = 5,
             owner = SynqOwner.NB,
-            orderLine = listOf(SynqOrderPayload.OrderLine(1, "hostProductId", 1.0))
+            orderLine =
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "hostProductId", 1.0)
+                ),
+            shippingAddress =
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
+                )
         )
 
     @Test

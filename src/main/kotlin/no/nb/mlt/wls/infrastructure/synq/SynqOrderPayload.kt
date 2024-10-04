@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Item
@@ -21,8 +22,7 @@ data class SynqOrderPayload(
     val priority: Int,
     val owner: SynqOwner,
     val orderLine: List<OrderLine>,
-    val customer: String? = null,
-    val shippingAddress: ShippingAddress? = null
+    val shippingAddress: ShippingAddress
 ) {
     data class OrderLine(
         @Min(1)
@@ -30,21 +30,6 @@ data class SynqOrderPayload(
         val productId: String,
         val quantityOrdered: Double
     )
-
-    data class ShippingAddress(
-        val address: Address?
-    ) {
-        data class Address(
-            val contactPerson: String? = null,
-            val addressLine1: String? = null,
-            val city: String? = null,
-            val state: String? = null,
-            val postalCode: String? = null,
-            val country: String? = null,
-            val phoneNumber: String? = null,
-            val email: String? = null
-        )
-    }
 
     enum class SynqOrderType(private val type: String) {
         STANDARD("Standard");
@@ -56,6 +41,16 @@ data class SynqOrderPayload(
     }
 }
 
+data class ShippingAddress(
+    val address: Address
+) {
+    data class Address(
+        val contactPerson: String,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val addressLine1: String? = null
+    )
+}
+
 fun Order.toSynqPayload() =
     SynqOrderPayload(
         orderId = hostOrderId,
@@ -65,7 +60,7 @@ fun Order.toSynqPayload() =
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
         orderDate = LocalDateTime.now(),
         // TODO: we don't get it from API so we set it to 1, is other value more appropriate?
-        priority = 1,
+        priority = 5,
         owner = owner?.toSynqOwner() ?: SynqOwner.NB,
         orderLine =
             productLine.mapIndexed { index, it ->
@@ -75,19 +70,13 @@ fun Order.toSynqPayload() =
                     quantityOrdered = 1.0
                 )
             },
-        customer = receiver.name,
-        shippingAddress = receiver.toShippingAddress()
-    )
-
-fun Order.Receiver.toShippingAddress(): SynqOrderPayload.ShippingAddress =
-    SynqOrderPayload.ShippingAddress(
-        SynqOrderPayload.ShippingAddress.Address(
-            contactPerson = name,
-            addressLine1 = address,
-            city = city,
-            postalCode = postalCode,
-            phoneNumber = phoneNumber
-        )
+        shippingAddress =
+            ShippingAddress(
+                ShippingAddress.Address(
+                    receiver.name,
+                    receiver.address
+                )
+            )
     )
 
 fun Item.toSynqPayload() =
