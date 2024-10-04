@@ -5,10 +5,13 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemId
+import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
+import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Mono
@@ -41,7 +44,7 @@ class ItemRepositoryMongoAdapter(
         return mongoRepo.save(item.toMongoItem()).map(MongoItem::toItem)
     }
 
-    override suspend fun doesAllItemsExist(ids: List<ItemId>): Boolean {
+    override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean {
         return mongoRepo.countItemsMatchingIds(ids)
             .map {
                 logger.debug { "Counted items matching ids: $ids, count: $it" }
@@ -55,6 +58,30 @@ class ItemRepositoryMongoAdapter(
             }
             .awaitSingle()
     }
+
+    override suspend fun moveItem(
+        hostId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Item {
+        mongoRepo
+            .findAndUpdateItemByHostNameAndHostId(hostId, hostName, quantity, location)
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while updating Item. Order ID: $hostId, Host: $hostName"
+                    } else {
+                        "Error while updating order"
+                    }
+                }
+            }
+            .onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
+            .awaitSingleOrNull() ?: ItemNotFoundException("Item with host ID $hostId for $hostName does not exist in WLS database")
+
+        return getItem(hostName, hostId)!!
+    }
 }
 
 @Repository
@@ -66,4 +93,13 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
 
     @Query(count = true, value = "{ '\$or': ?0 }")
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
+
+    @Query("{hostName: ?0, hostOrderId: ?1}")
+    @Update("{'\$set':{quantity: ?2,location: ?3}}")
+    fun findAndUpdateItemByHostNameAndHostId(
+        hostOrderId: String,
+        hostName: HostName,
+        quantity: Double,
+        location: String
+    ): Mono<Void>
 }

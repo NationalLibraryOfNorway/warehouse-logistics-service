@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
+import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +22,8 @@ import org.springframework.web.server.ServerWebInputException
 @Tag(name = "Product Controller", description = "API for managing products in Hermes WLS")
 class ProductController(
     private val addNewItem: AddNewItem,
-    private val getItem: GetItem
+    private val getItem: GetItem,
+    private val moveItem: MoveItem
 ) {
     @Operation(
         summary = "Register a product in the storage system",
