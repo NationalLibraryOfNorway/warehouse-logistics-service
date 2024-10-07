@@ -37,7 +37,7 @@ class SwaggerConfig {
                         """
                         Hermes is developed by the MLT (Warehouse and Logistics team) at the National Library of Norway (NLN).
                         Hermes facilitates communication between the NLN's storage systems and the cataloging systems.
-                        This submodule of Hermes is responsible for receiving product and order updates from SynQ.
+                        This submodule of Hermes is responsible for receiving product/item and order updates from SynQ.
                         Hermes will then use these to convert the updates into a format that can be used by the rest of the system.
                         And send these updates along to appropriate catalogs and update internal item and order information.
                         """.trimIndent()

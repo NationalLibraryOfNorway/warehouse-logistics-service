@@ -6,6 +6,7 @@ import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
@@ -14,14 +15,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
-class MongoOrderModelConversionTest {
+class OrderModelConversionTest {
     private val testApiOrderPayload =
         ApiOrderPayload(
-            orderId = "hostOrderId",
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
             status = Order.Status.NOT_STARTED,
-            productLine = listOf(),
+            orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
@@ -37,7 +37,7 @@ class MongoOrderModelConversionTest {
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
             status = Order.Status.NOT_STARTED,
-            productLine = listOf(Order.OrderItem("hostProductId", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
@@ -58,7 +58,7 @@ class MongoOrderModelConversionTest {
             owner = SynqOwner.NB,
             orderLine =
                 listOf(
-                    SynqOrderPayload.OrderLine(1, "hostProductId", 1.0)
+                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
                 ),
             shippingAddress =
                 ShippingAddress(
@@ -72,15 +72,28 @@ class MongoOrderModelConversionTest {
     fun `order converts to API payload`() {
         val payload = testOrder.toApiOrderPayload()
 
-        assertThat(payload.orderId).isEqualTo(testOrder.hostOrderId)
         assertThat(payload.hostName).isEqualTo(testOrder.hostName)
         assertThat(payload.hostOrderId).isEqualTo(testOrder.hostOrderId)
         assertThat(payload.status).isEqualTo(testOrder.status)
-        assertThat(payload.productLine).isEqualTo(testOrder.productLine)
+        assertThat(payload.orderLine).isEqualTo(testOrder.orderLine)
         assertThat(payload.orderType).isEqualTo(testOrder.orderType)
         assertThat(payload.owner).isEqualTo(testOrder.owner)
         assertThat(payload.receiver).isEqualTo(testOrder.receiver)
         assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
+    }
+
+    @Test
+    fun `order converts to Mongo Order payload`(){
+        val mongoOrder = testOrder.toMongoOrder()
+
+        assertThat(mongoOrder.hostName).isEqualTo(testOrder.hostName)
+        assertThat(mongoOrder.hostOrderId).isEqualTo(testOrder.hostOrderId)
+        assertThat(mongoOrder.status).isEqualTo(testOrder.status)
+        assertThat(mongoOrder.orderLine).isEqualTo(testOrder.orderLine)
+        assertThat(mongoOrder.orderType).isEqualTo(testOrder.orderType)
+        assertThat(mongoOrder.owner).isEqualTo(testOrder.owner)
+        assertThat(mongoOrder.receiver).isEqualTo(testOrder.receiver)
+        assertThat(mongoOrder.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
     @Test
@@ -102,7 +115,7 @@ class MongoOrderModelConversionTest {
         assertThat(order.hostName).isEqualTo(testApiOrderPayload.hostName)
         assertThat(order.hostOrderId).isEqualTo(testApiOrderPayload.hostOrderId)
         assertThat(order.status).isEqualTo(testApiOrderPayload.status)
-        assertThat(order.productLine).isEqualTo(testApiOrderPayload.productLine)
+        assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
         assertThat(order.owner).isEqualTo(testApiOrderPayload.owner)
         assertThat(order.receiver).isEqualTo(testApiOrderPayload.receiver)

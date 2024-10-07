@@ -63,7 +63,7 @@ fun Order.toSynqPayload() =
         priority = 5,
         owner = owner?.toSynqOwner() ?: SynqOwner.NB,
         orderLine =
-            productLine.mapIndexed { index, it ->
+            orderLine.mapIndexed { index, it ->
                 SynqOrderPayload.OrderLine(
                     orderLineNumber = index + 1,
                     productId = it.hostId,
@@ -85,7 +85,7 @@ fun Item.toSynqPayload() =
         owner = owner.toSynqOwner(),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
-        productCategory = productCategory,
+        productCategory = itemCategory,
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
         hostName = hostName.toString()

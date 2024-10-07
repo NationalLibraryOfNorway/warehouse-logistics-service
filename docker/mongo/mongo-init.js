@@ -16,7 +16,7 @@ db.createCollection('items');
 
 db.items.insertOne({
     "hostName": "AXIELL",
-    "hostId": "product-12345",
+    "hostId": "item-12345",
     "category": "BOOK",
     "description": "Tyv etter loven",
     "packaging": "NONE",

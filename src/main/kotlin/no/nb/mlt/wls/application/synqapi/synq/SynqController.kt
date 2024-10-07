@@ -65,9 +65,7 @@ class SynqController(
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
     ): ResponseEntity<Unit> {
-        orderStatusUpdate
-            .updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
-            ?: return ResponseEntity.notFound().build()
+        orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build<Unit>()
     }

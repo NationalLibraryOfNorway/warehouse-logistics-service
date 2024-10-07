@@ -33,7 +33,7 @@ class SecurityConfig {
                 authorize("/webjars/swagger-ui/**", permitAll)
                 authorize("/actuator", permitAll)
                 authorize("/actuator/**", permitAll)
-                authorize("/v1/product", hasAuthority("SCOPE_wls-product"))
+                authorize("/v1/item", hasAuthority("SCOPE_wls-item"))
                 authorize("/v1/order", hasAuthority("SCOPE_wls-order"))
                 authorize(anyExchange, authenticated)
             }

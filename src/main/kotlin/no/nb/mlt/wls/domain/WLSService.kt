@@ -80,7 +80,7 @@ class WLSService(
             return it
         }
 
-        val itemIds = orderDTO.orderItems.map { ItemId(orderDTO.hostName, it.hostId) }
+        val itemIds = orderDTO.orderLine.map { ItemId(orderDTO.hostName, it.hostId) }
         if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
@@ -125,7 +125,7 @@ class WLSService(
 
         val updatedOrder =
             order
-                .setProductLines(itemHostIds)
+                .setOrderLines(itemHostIds)
                 .setCallbackUrl(callbackUrl)
                 .setOrderType(orderType)
                 .setReceiver(receiver)
@@ -148,7 +148,7 @@ class WLSService(
         return itemRepository.getItem(hostName, hostId)
     }
 
-    override suspend fun updateOrderStatus(hostName: HostName, hostOrderId: String, status: Order.Status): Order? {
+    override suspend fun updateOrderStatus(hostName: HostName, hostOrderId: String, status: Order.Status): Order {
         val order = orderRepository.getOrder(hostName, hostOrderId)
             ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
 

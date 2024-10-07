@@ -30,7 +30,7 @@ import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping(path = [ "/v1"])
-@Tag(name = "Order Controller", description = "API for ordering products via Hermes WLS")
+@Tag(name = "Order Controller", description = "API for ordering items via Hermes WLS")
 class OrderController(
     private val createOrder: CreateOrder,
     private val getOrder: GetOrder,
@@ -38,9 +38,9 @@ class OrderController(
     private val updateOrder: UpdateOrder
 ) {
     @Operation(
-        summary = "Creates an order for products from the storage system",
-        description = """Creates an order for specified products to appropriate storage systems via Hermes WLS.
-            Orders are automatically sent to the systems that own the respective product(s)."""
+        summary = "Creates an order for items from the storage system",
+        description = """Creates an order for specified items to appropriate storage systems via Hermes WLS.
+            Orders are automatically sent to the systems that own the respective items(s)."""
     )
     @ApiResponses(
         ApiResponse(
@@ -60,7 +60,7 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "201",
-            description = "Created order for specified products to appropriate systems",
+            description = "Created order for specified items to appropriate systems",
             content = [
                 Content(
                     mediaType = "application/json",
@@ -82,7 +82,7 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to order products.",
+            description = "Client sending the request is not authorized to order items.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -111,8 +111,8 @@ class OrderController(
                 CreateOrderDTO(
                     hostName = payload.hostName,
                     hostOrderId = payload.hostOrderId,
-                    orderItems =
-                        payload.productLine.map {
+                    orderLine =
+                        payload.orderLine.map {
                             CreateOrderDTO.OrderItem(
                                 it.hostId
                             )
@@ -188,7 +188,7 @@ class OrderController(
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "The order was updated with the new products, and sent to appropriate systems",
+            description = "The order was updated with the new items, and sent to appropriate systems",
             content = [
                 Content(
                     mediaType = "application/json",
@@ -231,7 +231,7 @@ class OrderController(
             updateOrder.updateOrder(
                 hostName = payload.hostName,
                 hostOrderId = payload.hostOrderId,
-                itemHostIds = payload.productLine.map { it.hostId },
+                itemHostIds = payload.orderLine.map { it.hostId },
                 orderType = payload.orderType,
                 receiver = payload.receiver,
                 callbackUrl = payload.callbackUrl

@@ -55,10 +55,11 @@ class WLSServiceTest {
                         hostId = testItem.hostId,
                         hostName = testItem.hostName,
                         description = testItem.description,
-                        productCategory = testItem.productCategory,
+                        itemCategory = testItem.itemCategory,
                         preferredEnvironment = testItem.preferredEnvironment,
                         packaging = testItem.packaging,
-                        owner = testItem.owner
+                        owner = testItem.owner,
+                        callbackUrl = testItem.callbackUrl
                     )
                 )
 
@@ -84,10 +85,11 @@ class WLSServiceTest {
                         hostId = testItem.hostId,
                         hostName = testItem.hostName,
                         description = testItem.description,
-                        productCategory = testItem.productCategory,
+                        itemCategory = testItem.itemCategory,
                         preferredEnvironment = testItem.preferredEnvironment,
                         packaging = testItem.packaging,
-                        owner = testItem.owner
+                        owner = testItem.owner,
+                        callbackUrl = testItem.callbackUrl
                     )
                 )
 
@@ -132,7 +134,7 @@ class WLSServiceTest {
         coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, callbackHandlerMock)
         runTest {
             val movedItem = cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
             assertThat(movedItem).isEqualTo(expectedItem)
@@ -147,7 +149,7 @@ class WLSServiceTest {
     fun `moveItem should fail when item does not exist`() {
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ItemNotFoundException("Item not found")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, callbackHandlerMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
@@ -163,7 +165,7 @@ class WLSServiceTest {
     fun `moveItem throws when count is invalid`() {
         coEvery { itemRepoMock.moveItem(any(), any(), -1.0, any()) } throws ValidationException("Location cannot be blank")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, callbackHandlerMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testItem.hostId, testItem.hostName, -1.0, "Somewhere nice")
@@ -179,7 +181,7 @@ class WLSServiceTest {
     fun `moveItem throws when location is blank`() {
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ValidationException("Item not found")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, callbackHandlerMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testItem.hostId, testItem.hostName, 1.0, " ")
@@ -397,10 +399,11 @@ class WLSServiceTest {
             hostName = HostName.AXIELL,
             hostId = "12345",
             description = "Tyven, tyven skal du hete",
-            productCategory = "BOOK",
+            itemCategory = "BOOK",
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
             location = null,
             quantity = null
         )
@@ -410,7 +413,7 @@ class WLSServiceTest {
             hostName = HostName.AXIELL,
             hostOrderId = "12345",
             status = Order.Status.NOT_STARTED,
-            productLine = listOf(),
+            orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
@@ -418,12 +421,12 @@ class WLSServiceTest {
                     name = "Kåre",
                     address = "Kåresplass"
                 ),
-            callbackUrl = "http://callback.url/path"
+            callbackUrl = "https://callback.com/order"
         )
 
     private val updatedOrder =
         testOrder.copy(
-            productLine =
+            orderLine =
                 listOf(
                     Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED),
                     Order.OrderItem("mlt-421", Order.OrderItem.Status.NOT_STARTED)
@@ -434,7 +437,7 @@ class WLSServiceTest {
         CreateOrderDTO(
             hostName = testOrder.hostName,
             hostOrderId = testOrder.hostOrderId,
-            orderItems = testOrder.productLine.map { CreateOrderDTO.OrderItem(it.hostId) },
+            orderLine = testOrder.orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
             orderType = testOrder.orderType,
             owner = testOrder.owner,
             receiver = testOrder.receiver,

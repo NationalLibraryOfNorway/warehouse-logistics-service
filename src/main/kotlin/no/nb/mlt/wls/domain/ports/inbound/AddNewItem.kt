@@ -14,10 +14,11 @@ data class ItemMetadata(
     val hostId: String,
     val hostName: HostName,
     val description: String,
-    val productCategory: String,
+    val itemCategory: String,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
-    val owner: Owner
+    val owner: Owner,
+    val callbackUrl: String?
 )
 
 fun ItemMetadata.toItem(
@@ -27,10 +28,11 @@ fun ItemMetadata.toItem(
     this.hostId,
     this.hostName,
     this.description,
-    this.productCategory,
+    this.itemCategory,
     this.preferredEnvironment,
     this.packaging,
     this.owner,
+    this.callbackUrl,
     location,
     quantity
 )

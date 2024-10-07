@@ -93,12 +93,12 @@ data class OrderLine(
     )
     val orderTuType: String,
     @Schema(
-        description = "Storage ID of the product.",
+        description = "Storage ID of the product/item.",
         example = "mlt-12345"
     )
     val productId: String,
     @Schema(
-        description = "Version ID of the product.",
+        description = "Version ID of the product/item.",
         example = "Default"
     )
     val productVersionId: String,

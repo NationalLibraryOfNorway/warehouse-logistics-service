@@ -10,5 +10,5 @@ interface OrderStatusUpdate {
         hostName: HostName,
         hostOrderId: String,
         status: Order.Status
-    ): Order?
+    ): Order
 }

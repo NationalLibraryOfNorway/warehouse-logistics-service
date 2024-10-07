@@ -29,7 +29,7 @@ class ItemController(
         summary = "Register an items in the storage system",
         description = """Register data about the item in Hermes WLS and appropriate storage system,
             so that the physical item can be placed in the physical storage.
-            An item is also called product by some storage systems and users, those mean the same thing in Hermes.
+            An item is also called item by some storage systems and users, those mean the same thing in Hermes.
             NOTE: When registering new item quantity and location are set to default values (0.0 and null).
             Hence you should not provide these values in the payload, or at least know they will be overwritten."""
     )
@@ -104,7 +104,7 @@ class ItemController(
             throw ServerWebInputException("The item's description is required, and it cannot be blank")
         }
 
-        if (payload.productCategory.isBlank()) {
+        if (payload.itemCategory.isBlank()) {
             throw ServerWebInputException("The item's category is required, and it cannot be blank")
         }
     }

@@ -26,7 +26,7 @@ data class SynqOrderStatusUpdatePayload(
     )
     val status: SynqOrderStatus,
     @Schema(
-        description = "Name of the host system which placed the order/owns the order products.",
+        description = "Name of the host system which placed the order/owns the order products/items.",
         example = "Axiell"
     )
     val hostName: HostName,

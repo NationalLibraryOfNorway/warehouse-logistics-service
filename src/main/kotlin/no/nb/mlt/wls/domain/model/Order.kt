@@ -10,26 +10,26 @@ data class Order(
     val hostName: HostName,
     val hostOrderId: String,
     val status: Status,
-    val productLine: List<OrderItem>,
+    val orderLine: List<OrderItem>,
     val orderType: Type,
     val owner: Owner?,
     val receiver: Receiver,
     val callbackUrl: String
 ) {
-    fun setProductLines(listOfHostIds: List<String>): Order {
+    fun setOrderLines(listOfHostIds: List<String>): Order {
         if (isOrderProcessingStarted()) {
             throw IllegalOrderStateException("Order processing is already started")
         }
 
         return this.copy(
-            productLine =
+            orderLine =
                 listOfHostIds.map {
                     OrderItem(it, OrderItem.Status.NOT_STARTED)
                 }
         )
     }
 
-    fun setProductLineStatus(
+    fun setOrderLineStatus(
         hostId: String,
         status: OrderItem.Status
     ): Order {
@@ -37,8 +37,8 @@ data class Order(
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
 
-        val updatedProductLineList =
-            productLine.map {
+        val updatedOrderLineList =
+            orderLine.map {
                 if (it.hostId == hostId) {
                     it.copy(status = status)
                 } else {
@@ -46,13 +46,13 @@ data class Order(
                 }
             }
 
-        if (updatedProductLineList == productLine) {
-            throw IllegalOrderStateException("Product line item not found: $hostId")
+        if (updatedOrderLineList == orderLine) {
+            throw IllegalOrderStateException("Order line item not found: $hostId")
         }
 
         return this
-            .copy(productLine = updatedProductLineList)
-            .updateOrderStatusFromProductLines()
+            .copy(orderLine = updatedOrderLineList)
+            .updateOrderStatusFromOrderLines()
     }
 
     fun setReceiver(receiver: Receiver): Order {
@@ -69,13 +69,13 @@ data class Order(
         return this.copy(callbackUrl = callbackUrl)
     }
 
-    private fun updateOrderStatusFromProductLines(): Order {
+    private fun updateOrderStatusFromOrderLines(): Order {
         return when {
-            productLine.all(OrderItem::isPickedOrFailed) -> {
+            orderLine.all(OrderItem::isPickedOrFailed) -> {
                 this.copy(status = Status.COMPLETED)
             }
 
-            productLine.all { it.status == Order.OrderItem.Status.NOT_STARTED } -> {
+            orderLine.all { it.status == OrderItem.Status.NOT_STARTED } -> {
                 this.copy(status = Status.NOT_STARTED)
             }
 

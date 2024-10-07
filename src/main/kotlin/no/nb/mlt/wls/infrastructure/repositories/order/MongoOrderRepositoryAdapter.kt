@@ -66,7 +66,7 @@ class MongoOrderRepositoryAdapter(
             order.hostName,
             order.hostOrderId,
             order.status,
-            order.productLine,
+            order.orderLine,
             order.orderType,
             order.owner,
             order.receiver,
@@ -115,12 +115,12 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
     ): Mono<Void>
 
     @Query("{hostName: ?0, hostOrderId: ?1}")
-    @Update("{'\$set':{status: ?2,productLine: ?3,orderType: ?4,owner: ?5,receiver: ?6,callbackUrl: ?7}}")
+    @Update("{'\$set':{status: ?2,orderLine: ?3,orderType: ?4,owner: ?5,receiver: ?6,callbackUrl: ?7}}")
     fun findAndUpdateByHostNameAndHostOrderId(
         hostName: HostName,
         hostOrderId: String,
         status: Order.Status,
-        productLine: List<Order.OrderItem>,
+        orderLine: List<Order.OrderItem>,
         orderType: Order.Type,
         owner: Owner?,
         receiver: Order.Receiver,
