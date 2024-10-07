@@ -132,7 +132,7 @@ data class Product(
         description = "List of attribute values for the product.",
         example = "[{...}]"
     )
-    val attributeValues: List<AttributeValue>,
+    val attributeValue: List<AttributeValue>,
     @Schema(
         description = "Position of the product in the TU, not used by us so it always have default values of '1,1,1'.",
         example = "{...}"

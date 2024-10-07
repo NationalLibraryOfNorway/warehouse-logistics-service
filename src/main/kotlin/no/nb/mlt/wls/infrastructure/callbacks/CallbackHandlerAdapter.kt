@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
-
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -12,7 +11,6 @@ import org.springframework.web.reactive.function.client.WebClient
 class CallbackHandlerAdapter(
     private val webClient: WebClient
 ) : CallbackHandler {
-
     override fun handleItemCallback(item: Item) {
         TODO("Future task")
     }

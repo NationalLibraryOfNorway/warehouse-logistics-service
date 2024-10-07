@@ -53,9 +53,10 @@ enum class SynqOrderStatus {
     STAGED
 }
 
-fun SynqOrderStatusUpdatePayload.getConvertedStatus() = when(status) {
-    SynqOrderStatus.NEW -> Order.Status.NOT_STARTED
-    SynqOrderStatus.COMPLETED -> Order.Status.COMPLETED
-    SynqOrderStatus.CANCELLED -> Order.Status.DELETED
-    else -> Order.Status.IN_PROGRESS
-}
+fun SynqOrderStatusUpdatePayload.getConvertedStatus() =
+    when (status) {
+        SynqOrderStatus.NEW -> Order.Status.NOT_STARTED
+        SynqOrderStatus.COMPLETED -> Order.Status.COMPLETED
+        SynqOrderStatus.CANCELLED -> Order.Status.DELETED
+        else -> Order.Status.IN_PROGRESS
+    }

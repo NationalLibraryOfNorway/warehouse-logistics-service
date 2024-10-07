@@ -45,5 +45,4 @@ class SecurityConfig {
     @Bean("synqJwtDecoder")
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun jwtDecoder(): JwtDecoder = JwtDecoders.fromIssuerLocation(issuerUri)
-
 }

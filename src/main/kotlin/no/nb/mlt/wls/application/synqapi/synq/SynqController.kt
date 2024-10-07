@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController
 class SynqController(
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
-
     @Operation(
         summary = "Updates order status based on SynQ order status update",
         description = """Finds a specified order and updates its status given the message we receive from SynQ.
@@ -69,5 +68,4 @@ class SynqController(
 
         return ResponseEntity.ok().build<Unit>()
     }
-
 }

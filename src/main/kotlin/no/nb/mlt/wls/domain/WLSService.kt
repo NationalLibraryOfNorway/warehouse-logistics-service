@@ -148,9 +148,14 @@ class WLSService(
         return itemRepository.getItem(hostName, hostId)
     }
 
-    override suspend fun updateOrderStatus(hostName: HostName, hostOrderId: String, status: Order.Status): Order {
-        val order = orderRepository.getOrder(hostName, hostOrderId)
-            ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+    override suspend fun updateOrderStatus(
+        hostName: HostName,
+        hostOrderId: String,
+        status: Order.Status
+    ): Order {
+        val order =
+            orderRepository.getOrder(hostName, hostOrderId)
+                ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
 
         return orderRepository.updateOrder(order.copy(status = status))
     }
