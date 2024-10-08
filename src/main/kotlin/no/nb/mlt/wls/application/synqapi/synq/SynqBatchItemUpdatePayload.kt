@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 
 @Schema(
     description = "Payload for receiving Item updates in batch from SynQ storage system.",
@@ -187,3 +189,18 @@ data class Position(
     )
     val zPosition: Int
 )
+
+fun SynqBatchItemUpdatePayload.mapToItemPayloads(): List<MoveItemPayload> {
+    val list = mutableListOf<MoveItemPayload>()
+    for (product in loadUnit) {
+        list.add(
+            MoveItemPayload(
+                hostId = product.productId,
+                hostName = HostName.valueOf(product.hostName.uppercase()),
+                quantity = product.quantityOnHand,
+                location = location
+            )
+        )
+    }
+    return list
+}

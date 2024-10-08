@@ -18,4 +18,15 @@ interface MoveItem {
         quantity: Double,
         location: String
     ): Item
+
+    suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
+        return moveItem(moveItemPayload.hostId, moveItemPayload.hostName, moveItemPayload.quantity, moveItemPayload.location)
+    }
 }
+
+data class MoveItemPayload(
+    val hostId: String,
+    val hostName: HostName,
+    val quantity: Double,
+    val location: String
+)

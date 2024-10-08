@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -22,8 +23,22 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping(path = [ "/synq/v1"])
 @Tag(name = "SynQ Controller", description = "API for receiving product and order updates from SynQ in Hermes WLS")
 class SynqController(
+    private val moveItem: MoveItem,
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
+    // TODO - Swagger docs
+    @PutMapping("/item-update")
+    suspend fun updateItem(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @RequestBody synqBatchItemUpdatePayload: SynqBatchItemUpdatePayload
+    ): ResponseEntity<Void> {
+        for (payload in synqBatchItemUpdatePayload.mapToItemPayloads()) {
+            val item = moveItem.moveItem(payload)
+            println(item)
+        }
+        return ResponseEntity.ok().build()
+    }
+
     @Operation(
         summary = "Updates order status based on SynQ order status update",
         description = """Finds a specified order and updates its status given the message we receive from SynQ.
@@ -63,9 +78,9 @@ class SynqController(
         @PathVariable owner: Owner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
-    ): ResponseEntity<Unit> {
+    ): ResponseEntity<Void> {
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
-        return ResponseEntity.ok().build<Unit>()
+        return ResponseEntity.ok().build()
     }
 }
