@@ -3,8 +3,8 @@ package no.nb.mlt.wls.domain.ports.outbound
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 
-interface CallbackHandler {
-    fun handleItemCallback(item: Item)
+interface InventoryNotifier {
+    fun itemChanged(item: Item)
 
-    fun handleOrderCallback(order: Order)
+    fun orderChanged(order: Order)
 }

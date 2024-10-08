@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.infrastructure
 
 import no.nb.mlt.wls.domain.WLSService
-import no.nb.mlt.wls.infrastructure.callbacks.CallbackHandlerAdapter
+import no.nb.mlt.wls.infrastructure.callbacks.InventoryNotifierAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemRepositoryMongoAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
@@ -15,6 +15,6 @@ class BeansConfig {
         synqAdapter: SynqAdapter,
         itemMongoAdapter: ItemRepositoryMongoAdapter,
         orderMongoAdapter: MongoOrderRepositoryAdapter,
-        callbackHandler: CallbackHandlerAdapter
+        callbackHandler: InventoryNotifierAdapter
     ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler)
 }
