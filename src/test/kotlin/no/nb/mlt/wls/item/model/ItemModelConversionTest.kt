@@ -1,8 +1,8 @@
-package no.nb.mlt.wls.product.model
+package no.nb.mlt.wls.item.model
 
-import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.restapi.item.toApiPayload
-import no.nb.mlt.wls.application.restapi.item.toItem
+import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.hostapi.item.toApiPayload
+import no.nb.mlt.wls.application.hostapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -20,10 +20,11 @@ class ItemModelConversionTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            productCategory = "NONE",
+            itemCategory = "NONE",
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
             location = "",
             quantity = 1.0
         )
@@ -33,10 +34,11 @@ class ItemModelConversionTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            productCategory = "NONE",
+            itemCategory = "NONE",
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
             location = "",
             quantity = 1.0
         )
@@ -54,21 +56,22 @@ class ItemModelConversionTest {
         )
 
     @Test
-    fun `product converts to API payload`() {
+    fun `item converts to API payload`() {
         val payload = testItem.toApiPayload()
         assertThat(payload.hostId).isEqualTo(testProductPayload.hostId)
         assertThat(payload.hostName).isEqualTo(testProductPayload.hostName)
         assertThat(payload.description).isEqualTo(testProductPayload.description)
-        assertThat(payload.productCategory).isEqualTo(testProductPayload.productCategory)
+        assertThat(payload.itemCategory).isEqualTo(testProductPayload.itemCategory)
         assertThat(payload.preferredEnvironment).isEqualTo(testProductPayload.preferredEnvironment)
         assertThat(payload.packaging).isEqualTo(testProductPayload.packaging)
         assertThat(payload.owner).isEqualTo(testProductPayload.owner)
+        assertThat(payload.callbackUrl).isEqualTo(testProductPayload.callbackUrl)
         assertThat(payload.location).isEqualTo(testProductPayload.location)
         assertThat(payload.quantity).isEqualTo(testProductPayload.quantity)
     }
 
     @Test
-    fun `product converts to SynQ payload`() {
+    fun `item converts to SynQ payload`() {
         val synqPayload = testItem.toSynqPayload()
         assertThat(synqPayload.hostName).isEqualTo(testSynqPayload.hostName)
         assertThat(synqPayload.productId).isEqualTo(testSynqPayload.productId)
@@ -80,16 +83,17 @@ class ItemModelConversionTest {
     }
 
     @Test
-    fun `API payload converts to product`() {
-        val product = testProductPayload.toItem()
-        assertThat(product.hostId).isEqualTo(testItem.hostId)
-        assertThat(product.hostName).isEqualTo(testItem.hostName)
-        assertThat(product.description).isEqualTo(testItem.description)
-        assertThat(product.productCategory).isEqualTo(testItem.productCategory)
-        assertThat(product.preferredEnvironment).isEqualTo(testItem.preferredEnvironment)
-        assertThat(product.packaging).isEqualTo(testItem.packaging)
-        assertThat(product.owner).isEqualTo(testItem.owner)
-        assertThat(product.location).isEqualTo(testItem.location)
-        assertThat(product.quantity).isEqualTo(testItem.quantity)
+    fun `API payload converts to item`() {
+        val item = testProductPayload.toItem()
+        assertThat(item.hostId).isEqualTo(testItem.hostId)
+        assertThat(item.hostName).isEqualTo(testItem.hostName)
+        assertThat(item.description).isEqualTo(testItem.description)
+        assertThat(item.itemCategory).isEqualTo(testItem.itemCategory)
+        assertThat(item.preferredEnvironment).isEqualTo(testItem.preferredEnvironment)
+        assertThat(item.packaging).isEqualTo(testItem.packaging)
+        assertThat(item.owner).isEqualTo(testItem.owner)
+        assertThat(item.callbackUrl).isEqualTo(testItem.callbackUrl)
+        assertThat(item.location).isEqualTo(testItem.location)
+        assertThat(item.quantity).isEqualTo(testItem.quantity)
     }
 }

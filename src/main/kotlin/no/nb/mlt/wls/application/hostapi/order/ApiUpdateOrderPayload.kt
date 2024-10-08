@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi.order
+package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
@@ -13,7 +13,7 @@ import kotlin.jvm.Throws
     {
       "hostName": "AXIELL",
       "hostOrderId": "mlt-12345-order",
-      "productLine": [
+      "itemLine": [
         {
           "hostId": "mlt-12345",
           "status": "NOT_STARTED"
@@ -40,10 +40,10 @@ data class ApiUpdateOrderPayload(
     )
     val hostOrderId: String,
     @Schema(
-        description = "List of products in the order, also called order lines, or product lines.",
+        description = "List of items in the order, also called order lines.",
         accessMode = READ_ONLY
     )
-    val productLine: List<ProductLine>,
+    val orderLine: List<OrderLine>,
     @Schema(
         description = "Describes what type of order this is",
         examples = [ "LOAN", "DIGITIZATION" ]
@@ -61,7 +61,7 @@ data class ApiUpdateOrderPayload(
 )
 
 @Schema(
-    description = "Represents an order/product line in an order, containing information about ordered product.",
+    description = "Represents an order line in an order, containing information about ordered item.",
     example = """
     {
       "hostId": "mlt-12345",
@@ -69,9 +69,9 @@ data class ApiUpdateOrderPayload(
     }
     """
 )
-data class ProductLine(
+data class OrderLine(
     @Schema(
-        description = "Product ID from the host system.",
+        description = "Item ID from the host system.",
         example = "mlt-12345"
     )
     val hostId: String
@@ -82,7 +82,7 @@ fun ApiUpdateOrderPayload.throwIfInvalid() {
     if (this.hostOrderId.isBlank()) {
         throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
     }
-    if (this.productLine.isEmpty()) {
-        throw ServerWebInputException("The order must contain product lines")
+    if (this.orderLine.isEmpty()) {
+        throw ServerWebInputException("The order must contain order lines")
     }
 }

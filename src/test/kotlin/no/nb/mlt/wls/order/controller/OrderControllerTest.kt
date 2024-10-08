@@ -9,10 +9,10 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.restapi.ErrorMessage
-import no.nb.mlt.wls.application.restapi.order.ApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.restapi.order.toOrder
+import no.nb.mlt.wls.application.hostapi.ErrorMessage
+import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
@@ -119,7 +119,7 @@ class OrderControllerTest(
             .consumeWith { response ->
                 assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
                 assertThat(response.responseBody?.hostName).isEqualTo(duplicateOrderPayload.hostName)
-                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
+                assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
             }
     }
 
@@ -132,7 +132,7 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateOrderPayload.copy(
-                    productLine =
+                    orderLine =
                         listOf(
                             Order.OrderItem(
                                 "AAAAAAAAA",
@@ -145,7 +145,7 @@ class OrderControllerTest(
             .expectStatus().isOk
             .expectBody<ApiOrderPayload>()
             .consumeWith { response ->
-                assertThat(response.responseBody?.productLine).isEqualTo(duplicateOrderPayload.productLine)
+                assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
             }
     }
 
@@ -221,8 +221,8 @@ class OrderControllerTest(
             duplicateOrderPayload.toOrder()
                 .copy(
                     receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
-                    callbackUrl = "https://newCallbackUrl.com",
-                    productLine =
+                    callbackUrl = "https://new-callback.com/order",
+                    orderLine =
                         listOf(
                             Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
                         )
@@ -242,9 +242,9 @@ class OrderControllerTest(
             .expectStatus().isOk
             .expectBody<ApiOrderPayload>()
             .consumeWith { response ->
-                val products = response.responseBody?.productLine
-                products?.map {
-                    assertThat(testPayload.productLine.contains(it))
+                val items = response.responseBody?.orderLine
+                items?.map {
+                    assertThat(testPayload.orderLine.contains(it))
                 }
                 assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
                 assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
@@ -255,9 +255,9 @@ class OrderControllerTest(
     fun `updateOrder when order lines doesn't exists returns status 400`() {
         val testPayload =
             testOrderPayload.copy(
-                orderId = "mlt-test-order-processing",
+                hostOrderId = "mlt-test-order-processing",
                 status = Order.Status.IN_PROGRESS,
-                productLine = listOf(Order.OrderItem("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
+                orderLine = listOf(Order.OrderItem("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
             )
         val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
@@ -276,7 +276,7 @@ class OrderControllerTest(
 
     @Test
     fun `updateOrder when order is being processed errors`() {
-        val testPayload = testOrderPayload.copy(orderId = "mlt-test-order-processing", status = Order.Status.IN_PROGRESS)
+        val testPayload = testOrderPayload.copy(hostOrderId = "mlt-test-order-processing", status = Order.Status.IN_PROGRESS)
         val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
@@ -293,10 +293,10 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `updateOrder when order does not exists returns status 400 BAD REQUEST`() {
+    fun `updateOrder when order does not exists returns status 404 NOT FOUND`() {
         val testPayload =
             testOrderPayload.copy(
-                orderId = "humbug"
+                hostOrderId = "humbug"
             )
 
         runTest {
@@ -307,7 +307,7 @@ class OrderControllerTest(
                 .bodyValue(testPayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+                .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
         }
     }
 
@@ -366,11 +366,10 @@ class OrderControllerTest(
 
     private val testOrderPayload =
         ApiOrderPayload(
-            orderId = "order-360720",
             hostName = HostName.AXIELL,
             hostOrderId = "order-360720",
             status = Order.Status.NOT_STARTED,
-            productLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
@@ -387,11 +386,10 @@ class OrderControllerTest(
 
     private val duplicateOrderPayload =
         ApiOrderPayload(
-            orderId = "order-123456",
             hostName = HostName.AXIELL,
             hostOrderId = "order-123456",
             status = Order.Status.NOT_STARTED,
-            productLine = listOf(Order.OrderItem("product-123456", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(Order.OrderItem("item-123456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
@@ -399,7 +397,7 @@ class OrderControllerTest(
                     name = "name",
                     address = "address"
                 ),
-            callbackUrl = "https://callbackUrl.com"
+            callbackUrl = "https://callback.com/order"
         )
 
     fun populateDb() {
@@ -408,22 +406,23 @@ class OrderControllerTest(
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
-            val allProducts = testOrderPayload.productLine + duplicateOrderPayload.productLine
+            val allItems = testOrderPayload.orderLine + duplicateOrderPayload.orderLine
             itemMongoRepository
                 .deleteAll()
                 .thenMany(
                     Flux.fromIterable(
-                        allProducts.map {
+                        allItems.map {
                             MongoItem(
                                 hostId = it.hostId,
                                 hostName = testOrderPayload.hostName,
                                 description = "description",
-                                productCategory = "productCategory",
+                                itemCategory = "itemCategory",
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
                                 owner = Owner.NB,
                                 location = "null",
-                                quantity = 1.0
+                                quantity = 1.0,
+                                callbackUrl = "https://callback.com/item"
                             )
                         }
                     )

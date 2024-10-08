@@ -11,7 +11,7 @@ interface CreateOrder {
 data class CreateOrderDTO(
     val hostName: HostName,
     val hostOrderId: String,
-    val orderItems: List<OrderItem>,
+    val orderLine: List<OrderItem>,
     val orderType: Order.Type,
     val owner: Owner?,
     val receiver: Order.Receiver,
@@ -27,8 +27,8 @@ fun CreateOrderDTO.toOrder(): Order {
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = Order.Status.NOT_STARTED,
-        productLine =
-            orderItems.map {
+        orderLine =
+            orderLine.map {
                 Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
             },
         orderType = orderType,

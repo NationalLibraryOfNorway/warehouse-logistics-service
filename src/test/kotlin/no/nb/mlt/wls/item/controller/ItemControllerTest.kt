@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.product.controller
+package no.nb.mlt.wls.item.controller
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
@@ -7,8 +7,8 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.restapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.restapi.item.toItem
+import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.hostapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
@@ -59,7 +59,7 @@ class ItemControllerTest(
             WebTestClient
                 .bindToApplicationContext(applicationContext)
                 .configureClient()
-                .baseUrl("/v1/product")
+                .baseUrl("/v1/item")
                 .build()
 
         populateDb()
@@ -67,7 +67,7 @@ class ItemControllerTest(
 
     @Test
     @WithMockUser
-    fun `createProduct with valid payload creates product`() =
+    fun `createItem with valid payload creates item`() =
         runTest {
             coEvery {
                 synqFacade.createItem(any())
@@ -77,21 +77,21 @@ class ItemControllerTest(
                 .mutateWith(csrf())
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(testProductPayload)
+                .bodyValue(testItemPayload)
                 .exchange()
                 .expectStatus().isCreated
 
-            val product = repository.findByHostNameAndHostId(testProductPayload.hostName, testProductPayload.hostId).awaitSingle()
+            val item = repository.findByHostNameAndHostId(testItemPayload.hostName, testItemPayload.hostId).awaitSingle()
 
-            assertThat(product)
+            assertThat(item)
                 .isNotNull
                 .extracting("description", "location", "quantity")
-                .containsExactly(testProductPayload.description, null, 0.0)
+                .containsExactly(testItemPayload.description, null, 0.0)
         }
 
     @Test
     @WithMockUser
-    fun `createProduct with duplicate payload returns OK`() {
+    fun `createItem with duplicate payload returns OK`() {
         coEvery {
             synqFacade.createItem(any())
         }.answers { }
@@ -100,50 +100,50 @@ class ItemControllerTest(
             .mutateWith(csrf())
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(duplicateProductPayload)
+            .bodyValue(duplicateItemPayload)
             .exchange()
             .expectStatus().isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
-                assertThat(response.responseBody?.hostId).isEqualTo(duplicateProductPayload.hostId)
-                assertThat(response.responseBody?.hostName).isEqualTo(duplicateProductPayload.hostName)
-                assertThat(response.responseBody?.description).isEqualTo(duplicateProductPayload.description)
+                assertThat(response.responseBody?.hostId).isEqualTo(duplicateItemPayload.hostId)
+                assertThat(response.responseBody?.hostName).isEqualTo(duplicateItemPayload.hostName)
+                assertThat(response.responseBody?.description).isEqualTo(duplicateItemPayload.description)
             }
     }
 
     @Test
     @WithMockUser
-    fun `createProduct payload with different data but same ID returns DB entry`() {
+    fun `createItem payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
-                duplicateProductPayload.copy(description = "Test")
+                duplicateItemPayload.copy(description = "Test")
             )
             .exchange()
             .expectStatus().isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 // This value is different in payload, response value should be the same as in DB
-                assertThat(response.responseBody?.description).isEqualTo(duplicateProductPayload.description)
+                assertThat(response.responseBody?.description).isEqualTo(duplicateItemPayload.description)
             }
     }
 
     @Disabled("This test should be refactored.")
     @Test
     @WithMockUser
-    fun `createProduct where SynQ says it's a duplicate returns OK`() {
+    fun `createItem where SynQ says it's a duplicate returns OK`() {
         coEvery {
             synqFacade.createItem(any())
         }.answers { }
 
-        // SynqService converts an error to return OK if it finds a duplicate product
+        // SynqService converts an error to return OK if it finds a duplicate item
         webTestClient
             .mutateWith(csrf())
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testProductPayload)
+            .bodyValue(testItemPayload)
             .exchange()
             .expectStatus().isOk
             .expectBody().isEmpty
@@ -151,13 +151,13 @@ class ItemControllerTest(
 
     @Test
     @WithMockUser
-    fun `createProduct handles SynQ error`() {
+    fun `createItem handles SynQ error`() {
         coEvery {
             synqFacade.createItem(any())
         }.throws(
             ServerErrorException(
-                "Failed to create product in SynQ, the storage system responded with " +
-                    "error code: '1002' and error text: 'Unknown product category TEST.'",
+                "Failed to create item in SynQ, the storage system responded with " +
+                    "error code: '1002' and error text: 'Unknown item category TEST.'",
                 HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
             )
         )
@@ -166,7 +166,7 @@ class ItemControllerTest(
             .mutateWith(csrf())
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testProductPayload)
+            .bodyValue(testItemPayload)
             .exchange()
             .expectStatus().is5xxServerError
     }
@@ -178,15 +178,16 @@ class ItemControllerTest(
     /**
      * Payload which will be used in most tests
      */
-    private val testProductPayload =
+    private val testItemPayload =
         ApiItemPayload(
             hostId = "mlt-420",
             hostName = HostName.AXIELL,
             description = "Ringenes Herre samling",
-            productCategory = "BOOK",
+            itemCategory = "BOOK",
             preferredEnvironment = NONE,
             packaging = Packaging.BOX,
             owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1.0
         )
@@ -194,15 +195,16 @@ class ItemControllerTest(
     /**
      * Payload which will exist in the database
      */
-    private val duplicateProductPayload =
+    private val duplicateItemPayload =
         ApiItemPayload(
-            hostId = "product-12346",
+            hostId = "item-12346",
             hostName = HostName.AXIELL,
             description = "Tyv etter loven",
-            productCategory = "BOOK",
+            itemCategory = "BOOK",
             preferredEnvironment = NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1.0
         )
@@ -210,7 +212,7 @@ class ItemControllerTest(
     fun populateDb() {
         // Make sure we start with clean DB instance for each test
         runBlocking {
-            repository.deleteAll().then(repository.save(duplicateProductPayload.toItem().toMongoItem())).awaitSingle()
+            repository.deleteAll().then(repository.save(duplicateItemPayload.toItem().toMongoItem())).awaitSingle()
         }
     }
 }

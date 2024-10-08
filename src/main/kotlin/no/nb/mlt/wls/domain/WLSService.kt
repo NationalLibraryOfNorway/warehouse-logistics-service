@@ -15,12 +15,14 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
@@ -33,8 +35,9 @@ private val logger = KotlinLogging.logger {}
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val storageSystemFacade: StorageSystemFacade
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, MoveItem {
+    private val storageSystemFacade: StorageSystemFacade,
+    private val inventoryNotifier: InventoryNotifier
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
@@ -77,7 +80,7 @@ class WLSService(
             return it
         }
 
-        val itemIds = orderDTO.orderItems.map { ItemId(orderDTO.hostName, it.hostId) }
+        val itemIds = orderDTO.orderLine.map { ItemId(orderDTO.hostName, it.hostId) }
         if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
@@ -122,7 +125,7 @@ class WLSService(
 
         val updatedOrder =
             order
-                .setProductLines(itemHostIds)
+                .setOrderLines(itemHostIds)
                 .setCallbackUrl(callbackUrl)
                 .setOrderType(orderType)
                 .setReceiver(receiver)
@@ -143,5 +146,17 @@ class WLSService(
         hostId: String
     ): Item? {
         return itemRepository.getItem(hostName, hostId)
+    }
+
+    override suspend fun updateOrderStatus(
+        hostName: HostName,
+        hostOrderId: String,
+        status: Order.Status
+    ): Order {
+        val order =
+            orderRepository.getOrder(hostName, hostOrderId)
+                ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+        return orderRepository.updateOrder(order.copy(status = status))
     }
 }

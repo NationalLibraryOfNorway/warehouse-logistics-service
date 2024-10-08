@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.application.restapi
+package no.nb.mlt.wls.application.hostapi
 
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -35,7 +35,7 @@ class ExceptionHandler {
     @ExceptionHandler(OrderNotFoundException::class)
     fun handleOrderNotFoundException(e: OrderNotFoundException): ResponseEntity<ErrorMessage> {
         return ResponseEntity
-            .status(HttpStatus.BAD_REQUEST)
+            .status(HttpStatus.NOT_FOUND)
             .body(ErrorMessage(e.message))
     }
 }
