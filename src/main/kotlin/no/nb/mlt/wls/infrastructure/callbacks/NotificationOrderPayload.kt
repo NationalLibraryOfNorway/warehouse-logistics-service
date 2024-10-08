@@ -1,11 +1,9 @@
-package no.nb.mlt.wls.application.hostapi.order
+package no.nb.mlt.wls.infrastructure.callbacks
 
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
-import org.springframework.web.server.ServerWebInputException
 
 @Schema(
     description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
@@ -30,7 +28,7 @@ import org.springframework.web.server.ServerWebInputException
     }
     """
 )
-data class ApiOrderPayload(
+data class NotificationOrderPayload(
     @Schema(
         description = "Name of the host system which made the order.",
         examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
@@ -47,8 +45,7 @@ data class ApiOrderPayload(
     )
     val status: Order.Status?,
     @Schema(
-        description = "List of items in the order, also called order lines.",
-        accessMode = READ_ONLY
+        description = "List of items in the order, also called order lines."
     )
     val orderLine: List<Order.OrderItem>,
     @Schema(
@@ -58,8 +55,7 @@ data class ApiOrderPayload(
     val orderType: Order.Type,
     @Schema(
         description = "Who's the owner of the material in the order.",
-        examples = ["NB", "ARKIVVERKET"],
-        accessMode = READ_ONLY
+        examples = ["NB", "ARKIVVERKET"]
     )
     val owner: Owner?,
     @Schema(
@@ -73,8 +69,8 @@ data class ApiOrderPayload(
     val callbackUrl: String
 )
 
-fun Order.toApiOrderPayload() =
-    ApiOrderPayload(
+fun Order.toNotificationOrderPayload() =
+    NotificationOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
@@ -85,26 +81,17 @@ fun Order.toApiOrderPayload() =
         callbackUrl = callbackUrl
     )
 
-fun ApiOrderPayload.toOrder() =
+fun NotificationOrderPayload.toOrder() =
     Order(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status ?: Order.Status.NOT_STARTED,
         orderLine =
             orderLine.map {
-                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                Order.OrderItem(it.hostId, it.status)
             },
         orderType = orderType,
         owner = owner,
         receiver = receiver,
         callbackUrl = callbackUrl
     )
-
-fun throwIfInvalid(payload: ApiOrderPayload) {
-    if (payload.hostOrderId.isBlank()) {
-        throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
-    }
-    if (payload.orderLine.isEmpty()) {
-        throw ServerWebInputException("The order must contain order lines")
-    }
-}
