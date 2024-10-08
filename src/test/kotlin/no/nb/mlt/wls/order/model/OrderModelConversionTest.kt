@@ -83,7 +83,7 @@ class OrderModelConversionTest {
     }
 
     @Test
-    fun `order converts to Mongo Order payload`()  {
+    fun `order converts to Mongo Order payload`() {
         val mongoOrder = testOrder.toMongoOrder()
 
         assertThat(mongoOrder.hostName).isEqualTo(testOrder.hostName)
