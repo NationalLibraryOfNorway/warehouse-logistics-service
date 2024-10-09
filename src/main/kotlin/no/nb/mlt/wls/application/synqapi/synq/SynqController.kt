@@ -30,9 +30,9 @@ class SynqController(
     @PutMapping("/item-update")
     suspend fun updateItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody synqBatchItemUpdatePayload: SynqBatchItemUpdatePayload
+        @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Void> {
-        for (payload in synqBatchItemUpdatePayload.mapToItemPayloads()) {
+        for (payload in synqBatchMoveItemPayload.mapToItemPayloads()) {
             moveItem.moveItem(payload)
         }
         return ResponseEntity.ok().build()

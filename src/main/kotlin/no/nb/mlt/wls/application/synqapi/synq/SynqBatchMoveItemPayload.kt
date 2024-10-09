@@ -37,7 +37,7 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
       "warehouse" : "Sikringsmagasin_2"
     }"""
 )
-data class SynqBatchItemUpdatePayload(
+data class SynqBatchMoveItemPayload(
     @Schema(
         description = "ID of the transport unit in the SynQ storage system.",
         example = "6942066642"
@@ -190,7 +190,7 @@ data class Position(
     val zPosition: Int
 )
 
-fun SynqBatchItemUpdatePayload.mapToItemPayloads(): List<MoveItemPayload> {
+fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> {
     val list = mutableListOf<MoveItemPayload>()
     for (product in loadUnit) {
         list.add(
