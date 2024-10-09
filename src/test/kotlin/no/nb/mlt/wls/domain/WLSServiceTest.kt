@@ -4,6 +4,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.domain.model.Environment
@@ -133,6 +134,7 @@ class WLSServiceTest {
             )
         coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
+        every { inventoryNotifierMock.itemChanged(any()) } answers {}
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {

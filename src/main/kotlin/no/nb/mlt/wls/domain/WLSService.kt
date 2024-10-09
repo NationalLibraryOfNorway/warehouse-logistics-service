@@ -71,9 +71,9 @@ class WLSService(
             throw ValidationException("Location can not be blank")
         }
         val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
-        itemRepository.moveItem(item.hostId, item.hostName, quantity, location)
-        inventoryNotifier.itemChanged(item)
-        return item
+        val movedItem = itemRepository.moveItem(item.hostId, item.hostName, quantity, location)
+        inventoryNotifier.itemChanged(movedItem)
+        return movedItem
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
