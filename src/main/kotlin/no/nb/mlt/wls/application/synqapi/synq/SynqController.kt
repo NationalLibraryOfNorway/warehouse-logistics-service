@@ -26,7 +26,35 @@ class SynqController(
     private val moveItem: MoveItem,
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
-    // TODO - Swagger docs
+    @Operation(
+        summary = "Updates the status and location for items",
+        description = """Parses all the items from the SynQ load unit, and updates
+            both status & location for them.
+        """
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Item with given 'hostName' and 'hostId' was found and updated.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "The payload for moving items was invalid and nothing got updated.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """An item for a specific 'hostName' and 'hostId' was not found.
+                Error message contains information about the missing item.""",
+            content = [Content(schema = Schema())]
+        )
+    )
     @PutMapping("/item-update")
     suspend fun updateItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
