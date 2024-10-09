@@ -33,8 +33,7 @@ class SynqController(
         @RequestBody synqBatchItemUpdatePayload: SynqBatchItemUpdatePayload
     ): ResponseEntity<Void> {
         for (payload in synqBatchItemUpdatePayload.mapToItemPayloads()) {
-            val item = moveItem.moveItem(payload)
-            println(item)
+            moveItem.moveItem(payload)
         }
         return ResponseEntity.ok().build()
     }
