@@ -11,8 +11,6 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -55,7 +53,6 @@ class SynqController(
     )
     @PutMapping("/item-update")
     suspend fun updateItem(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Void> {
         synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
@@ -95,7 +92,6 @@ class SynqController(
     )
     @PutMapping("/order-update/{owner}/{orderId}")
     suspend fun updateOrder(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody orderUpdatePayload: SynqOrderStatusUpdatePayload,
         @Parameter(description = "Owner of the order items")
         @PathVariable owner: Owner,
