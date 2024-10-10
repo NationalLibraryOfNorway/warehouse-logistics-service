@@ -28,14 +28,12 @@ class SynqController(
 ) {
     @Operation(
         summary = "Updates the status and location for items",
-        description = """Parses all the items from the SynQ load unit, and updates
-            both status & location for them.
-        """
+        description = "Parses all the items from the SynQ load unit, and updates both status & location for them."
     )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = """Item with given 'hostName' and 'hostId' was found and updated.""",
+            description = "Item with given 'hostName' and 'hostId' was found and updated.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
