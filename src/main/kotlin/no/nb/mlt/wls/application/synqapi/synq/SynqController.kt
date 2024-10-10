@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping(path = [ "/synq/v1"])
+@RequestMapping(path = ["/synq/v1"])
 @Tag(name = "SynQ Controller", description = "API for receiving product and order updates from SynQ in Hermes WLS")
 class SynqController(
     private val moveItem: MoveItem,
@@ -58,9 +58,7 @@ class SynqController(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Void> {
-        for (payload in synqBatchMoveItemPayload.mapToItemPayloads()) {
-            moveItem.moveItem(payload)
-        }
+        synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
         return ResponseEntity.ok().build()
     }
 

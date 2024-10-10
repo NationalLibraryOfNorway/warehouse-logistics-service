@@ -190,17 +190,17 @@ data class Position(
     val zPosition: Int
 )
 
+fun Product.toPayload(location: String): MoveItemPayload {
+    return MoveItemPayload(
+        hostId = productId,
+        hostName = HostName.valueOf(hostName.uppercase()),
+        quantity = quantityOnHand,
+        location = location
+    )
+}
+
 fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> {
-    val list = mutableListOf<MoveItemPayload>()
-    for (product in loadUnit) {
-        list.add(
-            MoveItemPayload(
-                hostId = product.productId,
-                hostName = HostName.valueOf(product.hostName.uppercase()),
-                quantity = product.quantityOnHand,
-                location = location
-            )
-        )
+    return loadUnit.map {
+        it.toPayload(location)
     }
-    return list
 }
