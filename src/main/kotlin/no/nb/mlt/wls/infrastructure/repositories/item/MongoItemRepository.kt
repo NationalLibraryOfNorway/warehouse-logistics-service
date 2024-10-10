@@ -74,7 +74,7 @@ class ItemRepositoryMongoAdapter(
                         if (it is TimeoutException) {
                             "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
                         } else {
-                            "Error while updating order"
+                            "Error while updating item"
                         }
                     }
                 }
