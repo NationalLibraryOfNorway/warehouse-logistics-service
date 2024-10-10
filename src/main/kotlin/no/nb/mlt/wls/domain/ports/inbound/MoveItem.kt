@@ -12,10 +12,12 @@ import no.nb.mlt.wls.domain.model.Item
  * In both cases we want to know where the item went, and if the count changed
  */
 interface MoveItem {
-    suspend fun moveItem(
-        hostId: String,
-        hostName: HostName,
-        quantity: Double,
-        location: String
-    ): Item
+    suspend fun moveItem(moveItemPayload: MoveItemPayload): Item
 }
+
+data class MoveItemPayload(
+    val hostId: String,
+    val hostName: HostName,
+    val quantity: Double,
+    val location: String
+)

@@ -65,20 +65,25 @@ class ItemRepositoryMongoAdapter(
         quantity: Double,
         location: String
     ): Item {
-        mongoRepo
-            .findAndUpdateItemByHostNameAndHostId(hostId, hostName, quantity, location)
-            .timeout(Duration.ofSeconds(8))
-            .doOnError {
-                logger.error(it) {
-                    if (it is TimeoutException) {
-                        "Timed out while updating Item. Order ID: $hostId, Host: $hostName"
-                    } else {
-                        "Error while updating order"
+        val itemsModified =
+            mongoRepo
+                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
+                .timeout(Duration.ofSeconds(8))
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
+                        } else {
+                            "Error while updating item"
+                        }
                     }
                 }
-            }
-            .onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
-            .awaitSingleOrNull() ?: ItemNotFoundException("Item with host ID $hostId for $hostName does not exist in WLS database")
+                .onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
+                .awaitSingle()
+
+        if (itemsModified == 0L) {
+            throw ItemNotFoundException("Item was not found. Host ID: $hostId, Host: $hostName")
+        }
 
         return getItem(hostName, hostId)!!
     }
@@ -94,12 +99,12 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
     @Query(count = true, value = "{ '\$or': ?0 }")
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
 
-    @Query("{hostName: ?0, hostOrderId: ?1}")
+    @Query("{hostName: ?0,hostId: ?1}")
     @Update("{'\$set':{quantity: ?2,location: ?3}}")
     fun findAndUpdateItemByHostNameAndHostId(
-        hostOrderId: String,
         hostName: HostName,
+        hostId: String,
         quantity: Double,
         location: String
-    ): Mono<Void>
+    ): Mono<Long>
 }

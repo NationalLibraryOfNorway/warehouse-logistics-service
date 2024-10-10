@@ -11,7 +11,16 @@ class InventoryNotifierAdapter(
     private val webClient: WebClient
 ) : InventoryNotifier {
     override fun itemChanged(item: Item) {
-        TODO("Future task")
+        if (item.callbackUrl != null) {
+            webClient
+                .post()
+                .uri(item.callbackUrl)
+                .bodyValue(item)
+                .retrieve()
+                .bodyToMono(Void::class.java)
+                .retry(5)
+                .subscribe()
+        }
     }
 
     override fun orderChanged(order: Order) {

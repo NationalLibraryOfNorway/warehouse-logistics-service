@@ -4,6 +4,7 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.domain.model.Environment
@@ -15,6 +16,7 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
@@ -133,10 +135,11 @@ class WLSServiceTest {
             )
         coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
+        every { inventoryNotifierMock.itemChanged(any()) } answers {}
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
-            val movedItem = cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
+            val movedItem = cut.moveItem(testMoveItemPayload)
             assertThat(movedItem).isEqualTo(expectedItem)
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
@@ -152,7 +155,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
             assertThrows<RuntimeException> {
-                cut.moveItem(testItem.hostId, testItem.hostName, 1.0, "Somewhere nice")
+                cut.moveItem(testMoveItemPayload)
             }
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
@@ -168,7 +171,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
             assertThrows<RuntimeException> {
-                cut.moveItem(testItem.hostId, testItem.hostName, -1.0, "Somewhere nice")
+                cut.moveItem(testMoveItemPayload.copy(quantity = -1.0))
             }
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
@@ -184,7 +187,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
             assertThrows<RuntimeException> {
-                cut.moveItem(testItem.hostId, testItem.hostName, 1.0, " ")
+                cut.moveItem(testMoveItemPayload.copy(location = "  "))
             }
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
@@ -431,6 +434,14 @@ class WLSServiceTest {
                     Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED),
                     Order.OrderItem("mlt-421", Order.OrderItem.Status.NOT_STARTED)
                 )
+        )
+
+    private val testMoveItemPayload =
+        MoveItemPayload(
+            "12345",
+            HostName.AXIELL,
+            1.0,
+            "Somewhere nice"
         )
 
     private fun Order.toCreateOrderDTO() =

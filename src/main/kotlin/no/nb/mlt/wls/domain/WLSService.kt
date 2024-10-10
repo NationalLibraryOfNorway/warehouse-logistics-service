@@ -14,6 +14,7 @@ import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
+import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
@@ -58,20 +59,21 @@ class WLSService(
             .awaitSingle()
     }
 
-    override suspend fun moveItem(
-        hostId: String,
-        hostName: HostName,
-        quantity: Double,
-        location: String
-    ): Item {
-        if (quantity < 0.0) {
+    override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
+        if (moveItemPayload.quantity < 0.0) {
             throw ValidationException("Quantity can not be negative")
         }
-        if (location.isBlank()) {
+        if (moveItemPayload.location.isBlank()) {
             throw ValidationException("Location can not be blank")
         }
-        val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
-        return itemRepository.moveItem(item.hostId, item.hostName, quantity, location)
+        val item =
+            getItem(
+                moveItemPayload.hostName,
+                moveItemPayload.hostId
+            ) ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
+        val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
+        inventoryNotifier.itemChanged(movedItem)
+        return movedItem
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {

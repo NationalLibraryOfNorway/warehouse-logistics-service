@@ -8,10 +8,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -19,11 +18,47 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping(path = [ "/synq/v1"])
+@RequestMapping(path = ["/synq/v1"])
 @Tag(name = "SynQ Controller", description = "API for receiving product and order updates from SynQ in Hermes WLS")
 class SynqController(
+    private val moveItem: MoveItem,
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
+    @Operation(
+        summary = "Updates the status and location for items",
+        description = "Parses all the items from the SynQ load unit, and updates both status & location for them."
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Item with given 'hostName' and 'hostId' was found and updated.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "The payload for moving items was invalid and nothing got updated.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """An item for a specific 'hostName' and 'hostId' was not found.
+                Error message contains information about the missing item.""",
+            content = [Content(schema = Schema())]
+        )
+    )
+    @PutMapping("/item-update")
+    suspend fun updateItem(
+        @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
+    ): ResponseEntity<Void> {
+        synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
+        return ResponseEntity.ok().build()
+    }
+
     @Operation(
         summary = "Updates order status based on SynQ order status update",
         description = """Finds a specified order and updates its status given the message we receive from SynQ.
@@ -57,15 +92,14 @@ class SynqController(
     )
     @PutMapping("/order-update/{owner}/{orderId}")
     suspend fun updateOrder(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody orderUpdatePayload: SynqOrderStatusUpdatePayload,
         @Parameter(description = "Owner of the order items")
         @PathVariable owner: Owner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
-    ): ResponseEntity<Unit> {
+    ): ResponseEntity<Void> {
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
-        return ResponseEntity.ok().build<Unit>()
+        return ResponseEntity.ok().build()
     }
 }
