@@ -6,9 +6,9 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
-import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
@@ -86,6 +86,24 @@ class ItemRepositoryMongoAdapter(
         }
 
         return getItem(hostName, hostId)!!
+    }
+
+    override suspend fun pickItem(item: Item) {
+        mongoRepo
+            .findAndUpdateItemByHostNameAndHostId(item.hostName, item.hostId, 0.0, "Picked")
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while updating Item. Host ID: ${item.hostId}, Host: ${item.hostName}"
+                    } else {
+                        "Error while updating item"
+                    }
+                }
+            }
+            // TODO - Custom exception
+            .onErrorMap { RuntimeException(it.message ?: "Item could not be picked", it) }
+            .awaitSingle()
     }
 }
 

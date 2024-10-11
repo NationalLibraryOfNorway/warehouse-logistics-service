@@ -17,6 +17,8 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
+import no.nb.mlt.wls.domain.ports.inbound.PickItems
+import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -24,8 +26,8 @@ import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
-import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import java.time.Duration
@@ -38,7 +40,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
@@ -74,6 +76,58 @@ class WLSService(
         val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
         inventoryNotifier.itemChanged(movedItem)
         return movedItem
+    }
+
+    override suspend fun pickItems(
+        hostName: HostName,
+        itemsPickedMap: Map<String, Double>
+    ) {
+        val itemIds =
+            itemsPickedMap.map {
+                ItemId(hostName, it.key)
+            }
+        if (!itemRepository.doesEveryItemExist(
+                itemIds
+            )
+        ) {
+            throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
+        }
+
+        itemIds.map { itemId ->
+            val item = getItem(itemId.hostName, itemId.hostId)!!
+            if (itemsPickedMap[item.hostId] == null) {
+                TODO("Can this happen?")
+            }
+            itemRepository.moveItem(
+                item.hostId,
+                item.hostName,
+                item.quantity?.minus((itemsPickedMap[item.hostId] ?: 0.0)) ?: 0.0,
+                "Picked"
+            )
+        }
+        TODO("Send callbacks")
+    }
+
+    override suspend fun pickOrderItems(
+        hostName: HostName,
+        hostIds: List<String>,
+        orderId: String
+    ) {
+        // Make a new order line with picked items
+        val order = getOrder(hostName, orderId) ?: throw OrderNotFoundException("Order $orderId for host $hostName not found")
+
+        val orderLine =
+            order.orderLine.map { orderItem ->
+                hostIds.map { hostId ->
+                    if (orderItem.hostId == hostId) {
+                        orderItem.status = Order.OrderItem.Status.PICKED
+                    }
+                }
+
+                orderItem
+            }
+        val pickedOrder = orderRepository.updateOrder(order.copy(orderLine = orderLine))
+        inventoryNotifier.orderChanged(pickedOrder)
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {

@@ -7,9 +7,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
+import no.nb.mlt.wls.domain.ports.inbound.PickItems
+import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -22,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "SynQ Controller", description = "API for receiving product and order updates from SynQ in Hermes WLS")
 class SynqController(
     private val moveItem: MoveItem,
+    private val pickItems: PickItems,
+    private val pickOrderItems: PickOrderItems,
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
     @Operation(
@@ -52,11 +58,41 @@ class SynqController(
         )
     )
     @PutMapping("/item-update")
-    suspend fun updateItem(
+    suspend fun moveItem(
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Void> {
         synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
         return ResponseEntity.ok().build()
+    }
+
+    // TODO - more swagger docs
+    @Operation(
+        summary = "Confirms the picking of items from a specific SynQ order",
+        description = """Updates the items from a specific order when they are picked from a SynQ warehouse.
+            This does not update the order status, as SynQ sends an update to the order-update endpoint later.
+        """
+    )
+    @PutMapping("/pick-update/{owner}/{orderId}")
+    suspend fun pickOrder(
+        @Parameter(description = "Owner of the order items")
+        @PathVariable owner: Owner,
+        @Parameter(description = "Order ID in the storage system")
+        @PathVariable orderId: String,
+        payload: SynqOrderPickingConfirmationPayload
+    ) {
+        if (payload.orderLine.isEmpty()) throw ValidationException("Picking update does not contain any elements in the order line")
+
+        val hostIds: MutableMap<String, Double> = mutableMapOf()
+        val hostName = HostName.valueOf(payload.orderLine.first().hostName)
+        payload.orderLine.map { orderLine ->
+            hostIds.put(
+                orderLine.productId,
+                orderLine.quantity
+            )
+        }
+
+        pickItems.pickItems(hostName, hostIds)
+        pickOrderItems.pickOrderItems(hostName, hostIds.keys.toList(), orderId)
     }
 
     @Operation(
