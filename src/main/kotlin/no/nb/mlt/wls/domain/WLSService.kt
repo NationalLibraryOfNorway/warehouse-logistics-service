@@ -86,26 +86,27 @@ class WLSService(
             itemsPickedMap.map {
                 ItemId(hostName, it.key)
             }
-        if (!itemRepository.doesEveryItemExist(
-                itemIds
-            )
-        ) {
+
+        if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
         itemIds.map { itemId ->
             val item = getItem(itemId.hostName, itemId.hostId)!!
             if (itemsPickedMap[item.hostId] == null) {
-                TODO("Can this happen?")
+                // TODO - Review this. This state should generally not happen with the preconditions. Does it need to be handled at all?
+                throw ItemNotFoundException("Item with ID ${itemId.hostId} for host ${item.hostName} was not found, despite existing!")
             }
-            itemRepository.moveItem(
-                item.hostId,
-                item.hostName,
-                item.quantity?.minus((itemsPickedMap[item.hostId] ?: 0.0)) ?: 0.0,
-                "Picked"
-            )
+            val movedItem =
+                itemRepository.moveItem(
+                    item.hostId,
+                    item.hostName,
+                    item.quantity?.minus((itemsPickedMap[item.hostId] ?: 0.0)) ?: 0.0,
+                    "Picked"
+                )
+            inventoryNotifier.itemChanged(movedItem)
         }
-        TODO("Send callbacks")
+        // TODO - Should we log this once completed?
     }
 
     override suspend fun pickOrderItems(
