@@ -15,7 +15,7 @@ class InventoryNotifierAdapter(
             webClient
                 .post()
                 .uri(item.callbackUrl)
-                .bodyValue(item)
+                .bodyValue(item.toNotificationItemPayload())
                 .retrieve()
                 .bodyToMono(Void::class.java)
                 .retry(5)
