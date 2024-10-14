@@ -60,7 +60,7 @@ class OrderControllerTest(
     @Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
-    private lateinit var synqAdapter: SynqAdapter
+    private lateinit var synqAdapterMock: SynqAdapter
 
     private lateinit var webTestClient: WebTestClient
 
@@ -83,7 +83,7 @@ class OrderControllerTest(
     fun `createOrder with valid payload creates order`() =
         runTest {
             coEvery {
-                synqAdapter.createOrder(any())
+                synqAdapterMock.createOrder(any())
             } answers {}
 
             webTestClient
@@ -133,12 +133,12 @@ class OrderControllerTest(
             .bodyValue(
                 duplicateOrderPayload.copy(
                     orderLine =
-                        listOf(
-                            Order.OrderItem(
-                                "AAAAAAAAA",
-                                Order.OrderItem.Status.PICKED
-                            )
+                    listOf(
+                        Order.OrderItem(
+                            "AAAAAAAAA",
+                            Order.OrderItem.Status.PICKED
                         )
+                    )
                 )
             )
             .exchange()
@@ -152,7 +152,7 @@ class OrderControllerTest(
     @Test
     fun `createOrder where SynQ says it's a duplicate but we don't have it in the DB returns Server error`() {
         coEvery {
-            synqAdapter.createOrder(any())
+            synqAdapterMock.createOrder(any())
         } throws (DuplicateResourceException("Order already exists"))
 
         webTestClient
@@ -169,12 +169,12 @@ class OrderControllerTest(
     @Test
     fun `createOrder handles SynQ error`() {
         coEvery {
-            synqAdapter.createOrder(any())
+            synqAdapterMock.createOrder(any())
         } throws
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
+                StorageSystemException(
+                    "Unexpected error",
+                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+                )
 
         webTestClient
             .mutateWith(csrf())
@@ -223,13 +223,13 @@ class OrderControllerTest(
                     receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
                     callbackUrl = "https://new-callback.com/order",
                     orderLine =
-                        listOf(
-                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
-                        )
+                    listOf(
+                        Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
+                    )
                 )
 
         coEvery {
-            synqAdapter.updateOrder(any())
+            synqAdapterMock.updateOrder(any())
         } answers { testPayload }
 
         webTestClient
@@ -315,7 +315,7 @@ class OrderControllerTest(
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
-                synqAdapter.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -339,13 +339,13 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder handles synq error`() {
         coEvery {
-            synqAdapter.deleteOrder(any(), any())
+            synqAdapterMock.deleteOrder(any(), any())
         } throws (
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
-        )
+                StorageSystemException(
+                    "Unexpected error",
+                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+                )
+                )
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) })
@@ -372,12 +372,11 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
-            callbackUrl = "https://callbackUrl.com"
+            receiver = Order.Receiver(
+                name = "name",
+                address = "address"
+            ),
+            callbackUrl = "https://callback.com/order"
         )
 
     /**
@@ -392,11 +391,10 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("item-123456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
+            receiver = Order.Receiver(
+                name = "name",
+                address = "address"
+            ),
             callbackUrl = "https://callback.com/order"
         )
 

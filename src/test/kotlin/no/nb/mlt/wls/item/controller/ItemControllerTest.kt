@@ -49,7 +49,7 @@ class ItemControllerTest(
     @Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
-    private lateinit var synqFacade: SynqAdapter
+    private lateinit var synqAdapterMock: SynqAdapter
 
     private lateinit var webTestClient: WebTestClient
 
@@ -70,7 +70,7 @@ class ItemControllerTest(
     fun `createItem with valid payload creates item`() =
         runTest {
             coEvery {
-                synqFacade.createItem(any())
+                synqAdapterMock.createItem(any())
             }.answers { }
 
             webTestClient
@@ -93,7 +93,7 @@ class ItemControllerTest(
     @WithMockUser
     fun `createItem with duplicate payload returns OK`() {
         coEvery {
-            synqFacade.createItem(any())
+            synqAdapterMock.createItem(any())
         }.answers { }
 
         webTestClient
@@ -135,7 +135,7 @@ class ItemControllerTest(
     @WithMockUser
     fun `createItem where SynQ says it's a duplicate returns OK`() {
         coEvery {
-            synqFacade.createItem(any())
+            synqAdapterMock.createItem(any())
         }.answers { }
 
         // SynqService converts an error to return OK if it finds a duplicate item
@@ -153,7 +153,7 @@ class ItemControllerTest(
     @WithMockUser
     fun `createItem handles SynQ error`() {
         coEvery {
-            synqFacade.createItem(any())
+            synqAdapterMock.createItem(any())
         }.throws(
             ServerErrorException(
                 "Failed to create item in SynQ, the storage system responded with " +

@@ -157,8 +157,12 @@ class WLSService(
     ): Order {
         val order =
             orderRepository.getOrder(hostName, hostOrderId)
-                ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+                ?: throw OrderNotFoundException("No order with hostName: $hostName and hostOrderId: $hostOrderId exists")
 
-        return orderRepository.updateOrder(order.copy(status = status))
+        val updatedOrder = orderRepository.updateOrder(order.copy(status = status))
+
+        inventoryNotifier.orderChanged(updatedOrder)
+
+        return updatedOrder
     }
 }

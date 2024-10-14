@@ -11,6 +11,8 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -97,7 +99,15 @@ class SynqController(
         @PathVariable owner: Owner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<String> {
+        if (orderId.isBlank()) {
+            return ResponseEntity.badRequest().body("Order ID cannot be blank")
+        }
+
+        if (orderUpdatePayload.warehouse.isBlank()) {
+            return ResponseEntity.badRequest().body("Warehouse cannot be blank")
+        }
+
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
