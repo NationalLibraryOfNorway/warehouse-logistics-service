@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -109,23 +110,7 @@ class OrderController(
                 .body(it.toApiOrderPayload())
         }
 
-        val createdOrder =
-            createOrder.createOrder(
-                CreateOrderDTO(
-                    hostName = payload.hostName,
-                    hostOrderId = payload.hostOrderId,
-                    orderLine =
-                        payload.orderLine.map {
-                            CreateOrderDTO.OrderItem(
-                                it.hostId
-                            )
-                        },
-                    orderType = payload.orderType,
-                    owner = payload.owner,
-                    receiver = payload.receiver,
-                    callbackUrl = payload.callbackUrl
-                )
-            )
+        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
 
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -236,7 +221,7 @@ class OrderController(
                 hostOrderId = payload.hostOrderId,
                 itemHostIds = payload.orderLine.map { it.hostId },
                 orderType = payload.orderType,
-                receiver = payload.receiver,
+                receiver = Order.Receiver(payload.receiver.name, payload.receiver.address ?: ""),
                 callbackUrl = payload.callbackUrl
             )
 

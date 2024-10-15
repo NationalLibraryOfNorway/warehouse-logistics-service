@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.hibernate.validator.constraints.URL
 
@@ -52,7 +53,7 @@ data class ApiOrderPayload(
         description = "List of items in the order, also called order lines.",
         accessMode = READ_ONLY
     )
-    val orderLine: List<Order.OrderItem>,
+    val orderLine: List<OrderLine>,
     @Schema(
         description = "Describes what type of order this is",
         examples = ["LOAN", "DIGITIZATION"]
@@ -67,13 +68,57 @@ data class ApiOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: Order.Receiver,
+    val receiver: Receiver,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
     )
-    @URL
     val callbackUrl: String
+)
+
+@Schema(
+    description = "Represents an order line in an order, containing information about ordered item.",
+    example = """
+    {
+      "hostId": "mlt-12345",
+      "status": "NOT_STARTED"
+    }
+    """
+)
+data class OrderLine(
+    @Schema(
+        description = "Item ID from the host system.",
+        example = "mlt-12345"
+    )
+    val hostId: String,
+    @Schema(
+        description = "Current status of the item in the order.",
+        examples = ["NOT_STARTED", "PICKED", "FAILED"]
+    )
+    val status: Order.OrderItem.Status?
+)
+
+@Schema(
+    description = "Who's the receiver of the order.",
+    example = """
+    {
+      "name": "Doug Dimmadome",
+      "address": "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas"
+    }
+    """
+)
+data class Receiver(
+    @Schema(
+        description = "Name of the receiver.",
+        example = "Doug Dimmadome"
+    )
+    val name: String,
+    @Schema(
+        description = "Address of the receiver.",
+        example = "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas",
+        required = false
+    )
+    val address: String?
 )
 
 fun Order.toApiOrderPayload() =
@@ -81,10 +126,10 @@ fun Order.toApiOrderPayload() =
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
-        orderLine = orderLine,
+        orderLine = orderLine.map { OrderLine(it.hostId, it.status) },
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        receiver = Receiver(receiver.name, receiver.address),
         callbackUrl = callbackUrl
     )
 
@@ -93,19 +138,39 @@ fun ApiOrderPayload.toOrder() =
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status ?: Order.Status.NOT_STARTED,
-        orderLine =
-            orderLine.map {
-                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-            },
+        orderLine = orderLine.map { Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED) },
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        receiver = Order.Receiver(receiver.name, receiver.address ?: ""),
         callbackUrl = callbackUrl
     )
 
-fun Order.OrderItem.validate() {
+fun ApiOrderPayload.toCreateOrderDTO() =
+    CreateOrderDTO(
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        orderLine = orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
+        orderType = orderType,
+        owner = owner,
+        receiver =  Order.Receiver(receiver.name, receiver.address ?: ""),
+        callbackUrl = callbackUrl
+    )
+
+@Throws(ValidationException::class)
+fun OrderLine.validate() {
     if (hostId.isBlank()) {
         throw ValidationException("The order item's hostId is required, and can not be blank")
+    }
+}
+
+@Throws(ValidationException::class)
+fun Receiver.validate() {
+    if (name.isBlank()) {
+        throw ValidationException("The order's receiver name is required, and can not be blank")
+    }
+
+    if (address != null && address.isBlank()) {
+        throw ValidationException("The order's receiver address cannot be blank if provided")
     }
 }
 

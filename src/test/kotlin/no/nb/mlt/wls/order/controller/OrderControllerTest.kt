@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.OrderLine
+import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.Environment
@@ -135,7 +137,7 @@ class OrderControllerTest(
                 duplicateOrderPayload.copy(
                     orderLine =
                         listOf(
-                            Order.OrderItem(
+                            OrderLine(
                                 "AAAAAAAAA",
                                 Order.OrderItem.Status.PICKED
                             )
@@ -229,7 +231,7 @@ class OrderControllerTest(
         val testPayload =
             duplicateOrderPayload.toOrder()
                 .copy(
-                    receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
+                    receiver = Order.Receiver("newName", duplicateOrderPayload.receiver.address),
                     callbackUrl = "https://new-callback.com/order",
                     orderLine =
                         listOf(
@@ -251,9 +253,9 @@ class OrderControllerTest(
             .expectStatus().isOk
             .expectBody<ApiOrderPayload>()
             .consumeWith { response ->
-                val items = response.responseBody?.orderLine
-                items?.map {
-                    assertThat(testPayload.orderLine.contains(it))
+                val orderLines = response.responseBody?.orderLine
+                orderLines?.map { it ->
+                    assertThat(testPayload.orderLine.contains(Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
                 }
                 assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
                 assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
@@ -266,7 +268,7 @@ class OrderControllerTest(
             testOrderPayload.copy(
                 hostOrderId = "mlt-test-order-processing",
                 status = Order.Status.IN_PROGRESS,
-                orderLine = listOf(Order.OrderItem("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
+                orderLine = listOf(OrderLine("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
             )
         val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
@@ -378,14 +380,10 @@ class OrderControllerTest(
             hostName = HostName.AXIELL,
             hostOrderId = "order-360720",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(OrderLine("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
+            receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
 
@@ -398,14 +396,10 @@ class OrderControllerTest(
             hostName = HostName.AXIELL,
             hostOrderId = "order-123456",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem("item-123456", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(OrderLine("item-123456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
+            receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
 

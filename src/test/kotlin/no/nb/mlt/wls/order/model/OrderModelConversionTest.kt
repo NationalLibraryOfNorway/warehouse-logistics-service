@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.order.model
 
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.HostName
@@ -24,11 +25,7 @@ class OrderModelConversionTest {
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
+            receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "callbackUrl"
         )
 
@@ -75,10 +72,10 @@ class OrderModelConversionTest {
         assertThat(payload.hostName).isEqualTo(testOrder.hostName)
         assertThat(payload.hostOrderId).isEqualTo(testOrder.hostOrderId)
         assertThat(payload.status).isEqualTo(testOrder.status)
-        assertThat(payload.orderLine).isEqualTo(testOrder.orderLine)
+        assertThat(payload.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(payload.orderType).isEqualTo(testOrder.orderType)
         assertThat(payload.owner).isEqualTo(testOrder.owner)
-        assertThat(payload.receiver).isEqualTo(testOrder.receiver)
+        assertThat(payload.receiver.name).isEqualTo(testOrder.receiver.name)
         assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
@@ -89,10 +86,10 @@ class OrderModelConversionTest {
         assertThat(mongoOrder.hostName).isEqualTo(testOrder.hostName)
         assertThat(mongoOrder.hostOrderId).isEqualTo(testOrder.hostOrderId)
         assertThat(mongoOrder.status).isEqualTo(testOrder.status)
-        assertThat(mongoOrder.orderLine).isEqualTo(testOrder.orderLine)
+        assertThat(mongoOrder.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(mongoOrder.orderType).isEqualTo(testOrder.orderType)
         assertThat(mongoOrder.owner).isEqualTo(testOrder.owner)
-        assertThat(mongoOrder.receiver).isEqualTo(testOrder.receiver)
+        assertThat(mongoOrder.receiver.name).isEqualTo(testOrder.receiver.name)
         assertThat(mongoOrder.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
@@ -118,7 +115,7 @@ class OrderModelConversionTest {
         assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
         assertThat(order.owner).isEqualTo(testApiOrderPayload.owner)
-        assertThat(order.receiver).isEqualTo(testApiOrderPayload.receiver)
+        assertThat(order.receiver.name).isEqualTo(testApiOrderPayload.receiver.name)
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
 }

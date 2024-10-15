@@ -2,10 +2,14 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import no.nb.mlt.wls.application.hostapi.item.isValidUrl
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import org.hibernate.validator.constraints.URL
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.server.ServerWebInputException
+import java.net.MalformedURLException
 import kotlin.jvm.Throws
 
 @Schema(
@@ -53,7 +57,7 @@ data class ApiUpdateOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: Order.Receiver,
+    val receiver: Receiver,
     @Schema(
         description = "URL to send a callback to when the order is completed.",
         example = "https://example.com/send/callback/here"
@@ -61,29 +65,30 @@ data class ApiUpdateOrderPayload(
     val callbackUrl: String
 )
 
-@Schema(
-    description = "Represents an order line in an order, containing information about ordered item.",
-    example = """
-    {
-      "hostId": "mlt-12345",
-      "status": "NOT_STARTED"
-    }
-    """
-)
-data class OrderLine(
-    @Schema(
-        description = "Item ID from the host system.",
-        example = "mlt-12345"
-    )
-    val hostId: String
-)
-
-@Throws(ServerWebInputException::class)
+@Throws(ValidationException::class)
 fun ApiUpdateOrderPayload.validate() {
-    if (this.hostOrderId.isBlank()) {
-        throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
+    if (hostOrderId.isBlank()) {
+        throw ValidationException("The order's hostOrderId is required, and can not be blank")
     }
-    if (this.orderLine.isEmpty()) {
-        throw ServerWebInputException("The order must contain order lines")
+
+    if (orderLine.isEmpty()) {
+        throw ValidationException("The order cannot contain an empty list of order lines")
+    }
+
+    if (!isValidUrl(callbackUrl)) {
+        throw ValidationException("The order's callbackUrl is required, and can not be blank")
+    }
+
+    orderLine.forEach { it.validate() }
+
+    receiver.validate()
+}
+
+fun isValidUrl(url: String): Boolean {
+    return try {
+        URL(url) // Try to create a URL object
+        true
+    } catch (e: MalformedURLException) {
+        false // If exception is thrown, it's not a valid URL
     }
 }

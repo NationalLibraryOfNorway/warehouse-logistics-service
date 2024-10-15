@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.application.hostapi.item
 
+import com.sun.jndi.toolkit.url.UrlUtil
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -10,6 +10,10 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import org.hibernate.validator.constraints.URL
+import org.springframework.security.web.util.UrlUtils
+import sun.net.util.URLUtil
+import java.net.MalformedURLException
 
 @Schema(
     description = "Payload for registering an item in Hermes WLS, and appropriate storage system for the item.",
@@ -130,6 +134,7 @@ fun ApiItemPayload.toItemMetadata(): ItemMetadata =
         callbackUrl = callbackUrl
     )
 
+@Throws(ValidationException::class)
 fun ApiItemPayload.validate() {
     if (hostId.isBlank()) {
         throw ValidationException("The item's hostId is required, and it cannot be blank")
@@ -141,5 +146,26 @@ fun ApiItemPayload.validate() {
 
     if (itemCategory.isBlank()) {
         throw ValidationException("The item's category is required, and it cannot be blank")
+    }
+
+    if (location != null && location.isBlank()) {
+        throw ValidationException("The item's location cannot be blank if set")
+    }
+
+    if (quantity != null && quantity < 0.0) {
+        throw ValidationException("The item's quantity must be positive or zero if set")
+    }
+
+    if (callbackUrl != null && !isValidUrl(callbackUrl)) {
+        throw ValidationException("The item's callback must be a valid URL if set")
+    }
+}
+
+fun isValidUrl(url: String): Boolean {
+    return try {
+        URL(url) // Try to create a URL object
+        true
+    } catch (e: MalformedURLException) {
+        false // If exception is thrown, it's not a valid URL
     }
 }
