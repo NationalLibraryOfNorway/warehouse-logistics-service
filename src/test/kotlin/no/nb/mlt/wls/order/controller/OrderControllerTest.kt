@@ -134,12 +134,12 @@ class OrderControllerTest(
             .bodyValue(
                 duplicateOrderPayload.copy(
                     orderLine =
-                    listOf(
-                        Order.OrderItem(
-                            "AAAAAAAAA",
-                            Order.OrderItem.Status.PICKED
+                        listOf(
+                            Order.OrderItem(
+                                "AAAAAAAAA",
+                                Order.OrderItem.Status.PICKED
+                            )
                         )
-                    )
                 )
             )
             .exchange()
@@ -172,10 +172,10 @@ class OrderControllerTest(
         coEvery {
             synqAdapterMock.createOrder(any())
         } throws
-                StorageSystemException(
-                    "Unexpected error",
-                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-                )
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
 
         webTestClient
             .mutateWith(csrf())
@@ -224,9 +224,9 @@ class OrderControllerTest(
                     receiver = duplicateOrderPayload.receiver.copy(name = "newName"),
                     callbackUrl = "https://new-callback.com/order",
                     orderLine =
-                    listOf(
-                        Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
-                    )
+                        listOf(
+                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
+                        )
                 )
 
         coEvery {
@@ -342,11 +342,11 @@ class OrderControllerTest(
         coEvery {
             synqAdapterMock.deleteOrder(any(), any())
         } throws (
-                StorageSystemException(
-                    "Unexpected error",
-                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-                )
-                )
+            StorageSystemException(
+                "Unexpected error",
+                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+            )
+        )
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
@@ -373,10 +373,11 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver = Order.Receiver(
-                name = "name",
-                address = "address"
-            ),
+            receiver =
+                Order.Receiver(
+                    name = "name",
+                    address = "address"
+                ),
             callbackUrl = "https://callback.com/order"
         )
 
@@ -392,10 +393,11 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("item-123456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver = Order.Receiver(
-                name = "name",
-                address = "address"
-            ),
+            receiver =
+                Order.Receiver(
+                    name = "name",
+                    address = "address"
+                ),
             callbackUrl = "https://callback.com/order"
         )
 

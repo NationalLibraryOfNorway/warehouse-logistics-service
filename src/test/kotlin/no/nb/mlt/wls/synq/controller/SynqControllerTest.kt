@@ -32,8 +32,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -48,9 +46,7 @@ import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.reactive.server.WebTestClient
-import reactor.kotlin.core.publisher.toMono
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -63,7 +59,6 @@ class SynqControllerTest(
     @Autowired val orderRepository: OrderMongoRepository,
     @Autowired val applicationContext: ApplicationContext
 ) {
-
     @MockkBean
     private lateinit var inventoryNotifierAdapterMock: InventoryNotifierAdapter
 
@@ -71,12 +66,13 @@ class SynqControllerTest(
 
     @BeforeEach
     fun setUp() {
-        webTestClient = WebTestClient
-            .bindToApplicationContext(applicationContext)
-            .apply(springSecurity())
-            .configureClient()
-            .baseUrl("/synq/v1")
-            .build()
+        webTestClient =
+            WebTestClient
+                .bindToApplicationContext(applicationContext)
+                .apply(springSecurity())
+                .configureClient()
+                .baseUrl("/synq/v1")
+                .build()
 
         populateDb()
     }
@@ -122,8 +118,11 @@ class SynqControllerTest(
 
     @Test
     @WithMockUser
-    @EnabledIfSystemProperty(named =  "spring.profiles.active", matches = "local-dev",
-        disabledReason = "Only local-dev has properly configured keycloak & JWT")
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
     fun `updateOrder with unauthorized user returns 403`() =
         runTest {
             webTestClient
@@ -228,11 +227,13 @@ class SynqControllerTest(
                 .expectStatus().isUnauthorized
         }
 
-
     @Test
     @WithMockUser
-    @EnabledIfSystemProperty(named =  "spring.profiles.active", matches = "local-dev",
-        disabledReason = "Only local-dev has properly configured keycloak & JWT")
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
     fun `updateItem with unauthorized user returns 403`() =
         runTest {
             webTestClient
@@ -275,7 +276,6 @@ class SynqControllerTest(
                 .exchange()
                 .expectStatus().isBadRequest
 
-
             webTestClient
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
@@ -312,110 +312,121 @@ class SynqControllerTest(
             assertThat(item).isNotNull
             assertThat(item.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
-
         }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    private val product1 = Product(
-        confidentialProduct = false,
-        hostName = "Axiell",
-        productId = "mlt-12345",
-        productOwner = "NB",
-        productVersionId = "Default",
-        quantityOnHand = 1.0,
-        suspect = false,
-        attributeValue = listOf(
-            AttributeValue(
-                name = "materialStatus",
-                value = "Available"
-            )
-        ),
-        position = Position(
-            xPosition = 1,
-            yPosition = 1,
-            zPosition = 1
+    private val product1 =
+        Product(
+            confidentialProduct = false,
+            hostName = "Axiell",
+            productId = "mlt-12345",
+            productOwner = "NB",
+            productVersionId = "Default",
+            quantityOnHand = 1.0,
+            suspect = false,
+            attributeValue =
+                listOf(
+                    AttributeValue(
+                        name = "materialStatus",
+                        value = "Available"
+                    )
+                ),
+            position =
+                Position(
+                    xPosition = 1,
+                    yPosition = 1,
+                    zPosition = 1
+                )
         )
-    )
 
-    private val product2 = Product(
-        confidentialProduct = false,
-        hostName = "Axiell",
-        productId = "mlt-54321",
-        productOwner = "NB",
-        productVersionId = "Default",
-        quantityOnHand = 69.0,
-        suspect = false,
-        attributeValue = listOf(
-            AttributeValue(
-                name = "materialStatus",
-                value = "Available"
-            )
-        ),
-        position = Position(
-            xPosition = 1,
-            yPosition = 1,
-            zPosition = 1
+    private val product2 =
+        Product(
+            confidentialProduct = false,
+            hostName = "Axiell",
+            productId = "mlt-54321",
+            productOwner = "NB",
+            productVersionId = "Default",
+            quantityOnHand = 69.0,
+            suspect = false,
+            attributeValue =
+                listOf(
+                    AttributeValue(
+                        name = "materialStatus",
+                        value = "Available"
+                    )
+                ),
+            position =
+                Position(
+                    xPosition = 1,
+                    yPosition = 1,
+                    zPosition = 1
+                )
         )
-    )
 
-    private val item1 = Item(
-        hostId = "mlt-12345",
-        hostName = HostName.AXIELL,
-        owner = Owner.NB,
-        description = "Test item",
-        itemCategory = "Test category",
-        preferredEnvironment = Environment.FRYS,
-        packaging = Packaging.BOX,
-        callbackUrl = "https://callback.com/item",
-        location = null,
-        quantity = 0.0
-    )
+    private val item1 =
+        Item(
+            hostId = "mlt-12345",
+            hostName = HostName.AXIELL,
+            owner = Owner.NB,
+            description = "Test item",
+            itemCategory = "Test category",
+            preferredEnvironment = Environment.FRYS,
+            packaging = Packaging.BOX,
+            callbackUrl = "https://callback.com/item",
+            location = null,
+            quantity = 0.0
+        )
 
-    private val item2 = Item(
-        hostId = "mlt-54321",
-        hostName = HostName.AXIELL,
-        owner = Owner.NB,
-        description = "Item test",
-        itemCategory = "Category test",
-        preferredEnvironment = Environment.FRYS,
-        packaging = Packaging.BOX,
-        callbackUrl = "https://callback.com/item",
-        location = null,
-        quantity = 0.0
-    )
+    private val item2 =
+        Item(
+            hostId = "mlt-54321",
+            hostName = HostName.AXIELL,
+            owner = Owner.NB,
+            description = "Item test",
+            itemCategory = "Category test",
+            preferredEnvironment = Environment.FRYS,
+            packaging = Packaging.BOX,
+            callbackUrl = "https://callback.com/item",
+            location = null,
+            quantity = 0.0
+        )
 
-    private val order = Order(
-        hostName = HostName.AXIELL,
-        hostOrderId = "order-12345",
-        status = Order.Status.NOT_STARTED,
-        orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
-        orderType = Order.Type.LOAN,
-        owner = Owner.NB,
-        receiver = Order.Receiver(
-            name = "name",
-            address = "address"
-        ),
-        callbackUrl = "https://callback.com/order"
-    )
+    private val order =
+        Order(
+            hostName = HostName.AXIELL,
+            hostOrderId = "order-12345",
+            status = Order.Status.NOT_STARTED,
+            orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
+            owner = Owner.NB,
+            receiver =
+                Order.Receiver(
+                    name = "name",
+                    address = "address"
+                ),
+            callbackUrl = "https://callback.com/order"
+        )
 
-    private val orderStatusUpdatePayload = SynqOrderStatusUpdatePayload(
-        prevStatus = SynqOrderStatus.ALLOCATED,
-        status = SynqOrderStatus.RELEASED,
-        hostName = HostName.AXIELL,
-        warehouse = "Sikringmagasin_2"
-    )
+    private val orderStatusUpdatePayload =
+        SynqOrderStatusUpdatePayload(
+            prevStatus = SynqOrderStatus.ALLOCATED,
+            status = SynqOrderStatus.RELEASED,
+            hostName = HostName.AXIELL,
+            warehouse = "Sikringmagasin_2"
+        )
 
-    private val batchMoveItemPayload = SynqBatchMoveItemPayload(
-        tuId = "6942066642",
-        location = "SYNQ_WAREHOUSE",
-        prevLocation = "WS_PLUKKSENTER_1",
-        loadUnit = listOf(product1, product2),
-        user = "per.person@nb.no",
-        warehouse = "Sikringsmagasin_2"
-    )
+    private val batchMoveItemPayload =
+        SynqBatchMoveItemPayload(
+            tuId = "6942066642",
+            location = "SYNQ_WAREHOUSE",
+            prevLocation = "WS_PLUKKSENTER_1",
+            loadUnit = listOf(product1, product2),
+            user = "per.person@nb.no",
+            warehouse = "Sikringsmagasin_2"
+        )
 
     fun populateDb() {
         // Make sure we start with clean DB instance for each test

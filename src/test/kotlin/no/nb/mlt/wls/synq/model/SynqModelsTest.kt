@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.synq.model;
+package no.nb.mlt.wls.synq.model
 
 import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
 import no.nb.mlt.wls.application.synqapi.synq.Position
@@ -14,12 +14,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SynqModelsTest {
-    private val synqOrderStatusUpdatePayload = SynqOrderStatusUpdatePayload(
-        prevStatus = SynqOrderStatus.PICKED,
-        status = SynqOrderStatus.COMPLETED,
-        hostName = HostName.AXIELL,
-        warehouse = "Sikringmagasin_2"
-    )
+    private val synqOrderStatusUpdatePayload =
+        SynqOrderStatusUpdatePayload(
+            prevStatus = SynqOrderStatus.PICKED,
+            status = SynqOrderStatus.COMPLETED,
+            hostName = HostName.AXIELL,
+            warehouse = "Sikringmagasin_2"
+        )
 
     @Test
     fun `SynqOrderStatus maps correctly to an OrderStatus`() {
@@ -36,35 +37,39 @@ class SynqModelsTest {
         assertThat(released.getConvertedStatus()).isEqualTo(Order.Status.IN_PROGRESS)
     }
 
-    private val product = Product(
-        confidentialProduct = false,
-        hostName = "Axiell",
-        productId = "mlt-12345",
-        productOwner = "NB",
-        productVersionId = "Default",
-        quantityOnHand = 1.0,
-        suspect = false,
-        attributeValue = listOf(
-            AttributeValue(
-                name = "materialStatus",
-                value = "Available"
-            )
-        ),
-        position = Position(
-            xPosition = 1,
-            yPosition = 1,
-            zPosition = 1
+    private val product =
+        Product(
+            confidentialProduct = false,
+            hostName = "Axiell",
+            productId = "mlt-12345",
+            productOwner = "NB",
+            productVersionId = "Default",
+            quantityOnHand = 1.0,
+            suspect = false,
+            attributeValue =
+                listOf(
+                    AttributeValue(
+                        name = "materialStatus",
+                        value = "Available"
+                    )
+                ),
+            position =
+                Position(
+                    xPosition = 1,
+                    yPosition = 1,
+                    zPosition = 1
+                )
         )
-    )
 
-    private val synqBatchMoveItemPayload = SynqBatchMoveItemPayload(
-        tuId = "6942066642",
-        location = "SYNQ_WAREHOUSE",
-        prevLocation = "WS_PLUKKSENTER_1",
-        loadUnit = listOf(product, product, product),
-        user = "Per Person",
-        warehouse = "Sikringmagasin_2"
-    )
+    private val synqBatchMoveItemPayload =
+        SynqBatchMoveItemPayload(
+            tuId = "6942066642",
+            location = "SYNQ_WAREHOUSE",
+            prevLocation = "WS_PLUKKSENTER_1",
+            loadUnit = listOf(product, product, product),
+            user = "Per Person",
+            warehouse = "Sikringmagasin_2"
+        )
 
     @Test
     fun `SynqBatchMoveItemPayload maps correctly to a list of MoveItemPayloads`() {
