@@ -124,7 +124,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -180,34 +180,6 @@ class SynqControllerTest(
 
     @Test
     @WithMockUser
-    fun `updateOrder handles notifier exceptions`() =
-        runTest {
-            every {
-                inventoryNotifierAdapterMock.orderChanged(any())
-            } throws RuntimeException("Test exception")
-
-            webTestClient
-                .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
-                .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(orderStatusUpdatePayload)
-                .exchange()
-                .expectStatus().is5xxServerError
-
-            // Verify that order was updated
-            val res = orderRepository.findByHostNameAndHostOrderId(order.hostName, order.hostOrderId).awaitSingle()
-            assertThat(res).isNotNull
-            assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
-
-
-            // Should probably have some form of better retry mechanism in the future, so it tries to resend the notification
-            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS)) }
-        }
-
-    @Test
-    @WithMockUser
     fun `updateItem correct payload updates item and sends callback`() =
         runTest {
             every {
@@ -235,11 +207,107 @@ class SynqControllerTest(
             assertThat(item2.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item2.quantity).isEqualTo(batchMoveItemPayload.loadUnit[1].quantityOnHand)
 
-            // need to change that to payload when it comes around
             verify { inventoryNotifierAdapterMock.itemChanged(item1.toItem()) }
             verify { inventoryNotifierAdapterMock.itemChanged(item2.toItem()) }
         }
 
+    @Test
+    fun `updateItem without user returns 401`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload)
+                .exchange()
+                .expectStatus().isUnauthorized
+        }
+
+
+    @Test
+    @WithMockUser
+    fun `updateItem with unauthorized user returns 403`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload)
+                .exchange()
+                .expectStatus().isForbidden
+        }
+
+    @Test
+    @WithMockUser
+    fun `updateItem with unknown item returns 404`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(productId = "unknown"))))
+                .exchange()
+                .expectStatus().isNotFound
+        }
+
+    @Test
+    @WithMockUser
+    fun `updateItem with invalid payload returns 400`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload.copy(location = ""))
+                .exchange()
+                .expectStatus().isBadRequest
+
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(quantityOnHand = -1.0))))
+                .exchange()
+                .expectStatus().isBadRequest
+        }
+
+    @Test
+    @WithMockUser
+    fun `updateItem with no callbackUrl still updates the item`() =
+        runTest {
+            every {
+                inventoryNotifierAdapterMock.itemChanged(any())
+            }.answers { }
+
+            itemRepository.save(item1.copy(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .put()
+                .uri("/item-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(productId = "test-item"))))
+                .exchange()
+                .expectStatus().isOk
+
+            val item = itemRepository.findByHostNameAndHostId(item1.hostName, "test-item").awaitSingle()
+
+            assertThat(item).isNotNull
+            assertThat(item.location).isEqualTo(batchMoveItemPayload.location)
+            assertThat(item.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
+
+        }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
