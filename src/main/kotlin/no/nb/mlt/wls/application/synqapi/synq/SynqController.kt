@@ -13,7 +13,6 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -101,8 +100,7 @@ class SynqController(
         @PathVariable orderId: String,
         @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
-        if (payload.orderLine.isEmpty()) throw ValidationException("Picking update does not contain any elements in the order line")
-
+        payload.validate()
         val hostIds: MutableMap<String, Double> = mutableMapOf()
         val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
         payload.orderLine.map { orderLine ->
