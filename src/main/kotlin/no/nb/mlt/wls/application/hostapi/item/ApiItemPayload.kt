@@ -2,12 +2,14 @@ package no.nb.mlt.wls.application.hostapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
     description = "Payload for registering an item in Hermes WLS, and appropriate storage system for the item.",
@@ -127,3 +129,17 @@ fun ApiItemPayload.toItemMetadata(): ItemMetadata =
         owner = owner,
         callbackUrl = callbackUrl
     )
+
+fun ApiItemPayload.validate() {
+    if (hostId.isBlank()) {
+        throw ValidationException("The item's hostId is required, and it cannot be blank")
+    }
+
+    if (description.isBlank()) {
+        throw ValidationException("The item's description is required, and it cannot be blank")
+    }
+
+    if (itemCategory.isBlank()) {
+        throw ValidationException("The item's category is required, and it cannot be blank")
+    }
+}

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -65,7 +66,7 @@ class ItemControllerTest(
                 .bindToApplicationContext(applicationContext)
                 .apply(springSecurity())
                 .configureClient()
-                .baseUrl("/v1/item")
+                .baseUrl("/v1/item/")
                 .build()
 
         populateDb()
@@ -139,25 +140,97 @@ class ItemControllerTest(
             }
     }
 
-    @Disabled("This test should be refactored.")
     @Test
     @WithMockUser
-    fun `createItem where SynQ says it's a duplicate returns OK`() {
-        coEvery {
-            synqAdapterMock.createItem(any())
-        }.answers { }
-
-        // SynqService converts an error to return OK if it finds a duplicate item
+    fun `createItem with blank fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(hostId = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(description = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(itemCategory = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `createItem without user returns 401`() {
+        webTestClient
+            .mutateWith(csrf())
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isOk
-            .expectBody().isEmpty
+            .expectStatus().isUnauthorized
     }
+
+    @Test
+    @WithMockUser
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `updateOrder with unauthorized user returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject("other-client") }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload)
+            .exchange()
+            .expectStatus().isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload)
+            .exchange()
+            .expectStatus().isForbidden
+    }
+
+    @Test
+    @WithMockUser
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `updateOrder with wls user goes through`() =
+        runTest {
+            coEvery {
+                synqAdapterMock.createItem(any())
+            }.answers { }
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject("wls") }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testItemPayload)
+                .exchange()
+                .expectStatus().isCreated
+        }
 
     @Test
     @WithMockUser
@@ -167,7 +240,7 @@ class ItemControllerTest(
         }.throws(
             ServerErrorException(
                 "Failed to create item in SynQ, the storage system responded with " +
-                    "error code: '1002' and error text: 'Unknown item category TEST.'",
+                        "error code: '1002' and error text: 'Unknown item category TEST.'",
                 HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
             )
         )

@@ -6,15 +6,22 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.server.ServerWebInputException
 
 @RestController
@@ -82,9 +89,11 @@ class ItemController(
     )
     @PostMapping("/item")
     suspend fun createItem(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiItemPayload
     ): ResponseEntity<ApiItemPayload> {
-        throwIfInvalidPayload(payload)
+        jwt.checkIfAuthorized(payload.hostName)
+        payload.validate()
 
         getItem.getItem(payload.hostName, payload.hostId)?.let {
             return ResponseEntity.ok(it.toApiPayload())
@@ -93,19 +102,5 @@ class ItemController(
         val item = addNewItem.addItem(payload.toItemMetadata())
 
         return ResponseEntity(item.toApiPayload(), HttpStatus.CREATED)
-    }
-
-    private fun throwIfInvalidPayload(payload: ApiItemPayload) {
-        if (payload.hostId.isBlank()) {
-            throw ServerWebInputException("The item's hostId is required, and it cannot be blank")
-        }
-
-        if (payload.description.isBlank()) {
-            throw ServerWebInputException("The item's description is required, and it cannot be blank")
-        }
-
-        if (payload.itemCategory.isBlank()) {
-            throw ServerWebInputException("The item's category is required, and it cannot be blank")
-        }
     }
 }

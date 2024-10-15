@@ -7,7 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
+import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
@@ -17,6 +19,7 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -96,8 +99,8 @@ class OrderController(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, payload.hostName)
-        throwIfInvalid(payload)
+        jwt.checkIfAuthorized(payload.hostName)
+        payload.validate()
 
         // Return 200 OK and existing order if it exists
         getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
@@ -171,7 +174,7 @@ class OrderController(
         @PathVariable("hostName") hostName: HostName,
         @PathVariable("hostOrderId") hostOrderId: String
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, hostName)
+        jwt.checkIfAuthorized(hostName)
 
         val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
 
@@ -224,8 +227,8 @@ class OrderController(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, payload.hostName)
-        payload.throwIfInvalid()
+        jwt.checkIfAuthorized(payload.hostName)
+        payload.validate()
 
         val updatedOrder =
             updateOrder.updateOrder(
@@ -270,14 +273,15 @@ class OrderController(
     suspend fun deleteOrder(
         @PathVariable hostName: HostName,
         @PathVariable hostOrderId: String,
-        @AuthenticationPrincipal caller: JwtAuthenticationToken
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken
     ): ResponseEntity<String> {
+        jwt.checkIfAuthorized(hostName)
+
         if (hostOrderId.isBlank()) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body("The order's hostOrderId is required, and can not be blank")
         }
-        throwIfInvalidClientName(caller.name, hostName)
 
         try {
             deleteOrder.deleteOrder(hostName, hostOrderId)
@@ -286,16 +290,5 @@ class OrderController(
         }
 
         return ResponseEntity.ok().build()
-    }
-
-    fun throwIfInvalidClientName(
-        clientName: String,
-        hostName: HostName
-    ) {
-        if (clientName == "wls" || clientName.uppercase() == hostName.name) return
-        throw ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "You do not have access to view resources owned by $hostName"
-        )
     }
 }

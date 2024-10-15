@@ -198,7 +198,7 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isOk
-            .expectBody(Order::class.java)
+            .expectBody(ApiOrderPayload::class.java)
             .consumeWith { response ->
                 assertThat(response?.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
                 assertThat(response?.responseBody?.status?.equals(duplicateOrderPayload.status))
@@ -209,9 +209,17 @@ class OrderControllerTest(
     fun `getOrder for wrong client throws`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("ALMA") })
+            .mutateWith(mockJwt().jwt { it.subject("Alma") }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
             .get()
-            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", testOrderPayload.hostName, testOrderPayload.hostOrderId)
+            .exchange()
+            .expectStatus().isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .get()
+            .uri("/{hostName}/{hostOrderId}", testOrderPayload.hostName, testOrderPayload.hostOrderId)
             .exchange()
             .expectStatus().isForbidden
     }
@@ -321,7 +329,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject("axiell") })
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
                 .delete()
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)

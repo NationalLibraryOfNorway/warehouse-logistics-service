@@ -5,7 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
-import org.springframework.web.server.ServerWebInputException
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import org.hibernate.validator.constraints.URL
+
 
 @Schema(
     description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
@@ -70,6 +72,7 @@ data class ApiOrderPayload(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
     )
+    @URL
     val callbackUrl: String
 )
 
@@ -100,11 +103,20 @@ fun ApiOrderPayload.toOrder() =
         callbackUrl = callbackUrl
     )
 
-fun throwIfInvalid(payload: ApiOrderPayload) {
-    if (payload.hostOrderId.isBlank()) {
-        throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
+fun Order.OrderItem.validate() {
+    if (hostId.isBlank()) {
+        throw ValidationException("The order item's hostId is required, and can not be blank")
     }
-    if (payload.orderLine.isEmpty()) {
-        throw ServerWebInputException("The order must contain order lines")
+}
+
+fun ApiOrderPayload.validate() {
+    if (hostOrderId.isBlank()) {
+        throw ValidationException("The order's hostOrderId is required, and can not be blank")
     }
+
+    if (orderLine.isEmpty()) {
+        throw ValidationException("The order must contain order lines")
+    }
+
+    orderLine.forEach{it::validate}
 }

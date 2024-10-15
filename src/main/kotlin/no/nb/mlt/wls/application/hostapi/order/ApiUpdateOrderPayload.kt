@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.server.ServerWebInputException
 import kotlin.jvm.Throws
 
@@ -78,7 +79,7 @@ data class OrderLine(
 )
 
 @Throws(ServerWebInputException::class)
-fun ApiUpdateOrderPayload.throwIfInvalid() {
+fun ApiUpdateOrderPayload.validate() {
     if (this.hostOrderId.isBlank()) {
         throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
     }
