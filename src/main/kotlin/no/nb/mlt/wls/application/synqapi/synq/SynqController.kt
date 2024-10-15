@@ -57,7 +57,7 @@ class SynqController(
             content = [Content(schema = Schema())]
         )
     )
-    @PutMapping("/item-update")
+    @PutMapping("/move-item")
     suspend fun moveItem(
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Void> {
