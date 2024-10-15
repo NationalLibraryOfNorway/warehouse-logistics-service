@@ -31,8 +31,11 @@ import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.web.client.HttpClientErrorException
@@ -53,11 +56,14 @@ class ItemControllerTest(
 
     private lateinit var webTestClient: WebTestClient
 
+    val client: String = HostName.AXIELL.name
+
     @BeforeEach
     fun setUp() {
         webTestClient =
             WebTestClient
                 .bindToApplicationContext(applicationContext)
+                .apply(springSecurity())
                 .configureClient()
                 .baseUrl("/v1/item")
                 .build()
@@ -75,6 +81,7 @@ class ItemControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testItemPayload)
@@ -98,6 +105,7 @@ class ItemControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateItemPayload)
@@ -116,6 +124,7 @@ class ItemControllerTest(
     fun `createItem payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
@@ -141,6 +150,7 @@ class ItemControllerTest(
         // SynqService converts an error to return OK if it finds a duplicate item
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
@@ -164,6 +174,7 @@ class ItemControllerTest(
 
         webTestClient
             .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
