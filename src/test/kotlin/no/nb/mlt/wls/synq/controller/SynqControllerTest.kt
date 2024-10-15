@@ -52,7 +52,6 @@ import reactor.kotlin.core.publisher.toMono
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @AutoConfigureWebTestClient
-@ActiveProfiles("local-dev")
 @ExtendWith(MockKExtension::class)
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
