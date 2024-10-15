@@ -65,12 +65,33 @@ class SynqController(
         return ResponseEntity.ok().build()
     }
 
-    // TODO - more swagger docs
     @Operation(
         summary = "Confirms the picking of items from a specific SynQ order",
         description = """Updates the items from a specific order when they are picked from a SynQ warehouse.
             This does not update the order status, as SynQ sends an update to the order-update endpoint later.
         """
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "The items were picked successfully.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = "Order update payload was invalid and nothing got updated.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to update orders.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = "A valid 'Authorization' header is missing from the request.",
+            content = [Content(schema = Schema())]
+        )
     )
     @PutMapping("/pick-update/{owner}/{orderId}")
     suspend fun pickOrder(
@@ -112,6 +133,11 @@ class SynqController(
         ApiResponse(
             responseCode = "400",
             description = "Order update payload was invalid and nothing got updated.",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to update orders.",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
