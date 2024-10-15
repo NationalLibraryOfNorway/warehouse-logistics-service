@@ -78,12 +78,12 @@ class SynqController(
         @PathVariable owner: Owner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String,
-        payload: SynqOrderPickingConfirmationPayload
+        @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
         if (payload.orderLine.isEmpty()) throw ValidationException("Picking update does not contain any elements in the order line")
 
         val hostIds: MutableMap<String, Double> = mutableMapOf()
-        val hostName = HostName.valueOf(payload.orderLine.first().hostName)
+        val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
         payload.orderLine.map { orderLine ->
             hostIds.put(
                 orderLine.productId,
