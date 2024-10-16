@@ -133,14 +133,14 @@ class WLSService(
 
     override suspend fun pickOrderItems(
         hostName: HostName,
-        pickedItemIds: List<String>,
+        pickedHostIds: List<String>,
         orderId: String
     ) {
         // Make a new order line with picked items
         val order = getOrder(hostName, orderId) ?: throw OrderNotFoundException("Order $orderId for host $hostName not found")
         val orderLine =
             order.orderLine.map { orderItem ->
-                if (pickedItemIds.contains(orderItem.hostId)) {
+                if (pickedHostIds.contains(orderItem.hostId)) {
                     orderItem.copy(status = Order.OrderItem.Status.PICKED)
                 } else {
                     orderItem

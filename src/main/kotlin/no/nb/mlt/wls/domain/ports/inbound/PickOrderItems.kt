@@ -9,7 +9,7 @@ import no.nb.mlt.wls.domain.model.HostName
 interface PickOrderItems {
     suspend fun pickOrderItems(
         hostName: HostName,
-        pickedItemIds: List<String>,
+        pickedHostIds: List<String>,
         orderId: String
     )
 }
