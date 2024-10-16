@@ -75,7 +75,7 @@ data class ApiUpdateOrderPayload(
             throw ValidationException("The order's callbackUrl is required, and can not be blank")
         }
 
-        orderLine.forEach { it.validate() }
+        orderLine.forEach(OrderLine::validate)
 
         receiver.validate()
     }
