@@ -116,16 +116,13 @@ class WLSService(
     ) {
         // Make a new order line with picked items
         val order = getOrder(hostName, orderId) ?: throw OrderNotFoundException("Order $orderId for host $hostName not found")
-
         val orderLine =
             order.orderLine.map { orderItem ->
-                hostIds.map { hostId ->
-                    if (orderItem.hostId == hostId) {
-                        orderItem.status = Order.OrderItem.Status.PICKED
-                    }
+                if (hostIds.contains(orderItem.hostId)) {
+                    orderItem.copy(status = Order.OrderItem.Status.PICKED)
+                } else {
+                    orderItem
                 }
-
-                orderItem
             }
         val pickedOrder = orderRepository.updateOrder(order.copy(orderLine = orderLine))
         inventoryNotifier.orderChanged(pickedOrder)

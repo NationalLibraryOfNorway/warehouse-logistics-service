@@ -101,7 +101,7 @@ data class Order(
 
     data class OrderItem(
         val hostId: String,
-        var status: Status
+        val status: Status
     ) {
         enum class Status {
             NOT_STARTED,
