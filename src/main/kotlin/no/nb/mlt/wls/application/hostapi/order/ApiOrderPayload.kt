@@ -111,7 +111,7 @@ data class ApiOrderPayload(
             throw ValidationException("The order's callbackUrl is required, and must be a valid URL")
         }
 
-        orderLine.forEach(OrderLine::validate)omm
+        orderLine.forEach(OrderLine::validate)
         receiver.validate()
     }
 
