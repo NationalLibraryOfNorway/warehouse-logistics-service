@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder

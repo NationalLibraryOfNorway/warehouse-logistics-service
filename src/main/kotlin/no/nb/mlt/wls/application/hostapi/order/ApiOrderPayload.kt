@@ -10,7 +10,6 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.MalformedURLException
 import java.net.URI
 
-
 @Schema(
     description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
     example = """
@@ -95,9 +94,10 @@ data class ApiOrderPayload(
             orderLine = orderLine.map { it.toCreateOrderItem() },
             orderType = orderType,
             owner = owner,
-            receiver =  receiver.toOrderReceiver(),
+            receiver = receiver.toOrderReceiver(),
             callbackUrl = callbackUrl
         )
+
     fun validate() {
         if (hostOrderId.isBlank()) {
             throw ValidationException("The order's hostOrderId is required, and can not be blank")
@@ -140,7 +140,6 @@ fun Order.toApiOrderPayload() =
         callbackUrl = callbackUrl
     )
 
-
 @Schema(
     description = "Represents an order line in an order, containing information about ordered item.",
     example = """
@@ -175,7 +174,6 @@ data class OrderLine(
 }
 
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)
-
 
 @Schema(
     description = "Who's the receiver of the order.",

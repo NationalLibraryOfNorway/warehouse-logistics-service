@@ -265,7 +265,7 @@ class ItemControllerTest(
         }.throws(
             ServerErrorException(
                 "Failed to create item in SynQ, the storage system responded with " +
-                        "error code: '1002' and error text: 'Unknown item category TEST.'",
+                    "error code: '1002' and error text: 'Unknown item category TEST.'",
                 HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
             )
         )

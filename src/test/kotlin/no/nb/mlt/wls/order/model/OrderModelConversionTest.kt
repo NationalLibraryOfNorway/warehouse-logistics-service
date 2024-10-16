@@ -40,10 +40,10 @@ class OrderModelConversionTest {
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-            Order.Receiver(
-                name = "name",
-                address = "address"
-            ),
+                Order.Receiver(
+                    name = "name",
+                    address = "address"
+                ),
             callbackUrl = "callbackUrl"
         )
 
@@ -56,15 +56,15 @@ class OrderModelConversionTest {
             priority = 5,
             owner = SynqOwner.NB,
             orderLine =
-            listOf(
-                SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
-            ),
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
+                ),
             shippingAddress =
-            ShippingAddress(
-                ShippingAddress.Address(
-                    "contactPerson"
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
                 )
-            )
         )
 
     @Test
@@ -127,7 +127,6 @@ class OrderModelConversionTest {
             status = null
         )
 
-
     private val testOrderItem =
         Order.OrderItem(
             hostId = "hostItemId",
@@ -161,15 +160,17 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
-    private val testReceiver = Receiver(
-        name = "name",
-        address = "address"
-    )
+    private val testReceiver =
+        Receiver(
+            name = "name",
+            address = "address"
+        )
 
-    private val testOrderReceiver = Order.Receiver(
-        name = "name",
-        address = "address"
-    )
+    private val testOrderReceiver =
+        Order.Receiver(
+            name = "name",
+            address = "address"
+        )
 
     @Test
     fun `Receiver converts to OrderReceiver`() {
@@ -190,5 +191,4 @@ class OrderModelConversionTest {
         assertThat(receiver.name).isEqualTo(testOrderReceiver.name)
         assertThat(receiver.address).isEqualTo(testOrderReceiver.address)
     }
-
 }
