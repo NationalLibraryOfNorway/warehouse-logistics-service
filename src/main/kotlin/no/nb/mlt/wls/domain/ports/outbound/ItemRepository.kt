@@ -21,8 +21,6 @@ interface ItemRepository {
         location: String
     ): Item
 
-    suspend fun pickItem(item: Item)
-
     data class ItemId(val hostName: HostName, val hostId: String)
 }
 

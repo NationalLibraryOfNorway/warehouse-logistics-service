@@ -87,24 +87,6 @@ class ItemRepositoryMongoAdapter(
 
         return getItem(hostName, hostId)!!
     }
-
-    override suspend fun pickItem(item: Item) {
-        mongoRepo
-            .findAndUpdateItemByHostNameAndHostId(item.hostName, item.hostId, 0.0, "Picked")
-            .timeout(Duration.ofSeconds(8))
-            .doOnError {
-                logger.error(it) {
-                    if (it is TimeoutException) {
-                        "Timed out while updating Item. Host ID: ${item.hostId}, Host: ${item.hostName}"
-                    } else {
-                        "Error while updating item"
-                    }
-                }
-            }
-            // TODO - Custom exception
-            .onErrorMap { RuntimeException(it.message ?: "Item could not be picked", it) }
-            .awaitSingle()
-    }
 }
 
 @Repository
