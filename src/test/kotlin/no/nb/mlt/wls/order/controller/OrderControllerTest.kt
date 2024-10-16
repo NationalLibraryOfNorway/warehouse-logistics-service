@@ -14,7 +14,6 @@ import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.hostapi.order.toOrder
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
@@ -43,6 +42,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -136,12 +136,12 @@ class OrderControllerTest(
             .bodyValue(
                 duplicateOrderPayload.copy(
                     orderLine =
-                        listOf(
-                            OrderLine(
-                                "AAAAAAAAA",
-                                Order.OrderItem.Status.PICKED
-                            )
+                    listOf(
+                        OrderLine(
+                            "AAAAAAAAA",
+                            Order.OrderItem.Status.PICKED
                         )
+                    )
                 )
             )
             .exchange()
@@ -170,14 +170,76 @@ class OrderControllerTest(
     }
 
     @Test
+    @WithMockUser
+    fun `createOrder with invalid fields returns 400`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(hostOrderId = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        // Me thinks it might be a good idea to move those tests to a separate test class
+        // I.E model.OrderModelValidationTest, and here only test one simple case
+        // Same for other models, leaving as is for now to get this PR merged faster
+        // TODO: @Daniel fix this in a separate PR
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(callbackUrl = "hppt://callback.com/order"))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(orderLine = testOrderPayload.orderLine.map { it.copy(hostId = "") }))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "", address = "address")))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "Doug Dimmadome", address = "")))
+            .exchange()
+            .expectStatus().isBadRequest
+    }
+
+    @Test
     fun `createOrder handles SynQ error`() {
         coEvery {
             synqAdapterMock.createOrder(any())
         } throws
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
+                StorageSystemException(
+                    "Unexpected error",
+                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+                )
 
         webTestClient
             .mutateWith(csrf())
@@ -189,7 +251,6 @@ class OrderControllerTest(
             .expectStatus().is5xxServerError
     }
 
-    // FIXME - Endpoint now returns DTO instead of direct Orders, which breaks this test
     @Test
     fun `getOrder returns the order`() {
         webTestClient
@@ -205,6 +266,18 @@ class OrderControllerTest(
                 assertThat(response?.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
                 assertThat(response?.responseBody?.status?.equals(duplicateOrderPayload.status))
             }
+    }
+
+    @Test
+    fun `getOrder when order doesn't exist returns 404`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .get()
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "not-an-id")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isNotFound
     }
 
     @Test
@@ -234,9 +307,9 @@ class OrderControllerTest(
                     receiver = Order.Receiver("newName", duplicateOrderPayload.receiver.address),
                     callbackUrl = "https://new-callback.com/order",
                     orderLine =
-                        listOf(
-                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
-                        )
+                    listOf(
+                        Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
+                    )
                 )
 
         coEvery {
@@ -283,6 +356,54 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
         }
+    }
+
+    @Test
+    fun `updateOrder with invalid fields returns 400`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .put()
+            .bodyValue(testOrderPayload.copy(hostOrderId = ""))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .put()
+            .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .put()
+            .bodyValue(testOrderPayload.copy(callbackUrl = "hppt://callback.com/order"))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .put()
+            .bodyValue(testOrderPayload.copy(orderLine = testOrderPayload.orderLine.map { it.copy(hostId = "") }))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .put()
+            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "", address = null)))
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus().isBadRequest
     }
 
     @Test
@@ -348,15 +469,49 @@ class OrderControllerTest(
         }
 
     @Test
+    fun `deleteOrder with blank hostOrderId returns 400`() =
+        runTest {
+            coEvery {
+                synqAdapterMock.deleteOrder(any(), any())
+            } answers {}
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .delete()
+                .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, " ")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isBadRequest
+        }
+
+    @Test
+    fun `deleteOrder with order that does not exist returns 404`() =
+        runTest {
+            coEvery {
+                synqAdapterMock.deleteOrder(any(), any())
+            } answers {}
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .delete()
+                .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "does-not-exist")
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound
+        }
+
+    @Test
     fun `deleteOrder handles synq error`() {
         coEvery {
             synqAdapterMock.deleteOrder(any(), any())
         } throws (
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
-        )
+                StorageSystemException(
+                    "Unexpected error",
+                    WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
+                )
+                )
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))

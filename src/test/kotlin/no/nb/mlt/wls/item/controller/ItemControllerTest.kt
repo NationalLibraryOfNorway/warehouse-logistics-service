@@ -8,7 +8,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.hostapi.item.toItem
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
@@ -18,7 +17,6 @@ import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
@@ -142,7 +140,7 @@ class ItemControllerTest(
 
     @Test
     @WithMockUser
-    fun `createItem with blank fields returns 400`() {
+    fun `createItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
@@ -167,6 +165,33 @@ class ItemControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload.copy(itemCategory = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(location = ""))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(quantity = -1.0))
+            .exchange()
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemPayload.copy(callbackUrl = "hppt://callback.com/item"))
             .exchange()
             .expectStatus().isBadRequest
     }

@@ -10,9 +10,7 @@ import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
-import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -20,7 +18,6 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -30,7 +27,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping(path = [ "/v1"])
@@ -221,7 +217,7 @@ class OrderController(
                 hostOrderId = payload.hostOrderId,
                 itemHostIds = payload.orderLine.map { it.hostId },
                 orderType = payload.orderType,
-                receiver = Order.Receiver(payload.receiver.name, payload.receiver.address ?: ""),
+                receiver = payload.receiver.toOrderReceiver(),
                 callbackUrl = payload.callbackUrl
             )
 
@@ -270,7 +266,7 @@ class OrderController(
 
         try {
             deleteOrder.deleteOrder(hostName, hostOrderId)
-        } catch (e: OrderNotFoundException) {
+        } catch (_: OrderNotFoundException) {
             return ResponseEntity.notFound().build()
         }
 

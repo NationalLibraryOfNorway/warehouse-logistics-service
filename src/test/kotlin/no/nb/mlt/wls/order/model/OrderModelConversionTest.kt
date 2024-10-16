@@ -1,9 +1,11 @@
 package no.nb.mlt.wls.order.model
 
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.Receiver
+import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.hostapi.order.toOrder
+import no.nb.mlt.wls.application.hostapi.order.toReceiver
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
@@ -21,7 +23,7 @@ class OrderModelConversionTest {
         ApiOrderPayload(
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
-            status = Order.Status.NOT_STARTED,
+            status = null,
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
@@ -38,10 +40,10 @@ class OrderModelConversionTest {
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
-                ),
+            Order.Receiver(
+                name = "name",
+                address = "address"
+            ),
             callbackUrl = "callbackUrl"
         )
 
@@ -54,15 +56,15 @@ class OrderModelConversionTest {
             priority = 5,
             owner = SynqOwner.NB,
             orderLine =
-                listOf(
-                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
-                ),
+            listOf(
+                SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
+            ),
             shippingAddress =
-                ShippingAddress(
-                    ShippingAddress.Address(
-                        "contactPerson"
-                    )
+            ShippingAddress(
+                ShippingAddress.Address(
+                    "contactPerson"
                 )
+            )
         )
 
     @Test
@@ -111,11 +113,82 @@ class OrderModelConversionTest {
 
         assertThat(order.hostName).isEqualTo(testApiOrderPayload.hostName)
         assertThat(order.hostOrderId).isEqualTo(testApiOrderPayload.hostOrderId)
-        assertThat(order.status).isEqualTo(testApiOrderPayload.status)
+        assertThat(order.status).isEqualTo(Order.Status.NOT_STARTED)
         assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
         assertThat(order.owner).isEqualTo(testApiOrderPayload.owner)
         assertThat(order.receiver.name).isEqualTo(testApiOrderPayload.receiver.name)
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
+
+    private val testOrderLine =
+        OrderLine(
+            hostId = "hostItemId",
+            status = null
+        )
+
+
+    private val testOrderItem =
+        Order.OrderItem(
+            hostId = "hostItemId",
+            status = Order.OrderItem.Status.NOT_STARTED
+        )
+
+    @Test
+    fun `OrderLine converts to OrderItem`() {
+        val orderItem = testOrderLine.toOrderItem()
+
+        assertThat(orderItem.hostId).isEqualTo(testOrderLine.hostId)
+        assertThat(orderItem.status).isEqualTo(Order.OrderItem.Status.NOT_STARTED)
+
+        val orderItem2 = testOrderLine.copy(status = Order.OrderItem.Status.PICKED).toOrderItem()
+
+        assertThat(orderItem2.status).isEqualTo(Order.OrderItem.Status.PICKED)
+    }
+
+    @Test
+    fun `OrderLine converts to CreateOrderItem`() {
+        val createOrderItem = testOrderLine.toCreateOrderItem()
+
+        assertThat(createOrderItem.hostId).isEqualTo(testOrderLine.hostId)
+    }
+
+    @Test
+    fun `OrderItem converts to OrderLine`() {
+        val orderLine = testOrderItem.toApiOrderLine()
+
+        assertThat(orderLine.hostId).isEqualTo(testOrderItem.hostId)
+        assertThat(orderLine.status).isEqualTo(testOrderItem.status)
+    }
+
+    private val testReceiver = Receiver(
+        name = "name",
+        address = "address"
+    )
+
+    private val testOrderReceiver = Order.Receiver(
+        name = "name",
+        address = "address"
+    )
+
+    @Test
+    fun `Receiver converts to OrderReceiver`() {
+        val orderReceiver = testReceiver.toOrderReceiver()
+
+        assertThat(orderReceiver.name).isEqualTo(testReceiver.name)
+        assertThat(orderReceiver.address).isEqualTo(testReceiver.address)
+
+        val orderReceiver2 = testReceiver.copy(address = null).toOrderReceiver()
+
+        assertThat(orderReceiver2.address).isEqualTo("")
+    }
+
+    @Test
+    fun `OrderReceiver converts to Receiver`() {
+        val receiver = testOrderReceiver.toReceiver()
+
+        assertThat(receiver.name).isEqualTo(testOrderReceiver.name)
+        assertThat(receiver.address).isEqualTo(testOrderReceiver.address)
+    }
+
 }

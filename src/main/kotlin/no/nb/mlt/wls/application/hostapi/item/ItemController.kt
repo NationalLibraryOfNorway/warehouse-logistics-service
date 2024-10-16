@@ -7,12 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
-import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.throwIfInvalidClientName
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -21,8 +18,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
-import org.springframework.web.server.ServerWebInputException
 
 @RestController
 @RequestMapping(path = [ "/v1"])

@@ -2,14 +2,11 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import no.nb.mlt.wls.application.hostapi.item.isValidUrl
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import org.hibernate.validator.constraints.URL
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
-import org.springframework.web.server.ServerWebInputException
 import java.net.MalformedURLException
+import java.net.URI
 import kotlin.jvm.Throws
 
 @Schema(
@@ -63,32 +60,35 @@ data class ApiUpdateOrderPayload(
         example = "https://example.com/send/callback/here"
     )
     val callbackUrl: String
-)
+) {
+    @Throws(ValidationException::class)
+    fun validate() {
+        if (hostOrderId.isBlank()) {
+            throw ValidationException("The order's hostOrderId is required, and can not be blank")
+        }
 
-@Throws(ValidationException::class)
-fun ApiUpdateOrderPayload.validate() {
-    if (hostOrderId.isBlank()) {
-        throw ValidationException("The order's hostOrderId is required, and can not be blank")
+        if (orderLine.isEmpty()) {
+            throw ValidationException("The order cannot contain an empty list of order lines")
+        }
+
+        if (!isValidUrl(callbackUrl)) {
+            throw ValidationException("The order's callbackUrl is required, and can not be blank")
+        }
+
+        orderLine.forEach { it.validate() }
+
+        receiver.validate()
     }
 
-    if (orderLine.isEmpty()) {
-        throw ValidationException("The order cannot contain an empty list of order lines")
-    }
+    private fun isValidUrl(url: String): Boolean {
+        // Yes I am aware that this function is duplicated in three places
+        // But I prefer readability over DRY in cases like this
 
-    if (!isValidUrl(callbackUrl)) {
-        throw ValidationException("The order's callbackUrl is required, and can not be blank")
-    }
-
-    orderLine.forEach { it.validate() }
-
-    receiver.validate()
-}
-
-fun isValidUrl(url: String): Boolean {
-    return try {
-        URL(url) // Try to create a URL object
-        true
-    } catch (e: MalformedURLException) {
-        false // If exception is thrown, it's not a valid URL
+        return try {
+            URI(url).toURL() // Try to create a URL object
+            true
+        } catch (_: MalformedURLException) {
+            false // If exception is thrown, it's not a valid URL
+        }
     }
 }
