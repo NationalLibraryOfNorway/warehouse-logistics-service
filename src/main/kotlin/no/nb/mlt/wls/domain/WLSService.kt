@@ -93,27 +93,38 @@ class WLSService(
 
         itemIds.map { itemId ->
             val item = getItem(itemId.hostName, itemId.hostId)!!
-            if (itemsPickedMap[item.hostId] == null) {
-                // TODO - Review this. This state should generally not happen with the preconditions. Does it need to be handled at all?
-                throw ItemNotFoundException("Item with ID ${itemId.hostId} for host ${item.hostName} was not found, despite existing!")
-            }
 
-            val itemsStocked = item.quantity ?: 0.0
-            val itemsPicked = itemsPickedMap[item.hostId] ?: 0.0
+            val itemsInStockQuantity = item.quantity ?: 0.0
+            val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0.0
 
             // In the case of over-picking, set quantity to zero
             // so that on return the database hopefully recovers
-            if (itemsPicked > itemsStocked) {
+            if (pickedItemsQuantity > itemsInStockQuantity) {
                 logger.error {
-                    "Tried to pick too many items for ${item.hostId}. WLS DB has $itemsStocked stocked, and storage system tried to pick $itemsPicked"
+                    "Tried to pick too many items for ${item.hostId}. " +
+                        "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity"
                 }
             }
+            val quantity = Math.clamp(itemsInStockQuantity.minus(pickedItemsQuantity), 0.0, Double.MAX_VALUE)
+            val location: String =
+                if (quantity == 0.0) {
+                    "WITH_LENDER"
+                } else if (item.location != null) {
+                    item.location
+                } else {
+                    // Rare edge case. Log it until we can determine if this actually happens in production
+                    logger.error {
+                        "Item with ID ${item.hostId} for host $hostName without a location was picked. Location was set to empty string."
+                    }
+                    ""
+                }
+
             val movedItem =
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    Math.clamp(itemsPicked.minus(itemsStocked), 0.0, Double.MAX_VALUE),
-                    "WITH_LENDER"
+                    quantity,
+                    location
                 )
             inventoryNotifier.itemChanged(movedItem)
         }
