@@ -97,12 +97,23 @@ class WLSService(
                 // TODO - Review this. This state should generally not happen with the preconditions. Does it need to be handled at all?
                 throw ItemNotFoundException("Item with ID ${itemId.hostId} for host ${item.hostName} was not found, despite existing!")
             }
+
+            val itemsStocked = item.quantity ?: 0.0
+            val itemsPicked = itemsPickedMap[item.hostId] ?: 0.0
+
+            // In the case of over-picking, set quantity to zero
+            // so that on return the database hopefully recovers
+            if (itemsPicked > itemsStocked) {
+                logger.error {
+                    "Tried to pick too many items for ${item.hostId}. WLS DB has $itemsStocked stocked, and storage system tried to pick $itemsPicked"
+                }
+            }
             val movedItem =
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    item.quantity?.minus((itemsPickedMap[item.hostId] ?: 0.0)) ?: 0.0,
-                    "Picked"
+                    Math.clamp(itemsPicked.minus(itemsStocked), 0.0, Double.MAX_VALUE),
+                    "WITH_LENDER"
                 )
             inventoryNotifier.itemChanged(movedItem)
         }
