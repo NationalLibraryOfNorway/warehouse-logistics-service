@@ -47,10 +47,10 @@ data class SynqOrderPickingConfirmationPayload(
     val warehouse: String
 ) {
     fun validate() {
-        if (operator.trim().isBlank()) {
+        if (operator.isBlank()) {
             throw ValidationException("Operator name can not be blank")
         }
-        if (warehouse.trim().isBlank()) {
+        if (warehouse.isBlank()) {
             throw ValidationException("Warehouse location can not be blank")
         }
 
@@ -129,10 +129,10 @@ data class OrderLine(
     val attributeValue: List<AttributeValue>
 ) {
     fun validate() {
-        if (productId.trim().isBlank()) {
+        if (productId.isBlank()) {
             throw ValidationException("Product ID can not be blank")
         }
-        if (hostName.trim().isBlank()) {
+        if (hostName.isBlank()) {
             throw ValidationException("Hostname can not be blank")
         }
         if (quantity < 0) {
