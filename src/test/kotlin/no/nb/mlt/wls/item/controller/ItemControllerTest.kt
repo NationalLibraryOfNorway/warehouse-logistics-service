@@ -31,7 +31,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -71,7 +70,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createItem with valid payload creates item`() =
         runTest {
             coEvery {
@@ -96,7 +94,6 @@ class ItemControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `createItem with duplicate payload returns OK`() {
         coEvery {
             synqAdapterMock.createItem(any())
@@ -119,7 +116,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createItem payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
@@ -139,7 +135,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
@@ -208,7 +203,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @WithMockUser
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -235,7 +229,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @WithMockUser
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -258,7 +251,6 @@ class ItemControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `createItem handles SynQ error`() {
         coEvery {
             synqAdapterMock.createItem(any())

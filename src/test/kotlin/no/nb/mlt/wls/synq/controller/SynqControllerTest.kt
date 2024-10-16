@@ -42,7 +42,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -78,7 +77,6 @@ class SynqControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `updateOrder correct payload updates order and sends callback`() =
         runTest {
             every {
@@ -117,7 +115,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -137,7 +134,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateOrder with empty hostOrderId returns 400`() =
         runTest {
             webTestClient
@@ -152,7 +148,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateOrder with invalid payload returns 400`() =
         runTest {
             webTestClient
@@ -167,7 +162,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateOrder with unknown order returns 404`() =
         runTest {
             webTestClient
@@ -182,7 +176,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateItem correct payload updates item and sends callback`() =
         runTest {
             every {
@@ -228,7 +221,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -248,7 +240,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateItem with unknown item returns 404`() =
         runTest {
             webTestClient
@@ -263,7 +254,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateItem with invalid payload returns 400`() =
         runTest {
             webTestClient
@@ -288,7 +278,6 @@ class SynqControllerTest(
         }
 
     @Test
-    @WithMockUser
     fun `updateItem with no callbackUrl still updates the item`() =
         runTest {
             every {

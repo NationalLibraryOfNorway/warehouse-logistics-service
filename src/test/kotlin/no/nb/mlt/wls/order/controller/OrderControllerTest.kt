@@ -31,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -42,7 +43,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -170,7 +170,6 @@ class OrderControllerTest(
     }
 
     @Test
-    @WithMockUser
     fun `createOrder with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
@@ -281,12 +280,17 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `getOrder for wrong client throws`() {
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getOrder for wrong client returns 403`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject("Alma") }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
             .get()
-            .uri("/{hostName}/{hostOrderId}", testOrderPayload.hostName, testOrderPayload.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .exchange()
             .expectStatus().isForbidden
 
@@ -294,7 +298,7 @@ class OrderControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
             .get()
-            .uri("/{hostName}/{hostOrderId}", testOrderPayload.hostName, testOrderPayload.hostOrderId)
+            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .exchange()
             .expectStatus().isForbidden
     }
