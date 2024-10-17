@@ -65,16 +65,19 @@ class WLSService(
         if (moveItemPayload.quantity < 0.0) {
             throw ValidationException("Quantity can not be negative")
         }
+
         if (moveItemPayload.location.isBlank()) {
             throw ValidationException("Location can not be blank")
         }
+
         val item =
-            getItem(
-                moveItemPayload.hostName,
-                moveItemPayload.hostId
-            ) ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
+            getItem(moveItemPayload.hostName, moveItemPayload.hostId)
+                ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
+
         val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
+
         inventoryNotifier.itemChanged(movedItem)
+
         return movedItem
     }
 
@@ -231,8 +234,12 @@ class WLSService(
     ): Order {
         val order =
             orderRepository.getOrder(hostName, hostOrderId)
-                ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+                ?: throw OrderNotFoundException("No order with hostName: $hostName and hostOrderId: $hostOrderId exists")
 
-        return orderRepository.updateOrder(order.copy(status = status))
+        val updatedOrder = orderRepository.updateOrder(order.copy(status = status))
+
+        inventoryNotifier.orderChanged(updatedOrder)
+
+        return updatedOrder
     }
 }

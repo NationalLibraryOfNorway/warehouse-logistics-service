@@ -5,7 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
-import org.springframework.web.server.ServerWebInputException
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import java.net.MalformedURLException
+import java.net.URI
 
 @Schema(
     description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
@@ -50,7 +53,7 @@ data class ApiOrderPayload(
         description = "List of items in the order, also called order lines.",
         accessMode = READ_ONLY
     )
-    val orderLine: List<Order.OrderItem>,
+    val orderLine: List<OrderLine>,
     @Schema(
         description = "Describes what type of order this is",
         examples = ["LOAN", "DIGITIZATION"]
@@ -65,46 +68,147 @@ data class ApiOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: Order.Receiver,
+    val receiver: Receiver,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
     )
     val callbackUrl: String
-)
+) {
+    fun toOrder() =
+        Order(
+            hostName = hostName,
+            hostOrderId = hostOrderId,
+            status = status ?: Order.Status.NOT_STARTED,
+            orderLine = orderLine.map { it.toOrderItem() },
+            orderType = orderType,
+            owner = owner,
+            receiver = receiver.toOrderReceiver(),
+            callbackUrl = callbackUrl
+        )
+
+    fun toCreateOrderDTO() =
+        CreateOrderDTO(
+            hostName = hostName,
+            hostOrderId = hostOrderId,
+            orderLine = orderLine.map { it.toCreateOrderItem() },
+            orderType = orderType,
+            owner = owner,
+            receiver = receiver.toOrderReceiver(),
+            callbackUrl = callbackUrl
+        )
+
+    fun validate() {
+        if (hostOrderId.isBlank()) {
+            throw ValidationException("The order's hostOrderId is required, and can not be blank")
+        }
+
+        if (orderLine.isEmpty()) {
+            throw ValidationException("The order must contain order lines")
+        }
+
+        if (!isValidUrl(callbackUrl)) {
+            throw ValidationException("The order's callbackUrl is required, and must be a valid URL")
+        }
+
+        orderLine.forEach(OrderLine::validate)
+        receiver.validate()
+    }
+
+    private fun isValidUrl(url: String): Boolean {
+        // Yes I am aware that this function is duplicated in three places
+        // But I prefer readability over DRY in cases like this
+
+        return try {
+            URI(url).toURL() // Try to create a URL object
+            true
+        } catch (_: MalformedURLException) {
+            false // If exception is thrown, it's not a valid URL
+        }
+    }
+}
 
 fun Order.toApiOrderPayload() =
     ApiOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
-        orderLine = orderLine,
+        orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        receiver = Receiver(receiver.name, receiver.address),
         callbackUrl = callbackUrl
     )
 
-fun ApiOrderPayload.toOrder() =
-    Order(
-        hostName = hostName,
-        hostOrderId = hostOrderId,
-        status = status ?: Order.Status.NOT_STARTED,
-        orderLine =
-            orderLine.map {
-                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-            },
-        orderType = orderType,
-        owner = owner,
-        receiver = receiver,
-        callbackUrl = callbackUrl
-    )
-
-fun throwIfInvalid(payload: ApiOrderPayload) {
-    if (payload.hostOrderId.isBlank()) {
-        throw ServerWebInputException("The order's hostOrderId is required, and can not be blank")
+@Schema(
+    description = "Represents an order line in an order, containing information about ordered item.",
+    example = """
+    {
+      "hostId": "mlt-12345",
+      "status": "NOT_STARTED"
     }
-    if (payload.orderLine.isEmpty()) {
-        throw ServerWebInputException("The order must contain order lines")
+    """
+)
+data class OrderLine(
+    @Schema(
+        description = "Item ID from the host system.",
+        example = "mlt-12345"
+    )
+    val hostId: String,
+    @Schema(
+        description = "Current status of the item in the order.",
+        examples = ["NOT_STARTED", "PICKED", "FAILED"]
+    )
+    val status: Order.OrderItem.Status?
+) {
+    fun toOrderItem() = Order.OrderItem(hostId, status ?: Order.OrderItem.Status.NOT_STARTED)
+
+    fun toCreateOrderItem() = CreateOrderDTO.OrderItem(hostId)
+
+    @Throws(ValidationException::class)
+    fun validate() {
+        if (hostId.isBlank()) {
+            throw ValidationException("The order item's hostId is required, and can not be blank")
+        }
     }
 }
+
+fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)
+
+@Schema(
+    description = "Who's the receiver of the order.",
+    example = """
+    {
+      "name": "Doug Dimmadome",
+      "address": "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas"
+    }
+    """
+)
+data class Receiver(
+    @Schema(
+        description = "Name of the receiver.",
+        example = "Doug Dimmadome"
+    )
+    val name: String,
+    @Schema(
+        description = "Address of the receiver.",
+        example = "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas",
+        required = false
+    )
+    val address: String?
+) {
+    fun toOrderReceiver() = Order.Receiver(name, address ?: "")
+
+    @Throws(ValidationException::class)
+    fun validate() {
+        if (name.isBlank()) {
+            throw ValidationException("The order's receiver name is required, and can not be blank")
+        }
+
+        if (address != null && address.isBlank()) {
+            throw ValidationException("The order's receiver address cannot be blank if provided")
+        }
+    }
+}
+
+fun Order.Receiver.toReceiver() = Receiver(name, address)

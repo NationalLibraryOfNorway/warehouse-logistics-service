@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 
@@ -104,16 +106,19 @@ data class Product(
         description = "Name of the host system where the product is registered.",
         example = "Axiell"
     )
+    @NotBlank
     val hostName: String,
     @Schema(
         description = "Product ID from the host system, usually a barcode or an equivalent ID.",
         example = "mlt-12345"
     )
+    @NotBlank
     val productId: String,
     @Schema(
         description = "Owner of the product, usually the National Library of Norway (NB) or the National Archives of Norway (AV).",
         example = "NB"
     )
+    @NotBlank
     val productOwner: String,
     @Schema(
         description = "Product version ID in the storage system, seems to always have value 'Default'.",
@@ -124,6 +129,7 @@ data class Product(
         description = "Quantity of the product in the transport unit, uses float, however in our case we operate only in whole numbers.",
         example = "1.0"
     )
+    @PositiveOrZero
     val quantityOnHand: Double,
     @Schema(
         description = "Signifies the product is marked as suspect in the storage system and needs to be manually verified.",

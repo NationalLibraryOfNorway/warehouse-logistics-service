@@ -15,15 +15,17 @@ class InventoryNotifierAdapter(
             webClient
                 .post()
                 .uri(item.callbackUrl)
-                .bodyValue(item)
+                .bodyValue(item.toNotificationItemPayload())
                 .retrieve()
                 .bodyToMono(Void::class.java)
                 .retry(5)
+                .onErrorComplete()
                 .subscribe()
         }
     }
 
     override fun orderChanged(order: Order) {
+        // TODO: Should probably have a more robust retry mechanism, what if receiver is down for a while?
         webClient
             .post()
             .uri(order.callbackUrl)
@@ -31,6 +33,7 @@ class InventoryNotifierAdapter(
             .retrieve()
             .bodyToMono(Void::class.java)
             .retry(5)
+            .onErrorComplete()
             .subscribe()
     }
 }
