@@ -20,8 +20,8 @@ interface ItemRepository {
         quantity: Double,
         location: String
     ): Item
-}
 
-data class ItemId(val hostName: HostName, val hostId: String)
+    data class ItemId(val hostName: HostName, val hostId: String)
+}
 
 class ItemMovingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

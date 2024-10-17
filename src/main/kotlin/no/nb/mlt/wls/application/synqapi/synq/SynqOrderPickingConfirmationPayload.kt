@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
     description = "Payload for confirming picking of the order products/items in SynQ.",
@@ -44,7 +45,21 @@ data class SynqOrderPickingConfirmationPayload(
         example = "Sikringsmagasin_2"
     )
     val warehouse: String
-)
+) {
+    fun validate() {
+        if (operator.isBlank()) {
+            throw ValidationException("Operator name can not be blank")
+        }
+        if (warehouse.isBlank()) {
+            throw ValidationException("Warehouse location can not be blank")
+        }
+
+        if (orderLine.isEmpty()) {
+            throw ValidationException("Picking update does not contain any elements in the order line")
+        }
+        orderLine.forEach(OrderLine::validate)
+    }
+}
 
 @Schema(
     description = "Order line representing a picked product/item in an order.",
@@ -112,4 +127,16 @@ data class OrderLine(
         example = "[{...}]"
     )
     val attributeValue: List<AttributeValue>
-)
+) {
+    fun validate() {
+        if (productId.isBlank()) {
+            throw ValidationException("Product ID can not be blank")
+        }
+        if (hostName.isBlank()) {
+            throw ValidationException("Hostname can not be blank")
+        }
+        if (quantity < 0) {
+            throw ValidationException("Quantity for the product $productId must be positive")
+        }
+    }
+}

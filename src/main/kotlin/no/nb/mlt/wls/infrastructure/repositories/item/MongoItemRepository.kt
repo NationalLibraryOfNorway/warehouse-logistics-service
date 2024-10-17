@@ -6,9 +6,9 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
-import no.nb.mlt.wls.domain.ports.outbound.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
