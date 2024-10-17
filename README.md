@@ -147,6 +147,15 @@ It can be accessed by clicking on the `Details` link in the `Checks` section for
 In an IDE like IntelliJ IDEA, the tests can be run by right-clicking on the `src/test/kotlin` directory in the project and selecting `Run tests in 'kotlin'`.
 Further configuration can be done in the `Run/Debug Configurations` menu.
 
+In order to run tests with authentication, you will need to set the `spring.profiles.active` system property to `local-dev` in the run configuration.
+This can be easily done by adding the following to the `VM options` field in the run configuration:
+
+```shell
+-ea  -Dspring.profiles.active=local-dev
+```
+
+Of course this requires you to have the dependent services running locally, see the [Local Dependencies](#local-dependencies) section for more information.
+In short you will need to start the services using the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 
 # Usage
 

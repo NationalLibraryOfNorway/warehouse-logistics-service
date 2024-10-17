@@ -7,9 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
+import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
-import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping(path = [ "/v1"])
@@ -96,8 +95,8 @@ class OrderController(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, payload.hostName)
-        throwIfInvalid(payload)
+        jwt.checkIfAuthorized(payload.hostName)
+        payload.validate()
 
         // Return 200 OK and existing order if it exists
         getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
@@ -106,23 +105,7 @@ class OrderController(
                 .body(it.toApiOrderPayload())
         }
 
-        val createdOrder =
-            createOrder.createOrder(
-                CreateOrderDTO(
-                    hostName = payload.hostName,
-                    hostOrderId = payload.hostOrderId,
-                    orderLine =
-                        payload.orderLine.map {
-                            CreateOrderDTO.OrderItem(
-                                it.hostId
-                            )
-                        },
-                    orderType = payload.orderType,
-                    owner = payload.owner,
-                    receiver = payload.receiver,
-                    callbackUrl = payload.callbackUrl
-                )
-            )
+        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
 
         return ResponseEntity
             .status(HttpStatus.CREATED)
@@ -171,7 +154,7 @@ class OrderController(
         @PathVariable("hostName") hostName: HostName,
         @PathVariable("hostOrderId") hostOrderId: String
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, hostName)
+        jwt.checkIfAuthorized(hostName)
 
         val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
 
@@ -224,8 +207,8 @@ class OrderController(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @RequestBody payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
-        throwIfInvalidClientName(jwt.name, payload.hostName)
-        payload.throwIfInvalid()
+        jwt.checkIfAuthorized(payload.hostName)
+        payload.validate()
 
         val updatedOrder =
             updateOrder.updateOrder(
@@ -233,7 +216,7 @@ class OrderController(
                 hostOrderId = payload.hostOrderId,
                 itemHostIds = payload.orderLine.map { it.hostId },
                 orderType = payload.orderType,
-                receiver = payload.receiver,
+                receiver = payload.receiver.toOrderReceiver(),
                 callbackUrl = payload.callbackUrl
             )
 
@@ -270,32 +253,22 @@ class OrderController(
     suspend fun deleteOrder(
         @PathVariable hostName: HostName,
         @PathVariable hostOrderId: String,
-        @AuthenticationPrincipal caller: JwtAuthenticationToken
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken
     ): ResponseEntity<String> {
+        jwt.checkIfAuthorized(hostName)
+
         if (hostOrderId.isBlank()) {
             return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body("The order's hostOrderId is required, and can not be blank")
         }
-        throwIfInvalidClientName(caller.name, hostName)
 
         try {
             deleteOrder.deleteOrder(hostName, hostOrderId)
-        } catch (e: OrderNotFoundException) {
+        } catch (_: OrderNotFoundException) {
             return ResponseEntity.notFound().build()
         }
 
         return ResponseEntity.ok().build()
-    }
-
-    fun throwIfInvalidClientName(
-        clientName: String,
-        hostName: HostName
-    ) {
-        if (clientName == "wls" || clientName.uppercase() == hostName.name) return
-        throw ResponseStatusException(
-            HttpStatus.FORBIDDEN,
-            "You do not have access to view resources owned by $hostName"
-        )
     }
 }

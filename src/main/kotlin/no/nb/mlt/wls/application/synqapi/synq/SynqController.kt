@@ -97,7 +97,15 @@ class SynqController(
         @PathVariable owner: Owner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<String> {
+        if (orderId.isBlank()) {
+            return ResponseEntity.badRequest().body("Order ID cannot be blank")
+        }
+
+        if (orderUpdatePayload.warehouse.isBlank()) {
+            return ResponseEntity.badRequest().body("Warehouse cannot be blank")
+        }
+
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()

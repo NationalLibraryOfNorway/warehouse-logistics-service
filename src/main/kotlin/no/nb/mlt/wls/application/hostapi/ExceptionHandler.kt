@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.application.hostapi
 
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -34,6 +35,13 @@ class ExceptionHandler {
 
     @ExceptionHandler(OrderNotFoundException::class)
     fun handleOrderNotFoundException(e: OrderNotFoundException): ResponseEntity<ErrorMessage> {
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorMessage(e.message))
+    }
+
+    @ExceptionHandler(ItemNotFoundException::class)
+    fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorMessage> {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(ErrorMessage(e.message))
