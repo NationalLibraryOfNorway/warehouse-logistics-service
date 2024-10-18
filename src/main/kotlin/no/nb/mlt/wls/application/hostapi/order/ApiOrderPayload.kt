@@ -7,7 +7,6 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.MalformedURLException
 import java.net.URI
 
 @Schema(
@@ -104,11 +103,11 @@ data class ApiOrderPayload(
         }
 
         if (orderLine.isEmpty()) {
-            throw ValidationException("The order must contain order lines")
+            throw ValidationException("The order must have at least one order line")
         }
 
         if (!isValidUrl(callbackUrl)) {
-            throw ValidationException("The order's callbackUrl is required, and must be a valid URL")
+            throw ValidationException("The order's callback URL is required, and must be a valid URL")
         }
 
         orderLine.forEach(OrderLine::validate)
@@ -122,7 +121,7 @@ data class ApiOrderPayload(
         return try {
             URI(url).toURL() // Try to create a URL object
             true
-        } catch (_: MalformedURLException) {
+        } catch (_: Exception) {
             false // If exception is thrown, it's not a valid URL
         }
     }
@@ -168,7 +167,7 @@ data class OrderLine(
     @Throws(ValidationException::class)
     fun validate() {
         if (hostId.isBlank()) {
-            throw ValidationException("The order item's hostId is required, and can not be blank")
+            throw ValidationException("The order line's hostId is required, and can not be blank")
         }
     }
 }

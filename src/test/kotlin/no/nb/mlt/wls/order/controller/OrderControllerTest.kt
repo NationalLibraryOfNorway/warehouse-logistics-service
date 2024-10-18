@@ -58,9 +58,9 @@ import reactor.core.publisher.Flux
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
-    @Autowired val repository: OrderMongoRepository,
     @Autowired val itemMongoRepository: ItemMongoRepository,
-    @Autowired val applicationContext: ApplicationContext
+    @Autowired val applicationContext: ApplicationContext,
+    @Autowired val repository: OrderMongoRepository
 ) {
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
@@ -135,13 +135,7 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateOrderPayload.copy(
-                    orderLine =
-                        listOf(
-                            OrderLine(
-                                "AAAAAAAAA",
-                                Order.OrderItem.Status.PICKED
-                            )
-                        )
+                    orderLine = listOf(OrderLine("AAAAAAAAA", Order.OrderItem.Status.PICKED))
                 )
             )
             .exchange()
@@ -177,55 +171,6 @@ class OrderControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload.copy(hostOrderId = ""))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        // Me thinks it might be a good idea to move those tests to a separate test class
-        // I.E model.OrderModelValidationTest, and here only test one simple case
-        // Same for other models, leaving as is for now to get this PR merged faster
-        // TODO: @Daniel fix this in a separate PR
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(callbackUrl = "hppt://callback.com/order"))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(orderLine = testOrderPayload.orderLine.map { it.copy(hostId = "") }))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "", address = "address")))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "Doug Dimmadome", address = "")))
             .exchange()
             .expectStatus().isBadRequest
     }
@@ -306,19 +251,15 @@ class OrderControllerTest(
     @Test
     fun `updateOrder with valid payload updates order`() {
         val testPayload =
-            duplicateOrderPayload.toOrder()
-                .copy(
-                    receiver = Order.Receiver("newName", duplicateOrderPayload.receiver.address),
-                    callbackUrl = "https://new-callback.com/order",
-                    orderLine =
-                        listOf(
-                            Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED)
-                        )
-                )
+            duplicateOrderPayload.copy(
+                receiver = Receiver("newName", duplicateOrderPayload.receiver.address),
+                callbackUrl = "https://new-callback.com/order",
+                orderLine = listOf(OrderLine("item-123", null))
+            )
 
         coEvery {
             synqAdapterMock.updateOrder(any())
-        } answers { testPayload }
+        } answers { testPayload.toOrder() }
 
         webTestClient
             .mutateWith(csrf())
@@ -332,7 +273,7 @@ class OrderControllerTest(
             .consumeWith { response ->
                 val orderLines = response.responseBody?.orderLine
                 orderLines?.map { it ->
-                    assertThat(testPayload.orderLine.contains(Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
+                    assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
                 }
                 assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
                 assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
@@ -345,7 +286,7 @@ class OrderControllerTest(
             testOrderPayload.copy(
                 hostOrderId = "mlt-test-order-processing",
                 status = Order.Status.IN_PROGRESS,
-                orderLine = listOf(OrderLine("this-does-not-exist", Order.OrderItem.Status.NOT_STARTED))
+                orderLine = listOf(OrderLine("this-does-not-exist", null))
             )
         val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
@@ -369,42 +310,6 @@ class OrderControllerTest(
             .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
             .put()
             .bodyValue(testOrderPayload.copy(hostOrderId = ""))
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .put()
-            .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .put()
-            .bodyValue(testOrderPayload.copy(callbackUrl = "hppt://callback.com/order"))
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .put()
-            .bodyValue(testOrderPayload.copy(orderLine = testOrderPayload.orderLine.map { it.copy(hostId = "") }))
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
-            .put()
-            .bodyValue(testOrderPayload.copy(receiver = Receiver(name = "", address = null)))
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isBadRequest
@@ -537,9 +442,9 @@ class OrderControllerTest(
     private val testOrderPayload =
         ApiOrderPayload(
             hostName = HostName.AXIELL,
-            hostOrderId = "order-360720",
+            hostOrderId = "order-123",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
@@ -553,17 +458,20 @@ class OrderControllerTest(
     private val duplicateOrderPayload =
         ApiOrderPayload(
             hostName = HostName.AXIELL,
-            hostOrderId = "order-123456",
+            hostOrderId = "order-456",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("item-123456", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
 
+    /**
+     * Populate the database with items and orders for testing
+     */
+
     fun populateDb() {
-        // Make sure we start with clean DB instance for each test
         runBlocking {
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
@@ -582,7 +490,7 @@ class OrderControllerTest(
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
                                 owner = Owner.NB,
-                                location = "null",
+                                location = "location",
                                 quantity = 1.0,
                                 callbackUrl = "https://callback.com/item"
                             )
