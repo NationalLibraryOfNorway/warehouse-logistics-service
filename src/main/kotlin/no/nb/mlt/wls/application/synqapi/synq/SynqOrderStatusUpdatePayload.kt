@@ -3,6 +3,7 @@ package no.nb.mlt.wls.application.synqapi.synq
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
     description = "Payload for updating the status of an order placed in SynQ.",
@@ -35,7 +36,13 @@ data class SynqOrderStatusUpdatePayload(
         example = "Sikringmagasin_2"
     )
     val warehouse: String
-)
+) {
+    fun validate() {
+        if (warehouse.isBlank()) {
+            throw ValidationException("Order status update cannot hve a blank warehouse")
+        }
+    }
+}
 
 enum class SynqOrderStatus {
     ALLOCATED,
