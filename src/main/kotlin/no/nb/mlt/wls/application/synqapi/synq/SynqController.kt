@@ -2,6 +2,8 @@ package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.callbacks.Callback
+import io.swagger.v3.oas.annotations.callbacks.Callbacks
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -13,12 +15,15 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
 @RequestMapping(path = ["/synq/v1"])
@@ -56,6 +61,30 @@ class SynqController(
             content = [Content(schema = Schema())]
         )
     )
+    @Callbacks(
+        Callback(
+            name = "Item Callback",
+            callbackUrlExpression = "\$request.body#/callbackUrl",
+            operation =
+                arrayOf(
+                    Operation(
+                        summary = "Notification of updated item",
+                        description = """This callback triggers when an item is updated inside the storage systems.
+                        It contains the full data of the item, including the current quantity and location of it.
+                    """,
+                        method = "post",
+                        requestBody =
+                            SwaggerRequestBody(
+                                content =
+                                    arrayOf(
+                                        Content(schema = Schema(implementation = NotificationItemPayload::class))
+                                    ),
+                                required = true
+                            )
+                    )
+                )
+        )
+    )
     @PutMapping("/move-item")
     suspend fun moveItem(
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
@@ -90,6 +119,30 @@ class SynqController(
             responseCode = "403",
             description = "A valid 'Authorization' header is missing from the request.",
             content = [Content(schema = Schema())]
+        )
+    )
+    @Callbacks(
+        Callback(
+            name = "Order Callback",
+            callbackUrlExpression = "\$request.body#/callbackUrl",
+            operation =
+                arrayOf(
+                    Operation(
+                        summary = "Notification of updated order",
+                        description = """This callback triggers when the order is updated inside the storage systems.
+                        It contains the data of the complete and updated order.
+                    """,
+                        method = "post",
+                        requestBody =
+                            SwaggerRequestBody(
+                                content =
+                                    arrayOf(
+                                        Content(schema = Schema(implementation = NotificationOrderPayload::class))
+                                    ),
+                                required = true
+                            )
+                    )
+                )
         )
     )
     @PutMapping("/pick-update/{owner}/{orderId}")
@@ -148,6 +201,30 @@ class SynqController(
             description = """Order with given 'hostName' and 'orderId' was not found.
                 Error message contains information about the missing order.""",
             content = [Content(schema = Schema())]
+        )
+    )
+    @Callbacks(
+        Callback(
+            name = "Order Callback",
+            callbackUrlExpression = "\$request.body#/callbackUrl",
+            operation =
+                arrayOf(
+                    Operation(
+                        summary = "Notification of updated order",
+                        description = """This callback triggers when the order is updated inside the storage systems.
+                        It contains the data of the complete and updated order.
+                    """,
+                        method = "post",
+                        requestBody =
+                            SwaggerRequestBody(
+                                content =
+                                    arrayOf(
+                                        Content(schema = Schema(implementation = NotificationOrderPayload::class))
+                                    ),
+                                required = true
+                            )
+                    )
+                )
         )
     )
     @PutMapping("/order-update/{owner}/{orderId}")
