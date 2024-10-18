@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.callbacks.Callback
+import io.swagger.v3.oas.annotations.callbacks.Callbacks
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -14,6 +16,7 @@ import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -26,9 +29,10 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
-@RequestMapping(path = [ "/v1"])
+@RequestMapping(path = ["/v1"])
 @Tag(name = "Order Controller", description = "API for ordering items via Hermes WLS")
 class OrderController(
     private val createOrder: CreateOrder,
@@ -88,6 +92,30 @@ class OrderController(
             responseCode = "403",
             description = "A valid 'Authorization' header is missing from the request.",
             content = [Content(schema = Schema())]
+        )
+    )
+    @Callbacks(
+        Callback(
+            name = "Order Callback",
+            callbackUrlExpression = "\$request.body#/callbackUrl",
+            operation =
+                arrayOf(
+                    Operation(
+                        summary = "Notification of updated order",
+                        description = """This callback triggers when the order is updated inside the storage systems.
+                        It contains the data of the complete and updated order.
+                    """,
+                        method = "post",
+                        requestBody =
+                            SwaggerRequestBody(
+                                content =
+                                    arrayOf(
+                                        Content(schema = Schema(implementation = NotificationOrderPayload::class))
+                                    ),
+                                required = true
+                            )
+                    )
+                )
         )
     )
     @PostMapping("/order")
