@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
 @RequestMapping(path = ["/v1"])
@@ -206,7 +205,7 @@ class OrderController(
     @PutMapping("/order")
     suspend fun updateOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @SwaggerRequestBody payload: ApiUpdateOrderPayload
+        @RequestBody payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
         payload.validate()
