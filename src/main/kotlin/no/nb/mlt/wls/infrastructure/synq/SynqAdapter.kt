@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -69,13 +68,10 @@ class SynqAdapter(
             .awaitSingle()
     }
 
-    override suspend fun deleteOrder(
-        hostName: HostName,
-        hostOrderId: String
-    ) {
+    override suspend fun deleteOrder(order: Order) {
         webClient
             .delete()
-            .uri(URI.create("$baseUrl/orders/$hostName/$hostOrderId"))
+            .uri(URI.create("$baseUrl/orders/${order.owner}/${order.hostOrderId}"))
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }

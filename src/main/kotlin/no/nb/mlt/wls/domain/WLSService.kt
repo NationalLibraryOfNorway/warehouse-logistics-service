@@ -140,7 +140,7 @@ class WLSService(
         orderId: String
     ) {
         // Make a new order line with picked items
-        val order = getOrder(hostName, orderId) ?: throw OrderNotFoundException("Order $orderId for host $hostName not found")
+        val order = getOrderOrThrow(hostName, orderId)
         val orderLine =
             order.orderLine.map { orderItem ->
                 if (pickedHostIds.contains(orderItem.hostId)) {
@@ -179,7 +179,8 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        storageSystemFacade.deleteOrder(hostName, hostOrderId)
+        val order = getOrderOrThrow(hostName, hostOrderId)
+        storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
 
@@ -196,11 +197,7 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val order =
-            getOrder(
-                hostName,
-                hostOrderId
-            ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+        val order = getOrderOrThrow(hostName, hostOrderId)
 
         val updatedOrder =
             order
@@ -241,5 +238,16 @@ class WLSService(
         inventoryNotifier.orderChanged(updatedOrder)
 
         return updatedOrder
+    }
+
+    @Throws(OrderNotFoundException::class)
+    suspend fun getOrderOrThrow(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order {
+        return getOrder(
+            hostName,
+            hostOrderId
+        ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 }
