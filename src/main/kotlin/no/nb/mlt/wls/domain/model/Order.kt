@@ -12,7 +12,7 @@ data class Order(
     val status: Status,
     val orderLine: List<OrderItem>,
     val orderType: Type,
-    val owner: Owner?,
+    val owner: Owner,
     val receiver: Receiver,
     val callbackUrl: String
 ) {
