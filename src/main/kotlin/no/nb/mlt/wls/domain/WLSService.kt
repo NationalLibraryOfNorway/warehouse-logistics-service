@@ -180,6 +180,7 @@ class WLSService(
         hostOrderId: String
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
+        // TODO - Check Order status and invalidate orders in progress
         storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
