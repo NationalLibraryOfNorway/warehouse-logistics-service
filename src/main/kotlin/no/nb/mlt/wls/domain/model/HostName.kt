@@ -8,6 +8,7 @@ enum class HostName {
     ASTA
 }
 
+// TODO - Remove
 fun throwIfInvalidClientName(
     clientName: String,
     hostName: HostName

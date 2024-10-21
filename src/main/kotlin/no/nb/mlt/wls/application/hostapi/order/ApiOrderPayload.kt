@@ -69,6 +69,7 @@ data class ApiOrderPayload(
     )
     val callbackUrl: String
 ) {
+    // TODO - Only used for testing. Move this?
     fun toOrder() =
         Order(
             hostName = hostName,
@@ -76,6 +77,7 @@ data class ApiOrderPayload(
             status = status ?: Order.Status.NOT_STARTED,
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
+            // FIXME - Temporary hardcoding, not ideal
             owner = Owner.NB,
             receiver = receiver.toOrderReceiver(),
             callbackUrl = callbackUrl

@@ -451,7 +451,7 @@ class OrderControllerTest(
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -476,7 +476,7 @@ class OrderControllerTest(
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -493,7 +493,7 @@ class OrderControllerTest(
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -509,7 +509,7 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder handles synq error`() {
         coEvery {
-            synqAdapterMock.deleteOrder(any(), any())
+            synqAdapterMock.deleteOrder(any())
         } throws (
             StorageSystemException(
                 "Unexpected error",
@@ -541,7 +541,6 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("mlt-420", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
@@ -557,7 +556,6 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-123456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
