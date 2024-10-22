@@ -83,12 +83,24 @@ data class Order(
         }
     }
 
-    fun isOrderClosed(): Boolean {
+    private fun isOrderClosed(): Boolean {
         return listOf(Status.COMPLETED, Status.DELETED).contains(status)
     }
 
-    fun isOrderProcessingStarted(): Boolean {
+    private fun isOrderProcessingStarted(): Boolean {
         return status != Status.NOT_STARTED
+    }
+
+    /**
+     * Throws an exception if the order has been started or finished
+     */
+    fun throwIfInProgress() {
+        if (this.isOrderClosed()) {
+            throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
+        }
+        if (this.isOrderProcessingStarted()) {
+            throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
+        }
     }
 
     private fun throwIfInvalidUrl(url: String) {
