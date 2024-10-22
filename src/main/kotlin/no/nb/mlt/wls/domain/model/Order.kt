@@ -83,11 +83,11 @@ data class Order(
         }
     }
 
-    private fun isOrderClosed(): Boolean {
+    fun isOrderClosed(): Boolean {
         return listOf(Status.COMPLETED, Status.DELETED).contains(status)
     }
 
-    private fun isOrderProcessingStarted(): Boolean {
+    fun isOrderProcessingStarted(): Boolean {
         return status != Status.NOT_STARTED
     }
 

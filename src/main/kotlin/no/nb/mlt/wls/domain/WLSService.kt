@@ -11,6 +11,7 @@ import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
@@ -180,7 +181,12 @@ class WLSService(
         hostOrderId: String
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
-        // TODO - Check Order status and invalidate orders in progress
+        if (order.isOrderClosed()) {
+            throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
+        }
+        if (order.isOrderProcessingStarted()) {
+            throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
+        }
         storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
@@ -199,6 +205,13 @@ class WLSService(
         }
 
         val order = getOrderOrThrow(hostName, hostOrderId)
+
+        if (order.isOrderClosed()) {
+            throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
+        }
+        if (order.isOrderProcessingStarted()) {
+            throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
+        }
 
         val updatedOrder =
             order
