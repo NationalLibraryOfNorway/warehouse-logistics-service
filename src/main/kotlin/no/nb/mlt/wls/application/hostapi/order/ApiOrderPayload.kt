@@ -60,12 +60,6 @@ data class ApiOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = "Who's the owner of the material in the order.",
-        examples = ["NB", "ARKIVVERKET"],
-        accessMode = READ_ONLY
-    )
-    val owner: Owner?,
-    @Schema(
         description = "Who's the receiver of the material in the order."
     )
     val receiver: Receiver,
@@ -75,6 +69,7 @@ data class ApiOrderPayload(
     )
     val callbackUrl: String
 ) {
+    // TODO - Only used for testing. Move this?
     fun toOrder() =
         Order(
             hostName = hostName,
@@ -82,12 +77,13 @@ data class ApiOrderPayload(
             status = status ?: Order.Status.NOT_STARTED,
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
-            owner = owner,
+            // FIXME - Temporary hardcoding, not ideal
+            owner = Owner.NB,
             receiver = receiver.toOrderReceiver(),
             callbackUrl = callbackUrl
         )
 
-    fun toCreateOrderDTO() =
+    fun toCreateOrderDTO(owner: Owner) =
         CreateOrderDTO(
             hostName = hostName,
             hostOrderId = hostOrderId,
@@ -135,7 +131,6 @@ fun Order.toApiOrderPayload() =
         status = status,
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
-        owner = owner,
         receiver = Receiver(receiver.name, receiver.address),
         callbackUrl = callbackUrl
     )

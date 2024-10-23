@@ -13,7 +13,7 @@ data class CreateOrderDTO(
     val hostOrderId: String,
     val orderLine: List<OrderItem>,
     val orderType: Order.Type,
-    val owner: Owner?,
+    val owner: Owner,
     val receiver: Order.Receiver,
     val callbackUrl: String
 ) {

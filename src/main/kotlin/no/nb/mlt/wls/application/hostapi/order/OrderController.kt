@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
@@ -124,6 +125,15 @@ class OrderController(
         @RequestBody payload: ApiOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
+
+        // Special handling for Arkivverket is required for the storage systems
+        val owner =
+            if (payload.hostName == HostName.ASTA) {
+                Owner.ARKIVVERKET
+            } else {
+                Owner.NB
+            }
+
         payload.validate()
 
         // Return 200 OK and existing order if it exists
@@ -133,7 +143,7 @@ class OrderController(
                 .body(it.toApiOrderPayload())
         }
 
-        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
+        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO(owner))
 
         return ResponseEntity
             .status(HttpStatus.CREATED)

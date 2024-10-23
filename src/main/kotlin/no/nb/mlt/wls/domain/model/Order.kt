@@ -12,7 +12,7 @@ data class Order(
     val status: Status,
     val orderLine: List<OrderItem>,
     val orderType: Type,
-    val owner: Owner?,
+    val owner: Owner,
     val receiver: Receiver,
     val callbackUrl: String
 ) {
@@ -89,6 +89,19 @@ data class Order(
 
     private fun isOrderProcessingStarted(): Boolean {
         return status != Status.NOT_STARTED
+    }
+
+    /**
+     * Throws an exception if the order has been started or finished
+     * TODO - Make this private, and handle this in a more domain-driven way
+     */
+    fun throwIfInProgress() {
+        if (this.isOrderClosed()) {
+            throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
+        }
+        if (this.isOrderProcessingStarted()) {
+            throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
+        }
     }
 
     private fun throwIfInvalidUrl(url: String) {
