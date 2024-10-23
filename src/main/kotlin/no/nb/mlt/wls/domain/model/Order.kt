@@ -93,6 +93,7 @@ data class Order(
 
     /**
      * Throws an exception if the order has been started or finished
+     * TODO - Make this private, and handle this in a more domain-driven way
      */
     fun throwIfInProgress() {
         if (this.isOrderClosed()) {

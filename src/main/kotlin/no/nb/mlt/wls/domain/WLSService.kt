@@ -94,7 +94,9 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
+        // TODO - Move some of this to Order
         itemIds.map { itemId ->
+            // TODO - Get All Items function?
             val item = getItem(itemId.hostName, itemId.hostId)!!
 
             val itemsInStockQuantity = item.quantity ?: 0.0
@@ -139,6 +141,7 @@ class WLSService(
         pickedHostIds: List<String>,
         orderId: String
     ) {
+        // TODO - Move some of this to Order
         // Make a new order line with picked items
         val order = getOrderOrThrow(hostName, orderId)
         val orderLine =
