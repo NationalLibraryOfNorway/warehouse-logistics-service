@@ -76,11 +76,13 @@ class SynqModelValidationTest {
 
     @Test
     fun `SynqOrderPickingConfirmationPayload with invalid order line should fail validation`() {
-        val payload = validSynqOrderPickingConfirmationPayload.copy(
-            orderLine = listOf(
-                validSynqOrderLine1.copy(productId = "")
+        val payload =
+            validSynqOrderPickingConfirmationPayload.copy(
+                orderLine =
+                    listOf(
+                        validSynqOrderLine1.copy(productId = "")
+                    )
             )
-        )
 
         val thrown = catchThrowable(payload::validate)
 
@@ -138,7 +140,6 @@ class SynqModelValidationTest {
             .hasMessageContaining("TU ID")
     }
 
-
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
@@ -156,17 +157,18 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = "Axiell",
             orderLineNumber = 1,
-            orderTuId =  "tu-123",
-            orderTuType =  "UFO",
+            orderTuId = "tu-123",
+            orderTuType = "UFO",
             productId = "item-123",
             productVersionId = "1.0",
             quantity = 1.0,
-            attributeValue = listOf(
-                AttributeValue(
-                    name = "materialStatus",
-                    value = "Available"
+            attributeValue =
+                listOf(
+                    AttributeValue(
+                        name = "materialStatus",
+                        value = "Available"
+                    )
                 )
-            )
         )
 
     private val validSynqOrderLine2 =
@@ -174,22 +176,23 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = "Axiell",
             orderLineNumber = 2,
-            orderTuId =  "tu-123",
-            orderTuType =  "UFO",
+            orderTuId = "tu-123",
+            orderTuType = "UFO",
             productId = "item-456",
             productVersionId = "1.0",
             quantity = 1.0,
-            attributeValue = listOf(
-                AttributeValue(
-                    name = "materialStatus",
-                    value = "Available"
+            attributeValue =
+                listOf(
+                    AttributeValue(
+                        name = "materialStatus",
+                        value = "Available"
+                    )
                 )
-            )
         )
 
     private val validSynqOrderPickingConfirmationPayload =
         SynqOrderPickingConfirmationPayload(
-            orderLine = listOf(validSynqOrderLine1 , validSynqOrderLine2),
+            orderLine = listOf(validSynqOrderLine1, validSynqOrderLine2),
             operator = "operator-123",
             warehouse = "Sikringmagasin_2"
         )

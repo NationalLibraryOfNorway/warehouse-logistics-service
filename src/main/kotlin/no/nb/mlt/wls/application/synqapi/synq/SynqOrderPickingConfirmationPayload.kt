@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
-import io.micrometer.core.instrument.config.validate.Validated.valid
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
