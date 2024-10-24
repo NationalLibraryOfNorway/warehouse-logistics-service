@@ -9,6 +9,8 @@ import no.nb.mlt.wls.application.hostapi.order.toReceiver
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
+import no.nb.mlt.wls.infrastructure.callbacks.toNotificationOrderPayload
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
@@ -67,6 +69,18 @@ class OrderModelConversionTest {
                 )
         )
 
+    private val testOrderNotification =
+        NotificationOrderPayload(
+            hostName = HostName.AXIELL,
+            hostOrderId = "hostOrderId",
+            status = null,
+            orderLine = listOf(),
+            orderType = Order.Type.LOAN,
+            owner = Owner.NB,
+            receiver = Order.Receiver(name = "name", address = "address"),
+            callbackUrl = "callbackUrl"
+        )
+
     @Test
     fun `order converts to API payload`() {
         val payload = testOrder.toApiOrderPayload()
@@ -105,6 +119,20 @@ class OrderModelConversionTest {
         assertThat(synqPayload.priority).isEqualTo(testSynqOrderPayload.priority)
         assertThat(synqPayload.owner).isEqualTo(testSynqOrderPayload.owner)
         assertThat(synqPayload.orderLine).isEqualTo(testSynqOrderPayload.orderLine)
+    }
+
+    @Test
+    fun `order converts to notification payload`() {
+        val testNotificationOrderPayload = testOrder.toNotificationOrderPayload()
+
+        assertThat(testNotificationOrderPayload.hostName).isEqualTo(testOrderNotification.hostName)
+        assertThat(testNotificationOrderPayload.hostOrderId).isEqualTo(testOrderNotification.hostOrderId)
+        assertThat(testNotificationOrderPayload.status).isEqualTo(testOrderNotification.status)
+        assertThat(testNotificationOrderPayload.orderLine[0].hostId).isEqualTo(testOrderNotification.orderLine[0].hostId)
+        assertThat(testNotificationOrderPayload.orderType).isEqualTo(testOrderNotification.orderType)
+        assertThat(testNotificationOrderPayload.owner).isEqualTo(testOrderNotification.owner)
+        assertThat(testNotificationOrderPayload.receiver.name).isEqualTo(testOrderNotification.receiver.name)
+        assertThat(testNotificationOrderPayload.callbackUrl).isEqualTo(testOrderNotification.callbackUrl)
     }
 
     @Test

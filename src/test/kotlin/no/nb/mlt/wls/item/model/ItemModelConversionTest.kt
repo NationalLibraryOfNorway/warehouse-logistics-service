@@ -7,6 +7,8 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
+import no.nb.mlt.wls.infrastructure.callbacks.toNotificationItemPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
@@ -54,6 +56,20 @@ class ItemModelConversionTest {
             hostName = HostName.AXIELL.toString()
         )
 
+    private val testItemNotificationPayload =
+        NotificationItemPayload(
+            hostId = "mlt-test-1234",
+            hostName = HostName.AXIELL,
+            description = "Tyven skal du hete",
+            itemCategory = "NONE",
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
+            location = "",
+            quantity = 1.0
+        )
+
     @Test
     fun `item converts to API payload`() {
         val payload = testItem.toApiPayload()
@@ -79,6 +95,21 @@ class ItemModelConversionTest {
         assertThat(synqPayload.barcode.barcodeId).isEqualTo(testSynqPayload.barcode.barcodeId)
         assertThat(synqPayload.owner).isEqualTo(testSynqPayload.owner)
         assertThat(synqPayload.description).isEqualTo(testSynqPayload.description)
+    }
+
+    @Test
+    fun `item converts to notification payload`() {
+        val payload = testItem.toNotificationItemPayload()
+        assertThat(payload.hostId).isEqualTo(testItemNotificationPayload.hostId)
+        assertThat(payload.hostName).isEqualTo(testItemNotificationPayload.hostName)
+        assertThat(payload.description).isEqualTo(testItemNotificationPayload.description)
+        assertThat(payload.itemCategory).isEqualTo(testItemNotificationPayload.itemCategory)
+        assertThat(payload.preferredEnvironment).isEqualTo(testItemNotificationPayload.preferredEnvironment)
+        assertThat(payload.packaging).isEqualTo(testItemNotificationPayload.packaging)
+        assertThat(payload.owner).isEqualTo(testItemNotificationPayload.owner)
+        assertThat(payload.callbackUrl).isEqualTo(testItemNotificationPayload.callbackUrl)
+        assertThat(payload.location).isEqualTo(testItemNotificationPayload.location)
+        assertThat(payload.quantity).isEqualTo(testItemNotificationPayload.quantity)
     }
 
     @Test
