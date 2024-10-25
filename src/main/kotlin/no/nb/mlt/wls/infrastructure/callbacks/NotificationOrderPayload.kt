@@ -80,18 +80,3 @@ fun Order.toNotificationOrderPayload() =
         receiver = receiver,
         callbackUrl = callbackUrl
     )
-
-fun NotificationOrderPayload.toOrder() =
-    Order(
-        hostName = hostName,
-        hostOrderId = hostOrderId,
-        status = status ?: Order.Status.NOT_STARTED,
-        orderLine =
-            orderLine.map {
-                Order.OrderItem(it.hostId, it.status)
-            },
-        orderType = orderType,
-        owner = owner,
-        receiver = receiver,
-        callbackUrl = callbackUrl
-    )

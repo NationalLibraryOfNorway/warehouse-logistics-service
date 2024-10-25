@@ -94,7 +94,9 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
+        // TODO - Move some of this to Order
         itemIds.map { itemId ->
+            // TODO - Get All Items function?
             val item = getItem(itemId.hostName, itemId.hostId)!!
 
             val itemsInStockQuantity = item.quantity ?: 0.0
@@ -139,8 +141,9 @@ class WLSService(
         pickedHostIds: List<String>,
         orderId: String
     ) {
+        // TODO - Move some of this to Order
         // Make a new order line with picked items
-        val order = getOrder(hostName, orderId) ?: throw OrderNotFoundException("Order $orderId for host $hostName not found")
+        val order = getOrderOrThrow(hostName, orderId)
         val orderLine =
             order.orderLine.map { orderItem ->
                 if (pickedHostIds.contains(orderItem.hostId)) {
@@ -179,7 +182,9 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        storageSystemFacade.deleteOrder(hostName, hostOrderId)
+        val order = getOrderOrThrow(hostName, hostOrderId)
+        order.throwIfInProgress()
+        storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
 
@@ -196,11 +201,9 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val order =
-            getOrder(
-                hostName,
-                hostOrderId
-            ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+        val order = getOrderOrThrow(hostName, hostOrderId)
+
+        order.throwIfInProgress()
 
         val updatedOrder =
             order
@@ -241,5 +244,16 @@ class WLSService(
         inventoryNotifier.orderChanged(updatedOrder)
 
         return updatedOrder
+    }
+
+    @Throws(OrderNotFoundException::class)
+    suspend fun getOrderOrThrow(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order {
+        return getOrder(
+            hostName,
+            hostOrderId
+        ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 }
