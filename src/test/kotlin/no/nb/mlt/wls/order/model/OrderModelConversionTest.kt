@@ -73,7 +73,7 @@ class OrderModelConversionTest {
         NotificationOrderPayload(
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
-            status = null,
+            status = Order.Status.NOT_STARTED,
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
