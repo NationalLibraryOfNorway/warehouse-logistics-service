@@ -73,7 +73,7 @@ class OrderModelConversionTest {
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(),
+            orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             receiver = Order.Receiver(name = "name", address = "address"),
@@ -216,4 +216,16 @@ class OrderModelConversionTest {
         assertThat(receiver.name).isEqualTo(testOrderReceiver.name)
         assertThat(receiver.address).isEqualTo(testOrderReceiver.address)
     }
+
+    private fun ApiOrderPayload.toOrder() =
+        Order(
+            hostName = hostName,
+            hostOrderId = hostOrderId,
+            status = status ?: Order.Status.NOT_STARTED,
+            orderLine = orderLine.map { it.toOrderItem() },
+            orderType = orderType,
+            owner = Owner.NB,
+            receiver = receiver.toOrderReceiver(),
+            callbackUrl = callbackUrl
+        )
 }

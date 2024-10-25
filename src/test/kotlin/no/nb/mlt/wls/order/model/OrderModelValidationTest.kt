@@ -6,7 +6,6 @@ import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
@@ -228,7 +227,6 @@ class OrderModelValidationTest {
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(validOrderLine),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = validReceiver,
             callbackUrl = "https://callback.com/order"
         )

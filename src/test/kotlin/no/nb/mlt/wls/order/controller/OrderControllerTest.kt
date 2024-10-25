@@ -530,4 +530,16 @@ class OrderControllerTest(
                 .awaitLast()
         }
     }
+
+    private fun ApiOrderPayload.toOrder() =
+        Order(
+            hostName = hostName,
+            hostOrderId = hostOrderId,
+            status = status ?: Order.Status.NOT_STARTED,
+            orderLine = orderLine.map { it.toOrderItem() },
+            orderType = orderType,
+            owner = Owner.NB,
+            receiver = receiver.toOrderReceiver(),
+            callbackUrl = callbackUrl
+        )
 }
