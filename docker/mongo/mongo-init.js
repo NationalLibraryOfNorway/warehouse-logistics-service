@@ -17,14 +17,50 @@ db.createCollection('items');
 db.items.insertOne({
     "hostName": "AXIELL",
     "hostId": "item-12345",
-    "category": "BOOK",
+    "itemCategory": "BOOK",
     "description": "Tyv etter loven",
     "packaging": "NONE",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
     "preferredEnvironment": "NONE",
     "owner": "NB",
-    "_class": "no.nb.mlt.wls.domain.model.Item"
+    "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
+})
+
+db.items.insertOne({
+    "hostName": "AXIELL",
+    "hostId": "item-54321",
+    "itemCategory": "BOOK",
+    "description": "Tyv etter loven",
+    "packaging": "NONE",
+    "location": "SYNQ_WAREHOUSE",
+    "quantity": 1,
+    "preferredEnvironment": "NONE",
+    "owner": "NB",
+    "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
+})
+
+
+db.createCollection('orders')
+
+db.orders.insertOne({
+    "hostName": "AXIELL",
+    "hostOrderId": "order-12345",
+    "status": "NOT_STARTED",
+    "orderLine": [
+        {
+            "hostId": "item-12345",
+            "status": "NOT_STARTED"
+        }
+    ],
+    "orderType": "LOAN",
+    "owner": "NB",
+    "receiver": {
+        "name": "Doug Doug",
+        "address": "Somewhere in the United States"
+    },
+    "callbackUrl": "https://example.com/send/callback/here",
+    "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
 })
 
 print('END #################################################################');

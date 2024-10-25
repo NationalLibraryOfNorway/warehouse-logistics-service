@@ -28,7 +28,6 @@ class OrderModelConversionTest {
             status = null,
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "callbackUrl"
         )
@@ -90,7 +89,6 @@ class OrderModelConversionTest {
         assertThat(payload.status).isEqualTo(testOrder.status)
         assertThat(payload.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(payload.orderType).isEqualTo(testOrder.orderType)
-        assertThat(payload.owner).isEqualTo(testOrder.owner)
         assertThat(payload.receiver.name).isEqualTo(testOrder.receiver.name)
         assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
@@ -144,7 +142,6 @@ class OrderModelConversionTest {
         assertThat(order.status).isEqualTo(Order.Status.NOT_STARTED)
         assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
-        assertThat(order.owner).isEqualTo(testApiOrderPayload.owner)
         assertThat(order.receiver.name).isEqualTo(testApiOrderPayload.receiver.name)
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }

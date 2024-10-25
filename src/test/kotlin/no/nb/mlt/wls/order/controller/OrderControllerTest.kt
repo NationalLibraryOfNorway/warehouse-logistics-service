@@ -356,7 +356,7 @@ class OrderControllerTest(
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -378,10 +378,29 @@ class OrderControllerTest(
         }
 
     @Test
+    fun `deleteOrder when order is in progress returns 409`() {
+        runTest {
+            // Set up the DB with the order in progress
+            repository
+                .save(orderInProgress.toMongoOrder())
+                .awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .delete()
+                .uri("/{hostName}/{hostOrderId}", orderInProgress.hostName, orderInProgress.hostOrderId)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+        }
+    }
+
+    @Test
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -398,7 +417,7 @@ class OrderControllerTest(
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqAdapterMock.deleteOrder(any())
             } answers {}
 
             webTestClient
@@ -414,7 +433,7 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder handles synq error`() {
         coEvery {
-            synqAdapterMock.deleteOrder(any(), any())
+            synqAdapterMock.deleteOrder(any())
         } throws (
             StorageSystemException(
                 "Unexpected error",
@@ -446,7 +465,6 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
@@ -462,8 +480,19 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             receiver = Receiver(name = "name", address = "address"),
+            callbackUrl = "https://callback.com/order"
+        )
+
+    private val orderInProgress =
+        Order(
+            hostName = HostName.AXIELL,
+            hostOrderId = "order-in-progress",
+            status = Order.Status.IN_PROGRESS,
+            orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
+            owner = Owner.NB,
+            receiver = Order.Receiver(name = "name", address = "address"),
             callbackUrl = "https://callback.com/order"
         )
 
