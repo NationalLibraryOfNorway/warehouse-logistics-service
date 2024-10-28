@@ -13,7 +13,7 @@ import no.nb.mlt.wls.domain.model.Order
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class SynqModelsTest {
+class SynqModelConversionTest {
     private val synqOrderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.PICKED,

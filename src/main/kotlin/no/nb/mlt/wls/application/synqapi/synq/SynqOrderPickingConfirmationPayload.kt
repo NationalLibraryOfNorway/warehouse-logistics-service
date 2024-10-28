@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
@@ -47,16 +48,18 @@ data class SynqOrderPickingConfirmationPayload(
     val warehouse: String
 ) {
     fun validate() {
-        if (operator.isBlank()) {
-            throw ValidationException("Operator name can not be blank")
-        }
-        if (warehouse.isBlank()) {
-            throw ValidationException("Warehouse location can not be blank")
-        }
-
         if (orderLine.isEmpty()) {
             throw ValidationException("Picking update does not contain any elements in the order line")
         }
+
+        if (operator.isBlank()) {
+            throw ValidationException("Picking update's operator can not be blank")
+        }
+
+        if (warehouse.isBlank()) {
+            throw ValidationException("Picking update's warehouse can not be blank")
+        }
+
         orderLine.forEach(OrderLine::validate)
     }
 }
@@ -129,14 +132,40 @@ data class OrderLine(
     val attributeValue: List<AttributeValue>
 ) {
     fun validate() {
-        if (productId.isBlank()) {
-            throw ValidationException("Product ID can not be blank")
-        }
         if (hostName.isBlank()) {
-            throw ValidationException("Hostname can not be blank")
+            throw ValidationException("Order Line's host name can not be blank")
         }
+
+        if (HostName.entries.toTypedArray().none { it.name.uppercase() == hostName.uppercase() }) {
+            throw ValidationException("Order Line's host name: '$hostName' is not valid")
+        }
+
+        if (orderLineNumber < 0) {
+            throw ValidationException("Order Line's line number must be positive")
+        }
+
+        if (orderTuId.isBlank()) {
+            throw ValidationException("Order Line's TU ID can not be blank")
+        }
+
+        if (orderTuType.isBlank()) {
+            throw ValidationException("Order Line's TU type can not be blank")
+        }
+
+        if (productId.isBlank()) {
+            throw ValidationException("Order Line's product ID can not be blank")
+        }
+
+        if (productVersionId.isBlank()) {
+            throw ValidationException("Order Line's product version ID can not be blank")
+        }
+
         if (quantity < 0) {
-            throw ValidationException("Quantity for the product $productId must be positive")
+            throw ValidationException("Order Line's quantity for the product $productId must be positive")
+        }
+
+        if (attributeValue.isNotEmpty()) {
+            attributeValue.forEach(AttributeValue::validate)
         }
     }
 }

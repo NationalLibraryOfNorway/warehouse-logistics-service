@@ -7,7 +7,6 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.MalformedURLException
 import java.net.URI
 
 @Schema(
@@ -69,20 +68,6 @@ data class ApiOrderPayload(
     )
     val callbackUrl: String
 ) {
-    // TODO - Only used for testing. Move this?
-    fun toOrder() =
-        Order(
-            hostName = hostName,
-            hostOrderId = hostOrderId,
-            status = status ?: Order.Status.NOT_STARTED,
-            orderLine = orderLine.map { it.toOrderItem() },
-            orderType = orderType,
-            // FIXME - Temporary hardcoding, not ideal
-            owner = Owner.NB,
-            receiver = receiver.toOrderReceiver(),
-            callbackUrl = callbackUrl
-        )
-
     fun toCreateOrderDTO(owner: Owner) =
         CreateOrderDTO(
             hostName = hostName,
@@ -100,11 +85,11 @@ data class ApiOrderPayload(
         }
 
         if (orderLine.isEmpty()) {
-            throw ValidationException("The order must contain order lines")
+            throw ValidationException("The order must have at least one order line")
         }
 
         if (!isValidUrl(callbackUrl)) {
-            throw ValidationException("The order's callbackUrl is required, and must be a valid URL")
+            throw ValidationException("The order's callback URL is required, and must be a valid URL")
         }
 
         orderLine.forEach(OrderLine::validate)
@@ -118,7 +103,7 @@ data class ApiOrderPayload(
         return try {
             URI(url).toURL() // Try to create a URL object
             true
-        } catch (_: MalformedURLException) {
+        } catch (_: Exception) {
             false // If exception is thrown, it's not a valid URL
         }
     }
@@ -163,7 +148,7 @@ data class OrderLine(
     @Throws(ValidationException::class)
     fun validate() {
         if (hostId.isBlank()) {
-            throw ValidationException("The order item's hostId is required, and can not be blank")
+            throw ValidationException("The order line's hostId is required, and can not be blank")
         }
     }
 }

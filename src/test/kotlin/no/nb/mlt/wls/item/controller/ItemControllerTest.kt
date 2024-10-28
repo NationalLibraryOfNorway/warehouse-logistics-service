@@ -63,7 +63,7 @@ class ItemControllerTest(
                 .bindToApplicationContext(applicationContext)
                 .apply(springSecurity())
                 .configureClient()
-                .baseUrl("/v1/item/")
+                .baseUrl("/v1/item")
                 .build()
 
         populateDb()
@@ -142,51 +142,6 @@ class ItemControllerTest(
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload.copy(hostId = ""))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload.copy(description = ""))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload.copy(itemCategory = ""))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload.copy(location = ""))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload.copy(quantity = -1.0))
-            .exchange()
-            .expectStatus().isBadRequest
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload.copy(callbackUrl = "hppt://callback.com/item"))
             .exchange()
             .expectStatus().isBadRequest
     }

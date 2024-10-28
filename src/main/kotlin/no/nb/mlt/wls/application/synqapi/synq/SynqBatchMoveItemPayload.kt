@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
+import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
     description = "Payload for receiving Item updates in batch from SynQ storage system.",
@@ -167,7 +168,17 @@ data class AttributeValue(
         example = "Available"
     )
     val value: String
-)
+) {
+    fun validate() {
+        if (name.isBlank()) {
+            throw ValidationException("Attribute name cannot be blank")
+        }
+
+        if (value.isBlank()) {
+            throw ValidationException("Attribute value cannot be blank")
+        }
+    }
+}
 
 @Schema(
     description = "Represents position of the product in the TU.",

@@ -7,6 +7,8 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
+import no.nb.mlt.wls.infrastructure.callbacks.toNotificationItemPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
@@ -14,7 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class ItemModelConversionTest {
-    private val testProductPayload =
+    private val testItemPayload =
         ApiItemPayload(
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
@@ -54,19 +56,33 @@ class ItemModelConversionTest {
             hostName = HostName.AXIELL.toString()
         )
 
+    private val testItemNotificationPayload =
+        NotificationItemPayload(
+            hostId = "mlt-test-1234",
+            hostName = HostName.AXIELL,
+            description = "Tyven skal du hete",
+            itemCategory = "NONE",
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            owner = Owner.NB,
+            callbackUrl = "https://callback.com/item",
+            location = "",
+            quantity = 1.0
+        )
+
     @Test
     fun `item converts to API payload`() {
         val payload = testItem.toApiPayload()
-        assertThat(payload.hostId).isEqualTo(testProductPayload.hostId)
-        assertThat(payload.hostName).isEqualTo(testProductPayload.hostName)
-        assertThat(payload.description).isEqualTo(testProductPayload.description)
-        assertThat(payload.itemCategory).isEqualTo(testProductPayload.itemCategory)
-        assertThat(payload.preferredEnvironment).isEqualTo(testProductPayload.preferredEnvironment)
-        assertThat(payload.packaging).isEqualTo(testProductPayload.packaging)
-        assertThat(payload.owner).isEqualTo(testProductPayload.owner)
-        assertThat(payload.callbackUrl).isEqualTo(testProductPayload.callbackUrl)
-        assertThat(payload.location).isEqualTo(testProductPayload.location)
-        assertThat(payload.quantity).isEqualTo(testProductPayload.quantity)
+        assertThat(payload.hostId).isEqualTo(testItemPayload.hostId)
+        assertThat(payload.hostName).isEqualTo(testItemPayload.hostName)
+        assertThat(payload.description).isEqualTo(testItemPayload.description)
+        assertThat(payload.itemCategory).isEqualTo(testItemPayload.itemCategory)
+        assertThat(payload.preferredEnvironment).isEqualTo(testItemPayload.preferredEnvironment)
+        assertThat(payload.packaging).isEqualTo(testItemPayload.packaging)
+        assertThat(payload.owner).isEqualTo(testItemPayload.owner)
+        assertThat(payload.callbackUrl).isEqualTo(testItemPayload.callbackUrl)
+        assertThat(payload.location).isEqualTo(testItemPayload.location)
+        assertThat(payload.quantity).isEqualTo(testItemPayload.quantity)
     }
 
     @Test
@@ -82,8 +98,23 @@ class ItemModelConversionTest {
     }
 
     @Test
+    fun `item converts to notification payload`() {
+        val payload = testItem.toNotificationItemPayload()
+        assertThat(payload.hostId).isEqualTo(testItemNotificationPayload.hostId)
+        assertThat(payload.hostName).isEqualTo(testItemNotificationPayload.hostName)
+        assertThat(payload.description).isEqualTo(testItemNotificationPayload.description)
+        assertThat(payload.itemCategory).isEqualTo(testItemNotificationPayload.itemCategory)
+        assertThat(payload.preferredEnvironment).isEqualTo(testItemNotificationPayload.preferredEnvironment)
+        assertThat(payload.packaging).isEqualTo(testItemNotificationPayload.packaging)
+        assertThat(payload.owner).isEqualTo(testItemNotificationPayload.owner)
+        assertThat(payload.callbackUrl).isEqualTo(testItemNotificationPayload.callbackUrl)
+        assertThat(payload.location).isEqualTo(testItemNotificationPayload.location)
+        assertThat(payload.quantity).isEqualTo(testItemNotificationPayload.quantity)
+    }
+
+    @Test
     fun `API payload converts to item`() {
-        val item = testProductPayload.toItem()
+        val item = testItemPayload.toItem()
         assertThat(item.hostId).isEqualTo(testItem.hostId)
         assertThat(item.hostName).isEqualTo(testItem.hostName)
         assertThat(item.description).isEqualTo(testItem.description)

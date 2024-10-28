@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.MalformedURLException
 import java.net.URI
 import kotlin.jvm.Throws
 
@@ -64,15 +63,15 @@ data class ApiUpdateOrderPayload(
     @Throws(ValidationException::class)
     fun validate() {
         if (hostOrderId.isBlank()) {
-            throw ValidationException("The order's hostOrderId is required, and can not be blank")
+            throw ValidationException("Updated order's hostOrderId is required, and can not be blank")
         }
 
         if (orderLine.isEmpty()) {
-            throw ValidationException("The order cannot contain an empty list of order lines")
+            throw ValidationException("Updated order must have at least one order line")
         }
 
         if (!isValidUrl(callbackUrl)) {
-            throw ValidationException("The order's callbackUrl is required, and can not be blank")
+            throw ValidationException("Updated order's callback URL is required, and must be a valid URL")
         }
 
         orderLine.forEach(OrderLine::validate)
@@ -87,7 +86,7 @@ data class ApiUpdateOrderPayload(
         return try {
             URI(url).toURL() // Try to create a URL object
             true
-        } catch (_: MalformedURLException) {
+        } catch (_: Exception) {
             false // If exception is thrown, it's not a valid URL
         }
     }

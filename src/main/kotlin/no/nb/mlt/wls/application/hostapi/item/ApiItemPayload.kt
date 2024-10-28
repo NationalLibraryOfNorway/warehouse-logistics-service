@@ -138,7 +138,7 @@ data class ApiItemPayload(
         }
 
         if (callbackUrl != null && !isValidUrl(callbackUrl)) {
-            throw ValidationException("The item's callback must be a valid URL if set")
+            throw ValidationException("The item's callback URL must be valid if set")
         }
     }
 
