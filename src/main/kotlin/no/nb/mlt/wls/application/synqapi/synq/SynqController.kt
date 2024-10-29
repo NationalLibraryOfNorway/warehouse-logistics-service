@@ -101,7 +101,7 @@ class SynqController(
         @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
         payload.validate()
-        val hostIds: MutableMap<String, Double> = mutableMapOf()
+        val hostIds: MutableMap<String, Int> = mutableMapOf()
         val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
         payload.orderLine.map { orderLine ->
             hostIds.put(

@@ -520,7 +520,7 @@ class OrderControllerTest(
                                 packaging = Packaging.NONE,
                                 owner = Owner.NB,
                                 location = "location",
-                                quantity = 1.0,
+                                quantity = 1,
                                 callbackUrl = "https://callback.com/item"
                             )
                         }

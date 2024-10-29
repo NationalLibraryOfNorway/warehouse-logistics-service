@@ -83,7 +83,7 @@ class WLSService(
 
     override suspend fun pickItems(
         hostName: HostName,
-        itemsPickedMap: Map<String, Double>
+        itemsPickedMap: Map<String, Int>
     ) {
         val itemIds =
             itemsPickedMap.map {
@@ -99,8 +99,8 @@ class WLSService(
             // TODO - Get All Items function?
             val item = getItem(itemId.hostName, itemId.hostId)!!
 
-            val itemsInStockQuantity = item.quantity ?: 0.0
-            val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0.0
+            val itemsInStockQuantity = item.quantity ?: 0
+            val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
 
             // In the case of over-picking, set quantity to zero
             // so that on return the database hopefully recovers
@@ -110,9 +110,9 @@ class WLSService(
                         "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity"
                 }
             }
-            val quantity = Math.clamp(itemsInStockQuantity.minus(pickedItemsQuantity), 0.0, Double.MAX_VALUE)
+            val quantity = Math.clamp(itemsInStockQuantity.minus(pickedItemsQuantity).toLong(), 0, Int.MAX_VALUE)
             val location: String =
-                if (quantity == 0.0) {
+                if (quantity == 0) {
                     "WITH_LENDER"
                 } else if (item.location != null) {
                     item.location

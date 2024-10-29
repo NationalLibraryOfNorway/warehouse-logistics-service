@@ -131,7 +131,7 @@ data class Product(
         example = "1.0"
     )
     @PositiveOrZero
-    val quantityOnHand: Double,
+    val quantityOnHand: Int,
     @Schema(
         description = "Signifies the product is marked as suspect in the storage system and needs to be manually verified.",
         example = "false"

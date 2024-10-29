@@ -161,7 +161,7 @@ class SynqModelValidationTest {
             orderTuType = "UFO",
             productId = "item-123",
             productVersionId = "1.0",
-            quantity = 1.0,
+            quantity = 1,
             attributeValue =
                 listOf(
                     AttributeValue(
@@ -180,7 +180,7 @@ class SynqModelValidationTest {
             orderTuType = "UFO",
             productId = "item-456",
             productVersionId = "1.0",
-            quantity = 1.0,
+            quantity = 1,
             attributeValue =
                 listOf(
                     AttributeValue(

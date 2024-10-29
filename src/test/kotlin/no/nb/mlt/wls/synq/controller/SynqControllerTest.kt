@@ -272,7 +272,7 @@ class SynqControllerTest(
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(quantityOnHand = -1.0))))
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(quantityOnHand = -1))))
                 .exchange()
                 .expectStatus().isBadRequest
         }
@@ -314,7 +314,7 @@ class SynqControllerTest(
             productId = "mlt-12345",
             productOwner = "NB",
             productVersionId = "Default",
-            quantityOnHand = 1.0,
+            quantityOnHand = 1,
             suspect = false,
             attributeValue =
                 listOf(
@@ -338,7 +338,7 @@ class SynqControllerTest(
             productId = "mlt-54321",
             productOwner = "NB",
             productVersionId = "Default",
-            quantityOnHand = 69.0,
+            quantityOnHand = 69,
             suspect = false,
             attributeValue =
                 listOf(
@@ -366,7 +366,7 @@ class SynqControllerTest(
             packaging = Packaging.BOX,
             callbackUrl = "https://callback.com/item",
             location = null,
-            quantity = 0.0
+            quantity = 0
         )
 
     private val item2 =
@@ -380,7 +380,7 @@ class SynqControllerTest(
             packaging = Packaging.BOX,
             callbackUrl = "https://callback.com/item",
             location = null,
-            quantity = 0.0
+            quantity = 0
         )
 
     private val order =

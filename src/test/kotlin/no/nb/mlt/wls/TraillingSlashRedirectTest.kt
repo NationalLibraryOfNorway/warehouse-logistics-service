@@ -88,6 +88,6 @@ class TraillingSlashRedirectTest(
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "SYNQ_WAREHOUSE",
-            quantity = 1.0
+            quantity = 1
         )
 }

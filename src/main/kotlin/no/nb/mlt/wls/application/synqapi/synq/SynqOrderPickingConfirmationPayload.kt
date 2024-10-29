@@ -124,7 +124,7 @@ data class OrderLine(
         description = "Quantity of the product/item.",
         example = "1.0"
     )
-    val quantity: Double,
+    val quantity: Int,
     @Schema(
         description = "List of attribute values of the product/item.",
         example = "[{...}]"

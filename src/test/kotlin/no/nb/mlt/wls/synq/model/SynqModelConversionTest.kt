@@ -44,7 +44,7 @@ class SynqModelConversionTest {
             productId = "mlt-12345",
             productOwner = "NB",
             productVersionId = "Default",
-            quantityOnHand = 1.0,
+            quantityOnHand = 1,
             suspect = false,
             attributeValue =
                 listOf(
