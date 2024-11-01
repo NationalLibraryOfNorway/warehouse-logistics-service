@@ -78,18 +78,6 @@ fun Order.toSynqPayload() =
             )
     )
 
-fun Item.toSynqPayload() =
-    SynqProductPayload(
-        productId = hostId,
-        owner = owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(hostId),
-        description = description,
-        productCategory = itemCategory,
-        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
-        confidential = false,
-        hostName = hostName.toString()
-    )
-
 fun Packaging.toSynqPackaging(): SynqPackaging =
     when (this) {
         Packaging.NONE -> OBJ
