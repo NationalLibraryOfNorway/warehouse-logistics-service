@@ -86,7 +86,7 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        val itemsToPick = getItems(itemIds)
+        val itemsToPick = getItems(itemsPickedMap.keys.toList(), hostName)
         itemsToPick.map { item ->
             val itemsInStockQuantity = item.quantity ?: 0
             val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
@@ -192,8 +192,11 @@ class WLSService(
         return itemRepository.getItem(hostName, hostId)
     }
 
-    private suspend fun getItems(hostIds: List<ItemId>): List<Item> {
-        return itemRepository.getItems(hostIds)
+    private suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item> {
+        return itemRepository.getItems(hostIds, hostName)
     }
 
     override suspend fun updateOrderStatus(

@@ -10,7 +10,10 @@ interface ItemRepository {
         hostId: String
     ): Item?
 
-    suspend fun getItems(hostIds: List<ItemId>): List<Item>
+    suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item>
 
     fun createItem(item: Item): Mono<Item>
 
