@@ -47,9 +47,13 @@ data class SynqOrderPickingConfirmationPayload(
     )
     val warehouse: String
 ) {
-    fun validate() {
+    fun validate(orderId: String) {
         if (orderLine.isEmpty()) {
             throw ValidationException("Picking update does not contain any elements in the order line")
+        }
+
+        if (!orderId.startsWith(this.getHostname().toString())) {
+            throw ValidationException("Order picked from SynQ does not have a host declared within WLS")
         }
 
         if (operator.isBlank()) {
@@ -61,6 +65,25 @@ data class SynqOrderPickingConfirmationPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
+    }
+
+    fun getHostname(): HostName {
+        val hostString = this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get HostName as there were no order lines")
+        return HostName.valueOf(hostString)
+    }
+
+    /**
+     * Creates a map between the id and the quantity picked from each product in the order line
+     */
+    fun mapProductsToQuantity(): Map<String, Int> {
+        val map: MutableMap<String, Int> = mutableMapOf()
+        this.orderLine.map { orderLine ->
+            map.put(
+                orderLine.productId,
+                orderLine.quantity
+            )
+        }
+        return map
     }
 }
 

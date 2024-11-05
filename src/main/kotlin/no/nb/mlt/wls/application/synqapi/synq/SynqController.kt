@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
@@ -100,19 +99,9 @@ class SynqController(
         @PathVariable orderId: String,
         @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
-        payload.validate()
-        // TODO - Migrate functionality to the Order domain model instead of handling it here
-        val hostIds: MutableMap<String, Int> = mutableMapOf()
-        val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
-        if (!orderId.startsWith(hostName.toString())) {
-            TODO("Log this error, or throw an exception?")
-        }
-        payload.orderLine.map { orderLine ->
-            hostIds.put(
-                orderLine.productId,
-                orderLine.quantity
-            )
-        }
+        payload.validate(orderId)
+        val hostName = payload.getHostname()
+        val hostIds = payload.mapProductsToQuantity()
 
         pickItems.pickItems(hostName, hostIds)
         pickOrderItems.pickOrderItems(hostName, hostIds.keys.toList(), orderId)
