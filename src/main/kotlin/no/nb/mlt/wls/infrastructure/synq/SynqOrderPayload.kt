@@ -58,7 +58,6 @@ fun Order.toSynqPayload() =
         dispatchDate = LocalDateTime.now(),
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
         orderDate = LocalDateTime.now(),
-        // TODO: we don't get it from API so we set it to 1, is other value more appropriate?
         priority = 5,
         owner = owner.toSynqOwner(),
         orderLine =
@@ -86,7 +85,8 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
 
 fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
     when (this) {
-        Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD // TODO: Since mock api defined more types than Synq has we map both to standard
+        // Since mock api defined more types than Synq has we map both to standard
+        Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD
         Order.Type.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
     }
 
