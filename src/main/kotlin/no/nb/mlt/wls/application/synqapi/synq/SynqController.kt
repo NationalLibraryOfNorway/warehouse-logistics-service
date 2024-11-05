@@ -101,8 +101,12 @@ class SynqController(
         @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
         payload.validate()
+        // TODO - Migrate functionality to the Order domain model instead of handling it here
         val hostIds: MutableMap<String, Double> = mutableMapOf()
         val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
+        if (!orderId.startsWith(hostName.toString())) {
+            TODO("Log this error, or throw an exception?")
+        }
         payload.orderLine.map { orderLine ->
             hostIds.put(
                 orderLine.productId,

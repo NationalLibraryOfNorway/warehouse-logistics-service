@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
@@ -53,7 +52,7 @@ data class ShippingAddress(
 
 fun Order.toSynqPayload() =
     SynqOrderPayload(
-        orderId = hostOrderId,
+        orderId = hostName.toString().uppercase() + "_" + hostOrderId,
         orderType = orderType.toSynqOrderType(),
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
@@ -61,7 +60,7 @@ fun Order.toSynqPayload() =
         orderDate = LocalDateTime.now(),
         // TODO: we don't get it from API so we set it to 1, is other value more appropriate?
         priority = 5,
-        owner = owner?.toSynqOwner() ?: SynqOwner.NB,
+        owner = owner.toSynqOwner(),
         orderLine =
             orderLine.mapIndexed { index, it ->
                 SynqOrderPayload.OrderLine(
@@ -77,18 +76,6 @@ fun Order.toSynqPayload() =
                     receiver.address
                 )
             )
-    )
-
-fun Item.toSynqPayload() =
-    SynqProductPayload(
-        productId = hostId,
-        owner = owner.toSynqOwner(),
-        barcode = SynqProductPayload.Barcode(hostId),
-        description = description,
-        productCategory = itemCategory,
-        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
-        confidential = false,
-        hostName = hostName.toString()
     )
 
 fun Packaging.toSynqPackaging(): SynqPackaging =
