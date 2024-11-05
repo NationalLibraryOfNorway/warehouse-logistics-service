@@ -69,7 +69,7 @@ data class SynqOrderPickingConfirmationPayload(
 
     fun getHostname(): HostName {
         val hostString = this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get HostName as there were no order lines")
-        return HostName.valueOf(hostString)
+        return HostName.valueOf(hostString.uppercase())
     }
 
     /**
