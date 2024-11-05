@@ -141,18 +141,8 @@ class WLSService(
         pickedHostIds: List<String>,
         orderId: String
     ) {
-        // TODO - Move some of this to Order
-        // Make a new order line with picked items
         val order = getOrderOrThrow(hostName, orderId)
-        val orderLine =
-            order.orderLine.map { orderItem ->
-                if (pickedHostIds.contains(orderItem.hostId)) {
-                    orderItem.copy(status = Order.OrderItem.Status.PICKED)
-                } else {
-                    orderItem
-                }
-            }
-        val pickedOrder = orderRepository.updateOrder(order.copy(orderLine = orderLine))
+        val pickedOrder = orderRepository.updateOrder(order.pickOrder(pickedHostIds))
         inventoryNotifier.orderChanged(pickedOrder)
     }
 
@@ -183,7 +173,7 @@ class WLSService(
         hostOrderId: String
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
-        order.throwIfInProgress()
+        order.deleteOrder()
         storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
@@ -203,15 +193,7 @@ class WLSService(
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        order.throwIfInProgress()
-
-        val updatedOrder =
-            order
-                .setOrderLines(itemHostIds)
-                .setCallbackUrl(callbackUrl)
-                .setOrderType(orderType)
-                .setReceiver(receiver)
-
+        val updatedOrder = order.updateOrder(itemHostIds, callbackUrl, orderType, receiver)
         val result = storageSystemFacade.updateOrder(updatedOrder)
         return orderRepository.updateOrder(result)
     }

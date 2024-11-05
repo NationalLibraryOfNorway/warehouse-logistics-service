@@ -16,7 +16,7 @@ data class Order(
     val receiver: Receiver,
     val callbackUrl: String
 ) {
-    fun setOrderLines(listOfHostIds: List<String>): Order {
+    private fun setOrderLines(listOfHostIds: List<String>): Order {
         if (isOrderProcessingStarted()) {
             throw IllegalOrderStateException("Order processing is already started")
         }
@@ -29,8 +29,8 @@ data class Order(
         )
     }
 
-    fun setOrderLineStatus(
-        hostId: String,
+    private fun setOrderLineStatus(
+        hostId: List<String>,
         status: OrderItem.Status
     ): Order {
         if (isOrderClosed()) {
@@ -39,7 +39,7 @@ data class Order(
 
         val updatedOrderLineList =
             orderLine.map {
-                if (it.hostId == hostId) {
+                if (hostId.contains(it.hostId)) {
                     it.copy(status = status)
                 } else {
                     it
@@ -55,15 +55,15 @@ data class Order(
             .updateOrderStatusFromOrderLines()
     }
 
-    fun setReceiver(receiver: Receiver): Order {
+    private fun setReceiver(receiver: Receiver): Order {
         return this.copy(receiver = receiver)
     }
 
-    fun setOrderType(orderType: Type): Order {
+    private fun setOrderType(orderType: Type): Order {
         return this.copy(orderType = orderType)
     }
 
-    fun setCallbackUrl(callbackUrl: String): Order {
+    private fun setCallbackUrl(callbackUrl: String): Order {
         throwIfInvalidUrl(callbackUrl)
 
         return this.copy(callbackUrl = callbackUrl)
@@ -92,16 +92,43 @@ data class Order(
     }
 
     /**
-     * Throws an exception if the order has been started or finished
-     * TODO - Make this private, and handle this in a more domain-driven way
+     * Makes a copy of the order with the updated fields
      */
-    fun throwIfInProgress() {
+    fun updateOrder(
+        itemIds: List<String>,
+        callbackUrl: String,
+        orderType: Type,
+        receiver: Receiver
+    ): Order {
+        throwIfInProgress()
+
+        return this.setOrderLines(itemIds)
+            .setCallbackUrl(callbackUrl)
+            .setOrderType(orderType)
+            .setReceiver(receiver)
+    }
+
+    /**
+     * Delete the order as long as it is possible
+     */
+    fun deleteOrder() {
+        throwIfInProgress()
+    }
+
+    /**
+     * Throws an exception if the order has been started or finished
+     */
+    private fun throwIfInProgress() {
         if (this.isOrderClosed()) {
             throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
         }
         if (this.isOrderProcessingStarted()) {
             throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
         }
+    }
+
+    fun pickOrder(itemIds: List<String>): Order {
+        return this.setOrderLineStatus(itemIds, PICKED)
     }
 
     private fun throwIfInvalidUrl(url: String) {
