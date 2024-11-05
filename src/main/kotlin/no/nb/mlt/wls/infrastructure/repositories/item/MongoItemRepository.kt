@@ -40,6 +40,10 @@ class ItemRepositoryMongoAdapter(
             .awaitSingleOrNull()
     }
 
+    override suspend fun getItems(hostIds: List<ItemId>): List<Item> {
+        TODO("Not yet implemented")
+    }
+
     override fun createItem(item: Item): Mono<Item> {
         return mongoRepo.save(item.toMongoItem()).map(MongoItem::toItem)
     }

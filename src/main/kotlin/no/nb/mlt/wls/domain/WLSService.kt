@@ -62,6 +62,7 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
+        // TODO - Move validation
         if (moveItemPayload.quantity < 0.0) {
             throw ValidationException("Quantity can not be negative")
         }
@@ -94,11 +95,8 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        // TODO - Move some of this to Order
-        itemIds.map { itemId ->
-            // TODO - Get All Items function?
-            val item = getItem(itemId.hostName, itemId.hostId)!!
-
+        val itemsToPick = getItems(itemIds)
+        itemsToPick.map { item ->
             val itemsInStockQuantity = item.quantity ?: 0
             val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
 
@@ -110,27 +108,16 @@ class WLSService(
                         "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity"
                 }
             }
-            val quantity = Math.clamp(itemsInStockQuantity.minus(pickedItemsQuantity).toLong(), 0, Int.MAX_VALUE)
-            val location: String =
-                if (quantity == 0) {
-                    "WITH_LENDER"
-                } else if (item.location != null) {
-                    item.location
-                } else {
-                    // Rare edge case. Log it until we can determine if this actually happens in production
-                    logger.error {
-                        "Item with ID ${item.hostId} for host $hostName without a location was picked. Location was set to empty string."
-                    }
-                    ""
-                }
 
+            val pickedItem = item.pickItem(pickedItemsQuantity)
             val movedItem =
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    quantity,
-                    location
+                    pickedItem.quantity!!,
+                    pickedItem.location!!
                 )
+
             inventoryNotifier.itemChanged(movedItem)
         }
         // TODO - Should we log this once completed?
@@ -210,6 +197,10 @@ class WLSService(
         hostId: String
     ): Item? {
         return itemRepository.getItem(hostName, hostId)
+    }
+
+    private suspend fun getItems(hostIds: List<ItemId>): List<Item> {
+        return itemRepository.getItems(hostIds)
     }
 
     override suspend fun updateOrderStatus(
