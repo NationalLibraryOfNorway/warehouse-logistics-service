@@ -20,4 +20,14 @@ data class MoveItemPayload(
     val hostName: HostName,
     val quantity: Int,
     val location: String
-)
+) {
+    fun validate() {
+        if (quantity < 0.0) {
+            throw ValidationException("Quantity can not be negative")
+        }
+
+        if (location.isBlank()) {
+            throw ValidationException("Location can not be blank")
+        }
+    }
+}

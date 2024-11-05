@@ -62,23 +62,14 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
-        // TODO - Move validation
-        if (moveItemPayload.quantity < 0.0) {
-            throw ValidationException("Quantity can not be negative")
-        }
-
-        if (moveItemPayload.location.isBlank()) {
-            throw ValidationException("Location can not be blank")
-        }
+        moveItemPayload.validate()
 
         val item =
             getItem(moveItemPayload.hostName, moveItemPayload.hostId)
                 ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
 
         val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
-
         inventoryNotifier.itemChanged(movedItem)
-
         return movedItem
     }
 
@@ -110,6 +101,8 @@ class WLSService(
             }
 
             val pickedItem = item.pickItem(pickedItemsQuantity)
+            // Picking an item is guaranteed to set quantity or location.
+            // An exception is thrown otherwise
             val movedItem =
                 itemRepository.moveItem(
                     item.hostId,
