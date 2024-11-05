@@ -52,8 +52,9 @@ data class SynqOrderPickingConfirmationPayload(
             throw ValidationException("Picking update does not contain any elements in the order line")
         }
 
-        if (!orderId.startsWith(this.getHostname().toString())) {
-            throw ValidationException("Order picked from SynQ does not have a host declared within WLS")
+        val hostName = this.getHostname().toString()
+        if (!orderId.startsWith(hostName)) {
+            throw ValidationException("Order picked from SynQ does not have the host '$hostName' declared within WLS")
         }
 
         if (operator.isBlank()) {
