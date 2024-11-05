@@ -1,5 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
+import no.nb.mlt.wls.domain.model.Item
+
 data class SynqProductPayload(
     val productId: String,
     val owner: SynqOwner,
@@ -19,3 +21,15 @@ data class SynqProductPayload(
 
     data class ProductUom(val uomId: SynqPackaging)
 }
+
+fun Item.toSynqPayload() =
+    SynqProductPayload(
+        productId = hostId,
+        owner = owner.toSynqOwner(),
+        barcode = SynqProductPayload.Barcode(hostId),
+        description = description,
+        productCategory = itemCategory,
+        productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
+        confidential = false,
+        hostName = hostName.toString()
+    )

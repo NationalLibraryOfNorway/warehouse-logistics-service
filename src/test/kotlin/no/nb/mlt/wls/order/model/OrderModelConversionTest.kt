@@ -50,7 +50,7 @@ class OrderModelConversionTest {
 
     private val testSynqOrderPayload =
         SynqOrderPayload(
-            orderId = "hostOrderId",
+            orderId = "AXIELL_hostOrderId",
             orderType = SynqOrderPayload.SynqOrderType.STANDARD,
             dispatchDate = LocalDateTime.now(),
             orderDate = LocalDateTime.now(),
