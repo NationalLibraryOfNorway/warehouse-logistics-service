@@ -127,9 +127,8 @@ data class Product(
     )
     val productVersionId: String,
     @Schema(
-        description =
-            "Quantity of the product in the transport unit. Accepts doubles, " +
-                "however, this is converted as we operate only in whole numbers.",
+        description = """Quantity of the product in the transport unit.
+            Accepts doubles, but they will be converted to integers.""",
         example = "1.0"
     )
     @PositiveOrZero
