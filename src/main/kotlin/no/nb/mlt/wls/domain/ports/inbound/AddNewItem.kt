@@ -21,8 +21,13 @@ data class ItemMetadata(
     val callbackUrl: String?
 )
 
+/**
+ * Maps and creates an Item from ItemMetadata
+ * Note that when registering products the quantity and location
+ * are always zero/empty, as they must be registered before being inserted into storage
+ */
 fun ItemMetadata.toItem(
-    quantity: Double? = 0.0,
+    quantity: Int? = 0,
     location: String? = null
 ) = Item(
     this.hostId,

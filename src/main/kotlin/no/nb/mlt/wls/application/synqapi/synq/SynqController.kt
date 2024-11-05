@@ -102,7 +102,7 @@ class SynqController(
     ) {
         payload.validate()
         // TODO - Migrate functionality to the Order domain model instead of handling it here
-        val hostIds: MutableMap<String, Double> = mutableMapOf()
+        val hostIds: MutableMap<String, Int> = mutableMapOf()
         val hostName = HostName.valueOf(payload.orderLine.first().hostName.uppercase())
         if (!orderId.startsWith(hostName.toString())) {
             TODO("Log this error, or throw an exception?")

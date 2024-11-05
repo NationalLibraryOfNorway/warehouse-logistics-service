@@ -90,7 +90,7 @@ class ItemControllerTest(
             assertThat(item)
                 .isNotNull
                 .extracting("description", "location", "quantity")
-                .containsExactly(testItemPayload.description, null, 0.0)
+                .containsExactly(testItemPayload.description, null, 0)
         }
 
     @Test
@@ -245,7 +245,7 @@ class ItemControllerTest(
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "SYNQ_WAREHOUSE",
-            quantity = 1.0
+            quantity = 1
         )
 
     /**
@@ -262,7 +262,7 @@ class ItemControllerTest(
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "SYNQ_WAREHOUSE",
-            quantity = 1.0
+            quantity = 1
         )
 
     fun populateDb() {

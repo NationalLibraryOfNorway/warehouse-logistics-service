@@ -82,7 +82,7 @@ class ItemModelValidationTest {
 
     @Test
     fun `item with negative quantity should fail validation`() {
-        val item = validItem.copy(quantity = -1.0)
+        val item = validItem.copy(quantity = -1)
 
         val thrown = catchThrowable(item::validate)
 
@@ -119,6 +119,6 @@ class ItemModelValidationTest {
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "location",
-            quantity = 1.0
+            quantity = 1
         )
 }

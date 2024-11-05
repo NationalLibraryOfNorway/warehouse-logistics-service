@@ -17,7 +17,7 @@ interface ItemRepository {
     suspend fun moveItem(
         hostId: String,
         hostName: HostName,
-        quantity: Double,
+        quantity: Int,
         location: String
     ): Item
 

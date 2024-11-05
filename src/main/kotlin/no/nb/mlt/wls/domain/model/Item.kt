@@ -10,5 +10,5 @@ data class Item(
     val owner: Owner,
     val callbackUrl: String?,
     val location: String?,
-    val quantity: Double?
+    val quantity: Int?
 )

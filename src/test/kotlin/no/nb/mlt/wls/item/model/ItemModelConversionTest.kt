@@ -27,7 +27,7 @@ class ItemModelConversionTest {
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "",
-            quantity = 1.0
+            quantity = 1
         )
 
     private val testItem =
@@ -41,7 +41,7 @@ class ItemModelConversionTest {
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "",
-            quantity = 1.0
+            quantity = 1
         )
 
     private val testSynqPayload =
@@ -67,7 +67,7 @@ class ItemModelConversionTest {
             owner = Owner.NB,
             callbackUrl = "https://callback.com/item",
             location = "",
-            quantity = 1.0
+            quantity = 1
         )
 
     @Test

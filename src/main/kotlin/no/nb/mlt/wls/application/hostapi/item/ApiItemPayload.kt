@@ -82,12 +82,12 @@ data class ApiItemPayload(
     @Schema(
         description =
             "Quantity on hand of the item, this denotes if the item is in storage or not. " +
-                "If the item is in storage then quantity is 1.0, if it's not in storage then quantity is 0.0.",
-        examples = [ "0.0", "1.0"],
+                "If the item is in storage then quantity is at least 1, if it's not in storage then quantity is 0.",
+        examples = [ "0", "1"],
         accessMode = READ_ONLY,
         required = false
     )
-    val quantity: Double?
+    val quantity: Int?
 ) {
     fun toItem(): Item =
         Item(

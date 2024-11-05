@@ -18,7 +18,7 @@ data class MongoItem(
     val owner: Owner,
     val callbackUrl: String?,
     val location: String?,
-    val quantity: Double?
+    val quantity: Int?
 )
 
 fun Item.toMongoItem() =

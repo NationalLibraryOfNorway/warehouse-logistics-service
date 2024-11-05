@@ -18,6 +18,6 @@ interface MoveItem {
 data class MoveItemPayload(
     val hostId: String,
     val hostName: HostName,
-    val quantity: Double,
+    val quantity: Int,
     val location: String
 )

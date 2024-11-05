@@ -62,7 +62,7 @@ class ItemRepositoryMongoAdapter(
     override suspend fun moveItem(
         hostId: String,
         hostName: HostName,
-        quantity: Double,
+        quantity: Int,
         location: String
     ): Item {
         val itemsModified =
@@ -104,7 +104,7 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
     fun findAndUpdateItemByHostNameAndHostId(
         hostName: HostName,
         hostId: String,
-        quantity: Double,
+        quantity: Int,
         location: String
     ): Mono<Long>
 }

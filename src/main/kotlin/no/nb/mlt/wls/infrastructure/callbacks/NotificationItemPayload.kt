@@ -68,7 +68,7 @@ data class NotificationItemPayload(
         accessMode = READ_ONLY,
         required = false
     )
-    val quantity: Double?
+    val quantity: Int?
 )
 
 fun NotificationItemPayload.toItem(): Item {

@@ -131,7 +131,7 @@ class WLSServiceTest {
         val expectedItem =
             testItem.copy(
                 location = "Somewhere nice",
-                quantity = 1.0
+                quantity = 1
             )
         coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
@@ -166,12 +166,12 @@ class WLSServiceTest {
 
     @Test
     fun `moveItem throws when count is invalid`() {
-        coEvery { itemRepoMock.moveItem(any(), any(), -1.0, any()) } throws ValidationException("Location cannot be blank")
+        coEvery { itemRepoMock.moveItem(any(), any(), -1, any()) } throws ValidationException("Location cannot be blank")
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
             assertThrows<RuntimeException> {
-                cut.moveItem(testMoveItemPayload.copy(quantity = -1.0))
+                cut.moveItem(testMoveItemPayload.copy(quantity = -1))
             }
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
@@ -445,7 +445,7 @@ class WLSServiceTest {
         MoveItemPayload(
             "12345",
             HostName.AXIELL,
-            1.0,
+            1,
             "Somewhere nice"
         )
 
