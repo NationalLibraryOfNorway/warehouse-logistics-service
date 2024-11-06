@@ -36,8 +36,22 @@ class SynqModelValidationTest {
     @Test
     fun `valid SynqOrderPickingConfirmationPayload should pass validation`() {
         thenCode {
-            validSynqOrderPickingConfirmationPayload.validate(orderId)
+            validSynqOrderPickingConfirmationPayload.validate()
         }.doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `valid order id for SynqOrderPickingConfirmationPayload should pass validation`() {
+        thenCode {
+            validSynqOrderPickingConfirmationPayload.validateOrderId("AXIELL_order-12345")
+        }
+    }
+
+    @Test
+    fun `invalid order id for SynqOrderPickingConfirmationPayload should fail`() {
+        thenCode {
+            validSynqOrderPickingConfirmationPayload.validateOrderId("INVALID")
+        }
     }
 
     @Test
@@ -46,7 +60,7 @@ class SynqModelValidationTest {
 
         val thrown =
             catchThrowable {
-                payload.validate(orderId)
+                payload.validate()
             }
 
         then(thrown)
@@ -61,7 +75,7 @@ class SynqModelValidationTest {
 
         val thrown =
             catchThrowable {
-                payload.validate(orderId)
+                payload.validate()
             }
 
         then(thrown)
@@ -76,7 +90,7 @@ class SynqModelValidationTest {
 
         val thrown =
             catchThrowable {
-                payload.validate(orderId)
+                payload.validate()
             }
 
         then(thrown)
@@ -97,7 +111,7 @@ class SynqModelValidationTest {
 
         val thrown =
             catchThrowable {
-                payload.validate(orderId)
+                payload.validate()
             }
 
         then(thrown)
@@ -157,8 +171,6 @@ class SynqModelValidationTest {
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
-
-    private val orderId = "AXIELL_order-12345"
 
     private val validSynqOrderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
