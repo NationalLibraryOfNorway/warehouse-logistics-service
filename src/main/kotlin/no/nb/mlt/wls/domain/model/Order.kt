@@ -109,7 +109,10 @@ data class Order(
     }
 
     /**
-     * Delete the order as long as it is possible
+     * Delete the order as long as it is possible.
+     *
+     * At the moment this function only does validation, as deleting it from the system is
+     * handled by the service and infrastructure
      */
     fun deleteOrder() {
         throwIfInProgress()
