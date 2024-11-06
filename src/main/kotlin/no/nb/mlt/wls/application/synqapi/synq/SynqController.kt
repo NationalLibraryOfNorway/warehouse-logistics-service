@@ -99,7 +99,9 @@ class SynqController(
         @PathVariable orderId: String,
         @RequestBody payload: SynqOrderPickingConfirmationPayload
     ) {
-        payload.validate(orderId)
+        payload.validate()
+        payload.validateOrderId(orderId)
+
         val hostName = payload.getHostname()
         val hostIds = payload.mapProductsToQuantity()
 

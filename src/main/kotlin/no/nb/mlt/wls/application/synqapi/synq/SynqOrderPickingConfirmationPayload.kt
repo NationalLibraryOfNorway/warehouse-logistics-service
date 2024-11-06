@@ -47,14 +47,12 @@ data class SynqOrderPickingConfirmationPayload(
     )
     val warehouse: String
 ) {
-    fun validate(orderId: String) {
+    /**
+     * Validates the packet data and structure
+     */
+    fun validate() {
         if (orderLine.isEmpty()) {
             throw ValidationException("Picking update does not contain any elements in the order line")
-        }
-
-        val hostName = this.getHostname().toString()
-        if (!orderId.startsWith(hostName)) {
-            throw ValidationException("Order picked from SynQ does not have the host '$hostName' declared within WLS")
         }
 
         if (operator.isBlank()) {
@@ -66,6 +64,16 @@ data class SynqOrderPickingConfirmationPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
+    }
+
+    /**
+     * Validates the order id and checks if it starts with the hostname
+     */
+    fun validateOrderId(orderId: String) {
+        val hostName = getHostname().toString()
+        if (!orderId.startsWith(hostName)) {
+            throw ValidationException("Order picked from SynQ does not have the host '$hostName' declared within WLS")
+        }
     }
 
     fun getHostname(): HostName {
