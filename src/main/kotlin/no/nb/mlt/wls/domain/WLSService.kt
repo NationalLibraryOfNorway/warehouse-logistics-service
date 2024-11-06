@@ -88,20 +88,9 @@ class WLSService(
 
         val itemsToPick = getItems(itemsPickedMap.keys.toList(), hostName)
         itemsToPick.map { item ->
-            val itemsInStockQuantity = item.quantity ?: 0
             val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
-
-            // In the case of over-picking, set quantity to zero
-            // so that on return the database hopefully recovers
-            if (pickedItemsQuantity > itemsInStockQuantity) {
-                logger.error {
-                    """Tried to pick too many items for item with id '${item.hostId}'.
-                        |WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity
-                    """.trimMargin()
-                }
-            }
-
             val pickedItem = item.pickItem(pickedItemsQuantity)
+
             // Picking an item is guaranteed to set quantity or location.
             // An exception is thrown otherwise
             val movedItem =

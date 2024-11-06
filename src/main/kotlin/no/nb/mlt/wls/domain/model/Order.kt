@@ -30,7 +30,7 @@ data class Order(
     }
 
     private fun setOrderLineStatus(
-        hostId: List<String>,
+        hostIds: List<String>,
         status: OrderItem.Status
     ): Order {
         if (isOrderClosed()) {
@@ -39,7 +39,7 @@ data class Order(
 
         val updatedOrderLineList =
             orderLine.map {
-                if (hostId.contains(it.hostId)) {
+                if (hostIds.contains(it.hostId)) {
                     it.copy(status = status)
                 } else {
                     it
@@ -47,7 +47,7 @@ data class Order(
             }
 
         if (updatedOrderLineList == orderLine) {
-            throw IllegalOrderStateException("Order line item not found: $hostId")
+            throw IllegalOrderStateException("Order line item not found: $hostIds")
         }
 
         return this
@@ -120,10 +120,10 @@ data class Order(
      */
     private fun throwIfInProgress() {
         if (this.isOrderClosed()) {
-            throw IllegalOrderStateException("The order is already completed, and can therefore not be deleted")
+            throw IllegalOrderStateException("The order is already completed, and can therefore not be changed")
         }
         if (this.isOrderProcessingStarted()) {
-            throw IllegalOrderStateException("The order can not be deleted as it is already being processed")
+            throw IllegalOrderStateException("The order is currently being processed, and can therefore not be changed")
         }
     }
 

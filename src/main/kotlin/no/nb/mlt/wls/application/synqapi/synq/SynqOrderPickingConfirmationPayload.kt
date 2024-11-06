@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
       "orderLine" : [
         {
           "confidentialProduct" : false,
-          "hostName" : "Axiell",
+          "hostName" : "AXIELL",
           "orderLineNumber" : 1,
           "orderTuId" : "SYS_TU_00000001157",
           "orderTuType" : "UFO",
@@ -102,7 +102,7 @@ data class SynqOrderPickingConfirmationPayload(
     example = """
     {
       "confidentialProduct" : false,
-      "hostName" : "Axiell",
+      "hostName" : "AXIELL",
       "orderLineNumber" : 1,
       "orderTuId" : "SYS_TU_00000001157",
       "orderTuType" : "UFO",
@@ -125,7 +125,7 @@ data class OrderLine(
     val confidentialProduct: Boolean,
     @Schema(
         description = "Name of the host system which placed the order/owns the order products/items.",
-        example = "Axiell"
+        example = "AXIELL"
     )
     val hostName: String,
     @Schema(

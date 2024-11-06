@@ -17,7 +17,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
       "loadUnit" : [
         {
           "confidentialProduct" : false,
-          "hostName" : "Axiell",
+          "hostName" : "AXIELL",
           "productId" : "mlt-12345",
           "productOwner" : "NB",
           "productVersionId" : "Default",
@@ -78,7 +78,7 @@ data class SynqBatchMoveItemPayload(
     example = """
     {
       "confidentialProduct" : false,
-      "hostName" : "Axiell",
+      "hostName" : "AXIELL",
       "productId" : "mlt-12345",
       "productOwner" : "NB",
       "productVersionId" : "Default",
@@ -105,7 +105,7 @@ data class Product(
     val confidentialProduct: Boolean,
     @Schema(
         description = "Name of the host system where the product is registered.",
-        example = "Axiell"
+        example = "AXIELL"
     )
     @NotBlank
     val hostName: String,

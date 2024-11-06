@@ -98,7 +98,11 @@ class SynqController(
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String,
         @RequestBody payload: SynqOrderPickingConfirmationPayload
-    ) {
+    ): ResponseEntity<String> {
+        if (orderId.isBlank()) {
+            return ResponseEntity.badRequest().body("Order ID cannot be blank")
+        }
+
         payload.validate()
 
         val hostName = payload.getValidHostName()
@@ -106,6 +110,8 @@ class SynqController(
 
         pickItems.pickItems(hostName, hostIds)
         pickOrderItems.pickOrderItems(hostName, hostIds.keys.toList(), orderId)
+
+        return ResponseEntity.ok().build()
     }
 
     @Operation(

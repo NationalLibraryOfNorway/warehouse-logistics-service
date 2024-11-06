@@ -19,7 +19,17 @@ data class Item(
     fun pickItem(amountPicked: Int): Item {
         val itemsInStockQuantity = quantity ?: 0
 
+        // In the case of over-picking, log it and set quantity to zero.
+        // This is in hope that on return the database recovers
+        if (amountPicked > itemsInStockQuantity) {
+            logger.error {
+                """Tried to pick too many items for item with id '$hostId'.
+                        |WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $amountPicked
+                """.trimMargin()
+            }
+        }
         val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
+
         val location: String =
             if (quantity == 0) {
                 "WITH_LENDER"

@@ -35,9 +35,7 @@ class SynqModelValidationTest {
 
     @Test
     fun `valid SynqOrderPickingConfirmationPayload should pass validation`() {
-        thenCode {
-            validSynqOrderPickingConfirmationPayload.validate()
-        }.doesNotThrowAnyException()
+        thenCode(validSynqOrderStatusUpdatePayload::validate).doesNotThrowAnyException()
     }
 
     @Test

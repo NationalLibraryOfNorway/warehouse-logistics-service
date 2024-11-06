@@ -40,7 +40,7 @@ class SynqModelConversionTest {
     private val product =
         Product(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             productId = "mlt-12345",
             productOwner = "NB",
             productVersionId = "Default",
