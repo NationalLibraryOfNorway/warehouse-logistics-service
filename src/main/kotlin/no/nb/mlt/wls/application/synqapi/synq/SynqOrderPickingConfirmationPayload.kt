@@ -62,7 +62,7 @@ data class SynqOrderPickingConfirmationPayload(
         if (warehouse.isBlank()) {
             throw ValidationException("Picking update's warehouse can not be blank")
         }
-        // Validates the hostname present on the order lines
+        // Validates the hostname based on the value of hostname in order lines
         getValidHostName()
 
         orderLine.forEach(OrderLine::validate)
@@ -70,7 +70,7 @@ data class SynqOrderPickingConfirmationPayload(
 
     @Throws(ValidationException::class)
     fun getValidHostName(): HostName {
-        val hostName = getHostNameString() ?: throw ValidationException("Unable to get hostname from order lines")
+        val hostName = getHostNameString()
         try {
             return HostName.valueOf(hostName)
         } catch (e: IllegalArgumentException) {
@@ -78,8 +78,8 @@ data class SynqOrderPickingConfirmationPayload(
         }
     }
 
-    private fun getHostNameString(): String? {
-        return this.orderLine.firstOrNull()?.hostName
+    private fun getHostNameString(): String {
+        return this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get hostname from order lines")
     }
 
     /**

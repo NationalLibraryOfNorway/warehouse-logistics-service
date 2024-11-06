@@ -43,9 +43,7 @@ class SynqModelValidationTest {
         val payload = validSynqOrderPickingConfirmationPayload.copy(orderLine = emptyList())
 
         val thrown =
-            catchThrowable {
-                payload.validate()
-            }
+            catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -58,9 +56,7 @@ class SynqModelValidationTest {
         val payload = validSynqOrderPickingConfirmationPayload.copy(operator = "")
 
         val thrown =
-            catchThrowable {
-                payload.validate()
-            }
+            catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -73,9 +69,7 @@ class SynqModelValidationTest {
         val payload = validSynqOrderPickingConfirmationPayload.copy(warehouse = "")
 
         val thrown =
-            catchThrowable {
-                payload.validate()
-            }
+            catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -94,9 +88,7 @@ class SynqModelValidationTest {
             )
 
         val thrown =
-            catchThrowable {
-                payload.validate()
-            }
+            catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()

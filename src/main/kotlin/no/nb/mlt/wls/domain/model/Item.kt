@@ -23,9 +23,8 @@ data class Item(
         // This is in hope that on return the database recovers
         if (amountPicked > itemsInStockQuantity) {
             logger.error {
-                """Tried to pick too many items for item with id '$hostId'.
-                        |WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $amountPicked
-                """.trimMargin()
+                "Tried to pick too many items for item with id '$hostId'. " +
+                    "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $amountPicked"
             }
         }
         val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
