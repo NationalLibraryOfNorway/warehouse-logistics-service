@@ -41,20 +41,6 @@ class SynqModelValidationTest {
     }
 
     @Test
-    fun `valid order id for SynqOrderPickingConfirmationPayload should pass validation`() {
-        thenCode {
-            validSynqOrderPickingConfirmationPayload.validateOrderId("AXIELL_order-12345")
-        }
-    }
-
-    @Test
-    fun `invalid order id for SynqOrderPickingConfirmationPayload should fail`() {
-        thenCode {
-            validSynqOrderPickingConfirmationPayload.validateOrderId("INVALID")
-        }
-    }
-
-    @Test
     fun `SynqOrderPickingConfirmationPayload with no order line should fail validation`() {
         val payload = validSynqOrderPickingConfirmationPayload.copy(orderLine = emptyList())
 
@@ -183,7 +169,7 @@ class SynqModelValidationTest {
     private val validSynqOrderLine1 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             orderLineNumber = 1,
             orderTuId = "tu-123",
             orderTuType = "UFO",
@@ -202,7 +188,7 @@ class SynqModelValidationTest {
     private val validSynqOrderLine2 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             orderLineNumber = 2,
             orderTuId = "tu-123",
             orderTuType = "UFO",

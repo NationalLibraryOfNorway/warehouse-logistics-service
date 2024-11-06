@@ -62,23 +62,24 @@ data class SynqOrderPickingConfirmationPayload(
         if (warehouse.isBlank()) {
             throw ValidationException("Picking update's warehouse can not be blank")
         }
+        // Validates the hostname present on the order lines
+        getValidHostName()
 
         orderLine.forEach(OrderLine::validate)
     }
 
-    /**
-     * Validates the order id and checks if it starts with the hostname
-     */
-    fun validateOrderId(orderId: String) {
-        val hostName = getHostname().toString()
-        if (!orderId.startsWith(hostName)) {
-            throw ValidationException("Order picked from SynQ does not have the host '$hostName' declared within WLS")
+    @Throws(ValidationException::class)
+    fun getValidHostName(): HostName {
+        val hostName = getHostNameString() ?: throw ValidationException("Unable to get hostname from order lines")
+        try {
+            return HostName.valueOf(hostName)
+        } catch (e: IllegalArgumentException) {
+            throw ValidationException("Hostname $hostName is not recognized by WLS", e)
         }
     }
 
-    fun getHostname(): HostName {
-        val hostString = this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get HostName as there were no order lines")
-        return HostName.valueOf(hostString.uppercase())
+    private fun getHostNameString(): String? {
+        return this.orderLine.firstOrNull()?.hostName
     }
 
     /**
