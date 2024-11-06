@@ -95,8 +95,9 @@ class WLSService(
             // so that on return the database hopefully recovers
             if (pickedItemsQuantity > itemsInStockQuantity) {
                 logger.error {
-                    "Tried to pick too many items for ${item.hostId}. " +
-                        "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity"
+                    """Tried to pick too many items for item with id '${item.hostId}'.
+                        |WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity
+                    """.trimMargin()
                 }
             }
 
