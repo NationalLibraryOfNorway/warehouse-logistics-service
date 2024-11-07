@@ -42,8 +42,7 @@ class SynqModelValidationTest {
     fun `SynqOrderPickingConfirmationPayload with no order line should fail validation`() {
         val payload = validSynqOrderPickingConfirmationPayload.copy(orderLine = emptyList())
 
-        val thrown =
-            catchThrowable(payload::validate)
+        val thrown = catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -55,8 +54,7 @@ class SynqModelValidationTest {
     fun `SynqOrderPickingConfirmationPayload with blank operator should fail validation`() {
         val payload = validSynqOrderPickingConfirmationPayload.copy(operator = "")
 
-        val thrown =
-            catchThrowable(payload::validate)
+        val thrown = catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -68,8 +66,7 @@ class SynqModelValidationTest {
     fun `SynqOrderPickingConfirmationPayload with blank warehouse should fail validation`() {
         val payload = validSynqOrderPickingConfirmationPayload.copy(warehouse = "")
 
-        val thrown =
-            catchThrowable(payload::validate)
+        val thrown = catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
@@ -87,8 +84,7 @@ class SynqModelValidationTest {
                     )
             )
 
-        val thrown =
-            catchThrowable(payload::validate)
+        val thrown = catchThrowable(payload::validate)
 
         then(thrown)
             .isNotNull()
