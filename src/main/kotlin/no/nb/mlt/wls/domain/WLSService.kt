@@ -62,22 +62,14 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
-        if (moveItemPayload.quantity < 0.0) {
-            throw ValidationException("Quantity can not be negative")
-        }
-
-        if (moveItemPayload.location.isBlank()) {
-            throw ValidationException("Location can not be blank")
-        }
+        moveItemPayload.validate()
 
         val item =
             getItem(moveItemPayload.hostName, moveItemPayload.hostId)
                 ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
 
         val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
-
         inventoryNotifier.itemChanged(movedItem)
-
         return movedItem
     }
 
@@ -94,43 +86,21 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        // TODO - Move some of this to Order
-        itemIds.map { itemId ->
-            // TODO - Get All Items function?
-            val item = getItem(itemId.hostName, itemId.hostId)!!
-
-            val itemsInStockQuantity = item.quantity ?: 0
+        val itemsToPick = getItems(itemsPickedMap.keys.toList(), hostName)
+        itemsToPick.map { item ->
             val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
+            val pickedItem = item.pickItem(pickedItemsQuantity)
 
-            // In the case of over-picking, set quantity to zero
-            // so that on return the database hopefully recovers
-            if (pickedItemsQuantity > itemsInStockQuantity) {
-                logger.error {
-                    "Tried to pick too many items for ${item.hostId}. " +
-                        "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $pickedItemsQuantity"
-                }
-            }
-            val quantity = Math.clamp(itemsInStockQuantity.minus(pickedItemsQuantity).toLong(), 0, Int.MAX_VALUE)
-            val location: String =
-                if (quantity == 0) {
-                    "WITH_LENDER"
-                } else if (item.location != null) {
-                    item.location
-                } else {
-                    // Rare edge case. Log it until we can determine if this actually happens in production
-                    logger.error {
-                        "Item with ID ${item.hostId} for host $hostName without a location was picked. Location was set to empty string."
-                    }
-                    ""
-                }
-
+            // Picking an item is guaranteed to set quantity or location.
+            // An exception is thrown otherwise
             val movedItem =
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    quantity,
-                    location
+                    pickedItem.quantity!!,
+                    pickedItem.location!!
                 )
+
             inventoryNotifier.itemChanged(movedItem)
         }
         // TODO - Should we log this once completed?
@@ -141,18 +111,8 @@ class WLSService(
         pickedHostIds: List<String>,
         orderId: String
     ) {
-        // TODO - Move some of this to Order
-        // Make a new order line with picked items
         val order = getOrderOrThrow(hostName, orderId)
-        val orderLine =
-            order.orderLine.map { orderItem ->
-                if (pickedHostIds.contains(orderItem.hostId)) {
-                    orderItem.copy(status = Order.OrderItem.Status.PICKED)
-                } else {
-                    orderItem
-                }
-            }
-        val pickedOrder = orderRepository.updateOrder(order.copy(orderLine = orderLine))
+        val pickedOrder = orderRepository.updateOrder(order.pickOrder(pickedHostIds))
         inventoryNotifier.orderChanged(pickedOrder)
     }
 
@@ -183,7 +143,7 @@ class WLSService(
         hostOrderId: String
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
-        order.throwIfInProgress()
+        order.deleteOrder()
         storageSystemFacade.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
@@ -203,15 +163,7 @@ class WLSService(
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        order.throwIfInProgress()
-
-        val updatedOrder =
-            order
-                .setOrderLines(itemHostIds)
-                .setCallbackUrl(callbackUrl)
-                .setOrderType(orderType)
-                .setReceiver(receiver)
-
+        val updatedOrder = order.updateOrder(itemHostIds, callbackUrl, orderType, receiver)
         val result = storageSystemFacade.updateOrder(updatedOrder)
         return orderRepository.updateOrder(result)
     }
@@ -228,6 +180,13 @@ class WLSService(
         hostId: String
     ): Item? {
         return itemRepository.getItem(hostName, hostId)
+    }
+
+    private suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item> {
+        return itemRepository.getItems(hostIds, hostName)
     }
 
     override suspend fun updateOrderStatus(

@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
       "orderLine" : [
         {
           "confidentialProduct" : false,
-          "hostName" : "Axiell",
+          "hostName" : "AXIELL",
           "orderLineNumber" : 1,
           "orderTuId" : "SYS_TU_00000001157",
           "orderTuType" : "UFO",
@@ -47,6 +47,9 @@ data class SynqOrderPickingConfirmationPayload(
     )
     val warehouse: String
 ) {
+    /**
+     * Validates the packet data and structure
+     */
     fun validate() {
         if (orderLine.isEmpty()) {
             throw ValidationException("Picking update does not contain any elements in the order line")
@@ -59,8 +62,38 @@ data class SynqOrderPickingConfirmationPayload(
         if (warehouse.isBlank()) {
             throw ValidationException("Picking update's warehouse can not be blank")
         }
+        // Validates the hostname based on the value of hostname in order lines
+        getValidHostName()
 
         orderLine.forEach(OrderLine::validate)
+    }
+
+    @Throws(ValidationException::class)
+    fun getValidHostName(): HostName {
+        val hostName = getHostNameString()
+        try {
+            return HostName.valueOf(hostName)
+        } catch (e: IllegalArgumentException) {
+            throw ValidationException("Hostname $hostName is not recognized by WLS", e)
+        }
+    }
+
+    private fun getHostNameString(): String {
+        return this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get hostname from order lines")
+    }
+
+    /**
+     * Creates a map between the id and the quantity picked from each product in the order line
+     */
+    fun mapProductsToQuantity(): Map<String, Int> {
+        val map: MutableMap<String, Int> = mutableMapOf()
+        this.orderLine.map { orderLine ->
+            map.put(
+                orderLine.productId,
+                orderLine.quantity
+            )
+        }
+        return map
     }
 }
 
@@ -69,7 +102,7 @@ data class SynqOrderPickingConfirmationPayload(
     example = """
     {
       "confidentialProduct" : false,
-      "hostName" : "Axiell",
+      "hostName" : "AXIELL",
       "orderLineNumber" : 1,
       "orderTuId" : "SYS_TU_00000001157",
       "orderTuType" : "UFO",
@@ -92,7 +125,7 @@ data class OrderLine(
     val confidentialProduct: Boolean,
     @Schema(
         description = "Name of the host system which placed the order/owns the order products/items.",
-        example = "Axiell"
+        example = "AXIELL"
     )
     val hostName: String,
     @Schema(

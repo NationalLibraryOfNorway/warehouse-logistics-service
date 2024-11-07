@@ -35,7 +35,7 @@ class SynqModelValidationTest {
 
     @Test
     fun `valid SynqOrderPickingConfirmationPayload should pass validation`() {
-        thenCode(validSynqOrderPickingConfirmationPayload::validate).doesNotThrowAnyException()
+        thenCode(validSynqOrderStatusUpdatePayload::validate).doesNotThrowAnyException()
     }
 
     @Test
@@ -155,7 +155,7 @@ class SynqModelValidationTest {
     private val validSynqOrderLine1 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             orderLineNumber = 1,
             orderTuId = "tu-123",
             orderTuType = "UFO",
@@ -174,7 +174,7 @@ class SynqModelValidationTest {
     private val validSynqOrderLine2 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             orderLineNumber = 2,
             orderTuId = "tu-123",
             orderTuType = "UFO",

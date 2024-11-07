@@ -310,7 +310,7 @@ class SynqControllerTest(
     private val product1 =
         Product(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             productId = "mlt-12345",
             productOwner = "NB",
             productVersionId = "Default",
@@ -334,7 +334,7 @@ class SynqControllerTest(
     private val product2 =
         Product(
             confidentialProduct = false,
-            hostName = "Axiell",
+            hostName = "AXIELL",
             productId = "mlt-54321",
             productOwner = "NB",
             productVersionId = "Default",

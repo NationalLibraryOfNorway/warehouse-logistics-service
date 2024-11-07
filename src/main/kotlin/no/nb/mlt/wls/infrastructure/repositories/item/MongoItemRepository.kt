@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.Duration
 import java.util.concurrent.TimeoutException
@@ -38,6 +39,21 @@ class ItemRepositoryMongoAdapter(
                 }
             }
             .awaitSingleOrNull()
+    }
+
+    override suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item> {
+        return mongoRepo.findAllByHostNameAndHostId(hostName, hostIds)
+            .collectList()
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching multiple items for $hostName"
+                }
+            }
+            .awaitSingle()
+            .map { it.toItem() }
     }
 
     override fun createItem(item: Item): Mono<Item> {
@@ -107,4 +123,9 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         quantity: Int,
         location: String
     ): Mono<Long>
+
+    fun findAllByHostNameAndHostId(
+        hostName: HostName,
+        hostId: Collection<String>
+    ): Flux<MongoItem>
 }

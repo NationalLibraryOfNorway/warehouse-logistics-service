@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
     {
       "prevStatus": "PICKED",
       "status": "COMPLETED",
-      "hostName" : "Axiell",
+      "hostName" : "AXIELL",
       "warehouse" : "Sikringmagasin_2"
     }"""
 )

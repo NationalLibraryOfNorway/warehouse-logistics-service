@@ -10,6 +10,11 @@ interface ItemRepository {
         hostId: String
     ): Item?
 
+    suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item>
+
     fun createItem(item: Item): Mono<Item>
 
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
