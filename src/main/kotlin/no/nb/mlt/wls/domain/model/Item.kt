@@ -37,9 +37,9 @@ data class Item(
             } else {
                 // Rare edge case. Log it until we can determine if this actually happens in production
                 logger.error {
-                    "Item with ID $hostId for host $hostName without a location was picked. Location was set to empty string."
+                    "Item with ID $hostId for host $hostName without a location was picked. Location was set to \"UNKNOWN\"."
                 }
-                ""
+                "UNKNOWN"
             }
         return this.copy(quantity = quantity, location = location)
     }
