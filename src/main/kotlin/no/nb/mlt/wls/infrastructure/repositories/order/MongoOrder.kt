@@ -8,8 +8,8 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
-@CompoundIndex(unique = true, def = "{'hostName':1,'hostOrderId':1}")
 @Document(collection = "orders")
+@CompoundIndex(unique = true, def = "{'hostName':1,'hostOrderId':1}")
 data class MongoOrder(
     @Id
     private val id: ObjectId = ObjectId(),
