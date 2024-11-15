@@ -86,7 +86,7 @@ After building the JAR file, it can be used to build a Docker image using the fo
 
 ```shell
 # Move the jar to the Docker directory
-cp target/wls.jar docker/
+cp target/wls.jar docker/wls.jar
 
 # Use Docker Buildx to build the Docker Image
 docker buildx build --platform linux/amd64 -t wls:latest docker/

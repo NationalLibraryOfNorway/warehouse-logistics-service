@@ -1,4 +1,4 @@
-# Name of the workflow and a display name for the workflow
+# Name of the workflow and an action title to display in the GitHub UI
 name: Deploy Project
 run-name: ${{ github.actor }} is deploying the project
 
@@ -16,35 +16,36 @@ on:
   # Runs every time a pull request is created, updated, etc. can use "types" to run only on select PR activities
   pull_request:
 
-# Used to make sure that only one workflow in specified group runs at the same time
+# Used to make sure that only one workflow in the specified group runs at the same time
 concurrency:
-  # Define concurrency group which will then be used to determine duplicate workflow runs
+  # Define concurrency group which is then used to determine duplicate workflow runs
   # The second property uses fallback values since not every run is a PR run
   group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
   cancel-in-progress: true
 
 # Modify access granted to the workflow in the GITHUB_TOKEN
-# Mainly used here to give checks a write permission so we can get a test run report
+# Mainly used here to give checks a write permission to allow a test run reporter to publish test results
 permissions:
   contents: read
   actions: read
-  checks: write
+  checks: write # See the [[test-report-publisher]] step for explanation why this is needed
 
-# List of jobs that this workflow will execute
+# List of jobs that this workflow executes, each job can run on different runners, have different steps, etc.
 jobs:
-  # Unique identifier for this job, make sure it's unique, you can use "name" property to give it more descriptive name
+  # Unique identifier for this job, make sure it is unique, you can use "name" property to give it a more descriptive name
   test-project:
-    # This name will be displayed in the GitHub UI when
+    # This name is displayed in the GitHub UI when the job is running
     name: Build and Test the Project
-    # Defines what runner to run this job on, if you want you can use an array to match runner name
-    # for example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
+    # Defines what runner to run this job on, if you want you can use an array of tags/identifiers to match the runner name
+    # For example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
     runs-on: self-hosted-linux
-    # List of steps that this job needs to execute in sequential order, any changes done in one step will carry over to
-    # others, so be mindful of that when making changes to files
+    # List of steps that this job executes in sequential order, any changes done in one step will carry over to others
+    # Be mindful of that when making changes to files
     steps:
-      # Simple step which merely checks out the repository to the runner
+      # Simple step which merely checks out the repository to the runner, making it available for other steps
       - name: Checkout
-        # Specifies that this step should run a pre-defined action
+        # Specifies that this step should run a pre-defined action, meaning an action that was made by someone else or exists elsewhere
+        # In this case the provided identifier is a reference to a repository in: https://github.com/actions/checkout and the version is set tov4
         uses: actions/checkout@v4
 
       # This steps installs specified Java JDK
@@ -53,19 +54,19 @@ jobs:
         # Settings/Inputs/Parameters for the action
         with:
           # What JDK distribution to download and use
-          distribution: temurin # If you have no good reason go with Temurin distribution
+          distribution: temurin # If you have no good reasons to choose something else, go with Temurin distribution
           java-version: 21
           architecture: x64
           # Sets up caching and restoring of dependencies for the specified package manager
           # NB! If you decide to use a non-standard path for package repositories you need to set up caching yourself
-          # In that case use the "@actions/cache" action
+          #     In that case use the "@actions/cache" action
           cache: maven
 
-      # Since self hosted runner does not come with Maven, we need to install it
-      # Same for git, we need it to upload test results, hence why we initialize the repo
-      # Lastly gettext provides envsubst which is used in the "Verify the Project" step to replace env variables
+      # Since the self hosted runner does not come with Maven, it must be installed manually
+      # Same for git, it is needed to upload the test results, hence why repo is initialized using "git init"
+      # Lastly gettext provides envsubst which is used in the [[verify-the-project]] step to replace env variables
       - name: Install Maven and Initialize Repo
-        # Map of environment variables available for only this step, you can define it on job or workflow level too
+        # Map of environment variables available for this step only, you can define it on job or workflow level too
         env:
           MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
         run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
@@ -78,9 +79,10 @@ jobs:
           git init
           mvn -v
 
-      # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing
-      # GitHub secrets wont permit you to see or re-use secrets, speak with Platform team to set up a namespace for you
-      # They should also give you an approle "user" which will allow you to get the secrets from github action
+      # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing the secrets
+      # GitHub does not permit to check secret value or re-use the secrets
+      # Speak with Plattform team to set up a namespace if needed
+      # They should also create an approle "user" which allows fetching the secrets within a GitHub action
       #
       # The url must be in form: https://<URL>, while IDs are UUIDs
       # When providing path to the secret you need to include "/data" after namespace and before the secret name
@@ -88,66 +90,62 @@ jobs:
         uses: hashicorp/vault-action@v3
         with:
           url: ${{ secrets.VAULT_URL }}
-          method: approle
+          method: approle # Method used to authenticate against Vault
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/proxy *
+          secrets: secret/v1/application/k8s/mlt/data/proxy * # The "*" at the end is a wildcard, it will get all secrets in the path
 
-      # This step will actually build, test, and verify the project
-      # envsubst is used to provide proxy settings for Maven, proxy host address must be an IP address, not URL
+      # This step actually builds, tests, and verifies the project using Maven #[[verify-the-project]]
+      # "envsubst" supplies proxy settings for Maven, proxy host address must be an IP address, not a URL
       - name: Verify the Project
+        # Replace tags in settings.xml with values from environment and save it to a new file, then use it when running Maven
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
           mvn -B -e -s .m2/replaced.xml verify
 
-      # This step will use the test-reporter action to publish test results in the workflow run
+      # This step uses the test-reporter action to publish test results in the workflow run #[[test-report-publisher]]
+      # It looks for any file named "TEST-...xml" in the project and uses it to publish the test results
+      # The job name in GitHub with the test results is "JUnit Test Results"
       - name: Publish Test Report
         uses: dorny/test-reporter@v1
         # If defines conditions that need to be fulfilled to run this step, in this case this step will always run
+        # That is because the report should be published, even if the tests failed
         if: always()
         with:
-          # Name for the report
-          name: JUnit Tests
-          # Where to look for report files, in this case look for any file named "TEST-...xml" anywhere in the project
-          path: ./**/TEST-*.xml
-          # What reporter created to use, since this project uses JUnit java-junit is used
-          reporter: java-junit
-          # Fail this step if there are test errors
-          fail-on-error: true
-          # Fail this step if no test results were found
-          fail-on-empty: true
+          name: JUnit Test Results # Name for the report
+          path: ./**/TEST-*.xml # Where to look for report files, any file named "TEST-...xml" anywhere in the project
+          reporter: java-junit # What reporter to use, since this project uses JUnit, the reporter is "java-junit"
+          fail-on-error: true # Fail this step if there are test errors
+          fail-on-empty: true # Fail this step if no test results were found
 
-      # Last step will upload the JAR file as an artifact that can then be used in other jobs
+      # This step uploads the JAR file as an artifact which can then be used in other jobs
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4
         with:
-          # Artifact ID
-          name: packaged-project
-          # Where to find artifact file(s)
-          # Add "project.build.finalName --> ${project.artifactId}" to pom.xml to drop the version suffix
-          path: target/wls.jar
-          # Fail if artifact is not found
-          if-no-files-found: error
-          # Allow overwriting of previous artifacts
-          overwrite: true
+          name: packaged-project # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
+          path: target/wls.jar  # File(s) to include, the path is relative to the repository root
+                                #     Set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
+          if-no-files-found: error # Fail if artifact is not found
+          overwrite: true # Allow overwriting of previous artifacts
 
-  # This job will build a Docker image with relevant tags and labels, and publish it in Harbor
+  # This job build a Docker image with relevant tags and labels, and publish it in Harbor
   publish-image:
     name: Build and Publish the Docker Image
     # Defines that test-project job must finish successfully first, before this one can run
     needs: test-project
-    # The if statement limits it to run only if action was triggered on main branch or one of the tags
+    # The if statement limits the job to only run if action was triggered on main branch or one of the tags
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
     # Outputs allows a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
-      # The metadata step produces an image name that we need to use in deployment
+      # The metadata step produces an image name that is then used in deployment jobs
+      # Gets the value from the "meta" step: [[meta-step-id]]
       image-name: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Sets up a Docker Build action which will produce an image
+      # Sets up a Docker Build action which is then used to produce the Docker image
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
@@ -164,8 +162,8 @@ jobs:
           secrets: secret/v1/application/k8s/mlt/data/harbor *
 
       # Simple action that authenticates against the NLB's Harbor instance
-      # The url must be in form: https://<URL>, username and password should be for the github robot user
-      # Ask Platform team to create a robot user for you that has access to your project(s) in Harbor registry
+      # The url must be in form: https://<URL>, username and password should be for the GitHub robot user
+      # Ask Plattform team to create a robot user with access to your project(s) in Harbor registry
       - name: Log in to Harbor Registry
         uses: docker/login-action@v3
         with:
@@ -174,21 +172,21 @@ jobs:
           password: ${{ env.HARBOR_PASSWORD }}
 
       - name: Extract Metadata for Docker
-        # Give this step an unique ID that can be used for referencing it later, here it's used to get the value of tags
+        # Give this step a unique ID which is for referencing, here it's used to get the value of tags #[[meta-step-id]]
         id: meta
         uses: docker/metadata-action@v5
         with:
-          # Define the base that should be used for tags, can be multiple values if needed
+          # Define to use for tags, can be multiple values if needed
           images: harbor.nb.no/mlt/wls
           # Defines list of tag types to use for generating the metadata
-          # the semver type will use GitHub tag in semver form and turn it into a proper tag for the image
-          # the ref type wil base its version either on branch or PR event and generate the tag for the image
+          # the semver type uses GitHub tag in semver form and turns it into a proper tag for the image (semantic versioning: v4.2.0 -> 4.2.0)
+          # the ref type bases its version either on branch or PR event and generates the tag for the image based on that (branch -> branch-name, pr -> pr-number)
           tags: |
             type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
 
-      # Downloads previously uploaded artifact with provided name
+      # Downloads previously uploaded artifact with provided id/name, see [[packaged-project-id]] to see how it was defined
       - name: Download the JAR File
         uses: actions/download-artifact@v4
         with:
@@ -198,16 +196,11 @@ jobs:
       - name: Build the Docker Image
         uses: docker/build-push-action@v5
         with:
-          # Makes the action push image to Harbor, equivalent to "--output-type=registry"
-          push: true
-          # Build context, makes the build process use actual files in the runner instead of using files from GitHub
-          context: .
-          # Override the path to the Dockerfile, since this project has it in the docker folder
-          file: ./docker/Dockerfile
-          # Set tags for the image using output from the meta step
-          tags: ${{ steps.meta.outputs.tags }}
-          # Set labels for the image using output from the meta step
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true # Makes the action push image to Harbor, equivalent to "--output-type=registry"
+          context: . # Build context, makes the build process use actual files in the runner instead of using files from GitHub
+          file: ./docker/Dockerfile # Override the path to the Dockerfile, since this project has it in the docker folder
+          tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta step
+          labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta step
 
   # Deploys the image to kubernetes stage environment
   deploy-to-stage:
@@ -217,8 +210,8 @@ jobs:
     # Can be changed to also run on tags, to ensure that stage & prod use same image after a new version release
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
-    # Defines what environment this job references, this allows you to set deployment protections in the project
-    # Allows requiring a number of reviewers or specific reviewers, allow only specific branches or tags
+    # Defines what environment this job references, this allows for setting deployment protections in the project
+    # Allows requiring a number of reviewers or specific reviewers, or allow only specific branches or tags
     # It also permits setting specific secrets and variables
     environment: stage
     steps:
@@ -239,14 +232,14 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       # Script that sets some needed variables in deployment file, and then configures kubectl for deploying to stage
-      # Script itself is rather generic, especially for simple deployments so you can easily re-use it
-      # Just make sure to set correct context and namespace for your own needs
+      # Script itself is rather generic, especially for simple deployments, so it can be easily re-used
+      # Just make sure to set correct context and namespace when used in other projects
       #
-      # K8S_HOST_URL - URL pointing to where you want the app hosted, we have two options for both stage and prod
+      # K8S_HOST_URL - URL pointing where to host the app, there are two default options for both stage and prod
       # K8S_STAGE_SERVER - URL to the stage server in form https://<IP_ADDRESS>:<PORT>
-      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Platform team
-      # K8S_STAGE_USER - name of the robot user that can deploy to your namespace, get it from the Platform team
-      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Platform team
+      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Plattform team
+      # K8S_STAGE_USER - name of the robot user that can deploy to the given namespace, get it from the Plattform team
+      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Plattform team
       - name: Deploy to Stage
         run: |
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"

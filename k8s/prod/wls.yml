@@ -1,3 +1,4 @@
+# Define the API version of the Kubernetes object
 apiVersion: apps/v1
 
 # Kind is a string value representing type of object this manifest represents
@@ -16,7 +17,7 @@ metadata:
 spec:
   # The .spec.selector field defines how the Deployment finds which Pods to manage
   selector:
-    # In this case, you simply select a label that is defined in the Pod template (app: wls)
+    # In this case, simply select a label that is defined in the Pod template (app: wls)
     matchLabels:
       app: wls
 
@@ -104,9 +105,11 @@ spec:
             requests:
               cpu: 500m
               memory: 512Mi
+              ephemeral-storage: 42Gi
             limits:
               cpu: 1000m
               memory: 1024Mi
+              ephemeral-storage: 69Gi
 
           # Define settings for running the container's liveness probe
           livenessProbe:

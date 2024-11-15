@@ -1,8 +1,8 @@
-// Create a WLS database, a user, and a collection for products
+// Create a WLS database, a user, and a collection for items and orders.
 // This file only runs once during container creation.
-// If for some reason it fails to load, re-create the container
-// (E.G. running "docker compose down")
-print('Start #################################################################');
+// If for some reason it fails to load, re-create the container.
+//     (by running "docker compose down")
+print('START ##################################################################');
 
 db = db.getSiblingDB('wls');
 db.createUser(
@@ -12,40 +12,41 @@ db.createUser(
         roles: [{ role: 'readWrite', db: 'wls' }],
     },
 );
-db.createCollection('items');
 
+
+db.createCollection('items');
 db.items.insertOne({
+    "hostId": "mlt-12345",
     "hostName": "AXIELL",
-    "hostId": "item-12345",
+    "description": "Tyven, tyven skal du hete",
     "itemCategory": "BOOK",
-    "description": "Tyv etter loven",
+    "preferredEnvironment": "NONE",
     "packaging": "NONE",
+    "owner": "NB",
+    "callbackUrl": "https://callback-wls.no/item",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
-    "preferredEnvironment": "NONE",
-    "owner": "NB",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
 })
-
 db.items.insertOne({
+    "hostId": "mlt-54321",
     "hostName": "AXIELL",
-    "hostId": "item-54321",
-    "itemCategory": "BOOK",
     "description": "Tyv etter loven",
+    "itemCategory": "BOOK",
+    "preferredEnvironment": "NONE",
     "packaging": "NONE",
+    "owner": "NB",
+    "callbackUrl": "https://callback-wls.no/item",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
-    "preferredEnvironment": "NONE",
-    "owner": "NB",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
 })
 
 
 db.createCollection('orders')
-
 db.orders.insertOne({
     "hostName": "AXIELL",
-    "hostOrderId": "order-12345",
+    "hostOrderId": "mlt-order-12345",
     "status": "NOT_STARTED",
     "orderLine": [
         {
@@ -59,8 +60,8 @@ db.orders.insertOne({
         "name": "Doug Doug",
         "address": "Somewhere in the United States"
     },
-    "callbackUrl": "https://example.com/send/callback/here",
+    "callbackUrl": "https://callback-wls.no/order",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
 })
 
-print('END #################################################################');
+print('END ####################################################################');
