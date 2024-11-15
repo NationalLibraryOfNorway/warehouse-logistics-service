@@ -1,3 +1,4 @@
+# Define the API version of the Kubernetes object
 apiVersion: apps/v1
 
 # Kind is a string value representing type of object this manifest represents
@@ -104,9 +105,11 @@ spec:
             requests:
               cpu: 200m
               memory: 256Mi
+              ephemeral-storage: 4Gi
             limits:
               cpu: 500m
               memory: 512Mi
+              ephemeral-storage: 6Gi
 
           # Define settings for running the container's liveness probe
           livenessProbe:

@@ -14,8 +14,15 @@ middleware between NLNs (National Library of Norway) catalogues and storage syst
 #     and copy it to the docker folder with 'cp target/wls.jar docker/wls.jar'
 COPY wls.jar app.jar
 
-# Expose the port that the application is running on, this is defined in the src/main/resources/application.yml file
+# Mark the port that the application is listenting on
+# This port is defined in the src/main/resources/application.yml file
 EXPOSE 8080
+
+# Add a healthcheck to the container, this is used to check if the container is running as expected
+# This is not a replacement for health check in kubernetes
+# However it is convenient when running locally, or in a purely Docker based environment
+HEALTHCHECK --start-period=40s --retries=5 \
+  CMD curl --fail --silent localhost:8081/actuator/health | grep UP || exit 1
 
 # Set the entrypoint for the container, this is the command that will be run when the container starts up
 ENTRYPOINT ["java", "-Duser.timezone=Europe/Oslo", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app.jar"]
