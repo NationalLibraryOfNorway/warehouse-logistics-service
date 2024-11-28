@@ -346,7 +346,7 @@ class WLSServiceTest {
                     listOf("mlt-420", "mlt-421"),
                     testOrder.orderType,
                     testOrder.contactPerson,
-                    testOrder.address?: Order.Address.create(),
+                    testOrder.address ?: Order.Address.create(),
                     testOrder.callbackUrl
                 )
             }

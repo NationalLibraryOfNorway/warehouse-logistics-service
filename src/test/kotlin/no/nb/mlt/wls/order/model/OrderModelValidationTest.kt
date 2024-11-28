@@ -163,14 +163,15 @@ class OrderModelValidationTest {
 
     val validOrderLine = OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)
 
-    val validAddress = Order.Address(
-        name = "real name",
-        addressLine1 = "real street",
-        addressLine2 = null,
-        zipcode = "12345-WA",
-        city = "england",
-        state = "cornwall",
-    )
+    val validAddress =
+        Order.Address(
+            name = "real name",
+            addressLine1 = "real street",
+            addressLine2 = null,
+            zipcode = "12345-WA",
+            city = "england",
+            state = "cornwall"
+        )
 
     val validOrder =
         ApiOrderPayload(

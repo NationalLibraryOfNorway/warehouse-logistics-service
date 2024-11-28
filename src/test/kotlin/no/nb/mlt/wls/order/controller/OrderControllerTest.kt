@@ -464,14 +464,15 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            address = Order.Address(
-                name = "name",
-                addressLine1 = "addressLine1",
-                addressLine2 = "addressLine2",
-                zipcode = "zipcode",
-                city = "city",
-                state = "state"
-            ),
+            address =
+                Order.Address(
+                    name = "name",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    zipcode = "zipcode",
+                    city = "city",
+                    state = "state"
+                ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"
         )
@@ -487,14 +488,15 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            address = Order.Address(
-                name = "name",
-                addressLine1 = "addressLine1",
-                addressLine2 = "addressLine2",
-                zipcode = "zipcode",
-                city = "city",
-                state = "state"
-            ),
+            address =
+                Order.Address(
+                    name = "name",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    zipcode = "zipcode",
+                    city = "city",
+                    state = "state"
+                ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"
         )
@@ -507,14 +509,15 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            address = Order.Address(
-                name = "name",
-                addressLine1 = "addressLine1",
-                addressLine2 = "addressLine2",
-                zipcode = "zipcode",
-                city = "city",
-                state = "state"
-            ),
+            address =
+                Order.Address(
+                    name = "name",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    zipcode = "zipcode",
+                    city = "city",
+                    state = "state"
+                ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"
         )

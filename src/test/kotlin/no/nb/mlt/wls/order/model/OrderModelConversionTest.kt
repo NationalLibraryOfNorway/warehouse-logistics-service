@@ -27,14 +27,15 @@ class OrderModelConversionTest {
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
-            address = Order.Address(
-                name = "name",
-                addressLine1 = "address",
-                addressLine2 = "street",
-                zipcode = "zipcode",
-                city = "city",
-                state = "state"
-            ),
+            address =
+                Order.Address(
+                    name = "name",
+                    addressLine1 = "address",
+                    addressLine2 = "street",
+                    zipcode = "zipcode",
+                    city = "city",
+                    state = "state"
+                ),
             callbackUrl = "callbackUrl"
         )
 
@@ -87,14 +88,15 @@ class OrderModelConversionTest {
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            address = Order.Address(
-                name = "name",
-                addressLine1 = "address",
-                addressLine2 = "street",
-                city = "city",
-                state = "state",
-                zipcode = "zipcode",
-            ),
+            address =
+                Order.Address(
+                    name = "name",
+                    addressLine1 = "address",
+                    addressLine2 = "street",
+                    city = "city",
+                    state = "state",
+                    zipcode = "zipcode"
+                ),
             contactPerson = "contactPerson",
             callbackUrl = "callbackUrl"
         )

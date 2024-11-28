@@ -160,7 +160,7 @@ data class Order(
         val addressLine2: String?,
         val zipcode: String?,
         val city: String?,
-        val state: String?,
+        val state: String?
     ) {
         fun validate() {
             if (name?.isBlank() == true) {
