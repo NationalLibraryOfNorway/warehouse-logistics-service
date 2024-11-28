@@ -153,7 +153,8 @@ class WLSService(
         hostOrderId: String,
         itemHostIds: List<String>,
         orderType: Order.Type,
-        receiver: Order.Receiver,
+        contactPerson: String,
+        address: Order.Address?,
         callbackUrl: String
     ): Order {
         val itemIds = itemHostIds.map { ItemId(hostName, it) }
@@ -163,7 +164,7 @@ class WLSService(
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        val updatedOrder = order.updateOrder(itemHostIds, callbackUrl, orderType, receiver)
+        val updatedOrder = order.updateOrder(itemHostIds, callbackUrl, orderType, contactPerson)
         val result = storageSystemFacade.updateOrder(updatedOrder)
         return orderRepository.updateOrder(result)
     }
