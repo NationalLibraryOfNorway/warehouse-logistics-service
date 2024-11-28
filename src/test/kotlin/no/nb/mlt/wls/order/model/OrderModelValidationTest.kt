@@ -3,7 +3,6 @@ package no.nb.mlt.wls.order.model
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.ApiUpdateOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -35,44 +34,10 @@ class OrderModelValidationTest {
     }
 
 // /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Receiver ///////////////////////////////////
+// ///////////////////////////////// Address ///////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    @Test
-    fun `valid receiver should pass validation`() {
-        thenCode(validReceiver::validate).doesNotThrowAnyException()
-    }
-
-    @Test
-    fun `receiver with no address should pass validation`() {
-        val receiver = validReceiver.copy(address = null)
-
-        thenCode(receiver::validate).doesNotThrowAnyException()
-    }
-
-    @Test
-    fun `receiver with blank name should fail validation`() {
-        val receiver = validReceiver.copy(name = "")
-
-        val thrown = catchThrowable(receiver::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("name")
-    }
-
-    @Test
-    fun `receiver with blank address should fail validation`() {
-        val receiver = validReceiver.copy(address = "")
-
-        val thrown = catchThrowable(receiver::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("address")
-    }
+    // TODO - Add Address field tests
 
 // /////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////// Order ////////////////////////////////////
@@ -131,17 +96,7 @@ class OrderModelValidationTest {
             .hasMessageContaining("order line's")
     }
 
-    @Test
-    fun `order with invalid receiver should fail validation`() {
-        val order = validOrder.copy(receiver = Receiver(name = "", address = null))
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("name")
-    }
+    // TODO - Test for address
 
 // /////////////////////////////////////////////////////////////////////////////
 // /////////////////////////////// OrderUpdate // //////////////////////////////
@@ -200,17 +155,7 @@ class OrderModelValidationTest {
             .hasMessageContaining("order line's")
     }
 
-    @Test
-    fun `update order with invalid receiver should fail validation`() {
-        val order = validUpdateOrderPayload.copy(receiver = Receiver(name = "", address = null))
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("receiver name")
-    }
+    // TODO - Test Address
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
@@ -218,7 +163,14 @@ class OrderModelValidationTest {
 
     val validOrderLine = OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)
 
-    val validReceiver = Receiver(name = "name", address = "address")
+    val validAddress = Order.Address(
+        name = "real name",
+        addressLine1 = "real street",
+        addressLine2 = null,
+        zipcode = "12345-WA",
+        city = "england",
+        state = "cornwall",
+    )
 
     val validOrder =
         ApiOrderPayload(
@@ -227,7 +179,8 @@ class OrderModelValidationTest {
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(validOrderLine),
             orderType = Order.Type.LOAN,
-            receiver = validReceiver,
+            address = validAddress,
+            contactPerson = "contactPerson",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -237,7 +190,8 @@ class OrderModelValidationTest {
             hostOrderId = "order-123",
             orderLine = listOf(validOrderLine),
             orderType = Order.Type.LOAN,
-            receiver = validReceiver,
+            contactPerson = "contactPerson",
+            address = validAddress,
             callbackUrl = "https://callback.com/order"
         )
 }

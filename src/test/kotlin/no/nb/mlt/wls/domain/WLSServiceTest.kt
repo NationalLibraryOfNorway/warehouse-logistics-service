@@ -318,7 +318,8 @@ class WLSServiceTest {
                     "12345",
                     listOf("mlt-420", "mlt-421"),
                     Order.Type.LOAN,
-                    Order.Receiver("name", "address"),
+                    "unreal person",
+                    Order.Address.create(),
                     "https://example.com"
                 )
 
@@ -344,7 +345,8 @@ class WLSServiceTest {
                     "12345",
                     listOf("mlt-420", "mlt-421"),
                     testOrder.orderType,
-                    testOrder.receiver,
+                    testOrder.contactPerson,
+                    testOrder.address?: Order.Address.create(),
                     testOrder.callbackUrl
                 )
             }
@@ -367,7 +369,8 @@ class WLSServiceTest {
                     "12345",
                     listOf("mlt-420", "mlt-421"),
                     testOrder.orderType,
-                    testOrder.receiver,
+                    testOrder.contactPerson,
+                    testOrder.address,
                     testOrder.callbackUrl
                 )
             }
@@ -424,11 +427,8 @@ class WLSServiceTest {
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "Kåre",
-                    address = "Kåresplass"
-                ),
+            contactPerson = "contactPerson",
+            address = Order.Address.create(),
             callbackUrl = "https://callback.com/order"
         )
 
@@ -456,7 +456,8 @@ class WLSServiceTest {
             orderLine = testOrder.orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
             orderType = testOrder.orderType,
             owner = testOrder.owner,
-            receiver = testOrder.receiver,
+            contactPerson = testOrder.contactPerson,
+            address = testOrder.address,
             callbackUrl = testOrder.callbackUrl
         )
 }

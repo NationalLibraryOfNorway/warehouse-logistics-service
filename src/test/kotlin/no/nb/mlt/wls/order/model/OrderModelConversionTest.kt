@@ -2,10 +2,8 @@ package no.nb.mlt.wls.order.model
 
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
-import no.nb.mlt.wls.application.hostapi.order.toReceiver
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
@@ -28,7 +26,15 @@ class OrderModelConversionTest {
             status = null,
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
-            receiver = Receiver(name = "name", address = "address"),
+            contactPerson = "contactPerson",
+            address = Order.Address(
+                name = "name",
+                addressLine1 = "address",
+                addressLine2 = "street",
+                zipcode = "zipcode",
+                city = "city",
+                state = "state"
+            ),
             callbackUrl = "callbackUrl"
         )
 
@@ -40,10 +46,15 @@ class OrderModelConversionTest {
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
+            contactPerson = "contactPerson",
+            address =
+                Order.Address(
                     name = "name",
-                    address = "address"
+                    addressLine1 = "address",
+                    addressLine2 = "street",
+                    zipcode = "zipcode",
+                    city = "city",
+                    state = "state"
                 ),
             callbackUrl = "callbackUrl"
         )
@@ -76,7 +87,15 @@ class OrderModelConversionTest {
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver = Order.Receiver(name = "name", address = "address"),
+            address = Order.Address(
+                name = "name",
+                addressLine1 = "address",
+                addressLine2 = "street",
+                city = "city",
+                state = "state",
+                zipcode = "zipcode",
+            ),
+            contactPerson = "contactPerson",
             callbackUrl = "callbackUrl"
         )
 
@@ -89,7 +108,8 @@ class OrderModelConversionTest {
         assertThat(payload.status).isEqualTo(testOrder.status)
         assertThat(payload.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(payload.orderType).isEqualTo(testOrder.orderType)
-        assertThat(payload.receiver.name).isEqualTo(testOrder.receiver.name)
+        assertThat(payload.contactPerson).isEqualTo(testOrder.contactPerson)
+        assertThat(payload.address).isEqualTo(testOrder.address)
         assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
@@ -103,7 +123,8 @@ class OrderModelConversionTest {
         assertThat(mongoOrder.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(mongoOrder.orderType).isEqualTo(testOrder.orderType)
         assertThat(mongoOrder.owner).isEqualTo(testOrder.owner)
-        assertThat(mongoOrder.receiver.name).isEqualTo(testOrder.receiver.name)
+        assertThat(mongoOrder.contactPerson).isEqualTo(testOrder.contactPerson)
+        assertThat(mongoOrder.address).isEqualTo(testOrder.address)
         assertThat(mongoOrder.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
@@ -129,7 +150,7 @@ class OrderModelConversionTest {
         assertThat(testNotificationOrderPayload.orderLine[0].hostId).isEqualTo(testOrderNotification.orderLine[0].hostId)
         assertThat(testNotificationOrderPayload.orderType).isEqualTo(testOrderNotification.orderType)
         assertThat(testNotificationOrderPayload.owner).isEqualTo(testOrderNotification.owner)
-        assertThat(testNotificationOrderPayload.receiver.name).isEqualTo(testOrderNotification.receiver.name)
+        assertThat(testNotificationOrderPayload.address).isEqualTo(testOrderNotification.address)
         assertThat(testNotificationOrderPayload.callbackUrl).isEqualTo(testOrderNotification.callbackUrl)
     }
 
@@ -142,7 +163,8 @@ class OrderModelConversionTest {
         assertThat(order.status).isEqualTo(Order.Status.NOT_STARTED)
         assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
-        assertThat(order.receiver.name).isEqualTo(testApiOrderPayload.receiver.name)
+        assertThat(order.contactPerson).isEqualTo(testApiOrderPayload.contactPerson)
+        assertThat(order.address).isEqualTo(testApiOrderPayload.address)
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
 
@@ -185,37 +207,7 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
-    private val testReceiver =
-        Receiver(
-            name = "name",
-            address = "address"
-        )
-
-    private val testOrderReceiver =
-        Order.Receiver(
-            name = "name",
-            address = "address"
-        )
-
-    @Test
-    fun `Receiver converts to OrderReceiver`() {
-        val orderReceiver = testReceiver.toOrderReceiver()
-
-        assertThat(orderReceiver.name).isEqualTo(testReceiver.name)
-        assertThat(orderReceiver.address).isEqualTo(testReceiver.address)
-
-        val orderReceiver2 = testReceiver.copy(address = null).toOrderReceiver()
-
-        assertThat(orderReceiver2.address).isEqualTo("")
-    }
-
-    @Test
-    fun `OrderReceiver converts to Receiver`() {
-        val receiver = testOrderReceiver.toReceiver()
-
-        assertThat(receiver.name).isEqualTo(testOrderReceiver.name)
-        assertThat(receiver.address).isEqualTo(testOrderReceiver.address)
-    }
+    // TODO - Add tests for converting addresses between Order and payloads
 
     private fun ApiOrderPayload.toOrder() =
         Order(
@@ -225,7 +217,8 @@ class OrderModelConversionTest {
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
             owner = Owner.NB,
-            receiver = receiver.toOrderReceiver(),
+            contactPerson = contactPerson,
+            address = address,
             callbackUrl = callbackUrl
         )
 }

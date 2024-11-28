@@ -391,10 +391,15 @@ class SynqControllerTest(
             orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
+            contactPerson = "contactPerson",
+            address =
+                Order.Address(
                     name = "name",
-                    address = "address"
+                    addressLine1 = "addressLine1",
+                    null,
+                    null,
+                    null,
+                    null
                 ),
             callbackUrl = "https://callback.com/order"
         )
