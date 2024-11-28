@@ -59,9 +59,13 @@ data class NotificationOrderPayload(
     )
     val owner: Owner?,
     @Schema(
-        description = "Who's the receiver of the material in the order."
+        description = "The person to contact regarding matters about the order"
     )
-    val receiver: Order.Receiver,
+    val contactPerson: String,
+    @Schema(
+        description = "The address of the receiver of the material in the order."
+    )
+    val address: Order.Address?,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
@@ -77,6 +81,7 @@ fun Order.toNotificationOrderPayload() =
         orderLine = orderLine,
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        contactPerson = contactPerson,
+        address = address,
         callbackUrl = callbackUrl
     )

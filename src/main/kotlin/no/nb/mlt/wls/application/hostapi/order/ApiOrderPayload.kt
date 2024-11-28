@@ -58,10 +58,11 @@ data class ApiOrderPayload(
         examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
-    @Schema(
-        description = "Who's the receiver of the material in the order."
-    )
-    val receiver: Receiver,
+    // TODO - Swaggerdoc
+    val contactPerson: String,
+    // TODO - Swaggerdoc
+    // TODO - Should this use Order Address or custom DTO?
+    val address: Order.Address?,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
@@ -75,7 +76,8 @@ data class ApiOrderPayload(
             orderLine = orderLine.map { it.toCreateOrderItem() },
             orderType = orderType,
             owner = owner,
-            receiver = receiver.toOrderReceiver(),
+            address = address,
+            contactPerson = contactPerson,
             callbackUrl = callbackUrl
         )
 
@@ -93,7 +95,7 @@ data class ApiOrderPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
-        receiver.validate()
+        address?.validate()
     }
 
     private fun isValidUrl(url: String): Boolean {
@@ -116,7 +118,8 @@ fun Order.toApiOrderPayload() =
         status = status,
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
-        receiver = Receiver(receiver.name, receiver.address),
+        contactPerson = contactPerson,
+        address = address,
         callbackUrl = callbackUrl
     )
 
@@ -155,40 +158,3 @@ data class OrderLine(
 
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)
 
-@Schema(
-    description = "Who's the receiver of the order.",
-    example = """
-    {
-      "name": "Doug Dimmadome",
-      "address": "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas"
-    }
-    """
-)
-data class Receiver(
-    @Schema(
-        description = "Name of the receiver.",
-        example = "Doug Dimmadome"
-    )
-    val name: String,
-    @Schema(
-        description = "Address of the receiver.",
-        example = "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas",
-        required = false
-    )
-    val address: String?
-) {
-    fun toOrderReceiver() = Order.Receiver(name, address ?: "")
-
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (name.isBlank()) {
-            throw ValidationException("The order's receiver name is required, and can not be blank")
-        }
-
-        if (address != null && address.isBlank()) {
-            throw ValidationException("The order's receiver address cannot be blank if provided")
-        }
-    }
-}
-
-fun Order.Receiver.toReceiver() = Receiver(name, address)

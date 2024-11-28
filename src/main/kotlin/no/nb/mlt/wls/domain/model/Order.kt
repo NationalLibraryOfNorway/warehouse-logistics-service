@@ -13,7 +13,8 @@ data class Order(
     val orderLine: List<OrderItem>,
     val orderType: Type,
     val owner: Owner,
-    val receiver: Receiver,
+    val address: Address?,
+    val contactPerson: String,
     val callbackUrl: String
 ) {
     private fun setOrderLines(listOfHostIds: List<String>): Order {
@@ -55,8 +56,8 @@ data class Order(
             .updateOrderStatusFromOrderLines()
     }
 
-    private fun setReceiver(receiver: Receiver): Order {
-        return this.copy(receiver = receiver)
+    private fun setContactPerson(contactPerson: String): Order {
+        return this.copy(contactPerson = contactPerson)
     }
 
     private fun setOrderType(orderType: Type): Order {
@@ -98,14 +99,14 @@ data class Order(
         itemIds: List<String>,
         callbackUrl: String,
         orderType: Type,
-        receiver: Receiver
+        contactPerson: String
     ): Order {
         throwIfInProgress()
 
         return this.setOrderLines(itemIds)
             .setCallbackUrl(callbackUrl)
             .setOrderType(orderType)
-            .setReceiver(receiver)
+            .setContactPerson(contactPerson)
     }
 
     /**
@@ -153,10 +154,39 @@ data class Order(
         }
     }
 
-    data class Receiver(
-        val name: String,
-        val address: String?
-    )
+    data class Address(
+        val name: String?,
+        val addressLine1: String?,
+        val addressLine2: String?,
+        val zipcode: String?,
+        val city: String?,
+        val state: String?,
+    ) {
+        fun validate() {
+            if (name?.isBlank() == true) {
+                throw ValidationException("Name must not be blank")
+            }
+            if (addressLine1?.isBlank() == true) {
+                throw ValidationException("Address line must not be blank")
+            }
+            if (addressLine2?.isBlank() == true) {
+                throw ValidationException("Address line must not be blank")
+            }
+            if (zipcode?.isBlank() == true) {
+                throw ValidationException("Zipcode can not be blank")
+            }
+            if (city?.isBlank() == true) {
+                throw ValidationException("City must not be blank")
+            }
+            // TODO - Validate State/Region/County?
+        }
+
+        companion object {
+            fun create(): Address {
+                return Address(null, null, null, null, null, null)
+            }
+        }
+    }
 
     enum class Status {
         NOT_STARTED,

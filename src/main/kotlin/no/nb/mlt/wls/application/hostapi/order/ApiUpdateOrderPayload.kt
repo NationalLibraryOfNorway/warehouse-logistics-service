@@ -53,7 +53,8 @@ data class ApiUpdateOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: Receiver,
+    val contactPerson: String,
+    val address: Order.Address?,
     @Schema(
         description = "URL to send a callback to when the order is completed.",
         example = "https://example.com/send/callback/here"
@@ -75,8 +76,7 @@ data class ApiUpdateOrderPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
-
-        receiver.validate()
+        address?.validate()
     }
 
     private fun isValidUrl(url: String): Boolean {

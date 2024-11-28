@@ -40,6 +40,7 @@ data class SynqOrderPayload(
     }
 }
 
+// TODO - Should this be expanded with more fields?
 data class ShippingAddress(
     val address: Address
 ) {
@@ -71,8 +72,8 @@ fun Order.toSynqPayload() =
         shippingAddress =
             ShippingAddress(
                 ShippingAddress.Address(
-                    receiver.name,
-                    receiver.address
+                    contactPerson,
+                    address?.addressLine1
                 )
             )
     )
