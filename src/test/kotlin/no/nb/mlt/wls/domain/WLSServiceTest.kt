@@ -462,6 +462,6 @@ class WLSServiceTest {
         )
 
     fun createOrderAddress(): Order.Address {
-        return Order.Address(null, null, null, null, null, null)
+        return Order.Address(null, null, null, null, null, null, null)
     }
 }

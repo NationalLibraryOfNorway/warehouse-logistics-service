@@ -471,7 +471,8 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state"
+                    state = "state",
+                    country = "country"
                 ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"
@@ -495,7 +496,8 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state"
+                    state = "state",
+                    country = "country"
                 ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"
@@ -516,7 +518,8 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state"
+                    state = "state",
+                    country = "country"
                 ),
             contactPerson = "named person",
             callbackUrl = "https://callback.com/order"

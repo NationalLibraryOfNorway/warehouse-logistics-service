@@ -210,7 +210,8 @@ class OrderModelValidationTest {
             addressLine2 = null,
             zipcode = "12345-WA",
             city = "england",
-            state = "cornwall"
+            state = "cornwall",
+            country = "london"
         )
 
     val validOrder =

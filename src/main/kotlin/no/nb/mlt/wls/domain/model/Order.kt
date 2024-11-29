@@ -154,14 +154,14 @@ data class Order(
         }
     }
 
-    // TODO - Add country field
     data class Address(
         val name: String?,
         val addressLine1: String?,
         val addressLine2: String?,
         val zipcode: String?,
         val city: String?,
-        val state: String?
+        val state: String?,
+        val country: String?
     ) {
         fun validate() {
             if (name?.isBlank() == true) {
@@ -178,6 +178,9 @@ data class Order(
             }
             if (city?.isBlank() == true) {
                 throw ValidationException("Invalid address: city must not be blank")
+            }
+            if (country?.isBlank() == true) {
+                throw ValidationException("Invalid address: country must not be blank")
             }
             // TODO - Validate State/Region/County?
         }

@@ -54,6 +54,18 @@ data class ApiUpdateOrderPayload(
         description = "Who's the receiver of the material in the order."
     )
     val contactPerson: String,
+    @Schema(
+        description = "The delivery address of the order",
+        example = """
+            "address": {
+                "name": "Nasjonalbibliotekaren",
+                "addressLine1": "Henrik Ibsens gate 110",
+                "city": "Oslo",
+                "country": "Norway",
+                "zipcode": "0255"
+            }
+        """
+    )
     val address: Order.Address?,
     @Schema(
         description = "URL to send a callback to when the order is completed.",
