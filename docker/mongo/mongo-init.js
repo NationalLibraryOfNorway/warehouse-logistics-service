@@ -62,7 +62,7 @@ db.orders.insertOne({
         "addressLine2": "Behind a cardboard box",
         "city": "Las Vegas",
         "country": "United States",
-        "state": "Texas",
+        "region": "Texas",
         "zipcode": "TX-55415"
     },
     "callbackUrl": "https://example.com/send/callback/here",

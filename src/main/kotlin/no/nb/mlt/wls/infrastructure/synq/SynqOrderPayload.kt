@@ -81,7 +81,7 @@ fun Order.toSynqPayload() =
                     addressLine1 = address?.addressLine1,
                     addressLine2 = address?.addressLine2,
                     city = address?.city,
-                    state = address?.state,
+                    state = address?.region,
                     country = address?.country,
                     postalCode = address?.zipcode
                 )

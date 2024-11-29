@@ -60,7 +60,10 @@ data class ApiUpdateOrderPayload(
     )
     val contactPerson: String,
     @Schema(
-        description = "The delivery address of the order",
+        description = """
+            The delivery address of the order.
+            If delivering to a country with states (I.E. the United States), include the state name in the region.
+        """,
         example = """
             "address": {
                 "name": "Nasjonalbibliotekaren",

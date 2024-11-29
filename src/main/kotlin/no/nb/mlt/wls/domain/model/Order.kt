@@ -165,7 +165,7 @@ data class Order(
         val addressLine2: String?,
         val zipcode: String?,
         val city: String?,
-        val state: String?,
+        val region: String?,
         val country: String?
     ) {
         fun validate() {
@@ -184,8 +184,8 @@ data class Order(
             if (city?.isBlank() == true) {
                 throw ValidationException("Invalid address: city must not be blank")
             }
-            if (state?.isBlank() == true) {
-                throw ValidationException("Invalid address: state must not be blank")
+            if (region?.isBlank() == true) {
+                throw ValidationException("Invalid address: region must not be blank")
             }
             if (country?.isBlank() == true) {
                 throw ValidationException("Invalid address: country must not be blank")

@@ -471,7 +471,7 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     country = "country"
                 ),
             contactPerson = "named person",
@@ -496,7 +496,7 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     country = "country"
                 ),
             contactPerson = "named person",
@@ -518,7 +518,7 @@ class OrderControllerTest(
                     addressLine2 = "addressLine2",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     country = "country"
                 ),
             contactPerson = "named person",

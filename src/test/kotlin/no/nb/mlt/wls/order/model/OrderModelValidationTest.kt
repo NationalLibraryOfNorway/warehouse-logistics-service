@@ -210,7 +210,7 @@ class OrderModelValidationTest {
             addressLine2 = null,
             zipcode = "12345-WA",
             city = "england",
-            state = "cornwall",
+            region = "cornwall",
             country = "london"
         )
 

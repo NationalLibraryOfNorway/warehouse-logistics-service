@@ -34,7 +34,7 @@ class OrderModelConversionTest {
                     addressLine2 = "street",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     country = "country"
                 ),
             callbackUrl = "callbackUrl"
@@ -56,7 +56,7 @@ class OrderModelConversionTest {
                     addressLine2 = "street",
                     zipcode = "zipcode",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     country = "country"
                 ),
             callbackUrl = "callbackUrl"
@@ -96,7 +96,7 @@ class OrderModelConversionTest {
                     addressLine1 = "address",
                     addressLine2 = "street",
                     city = "city",
-                    state = "state",
+                    region = "region",
                     zipcode = "zipcode",
                     country = "country"
                 ),
