@@ -209,8 +209,6 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
-    // TODO - Add tests for converting addresses between Order and payloads
-
     private fun ApiOrderPayload.toOrder() =
         Order(
             hostName = hostName,

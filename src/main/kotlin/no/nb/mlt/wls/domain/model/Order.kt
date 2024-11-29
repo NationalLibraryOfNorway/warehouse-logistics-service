@@ -164,27 +164,21 @@ data class Order(
     ) {
         fun validate() {
             if (name?.isBlank() == true) {
-                throw ValidationException("Name must not be blank")
+                throw ValidationException("Invalid address: name must not be blank")
             }
             if (addressLine1?.isBlank() == true) {
-                throw ValidationException("Address line must not be blank")
+                throw ValidationException("Invalid address: address line must not be blank")
             }
             if (addressLine2?.isBlank() == true) {
-                throw ValidationException("Address line must not be blank")
+                throw ValidationException("Invalid address: address line must not be blank")
             }
             if (zipcode?.isBlank() == true) {
-                throw ValidationException("Zipcode can not be blank")
+                throw ValidationException("Invalid address: zipcode must not be blank")
             }
             if (city?.isBlank() == true) {
-                throw ValidationException("City must not be blank")
+                throw ValidationException("Invalid address: city must not be blank")
             }
             // TODO - Validate State/Region/County?
-        }
-
-        companion object {
-            fun create(): Address {
-                return Address(null, null, null, null, null, null)
-            }
         }
     }
 

@@ -37,7 +37,28 @@ class OrderModelValidationTest {
 // ///////////////////////////////// Address ///////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    // TODO - Add Address field tests
+    @Test
+    fun `valid address should pass validation`() {
+        thenCode(validAddress::validate).doesNotThrowAnyException()
+    }
+
+    @Test
+    fun `address with blank fields should fail validation`() {
+        val invalidAddress = validAddress.copy(name = "")
+        val invalidCityAddress = validAddress.copy(city = "")
+
+        val error = catchThrowable(invalidAddress::validate)
+        then(error)
+            .isNotNull()
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessageContaining("name must not")
+
+        val anotherError = catchThrowable(invalidCityAddress::validate)
+        then(anotherError)
+            .isNotNull()
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessageContaining("city must not")
+    }
 
 // /////////////////////////////////////////////////////////////////////////////
 // ////////////////////////////////// Order ////////////////////////////////////
@@ -96,7 +117,17 @@ class OrderModelValidationTest {
             .hasMessageContaining("order line's")
     }
 
-    // TODO - Test for address
+    @Test
+    fun `order with invalid address should fail validation`() {
+        val order = validOrder.copy(address = validAddress.copy(name = ""))
+
+        val thrown = catchThrowable(order::validate)
+
+        then(thrown)
+            .isNotNull()
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessageContaining("Invalid address")
+    }
 
 // /////////////////////////////////////////////////////////////////////////////
 // /////////////////////////////// OrderUpdate // //////////////////////////////
@@ -155,8 +186,17 @@ class OrderModelValidationTest {
             .hasMessageContaining("order line's")
     }
 
-    // TODO - Test Address
+    @Test
+    fun `update order with invalid address should fail validation`() {
+        val order = validUpdateOrderPayload.copy(address = validAddress.copy(name = ""))
 
+        val thrown = catchThrowable(order::validate)
+
+        then(thrown)
+            .isNotNull()
+            .isInstanceOf(ValidationException::class.java)
+            .hasMessageContaining("address")
+    }
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////

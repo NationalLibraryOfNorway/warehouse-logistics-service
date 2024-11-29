@@ -319,7 +319,7 @@ class WLSServiceTest {
                     listOf("mlt-420", "mlt-421"),
                     Order.Type.LOAN,
                     "unreal person",
-                    Order.Address.create(),
+                    createOrderAddress(),
                     "https://example.com"
                 )
 
@@ -346,7 +346,7 @@ class WLSServiceTest {
                     listOf("mlt-420", "mlt-421"),
                     testOrder.orderType,
                     testOrder.contactPerson,
-                    testOrder.address ?: Order.Address.create(),
+                    testOrder.address ?: createOrderAddress(),
                     testOrder.callbackUrl
                 )
             }
@@ -428,7 +428,7 @@ class WLSServiceTest {
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
             contactPerson = "contactPerson",
-            address = Order.Address.create(),
+            address = createOrderAddress(),
             callbackUrl = "https://callback.com/order"
         )
 
@@ -460,4 +460,8 @@ class WLSServiceTest {
             address = testOrder.address,
             callbackUrl = testOrder.callbackUrl
         )
+
+    fun createOrderAddress(): Order.Address {
+        return Order.Address(null, null, null, null, null, null)
+    }
 }
