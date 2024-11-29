@@ -40,14 +40,19 @@ data class SynqOrderPayload(
     }
 }
 
-// TODO - Should this be expanded with more fields?
 data class ShippingAddress(
     val address: Address
 ) {
+    // TODO - Should all the fields here be annotated?
     data class Address(
         val contactPerson: String,
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        val addressLine1: String? = null
+        val addressLine1: String? = null,
+        val addressLine2: String? = null,
+        val city: String? = null,
+        val state: String? = null,
+        val country: String? = null,
+        val postalCode: String? = null
     )
 }
 
@@ -72,8 +77,13 @@ fun Order.toSynqPayload() =
         shippingAddress =
             ShippingAddress(
                 ShippingAddress.Address(
-                    contactPerson,
-                    address?.addressLine1
+                    contactPerson = contactPerson,
+                    addressLine1 = address?.addressLine1,
+                    addressLine2 = address?.addressLine2,
+                    city = address?.city,
+                    state = address?.state,
+                    country = address?.country,
+                    postalCode = address?.zipcode
                 )
             )
     )
