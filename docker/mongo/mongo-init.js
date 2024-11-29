@@ -55,9 +55,15 @@ db.orders.insertOne({
     ],
     "orderType": "LOAN",
     "owner": "NB",
-    "receiver": {
+    "contactPerson": "MLT Team",
+    "address": {
         "name": "Doug Doug",
-        "address": "Somewhere in the United States"
+        "addressLine1": "Somewhere",
+        "addressLine2": "Behind a cardboard box",
+        "city": "Las Vegas",
+        "country": "United States",
+        "state": "Texas",
+        "zipcode": "TX-55415"
     },
     "callbackUrl": "https://example.com/send/callback/here",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"

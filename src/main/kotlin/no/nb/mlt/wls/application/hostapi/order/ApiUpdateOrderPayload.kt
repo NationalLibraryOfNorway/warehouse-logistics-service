@@ -21,10 +21,15 @@ import kotlin.jvm.Throws
         }
       ],
       "orderType": "LOAN",
-      "receiver": {
+      "contactPerson": "MLT Team",
+      "address": {
         "name": "Doug Dimmadome",
-        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
-      },
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
+        "country": "United States",
+        "state": "California",
+        "zipcode": "CA-55415"
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """
