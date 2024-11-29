@@ -154,6 +154,7 @@ data class Order(
         }
     }
 
+    // TODO - Add country field
     data class Address(
         val name: String?,
         val addressLine1: String?,

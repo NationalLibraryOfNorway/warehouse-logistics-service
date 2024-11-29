@@ -24,9 +24,13 @@ import java.net.URI
       ],
       "orderType": "LOAN",
       "owner": "NB",
-      "receiver": {
-        "name": "Doug Dimmadome",
-        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
+      "contactPerson": "Hermes the Great",
+      "address": {
+        "name": "Nasjonalbibliotekaren",
+        "addressLine1": "Henrik Ibsens gate 110",
+        "city": "Oslo",
+        "country": "Norway",
+        "zipcode": "0255"
       },
       "callbackUrl": "https://example.com/send/callback/here"
     }
@@ -58,10 +62,24 @@ data class ApiOrderPayload(
         examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
-    // TODO - Swaggerdoc
+    @Schema(
+        description = "The name of the person to contact with manners related to this order",
+        example = "Hermes"
+    )
     val contactPerson: String,
-    // TODO - Swaggerdoc
-    // TODO - Should this use Order Address or custom DTO?
+    // TODO - Should this use custom DTO?
+    @Schema(
+        description = "The delivery address of this order",
+        example = """
+            "address": {
+                "name": "Nasjonalbibliotekaren",
+                "addressLine1": "Henrik Ibsens gate 110",
+                "city": "Oslo",
+                "country": "Norway",
+                "zipcode": "0255"
+            }
+        """
+    )
     val address: Order.Address?,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
