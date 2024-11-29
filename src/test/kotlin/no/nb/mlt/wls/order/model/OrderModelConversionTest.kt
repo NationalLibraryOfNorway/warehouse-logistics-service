@@ -32,7 +32,7 @@ class OrderModelConversionTest {
                     name = "name",
                     addressLine1 = "address",
                     addressLine2 = "street",
-                    zipcode = "zipcode",
+                    postcode = "postcode",
                     city = "city",
                     region = "region",
                     country = "country"
@@ -54,7 +54,7 @@ class OrderModelConversionTest {
                     name = "name",
                     addressLine1 = "address",
                     addressLine2 = "street",
-                    zipcode = "zipcode",
+                    postcode = "postcode",
                     city = "city",
                     region = "region",
                     country = "country"
@@ -97,7 +97,7 @@ class OrderModelConversionTest {
                     addressLine2 = "street",
                     city = "city",
                     region = "region",
-                    zipcode = "zipcode",
+                    postcode = "postcode",
                     country = "country"
                 ),
             contactPerson = "contactPerson",

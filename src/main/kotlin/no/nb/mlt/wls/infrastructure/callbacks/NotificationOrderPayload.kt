@@ -27,8 +27,8 @@ import no.nb.mlt.wls.domain.model.Owner
         "addressLine2": "21st Texan Ave.",
         "city": "Dimmsdale",
         "country": "United States",
-        "state": "California",
-        "zipcode": "CA-55415"
+        "region": "California",
+        "postcode": "CA-55415"
       },
       "callbackUrl": "https://example.com/send/callback/here"
     }

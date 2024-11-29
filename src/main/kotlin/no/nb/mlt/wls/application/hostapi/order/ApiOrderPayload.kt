@@ -30,7 +30,7 @@ import java.net.URI
         "addressLine1": "Henrik Ibsens gate 110",
         "city": "Oslo",
         "country": "Norway",
-        "zipcode": "0255"
+        "postcode": "0255"
       },
       "callbackUrl": "https://example.com/send/callback/here"
     }
@@ -76,7 +76,7 @@ data class ApiOrderPayload(
                 "addressLine1": "Henrik Ibsens gate 110",
                 "city": "Oslo",
                 "country": "Norway",
-                "zipcode": "0255"
+                "postcode": "0255"
             }
         """
     )

@@ -163,7 +163,7 @@ data class Order(
         val name: String?,
         val addressLine1: String?,
         val addressLine2: String?,
-        val zipcode: String?,
+        val postcode: String?,
         val city: String?,
         val region: String?,
         val country: String?
@@ -178,8 +178,8 @@ data class Order(
             if (addressLine2?.isBlank() == true) {
                 throw ValidationException("Invalid address: address line must not be blank")
             }
-            if (zipcode?.isBlank() == true) {
-                throw ValidationException("Invalid address: zipcode must not be blank")
+            if (postcode?.isBlank() == true) {
+                throw ValidationException("Invalid address: postcode must not be blank")
             }
             if (city?.isBlank() == true) {
                 throw ValidationException("Invalid address: city must not be blank")

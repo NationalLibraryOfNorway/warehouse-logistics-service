@@ -83,7 +83,7 @@ fun Order.toSynqPayload() =
                     city = address?.city,
                     state = address?.region,
                     country = address?.country,
-                    postalCode = address?.zipcode
+                    postalCode = address?.postcode
                 )
             )
     )

@@ -208,7 +208,7 @@ class OrderModelValidationTest {
             name = "real name",
             addressLine1 = "real street",
             addressLine2 = null,
-            zipcode = "12345-WA",
+            postcode = "12345-WA",
             city = "england",
             region = "cornwall",
             country = "london"

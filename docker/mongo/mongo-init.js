@@ -63,7 +63,7 @@ db.orders.insertOne({
         "city": "Las Vegas",
         "country": "United States",
         "region": "Texas",
-        "zipcode": "TX-55415"
+        "postcode": "TX-55415"
     },
     "callbackUrl": "https://example.com/send/callback/here",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"

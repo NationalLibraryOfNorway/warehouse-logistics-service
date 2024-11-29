@@ -28,8 +28,8 @@ import kotlin.jvm.Throws
         "addressLine2": "21st Texan Ave.",
         "city": "Dimmsdale",
         "country": "United States",
-        "state": "California",
-        "zipcode": "CA-55415"
+        "region": "California",
+        "postcode": "CA-55415"
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """
@@ -70,7 +70,7 @@ data class ApiUpdateOrderPayload(
                 "addressLine1": "Henrik Ibsens gate 110",
                 "city": "Oslo",
                 "country": "Norway",
-                "zipcode": "0255"
+                "postcode": "0255"
             }
         """
     )
