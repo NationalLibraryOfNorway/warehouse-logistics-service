@@ -184,10 +184,12 @@ data class Order(
             if (city?.isBlank() == true) {
                 throw ValidationException("Invalid address: city must not be blank")
             }
+            if (state?.isBlank() == true) {
+                throw ValidationException("Invalid address: state must not be blank")
+            }
             if (country?.isBlank() == true) {
                 throw ValidationException("Invalid address: country must not be blank")
             }
-            // TODO - Validate State/Region/County?
         }
     }
 
