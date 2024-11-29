@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
+import no.nb.mlt.wls.domain.model.Order.Address
 import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.FAILED
 import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.PICKED
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
@@ -99,6 +100,7 @@ data class Order(
         itemIds: List<String>,
         callbackUrl: String,
         orderType: Type,
+        address: Address?,
         contactPerson: String
     ): Order {
         throwIfInProgress()
@@ -106,8 +108,11 @@ data class Order(
         return this.setOrderLines(itemIds)
             .setCallbackUrl(callbackUrl)
             .setOrderType(orderType)
+            .setAddress(address)
             .setContactPerson(contactPerson)
     }
+
+    private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
 
     /**
      * Delete the order as long as it is possible.
@@ -203,3 +208,5 @@ data class Order(
 fun Order.OrderItem.isPickedOrFailed(): Boolean {
     return this.status == PICKED || this.status == FAILED
 }
+
+fun createOrderAddress(): Order.Address = Address(null, null, null, null, null, null, null)
