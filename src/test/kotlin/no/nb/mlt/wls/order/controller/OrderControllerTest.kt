@@ -475,6 +475,7 @@ class OrderControllerTest(
                     country = "country"
                 ),
             contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -500,6 +501,7 @@ class OrderControllerTest(
                     country = "country"
                 ),
             contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -522,6 +524,7 @@ class OrderControllerTest(
                     country = "country"
                 ),
             contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -570,6 +573,7 @@ class OrderControllerTest(
             owner = Owner.NB,
             address = address,
             contactPerson = contactPerson,
+            note = note,
             callbackUrl = callbackUrl
         )
 }

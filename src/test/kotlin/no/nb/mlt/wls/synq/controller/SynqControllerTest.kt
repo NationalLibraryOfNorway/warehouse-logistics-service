@@ -402,7 +402,8 @@ class SynqControllerTest(
                     null,
                     null
                 ),
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback.com/order",
+            note = "note"
         )
 
     private val orderStatusUpdatePayload =

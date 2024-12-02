@@ -37,7 +37,8 @@ class OrderModelConversionTest {
                     region = "region",
                     country = "country"
                 ),
-            callbackUrl = "callbackUrl"
+            callbackUrl = "callbackUrl",
+            note = "note"
         )
 
     private val testOrder =
@@ -59,7 +60,8 @@ class OrderModelConversionTest {
                     region = "region",
                     country = "country"
                 ),
-            callbackUrl = "callbackUrl"
+            callbackUrl = "callbackUrl",
+            note = "note"
         )
 
     private val testSynqOrderPayload =
@@ -222,6 +224,7 @@ class OrderModelConversionTest {
             owner = Owner.NB,
             contactPerson = contactPerson,
             address = address,
-            callbackUrl = callbackUrl
+            callbackUrl = callbackUrl,
+            note = note
         )
 }

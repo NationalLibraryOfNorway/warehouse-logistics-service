@@ -223,7 +223,8 @@ class OrderModelValidationTest {
             orderType = Order.Type.LOAN,
             address = validAddress,
             contactPerson = "contactPerson",
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback.com/order",
+            note = "note"
         )
 
     val validUpdateOrderPayload =
@@ -234,6 +235,7 @@ class OrderModelValidationTest {
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
             address = validAddress,
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback.com/order",
+            note = "note"
         )
 }

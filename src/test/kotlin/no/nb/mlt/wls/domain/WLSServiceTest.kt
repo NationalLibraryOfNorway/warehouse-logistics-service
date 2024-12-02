@@ -207,7 +207,7 @@ class WLSServiceTest {
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
-            val order = cut.createOrder(testOrder.toCreateOrderDTO())
+            val order = cut.createOrder(createOrderDTO)
 
             assertThat(order).isEqualTo(expectedOrder)
 
@@ -226,7 +226,7 @@ class WLSServiceTest {
         runTest {
             val order =
                 cut.createOrder(
-                    testOrder.toCreateOrderDTO().copy(callbackUrl = "https://newurl.com")
+                    createOrderDTO.copy(callbackUrl = "https://newurl.com")
                 )
 
             assertThat(order).isEqualTo(testOrder)
@@ -245,7 +245,7 @@ class WLSServiceTest {
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock)
         runTest {
             assertThrows<ValidationException> {
-                cut.createOrder(testOrder.toCreateOrderDTO())
+                cut.createOrder(createOrderDTO)
             }
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
             coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
@@ -320,6 +320,7 @@ class WLSServiceTest {
                     Order.Type.LOAN,
                     "unreal person",
                     createOrderAddress(),
+                    "note",
                     "https://example.com"
                 )
 
@@ -347,6 +348,7 @@ class WLSServiceTest {
                     testOrder.orderType,
                     testOrder.contactPerson,
                     testOrder.address ?: createOrderAddress(),
+                    testOrder.note,
                     testOrder.callbackUrl
                 )
             }
@@ -371,6 +373,7 @@ class WLSServiceTest {
                     testOrder.orderType,
                     testOrder.contactPerson,
                     testOrder.address,
+                    testOrder.note,
                     testOrder.callbackUrl
                 )
             }
@@ -429,6 +432,7 @@ class WLSServiceTest {
             owner = Owner.NB,
             contactPerson = "contactPerson",
             address = createOrderAddress(),
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -449,7 +453,7 @@ class WLSServiceTest {
             "Somewhere nice"
         )
 
-    private fun Order.toCreateOrderDTO() =
+    private val createOrderDTO =
         CreateOrderDTO(
             hostName = testOrder.hostName,
             hostOrderId = testOrder.hostOrderId,
@@ -458,6 +462,7 @@ class WLSServiceTest {
             owner = testOrder.owner,
             contactPerson = testOrder.contactPerson,
             address = testOrder.address,
+            note = testOrder.note,
             callbackUrl = testOrder.callbackUrl
         )
 
