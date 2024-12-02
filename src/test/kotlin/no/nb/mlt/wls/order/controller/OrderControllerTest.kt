@@ -466,7 +466,7 @@ class OrderControllerTest(
             orderType = Order.Type.LOAN,
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "addressLine1",
                     addressLine2 = "addressLine2",
                     postcode = "postcode",
@@ -492,7 +492,7 @@ class OrderControllerTest(
             orderType = Order.Type.LOAN,
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "addressLine1",
                     addressLine2 = "addressLine2",
                     postcode = "postcode",
@@ -515,7 +515,7 @@ class OrderControllerTest(
             owner = Owner.NB,
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "addressLine1",
                     addressLine2 = "addressLine2",
                     postcode = "postcode",

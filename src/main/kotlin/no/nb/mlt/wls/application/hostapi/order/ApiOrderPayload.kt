@@ -26,7 +26,7 @@ import java.net.URI
       "owner": "NB",
       "contactPerson": "Hermes the Great",
       "address": {
-        "name": "Nasjonalbibliotekaren",
+        "recipient": "Nasjonalbibliotekaren",
         "addressLine1": "Henrik Ibsens gate 110",
         "city": "Oslo",
         "country": "Norway",
@@ -78,7 +78,7 @@ data class ApiOrderPayload(
         description = "The delivery address of this order",
         example = """
             "address": {
-                "name": "Nasjonalbibliotekaren",
+                "recipient": "Nasjonalbibliotekaren",
                 "addressLine1": "Henrik Ibsens gate 110",
                 "city": "Oslo",
                 "country": "Norway",

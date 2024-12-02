@@ -167,7 +167,7 @@ data class Order(
     }
 
     data class Address(
-        val name: String?,
+        val recipient: String?,
         val addressLine1: String?,
         val addressLine2: String?,
         val postcode: String?,
@@ -176,8 +176,8 @@ data class Order(
         val country: String?
     ) {
         fun validate() {
-            if (name?.isBlank() == true) {
-                throw ValidationException("Invalid address: name must not be blank")
+            if (recipient?.isBlank() == true) {
+                throw ValidationException("Invalid address: recipient must not be blank")
             }
             if (addressLine1?.isBlank() == true) {
                 throw ValidationException("Invalid address: address line must not be blank")
@@ -218,4 +218,4 @@ fun Order.OrderItem.isPickedOrFailed(): Boolean {
     return this.status == PICKED || this.status == FAILED
 }
 
-fun createOrderAddress(): Order.Address = Address(null, null, null, null, null, null, null)
+fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)

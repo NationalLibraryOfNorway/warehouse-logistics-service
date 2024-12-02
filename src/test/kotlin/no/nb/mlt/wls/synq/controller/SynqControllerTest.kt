@@ -394,7 +394,7 @@ class SynqControllerTest(
             contactPerson = "contactPerson",
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "addressLine1",
                     null,
                     null,

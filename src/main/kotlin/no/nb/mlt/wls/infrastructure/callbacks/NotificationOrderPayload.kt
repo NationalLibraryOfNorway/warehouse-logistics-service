@@ -22,7 +22,7 @@ import no.nb.mlt.wls.domain.model.Owner
       "owner": "NB",
       "contactPerson": "MLT Team",
       "address": {
-        "name": "Doug Dimmadome",
+        "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
         "addressLine2": "21st Texan Ave.",
         "city": "Dimmsdale",

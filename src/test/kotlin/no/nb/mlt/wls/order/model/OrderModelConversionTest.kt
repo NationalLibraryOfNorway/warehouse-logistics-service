@@ -29,7 +29,7 @@ class OrderModelConversionTest {
             contactPerson = "contactPerson",
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "address",
                     addressLine2 = "street",
                     postcode = "postcode",
@@ -52,7 +52,7 @@ class OrderModelConversionTest {
             contactPerson = "contactPerson",
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "address",
                     addressLine2 = "street",
                     postcode = "postcode",
@@ -94,7 +94,7 @@ class OrderModelConversionTest {
             owner = Owner.NB,
             address =
                 Order.Address(
-                    name = "name",
+                    recipient = "recipient",
                     addressLine1 = "address",
                     addressLine2 = "street",
                     city = "city",

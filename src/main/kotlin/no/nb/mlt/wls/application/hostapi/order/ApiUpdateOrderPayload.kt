@@ -23,7 +23,7 @@ import kotlin.jvm.Throws
       "orderType": "LOAN",
       "contactPerson": "MLT Team",
       "address": {
-        "name": "Doug Dimmadome",
+        "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
         "addressLine2": "21st Texan Ave.",
         "city": "Dimmsdale",
@@ -68,7 +68,7 @@ data class ApiUpdateOrderPayload(
         """,
         example = """
             "address": {
-                "name": "Nasjonalbibliotekaren",
+                "recipient": "Nasjonalbibliotekaren",
                 "addressLine1": "Henrik Ibsens gate 110",
                 "city": "Oslo",
                 "country": "Norway",

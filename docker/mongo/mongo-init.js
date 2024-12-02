@@ -57,7 +57,7 @@ db.orders.insertOne({
     "owner": "NB",
     "contactPerson": "MLT Team",
     "address": {
-        "name": "Doug Doug",
+        "recipient": "Doug Doug",
         "addressLine1": "Somewhere",
         "addressLine2": "Behind a cardboard box",
         "city": "Las Vegas",

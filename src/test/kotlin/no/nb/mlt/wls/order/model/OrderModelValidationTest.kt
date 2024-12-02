@@ -44,7 +44,7 @@ class OrderModelValidationTest {
 
     @Test
     fun `address with blank fields should fail validation`() {
-        val invalidAddress = validAddress.copy(name = "")
+        val invalidAddress = validAddress.copy(recipient = "")
         val invalidCityAddress = validAddress.copy(city = "")
 
         val error = catchThrowable(invalidAddress::validate)
@@ -119,7 +119,7 @@ class OrderModelValidationTest {
 
     @Test
     fun `order with invalid address should fail validation`() {
-        val order = validOrder.copy(address = validAddress.copy(name = ""))
+        val order = validOrder.copy(address = validAddress.copy(recipient = ""))
 
         val thrown = catchThrowable(order::validate)
 
@@ -188,7 +188,7 @@ class OrderModelValidationTest {
 
     @Test
     fun `update order with invalid address should fail validation`() {
-        val order = validUpdateOrderPayload.copy(address = validAddress.copy(name = ""))
+        val order = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
 
         val thrown = catchThrowable(order::validate)
 
@@ -205,7 +205,7 @@ class OrderModelValidationTest {
 
     val validAddress =
         Order.Address(
-            name = "real name",
+            recipient = "real name",
             addressLine1 = "real street",
             addressLine2 = null,
             postcode = "12345-WA",
