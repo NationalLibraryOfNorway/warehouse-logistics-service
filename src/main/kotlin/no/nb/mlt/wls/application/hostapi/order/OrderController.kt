@@ -256,6 +256,7 @@ class OrderController(
                 orderType = payload.orderType,
                 contactPerson = payload.contactPerson,
                 address = payload.address,
+                note = payload.note,
                 callbackUrl = payload.callbackUrl
             )
 

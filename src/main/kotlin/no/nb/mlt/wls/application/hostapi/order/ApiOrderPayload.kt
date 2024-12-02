@@ -67,6 +67,11 @@ data class ApiOrderPayload(
         example = "Hermes"
     )
     val contactPerson: String,
+    @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
     // TODO - Should this use custom DTO?
     @Schema(
         description = "The delivery address of this order",
@@ -96,6 +101,7 @@ data class ApiOrderPayload(
             owner = owner,
             address = address,
             contactPerson = contactPerson,
+            note = note,
             callbackUrl = callbackUrl
         )
 
@@ -138,6 +144,7 @@ fun Order.toApiOrderPayload() =
         orderType = orderType,
         contactPerson = contactPerson,
         address = address,
+        note = note,
         callbackUrl = callbackUrl
     )
 

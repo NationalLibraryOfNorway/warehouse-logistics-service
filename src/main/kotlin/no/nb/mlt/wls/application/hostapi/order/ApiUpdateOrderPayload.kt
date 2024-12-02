@@ -76,6 +76,11 @@ data class ApiUpdateOrderPayload(
     )
     val address: Order.Address?,
     @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
+    @Schema(
         description = "URL to send a callback to when the order is completed.",
         example = "https://example.com/send/callback/here"
     )

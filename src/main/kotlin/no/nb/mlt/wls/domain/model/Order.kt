@@ -16,6 +16,7 @@ data class Order(
     val owner: Owner,
     val address: Address?,
     val contactPerson: String,
+    val note: String?,
     val callbackUrl: String
 ) {
     private fun setOrderLines(listOfHostIds: List<String>): Order {
@@ -101,6 +102,7 @@ data class Order(
         callbackUrl: String,
         orderType: Type,
         address: Address?,
+        note: String?,
         contactPerson: String
     ): Order {
         throwIfInProgress()
@@ -109,7 +111,12 @@ data class Order(
             .setCallbackUrl(callbackUrl)
             .setOrderType(orderType)
             .setAddress(address)
+            .setNote(note)
             .setContactPerson(contactPerson)
+    }
+
+    private fun setNote(note: String?): Order {
+        return this.copy(note = note)
     }
 
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())

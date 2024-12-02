@@ -14,6 +14,7 @@ interface UpdateOrder {
         orderType: Order.Type,
         contactPerson: String,
         address: Order.Address?,
+        note: String?,
         callbackUrl: String
     ): Order
 }
