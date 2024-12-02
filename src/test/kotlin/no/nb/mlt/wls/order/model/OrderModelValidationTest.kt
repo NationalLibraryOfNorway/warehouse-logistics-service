@@ -51,7 +51,7 @@ class OrderModelValidationTest {
         then(error)
             .isNotNull()
             .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("name must not")
+            .hasMessageContaining("recipient must not")
 
         val anotherError = catchThrowable(invalidCityAddress::validate)
         then(anotherError)
