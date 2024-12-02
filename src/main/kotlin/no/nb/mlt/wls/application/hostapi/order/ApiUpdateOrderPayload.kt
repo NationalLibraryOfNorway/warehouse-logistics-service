@@ -30,6 +30,8 @@ import kotlin.jvm.Throws
         "country": "United States",
         "region": "California",
         "postcode": "CA-55415"
+      },
+      "note": "Handle with care",
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """

@@ -32,6 +32,7 @@ import java.net.URI
         "country": "Norway",
         "postcode": "0255"
       },
+      "note": "Handle with care",
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """
