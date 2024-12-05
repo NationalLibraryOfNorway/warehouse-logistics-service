@@ -73,6 +73,11 @@ data class NotificationOrderPayload(
     )
     val address: Order.Address?,
     @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
+    @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
     )
@@ -89,5 +94,6 @@ fun Order.toNotificationOrderPayload() =
         owner = owner,
         contactPerson = contactPerson,
         address = address,
+        note = note,
         callbackUrl = callbackUrl
     )
