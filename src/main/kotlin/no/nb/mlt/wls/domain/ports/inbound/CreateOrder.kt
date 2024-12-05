@@ -14,7 +14,9 @@ data class CreateOrderDTO(
     val orderLine: List<OrderItem>,
     val orderType: Order.Type,
     val owner: Owner,
-    val receiver: Order.Receiver,
+    val contactPerson: String,
+    val address: Order.Address?,
+    val note: String?,
     val callbackUrl: String
 ) {
     data class OrderItem(
@@ -33,7 +35,9 @@ fun CreateOrderDTO.toOrder(): Order {
             },
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        contactPerson = contactPerson,
+        address = address,
+        note = note,
         callbackUrl = callbackUrl
     )
 }

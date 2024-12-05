@@ -12,7 +12,6 @@ import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -252,7 +251,7 @@ class OrderControllerTest(
     fun `updateOrder with valid payload updates order`() {
         val testPayload =
             duplicateOrderPayload.copy(
-                receiver = Receiver("newName", duplicateOrderPayload.receiver.address),
+                contactPerson = "new person",
                 callbackUrl = "https://new-callback.com/order",
                 orderLine = listOf(OrderLine("item-123", null))
             )
@@ -275,7 +274,7 @@ class OrderControllerTest(
                 orderLines?.map { it ->
                     assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
                 }
-                assertThat(response.responseBody?.receiver?.name).isEqualTo(testPayload.receiver.name)
+                assertThat(response.responseBody?.contactPerson).isEqualTo(testPayload.contactPerson)
                 assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
             }
     }
@@ -465,7 +464,18 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            receiver = Receiver(name = "name", address = "address"),
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    postcode = "postcode",
+                    city = "city",
+                    region = "region",
+                    country = "country"
+                ),
+            contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -480,7 +490,18 @@ class OrderControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            receiver = Receiver(name = "name", address = "address"),
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    postcode = "postcode",
+                    city = "city",
+                    region = "region",
+                    country = "country"
+                ),
+            contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -492,7 +513,18 @@ class OrderControllerTest(
             orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver = Order.Receiver(name = "name", address = "address"),
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    postcode = "postcode",
+                    city = "city",
+                    region = "region",
+                    country = "country"
+                ),
+            contactPerson = "named person",
+            note = "note",
             callbackUrl = "https://callback.com/order"
         )
 
@@ -539,7 +571,9 @@ class OrderControllerTest(
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
             owner = Owner.NB,
-            receiver = receiver.toOrderReceiver(),
+            address = address,
+            contactPerson = contactPerson,
+            note = note,
             callbackUrl = callbackUrl
         )
 }

@@ -24,10 +24,15 @@ import java.net.URI
       ],
       "orderType": "LOAN",
       "owner": "NB",
-      "receiver": {
-        "name": "Doug Dimmadome",
-        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
+      "contactPerson": "Hermes the Great",
+      "address": {
+        "recipient": "Nasjonalbibliotekaren",
+        "addressLine1": "Henrik Ibsens gate 110",
+        "city": "Oslo",
+        "country": "Norway",
+        "postcode": "0255"
       },
+      "note": "Handle with care",
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """
@@ -59,9 +64,29 @@ data class ApiOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = "Who's the receiver of the material in the order."
+        description = "The name of the person to contact with manners related to this order",
+        example = "Hermes"
     )
-    val receiver: Receiver,
+    val contactPerson: String,
+    @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
+    // TODO - Should this use custom DTO?
+    @Schema(
+        description = "The delivery address of this order",
+        example = """
+            "address": {
+                "recipient": "Nasjonalbibliotekaren",
+                "addressLine1": "Henrik Ibsens gate 110",
+                "city": "Oslo",
+                "country": "Norway",
+                "postcode": "0255"
+            }
+        """
+    )
+    val address: Order.Address?,
     @Schema(
         description = "Callback URL for the order used to update the order information in the host system.",
         example = "https://example.com/send/callback/here"
@@ -75,7 +100,9 @@ data class ApiOrderPayload(
             orderLine = orderLine.map { it.toCreateOrderItem() },
             orderType = orderType,
             owner = owner,
-            receiver = receiver.toOrderReceiver(),
+            address = address,
+            contactPerson = contactPerson,
+            note = note,
             callbackUrl = callbackUrl
         )
 
@@ -93,7 +120,7 @@ data class ApiOrderPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
-        receiver.validate()
+        address?.validate()
     }
 
     private fun isValidUrl(url: String): Boolean {
@@ -116,7 +143,9 @@ fun Order.toApiOrderPayload() =
         status = status,
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
-        receiver = Receiver(receiver.name, receiver.address),
+        contactPerson = contactPerson,
+        address = address,
+        note = note,
         callbackUrl = callbackUrl
     )
 
@@ -154,41 +183,3 @@ data class OrderLine(
 }
 
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)
-
-@Schema(
-    description = "Who's the receiver of the order.",
-    example = """
-    {
-      "name": "Doug Dimmadome",
-      "address": "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas"
-    }
-    """
-)
-data class Receiver(
-    @Schema(
-        description = "Name of the receiver.",
-        example = "Doug Dimmadome"
-    )
-    val name: String,
-    @Schema(
-        description = "Address of the receiver.",
-        example = "Dimmsdale Dimmadome, Apartment 420, 69th Ave. Texas",
-        required = false
-    )
-    val address: String?
-) {
-    fun toOrderReceiver() = Order.Receiver(name, address ?: "")
-
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (name.isBlank()) {
-            throw ValidationException("The order's receiver name is required, and can not be blank")
-        }
-
-        if (address != null && address.isBlank()) {
-            throw ValidationException("The order's receiver address cannot be blank if provided")
-        }
-    }
-}
-
-fun Order.Receiver.toReceiver() = Receiver(name, address)

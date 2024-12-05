@@ -391,12 +391,19 @@ class SynqControllerTest(
             orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             owner = Owner.NB,
-            receiver =
-                Order.Receiver(
-                    name = "name",
-                    address = "address"
+            contactPerson = "contactPerson",
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
                 ),
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback.com/order",
+            note = "note"
         )
 
     private val orderStatusUpdatePayload =

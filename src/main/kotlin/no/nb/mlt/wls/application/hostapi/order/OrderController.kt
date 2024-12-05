@@ -254,7 +254,9 @@ class OrderController(
                 hostOrderId = payload.hostOrderId,
                 itemHostIds = payload.orderLine.map { it.hostId },
                 orderType = payload.orderType,
-                receiver = payload.receiver.toOrderReceiver(),
+                contactPerson = payload.contactPerson,
+                address = payload.address,
+                note = payload.note,
                 callbackUrl = payload.callbackUrl
             )
 

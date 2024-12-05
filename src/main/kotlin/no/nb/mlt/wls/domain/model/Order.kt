@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
+import no.nb.mlt.wls.domain.model.Order.Address
 import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.FAILED
 import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.PICKED
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
@@ -13,7 +14,9 @@ data class Order(
     val orderLine: List<OrderItem>,
     val orderType: Type,
     val owner: Owner,
-    val receiver: Receiver,
+    val address: Address?,
+    val contactPerson: String,
+    val note: String?,
     val callbackUrl: String
 ) {
     private fun setOrderLines(listOfHostIds: List<String>): Order {
@@ -55,8 +58,8 @@ data class Order(
             .updateOrderStatusFromOrderLines()
     }
 
-    private fun setReceiver(receiver: Receiver): Order {
-        return this.copy(receiver = receiver)
+    private fun setContactPerson(contactPerson: String): Order {
+        return this.copy(contactPerson = contactPerson)
     }
 
     private fun setOrderType(orderType: Type): Order {
@@ -98,15 +101,25 @@ data class Order(
         itemIds: List<String>,
         callbackUrl: String,
         orderType: Type,
-        receiver: Receiver
+        address: Address?,
+        note: String?,
+        contactPerson: String
     ): Order {
         throwIfInProgress()
 
         return this.setOrderLines(itemIds)
             .setCallbackUrl(callbackUrl)
             .setOrderType(orderType)
-            .setReceiver(receiver)
+            .setAddress(address)
+            .setNote(note)
+            .setContactPerson(contactPerson)
     }
+
+    private fun setNote(note: String?): Order {
+        return this.copy(note = note)
+    }
+
+    private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
 
     /**
      * Delete the order as long as it is possible.
@@ -153,10 +166,39 @@ data class Order(
         }
     }
 
-    data class Receiver(
-        val name: String,
-        val address: String?
-    )
+    data class Address(
+        val recipient: String?,
+        val addressLine1: String?,
+        val addressLine2: String?,
+        val postcode: String?,
+        val city: String?,
+        val region: String?,
+        val country: String?
+    ) {
+        fun validate() {
+            if (recipient?.isBlank() == true) {
+                throw ValidationException("Invalid address: recipient must not be blank")
+            }
+            if (addressLine1?.isBlank() == true) {
+                throw ValidationException("Invalid address: address line must not be blank")
+            }
+            if (addressLine2?.isBlank() == true) {
+                throw ValidationException("Invalid address: address line must not be blank")
+            }
+            if (postcode?.isBlank() == true) {
+                throw ValidationException("Invalid address: postcode must not be blank")
+            }
+            if (city?.isBlank() == true) {
+                throw ValidationException("Invalid address: city must not be blank")
+            }
+            if (region?.isBlank() == true) {
+                throw ValidationException("Invalid address: region must not be blank")
+            }
+            if (country?.isBlank() == true) {
+                throw ValidationException("Invalid address: country must not be blank")
+            }
+        }
+    }
 
     enum class Status {
         NOT_STARTED,
@@ -175,3 +217,5 @@ data class Order(
 fun Order.OrderItem.isPickedOrFailed(): Boolean {
     return this.status == PICKED || this.status == FAILED
 }
+
+fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
