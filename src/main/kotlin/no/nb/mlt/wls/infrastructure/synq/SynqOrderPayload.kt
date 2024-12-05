@@ -43,15 +43,19 @@ data class SynqOrderPayload(
 data class ShippingAddress(
     val address: Address
 ) {
-    // TODO - Should all the fields here be annotated?
     data class Address(
         val contactPerson: String,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine1: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine2: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val city: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val state: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val country: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val postalCode: String? = null
     )
 }
