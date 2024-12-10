@@ -50,6 +50,8 @@ data class ShippingAddress(
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine2: String? = null,
         @JsonInclude(JsonInclude.Include.NON_NULL)
+        val addressLine3: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         val city: String? = null,
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val state: String? = null,
@@ -82,8 +84,9 @@ fun Order.toSynqPayload() =
             ShippingAddress(
                 ShippingAddress.Address(
                     contactPerson = contactPerson,
-                    addressLine1 = address?.addressLine1,
-                    addressLine2 = address?.addressLine2,
+                    addressLine1 = address?.recipient,
+                    addressLine2 = address?.addressLine1,
+                    addressLine3 = address?.addressLine2,
                     city = address?.city,
                     state = address?.region,
                     country = address?.country,
