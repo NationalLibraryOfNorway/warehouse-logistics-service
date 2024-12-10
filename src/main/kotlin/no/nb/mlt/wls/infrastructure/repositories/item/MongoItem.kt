@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import org.springframework.data.mongodb.core.mapping.Document
@@ -12,7 +13,7 @@ data class MongoItem(
     val hostId: String,
     val hostName: HostName,
     val description: String,
-    val itemCategory: String,
+    val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val owner: Owner,
