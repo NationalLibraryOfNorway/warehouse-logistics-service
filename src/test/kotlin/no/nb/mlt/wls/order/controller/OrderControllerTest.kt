@@ -16,6 +16,7 @@ import no.nb.mlt.wls.application.hostapi.order.Receiver
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
@@ -515,7 +516,7 @@ class OrderControllerTest(
                                 hostId = it.hostId,
                                 hostName = testOrderPayload.hostName,
                                 description = "description",
-                                itemCategory = "itemCategory",
+                                itemCategory = ItemCategory.papir,
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
                                 owner = Owner.NB,

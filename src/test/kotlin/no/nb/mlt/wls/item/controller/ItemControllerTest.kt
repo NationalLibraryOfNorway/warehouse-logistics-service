@@ -10,6 +10,7 @@ import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -239,7 +240,7 @@ class ItemControllerTest(
             hostId = "mlt-420",
             hostName = HostName.AXIELL,
             description = "Ringenes Herre samling",
-            itemCategory = "BOOK",
+            itemCategory = ItemCategory.papir,
             preferredEnvironment = NONE,
             packaging = Packaging.BOX,
             owner = Owner.NB,
@@ -256,7 +257,7 @@ class ItemControllerTest(
             hostId = "item-12346",
             hostName = HostName.AXIELL,
             description = "Tyv etter loven",
-            itemCategory = "BOOK",
+            itemCategory = ItemCategory.papir,
             preferredEnvironment = NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,

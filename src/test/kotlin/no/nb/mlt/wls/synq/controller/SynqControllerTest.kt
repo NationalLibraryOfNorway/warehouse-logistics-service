@@ -18,6 +18,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
@@ -361,7 +362,7 @@ class SynqControllerTest(
             hostName = HostName.AXIELL,
             owner = Owner.NB,
             description = "Test item",
-            itemCategory = "Test category",
+            itemCategory = ItemCategory.papir,
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback.com/item",
@@ -375,7 +376,7 @@ class SynqControllerTest(
             hostName = HostName.AXIELL,
             owner = Owner.NB,
             description = "Item test",
-            itemCategory = "Category test",
+            itemCategory = ItemCategory.papir,
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback.com/item",
