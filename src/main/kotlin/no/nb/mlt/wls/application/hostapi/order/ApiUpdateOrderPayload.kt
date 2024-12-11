@@ -21,10 +21,17 @@ import kotlin.jvm.Throws
         }
       ],
       "orderType": "LOAN",
-      "receiver": {
-        "name": "Doug Dimmadome",
-        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
+      "contactPerson": "MLT Team",
+      "address": {
+        "recipient": "Doug Dimmadome",
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
+        "country": "United States",
+        "region": "California",
+        "postcode": "CA-55415"
       },
+      "note": "Handle with care",
       "callbackUrl": "https://example.com/send/callback/here"
     }
     """
@@ -53,7 +60,28 @@ data class ApiUpdateOrderPayload(
     @Schema(
         description = "Who's the receiver of the material in the order."
     )
-    val receiver: Receiver,
+    val contactPerson: String,
+    @Schema(
+        description = """
+            The delivery address of the order.
+            If delivering to a country with states (I.E. the United States), include the state name in the region.
+        """,
+        example = """
+            "address": {
+                "recipient": "Nasjonalbibliotekaren",
+                "addressLine1": "Henrik Ibsens gate 110",
+                "city": "Oslo",
+                "country": "Norway",
+                "postcode": "0255"
+            }
+        """
+    )
+    val address: Order.Address?,
+    @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
     @Schema(
         description = "URL to send a callback to when the order is completed.",
         example = "https://example.com/send/callback/here"
@@ -75,8 +103,7 @@ data class ApiUpdateOrderPayload(
         }
 
         orderLine.forEach(OrderLine::validate)
-
-        receiver.validate()
+        address?.validate()
     }
 
     private fun isValidUrl(url: String): Boolean {
