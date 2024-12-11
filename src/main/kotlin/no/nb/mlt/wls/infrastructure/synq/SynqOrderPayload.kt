@@ -46,7 +46,19 @@ data class ShippingAddress(
     data class Address(
         val contactPerson: String,
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        val addressLine1: String? = null
+        val addressLine1: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val addressLine2: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val addressLine3: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val city: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val state: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val country: String? = null,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        val postalCode: String? = null
     )
 }
 
@@ -71,8 +83,14 @@ fun Order.toSynqPayload() =
         shippingAddress =
             ShippingAddress(
                 ShippingAddress.Address(
-                    receiver.name,
-                    receiver.address
+                    contactPerson = contactPerson,
+                    addressLine1 = address?.recipient,
+                    addressLine2 = address?.addressLine1,
+                    addressLine3 = address?.addressLine2,
+                    city = address?.city,
+                    state = address?.region,
+                    country = address?.country,
+                    postalCode = address?.postcode
                 )
             )
     )
