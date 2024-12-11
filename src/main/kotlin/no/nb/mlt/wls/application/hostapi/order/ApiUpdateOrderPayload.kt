@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import org.apache.commons.validator.routines.UrlValidator
 import java.net.URI
 import kotlin.jvm.Throws
 
@@ -83,11 +84,7 @@ data class ApiUpdateOrderPayload(
         // Yes I am aware that this function is duplicated in three places
         // But I prefer readability over DRY in cases like this
 
-        return try {
-            URI(url).toURL() // Try to create a URL object
-            true
-        } catch (_: Exception) {
-            false // If exception is thrown, it's not a valid URL
-        }
+        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
+        return validator.isValid(url)
     }
 }

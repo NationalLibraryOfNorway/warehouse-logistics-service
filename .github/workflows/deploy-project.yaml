@@ -172,7 +172,7 @@ jobs:
           password: ${{ env.HARBOR_PASSWORD }}
 
       - name: Extract Metadata for Docker
-        # Give this step a unique ID which is for referencing, here it's used to get the value of tags #[[meta-step-id]]
+        # Give this step a unique ID for referencing it elsewhere, here it is used to get the value of tags #[[meta-step-id]]
         id: meta
         uses: docker/metadata-action@v5
         with:
