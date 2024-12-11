@@ -29,18 +29,20 @@ fun Item.toSynqPayload() =
         owner = owner.toSynqOwner(),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
-        productCategory = toSynqCategory(itemCategory).toString(),
+        productCategory = toSynqCategory(itemCategory),
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
         hostName = hostName.toString()
     )
 
-fun toSynqCategory(itemCategory: ItemCategory): ItemCategory {
-    return when (itemCategory) {
-        ItemCategory.lydbånd -> ItemCategory.magnetbånd
-        ItemCategory.videobånd -> ItemCategory.magnetbånd
-        ItemCategory.safetyfilm -> ItemCategory.film
-        ItemCategory.nitratfilm -> ItemCategory.film
-        else -> itemCategory
+fun toSynqCategory(category: ItemCategory): String {
+    return when (category) {
+        ItemCategory.PAPER -> "papir"
+        ItemCategory.DISC -> "plater"
+        ItemCategory.FILM -> "film"
+        ItemCategory.PHOTO -> "foto"
+        ItemCategory.OBJECT -> "gjenstand"
+        ItemCategory.BULK_ITEMS -> "sekkepost"
+        ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
     }
 }

@@ -414,7 +414,7 @@ class WLSServiceTest {
             hostName = HostName.AXIELL,
             hostId = "12345",
             description = "Tyven, tyven skal du hete",
-            itemCategory = ItemCategory.papir,
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,

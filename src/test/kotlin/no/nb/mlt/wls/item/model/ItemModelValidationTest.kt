@@ -115,7 +115,7 @@ class ItemModelValidationTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            itemCategory = ItemCategory.papir,
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,

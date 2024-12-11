@@ -548,7 +548,7 @@ class OrderControllerTest(
                                 hostId = it.hostId,
                                 hostName = testOrderPayload.hostName,
                                 description = "description",
-                                itemCategory = ItemCategory.papir,
+                                itemCategory = ItemCategory.PAPER,
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
                                 owner = Owner.NB,

@@ -83,7 +83,7 @@ class TraillingSlashRedirectTest(
             hostId = "item-12346",
             hostName = HostName.AXIELL,
             description = "Tyv etter loven",
-            itemCategory = ItemCategory.papir,
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
