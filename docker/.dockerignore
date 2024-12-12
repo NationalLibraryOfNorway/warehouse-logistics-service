@@ -1,0 +1,60 @@
+# Ignore Maven build files
+target/
+build/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Ignore IntelliJ IDEA project files
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignore VS Code project files
+.vscode/
+
+# Ignore Maven files
+.mvn/
+.m2/
+mvnw
+mvnw.cmd
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore logs
+*.log
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# Ignore backup files
+*.bak
+
+# Ignore Git configuration files
+.github/
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# Ignore Kubernetes configuration files
+k8s/
+
+# Exclude test-related files and coverage reports
+test-results/
+surefire-reports/
+
+
+# Ignore project specific files
+docker/keycloak/
+docker/mongo/
+docker/keycloak-realm-export.md
+.editorconfig

@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.model.Item
  * storage systems.
  * In both cases we want to know where the item went, and if the count changed
  */
-interface MoveItem {
+fun interface MoveItem {
     suspend fun moveItem(moveItemPayload: MoveItemPayload): Item
 }
 
@@ -21,6 +21,7 @@ data class MoveItemPayload(
     val quantity: Int,
     val location: String
 ) {
+    @Throws(ValidationException::class)
     fun validate() {
         if (quantity < 0.0) {
             throw ValidationException("Quantity can not be negative")

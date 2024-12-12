@@ -4,7 +4,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 
-interface CreateOrder {
+fun interface CreateOrder {
     suspend fun createOrder(orderDTO: CreateOrderDTO): Order
 }
 
