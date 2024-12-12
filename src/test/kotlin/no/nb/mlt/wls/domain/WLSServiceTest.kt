@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
@@ -413,7 +414,7 @@ class WLSServiceTest {
             hostName = HostName.AXIELL,
             hostId = "12345",
             description = "Tyven, tyven skal du hete",
-            itemCategory = "BOOK",
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,

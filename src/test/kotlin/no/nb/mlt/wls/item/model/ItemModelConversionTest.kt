@@ -5,12 +5,14 @@ import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
 import no.nb.mlt.wls.infrastructure.callbacks.toNotificationItemPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
+import no.nb.mlt.wls.infrastructure.synq.toSynqCategory
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -21,7 +23,7 @@ class ItemModelConversionTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            itemCategory = "NONE",
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
@@ -35,7 +37,7 @@ class ItemModelConversionTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            itemCategory = "NONE",
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
@@ -50,7 +52,7 @@ class ItemModelConversionTest {
             owner = SynqOwner.NB,
             barcode = SynqProductPayload.Barcode("mlt-test-1234"),
             description = "Tyven skal du hete",
-            productCategory = "NONE",
+            productCategory = toSynqCategory(ItemCategory.PAPER),
             productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
             false,
             hostName = HostName.AXIELL.toString()
@@ -61,7 +63,7 @@ class ItemModelConversionTest {
             hostId = "mlt-test-1234",
             hostName = HostName.AXIELL,
             description = "Tyven skal du hete",
-            itemCategory = "NONE",
+            itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
