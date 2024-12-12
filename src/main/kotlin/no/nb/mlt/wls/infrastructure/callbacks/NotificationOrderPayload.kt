@@ -20,9 +20,15 @@ import no.nb.mlt.wls.domain.model.Owner
       ],
       "orderType": "LOAN",
       "owner": "NB",
-      "receiver": {
-        "name": "Doug Dimmadome",
-        "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
+      "contactPerson": "MLT Team",
+      "address": {
+        "recipient": "Doug Dimmadome",
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
+        "country": "United States",
+        "region": "California",
+        "postcode": "CA-55415"
       },
       "callbackUrl": "https://callback-wls.no/order"
     }
@@ -65,9 +71,18 @@ data class NotificationOrderPayload(
     )
     val owner: Owner?,
     @Schema(
-        description = """Who's the receiver of the order."""
+        description = "The person to contact regarding matters about the order"
     )
-    val receiver: Order.Receiver,
+    val contactPerson: String,
+    @Schema(
+        description = "The address of the receiver of the material in the order."
+    )
+    val address: Order.Address?,
+    @Schema(
+        description = "Any notes about the order",
+        example = "This is required in four weeks time"
+    )
+    val note: String?,
     @Schema(
         description = """Callback URL to use for sending order updates in the host system.
             For example when order items get picked or the order is cancelled.""",
@@ -84,6 +99,8 @@ fun Order.toNotificationOrderPayload() =
         orderLine = orderLine,
         orderType = orderType,
         owner = owner,
-        receiver = receiver,
+        contactPerson = contactPerson,
+        address = address,
+        note = note,
         callbackUrl = callbackUrl
     )

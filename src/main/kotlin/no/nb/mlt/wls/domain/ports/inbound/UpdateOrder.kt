@@ -12,7 +12,9 @@ fun interface UpdateOrder {
         hostOrderId: String,
         itemHostIds: List<String>,
         orderType: Order.Type,
-        receiver: Order.Receiver,
+        contactPerson: String,
+        address: Order.Address?,
+        note: String?,
         callbackUrl: String
     ): Order
 }

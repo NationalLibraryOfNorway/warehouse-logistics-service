@@ -56,9 +56,15 @@ db.orders.insertOne({
     ],
     "orderType": "LOAN",
     "owner": "NB",
-    "receiver": {
-        "name": "Doug Doug",
-        "address": "Somewhere in the United States"
+    "contactPerson": "MLT Team",
+    "address": {
+        "recipient": "Doug Doug",
+        "addressLine1": "Somewhere",
+        "addressLine2": "Behind a cardboard box",
+        "city": "Las Vegas",
+        "country": "United States",
+        "region": "Texas",
+        "postcode": "TX-55415"
     },
     "callbackUrl": "https://callback-wls.no/order",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
