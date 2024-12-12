@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.hostapi.order
 
+import io.micrometer.core.instrument.config.validate.Validated.valid
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
@@ -19,6 +20,7 @@ import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
+import org.bouncycastle.pqc.legacy.math.linearalgebra.IntegerFunctions.order
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -35,7 +37,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 @RestController
 @RequestMapping(path = ["/v1"])
-@Tag(name = "Order Controller", description = "API for ordering items via Hermes WLS")
+@Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
 class OrderController(
     private val createOrder: CreateOrder,
     private val getOrder: GetOrder,
@@ -65,7 +67,7 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "201",
-            description = "Created order for specified items to appropriate systems",
+            description = """Created order for specified items to appropriate systems""",
             content = [
                 Content(
                     mediaType = "application/json",
@@ -87,12 +89,12 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to order items.",
+            description = """Client sending the request is not authorized to order items.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "403",
-            description = "A valid 'Authorization' header is missing from the request.",
+            description = """A valid "Authorization" header is missing from the request.""",
             content = [Content(schema = Schema())]
         )
     )
@@ -105,7 +107,7 @@ class OrderController(
                     Operation(
                         summary = "Notification of updated order",
                         description = """This callback triggers when the order is updated inside the storage systems.
-                        It returns the same data as one would receive from the GET endpoint, meaning complete information about the order.""",
+                            It returns the same data as one would receive from the GET endpoint, meaning complete information about the order.""",
                         method = "post",
                         requestBody =
                             SwaggerRequestBody(
@@ -156,8 +158,7 @@ class OrderController(
             Order status is updated based on information provided from the storage systems.
             As such there might be a delay in the status update.
             Some systems don't give any status updates and the order might be stuck in "NOT_STARTED" status until it's manually marked as "COMPLETED".
-            The caller must "own" the order, e.g. be the creator of the order.
-        """
+            The caller must "own" the order, e.g. be the creator of the order."""
     )
     @ApiResponses(
         ApiResponse(
@@ -246,17 +247,17 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to update orders, or this order does not belong to them.",
+            description = """Client sending the request is not authorized to update orders, or this order does not belong to them.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "403",
-            description = "A valid 'Authorization' header is missing from the request.",
+            description = """A valid "Authorization" header is missing from the request.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "409",
-            description = "The order is already being processed, and can not be edited at this point.",
+            description = """The order is already being processed, and can not be edited at this point.""",
             content = [Content(schema = Schema())]
         )
     )
@@ -290,21 +291,20 @@ class OrderController(
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "Order with given 'hostName' and 'hostOrderId' was deleted from the system.",
+            description = """Order with given "hostName" and "hostOrderId" was deleted from the system.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to delete orders, or this order does not belong to them."
+            description = """Client sending the request is not authorized to delete orders, or this order does not belong to them."""
         ),
         ApiResponse(
             responseCode = "403",
-            description = """A valid 'Authorization' header is missing from the request,
-                    or the caller is not authorized to delete the order."""
+            description = """A valid "Authorization" header is missing from the request, or the caller is not authorized to delete the order."""
         ),
         ApiResponse(
             responseCode = "404",
-            description = "Order with given 'hostName' and 'hostOrderId' does not exist in the system."
+            description = """Order with given "hostName" and "hostOrderId" does not exist in the system."""
         )
     )
     @DeleteMapping("/order/{hostName}/{hostOrderId}")

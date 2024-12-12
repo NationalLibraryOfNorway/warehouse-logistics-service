@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
+import io.micrometer.core.instrument.config.validate.Validated.valid
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -7,11 +8,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jdk.internal.joptsimple.internal.Messages.message
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import org.bouncycastle.pqc.legacy.math.linearalgebra.IntegerFunctions.order
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -21,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping(path = ["/synq/v1"])
-@Tag(name = "SynQ Controller", description = "API for receiving product and order updates from SynQ in Hermes WLS")
+@Tag(name = "SynQ Controller", description = """API for receiving product and order updates from SynQ in Hermes WLS""")
 class SynqController(
     private val moveItem: MoveItem,
     private val pickItems: PickItems,
@@ -29,28 +32,28 @@ class SynqController(
     private val orderStatusUpdate: OrderStatusUpdate
 ) {
     @Operation(
-        summary = "Updates the status and location for items",
-        description = "Parses all the items from the SynQ load unit, and updates both status & location for them."
+        summary = "Updates item's status and location",
+        description = """Extracts information about every item, updates their location and quantity, and sends an update to the host systems."""
     )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "Item with given 'hostName' and 'hostId' was found and updated.",
+            description = """Item with given "hostName" and "hostId" was found and updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "400",
-            description = "The payload for moving items was invalid and nothing got updated.",
+            description = """The payload for moving items was invalid and nothing got updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "403",
-            description = "A valid 'Authorization' header is missing from the request.",
+            description = """A valid "Authorization" header is missing from the request.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "404",
-            description = """An item for a specific 'hostName' and 'hostId' was not found.
+            description = """An item for a specific "hostName" and "hostId" was not found.
                 Error message contains information about the missing item.""",
             content = [Content(schema = Schema())]
         )
@@ -65,29 +68,28 @@ class SynqController(
 
     @Operation(
         summary = "Confirms the picking of items from a specific SynQ order",
-        description = """Updates the items from a specific order when they are picked from a SynQ warehouse.
-            This does not update the order status, as SynQ sends an update to the order-update endpoint later.
-        """
+        description = """Updates status of items in a specific order when they are picked from a SynQ warehouse.
+            This does not update the order status, as SynQ sends an update to the order-update endpoint later."""
     )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "The items were picked successfully.",
+            description = """The items were picked successfully.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "400",
-            description = "Order update payload was invalid and nothing got updated.",
+            description = """Order update payload was invalid and nothing got updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to update orders.",
+            description = """Client sending the request is not authorized to update orders.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "403",
-            description = "A valid 'Authorization' header is missing from the request.",
+            description = """A valid "Authorization" header is missing from the request.""",
             content = [Content(schema = Schema())]
         )
     )
@@ -116,36 +118,35 @@ class SynqController(
 
     @Operation(
         summary = "Updates order status based on SynQ order status update",
-        description = """Finds a specified order and updates its status given the message we receive from SynQ.
-            SynQ only sends us the update for the whole order, not for individual products.
-            They are updated in the pick-update endpoint.
-        """
+        description = """Finds a specified order and updates its status.
+            SynQ only sends the order-update for the whole order, not for individual products in the order.
+            They are updated in the pick-update endpoint."""
     )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = """Order with given 'hostName' and 'orderId' was found and updated.
+            description = """Order with given "hostName" and "orderId" was found and updated.
                 The response body contains the updated order.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "400",
-            description = "Order update payload was invalid and nothing got updated.",
+            description = """Order update payload was invalid and nothing got updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "401",
-            description = "Client sending the request is not authorized to update orders.",
+            description = """Client sending the request is not authorized to update orders.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "403",
-            description = "A valid 'Authorization' header is missing from the request.",
+            description = """A valid "Authorization" header is missing from the request.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
             responseCode = "404",
-            description = """Order with given 'hostName' and 'orderId' was not found.
+            description = """Order with given "hostName" and "orderId" was not found.
                 Error message contains information about the missing order.""",
             content = [Content(schema = Schema())]
         )

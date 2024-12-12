@@ -8,10 +8,9 @@ import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
-import java.net.URI
 
 @Schema(
-    description = "Payload for creating and editing orders in Hermes WLS, and appropriate storage system(s).",
+    description = """Payload for creating orders in Hermes WLS, and appropriate storage system(s).""",
     example = """
     {
       "hostName": "AXIELL",
@@ -29,7 +28,7 @@ import java.net.URI
         "name": "Doug Dimmadome",
         "address": "Dimmsdale Dimmadome, 21st Ave. Texas"
       },
-      "callbackUrl": "https://example.com/send/callback/here"
+      "callbackUrl": "https://callback-wls.no/order"
     }
     """
 )
@@ -87,6 +86,7 @@ data class ApiOrderPayload(
             callbackUrl = callbackUrl
         )
 
+    @Throws(ValidationException::class)
     fun validate() {
         if (hostOrderId.isBlank()) {
             throw ValidationException("The order's hostOrderId is required, and can not be blank")
@@ -125,7 +125,7 @@ fun Order.toApiOrderPayload() =
     )
 
 @Schema(
-    description = "Represents an order line in an order, containing information about the ordered item.",
+    description = """Represents an order line in an order, containing information about the ordered item.""",
     example = """
     {
       "hostId": "mlt-12345",
@@ -160,7 +160,7 @@ data class OrderLine(
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)
 
 @Schema(
-    description = "Information about the order's receiver.",
+    description = """Information about the order's receiver.""",
     example = """
     {
       "name": "Doug Dimmadome",

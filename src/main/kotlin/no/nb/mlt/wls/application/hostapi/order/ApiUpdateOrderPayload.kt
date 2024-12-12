@@ -6,11 +6,10 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
-import java.net.URI
 import kotlin.jvm.Throws
 
 @Schema(
-    description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
+    description = """Payload for editing an order in Hermes WLS, and appropriate storage system(s).""",
     example = """
     {
       "hostName": "AXIELL",
@@ -32,31 +31,32 @@ import kotlin.jvm.Throws
 )
 data class ApiUpdateOrderPayload(
     @Schema(
-        description = "Name of the host system which made the order.",
+        description = """Name of the host system which made the order.""",
         examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
     )
     val hostName: HostName,
     @Schema(
-        description = "Order ID from the host system which made the order.",
+        description = """Order ID from the host system which made the order.""",
         example = "mlt-12345-order"
     )
     val hostOrderId: String,
     @Schema(
-        description = "List of items in the order, also called order lines.",
+        description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = "Describes what type of order this is",
+        description = """Describes what type of order this is""",
         examples = [ "LOAN", "DIGITIZATION" ]
     )
     val orderType: Order.Type,
     @Schema(
-        description = "Who's the receiver of the material in the order."
+        description = """Who's the receiver of the material in the order.""",
+        example = "{...}"
     )
     val receiver: Receiver,
     @Schema(
-        description = "URL to send a callback to when the order is completed.",
+        description = """URL to send a callback to when the order is completed.""",
         example = "https://example.com/send/callback/here"
     )
     val callbackUrl: String

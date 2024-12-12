@@ -12,6 +12,9 @@ import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
+import org.bouncycastle.pqc.legacy.math.linearalgebra.IntegerFunctions.order
+import org.springframework.boot.util.LambdaSafe.callback
+import org.springframework.data.mongodb.core.aggregation.DensifyOperation.Range.full
 import org.springframework.data.mongodb.core.validation.Validator.schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -25,7 +28,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 @RestController
 @RequestMapping(path = [ "/v1"])
-@Tag(name = "Item Controller", description = "API endpoints used by catalogs for managing items in Hermes WLS")
+@Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
 class ItemController(
     private val addNewItem: AddNewItem,
     private val getItem: GetItem
@@ -80,12 +83,12 @@ class ItemController(
             ),
             ApiResponse(
                 responseCode = "401",
-                description = "Client sending the request is not authorized to operate on items.",
+                description = """Client sending the request is not authorized to operate on items.""",
                 content = [Content(schema = Schema())]
             ),
             ApiResponse(
                 responseCode = "403",
-                description = "A valid 'Authorization' header is missing from the request.",
+                description = """A valid "Authorization" header is missing from the request.""",
                 content = [Content(schema = Schema())]
             )
         ]

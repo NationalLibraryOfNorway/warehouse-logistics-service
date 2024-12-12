@@ -10,10 +10,9 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
-import java.net.URI
 
 @Schema(
-    description = "Payload for registering an item in Hermes WLS, and appropriate storage systems.",
+    description = """Payload for registering an item in Hermes WLS, and appropriate storage systems.""",
     example = """
     {
       "hostId": "mlt-12345",

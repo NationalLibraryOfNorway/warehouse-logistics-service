@@ -5,7 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
-    description = "Payload for confirming picking of the order products/items in SynQ.",
+    description = """Payload which confirms the picking of products/items in a SynQ order.""",
     example = """
     {
       "orderLine" : [
@@ -32,24 +32,22 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 )
 data class SynqOrderPickingConfirmationPayload(
     @Schema(
-        description = "List of order lines representing the picked products/items.",
+        description = """List of order lines representing the picked products/items.""",
         example = "[{...}]"
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = "User who confirmed the picking.",
+        description = """User who picked the products/items.""",
         example = "per@person@nb.no"
     )
     val operator: String,
     @Schema(
-        description = "Name of the warehouse where the order products/items are located.",
+        description = """Name of the warehouse where the order products/items were picked from.""",
         example = "Sikringsmagasin_2"
     )
     val warehouse: String
 ) {
-    /**
-     * Validates the packet data and structure
-     */
+    @Throws(ValidationException::class)
     fun validate() {
         if (orderLine.isEmpty()) {
             throw ValidationException("Picking update does not contain any elements in the order line")
@@ -98,7 +96,7 @@ data class SynqOrderPickingConfirmationPayload(
 }
 
 @Schema(
-    description = "Order line representing a picked product/item in an order.",
+    description = """Order line representing a picked product/item in a SynQ order.""",
     example = """
     {
       "confidentialProduct" : false,
@@ -119,51 +117,52 @@ data class SynqOrderPickingConfirmationPayload(
 )
 data class OrderLine(
     @Schema(
-        description = "Whether the product/item is confidential.",
+        description = """Marks the product as confidential, meaning only people with special access can view, modify, or request the product.""",
         example = "false"
     )
     val confidentialProduct: Boolean,
     @Schema(
-        description = "Name of the host system which placed the order/owns the order products/items.",
+        description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
     val hostName: String,
     @Schema(
-        description = "Order line number.",
+        description = """Order line number/index.""",
         example = "1"
     )
     val orderLineNumber: Int,
     @Schema(
-        description = "ID of the transport unit (TU) with the product/item.",
+        description = """ID of the transport unit (TU) with the product/item in SynQ.""",
         example = "SYS_TU_00000001157"
     )
     val orderTuId: String,
     @Schema(
-        description = "Type of the transport unit (TU) with the product/item.",
+        description = """Type of the transport unit (TU) with the product/item.""",
         example = "UFO"
     )
     val orderTuType: String,
     @Schema(
-        description = "Storage ID of the product/item.",
+        description = """Product ID from the host system, usually a barcode value or an equivalent ID.""",
         example = "mlt-12345"
     )
     val productId: String,
     @Schema(
-        description = "Version ID of the product/item.",
+        description = """Product version ID in the storage system, seems to always have value 'Default'.""",
         example = "Default"
     )
     val productVersionId: String,
     @Schema(
-        description = "Quantity of the product/item.",
+        description = """Number of picked products/items, in our case it should be 1 and nothing more.""",
         example = "1.0"
     )
     val quantity: Int,
     @Schema(
-        description = "List of attribute values of the product/item.",
+        description = """List of attributes for the product.""",
         example = "[{...}]"
     )
     val attributeValue: List<AttributeValue>
 ) {
+    @Throws(ValidationException::class)
     fun validate() {
         if (hostName.isBlank()) {
             throw ValidationException("Order Line's host name can not be blank")

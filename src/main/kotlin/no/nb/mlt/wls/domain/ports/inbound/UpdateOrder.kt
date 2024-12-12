@@ -5,7 +5,7 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.OrderUpdateException
 import kotlin.jvm.Throws
 
-interface UpdateOrder {
+fun interface UpdateOrder {
     @Throws(OrderNotFoundException::class, ValidationException::class, OrderUpdateException::class, IllegalOrderStateException::class)
     suspend fun updateOrder(
         hostName: HostName,
