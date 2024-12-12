@@ -5,7 +5,7 @@ enum class ItemCategory {
     DISC,
     FILM,
     PHOTO,
-    OBJECT,
+    EQUIPMENT,
     BULK_ITEMS,
     MAGNETIC_TAPE
 }

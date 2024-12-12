@@ -41,7 +41,7 @@ fun toSynqCategory(category: ItemCategory): String {
         ItemCategory.DISC -> "plater"
         ItemCategory.FILM -> "film"
         ItemCategory.PHOTO -> "foto"
-        ItemCategory.OBJECT -> "gjenstand"
+        ItemCategory.EQUIPMENT -> "gjenstand"
         ItemCategory.BULK_ITEMS -> "sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
     }
