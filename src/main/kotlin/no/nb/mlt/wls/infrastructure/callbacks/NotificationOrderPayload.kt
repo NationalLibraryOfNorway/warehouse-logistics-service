@@ -54,6 +54,7 @@ data class NotificationOrderPayload(
     val status: Order.Status?,
     @Schema(
         description = """List of items in the order, also called order lines.""",
+        example = "NOT_STARTED"
     )
     val orderLine: List<Order.OrderItem>,
     @Schema(
@@ -71,11 +72,13 @@ data class NotificationOrderPayload(
     )
     val owner: Owner?,
     @Schema(
-        description = "The person to contact regarding matters about the order"
+        description = "The person to contact regarding matters about the order",
+        example = "Hermes the Great"
     )
     val contactPerson: String,
     @Schema(
-        description = "The address of the receiver of the material in the order."
+        description = "The address of the receiver of the material in the order.",
+        example = "{...}"
     )
     val address: Order.Address?,
     @Schema(

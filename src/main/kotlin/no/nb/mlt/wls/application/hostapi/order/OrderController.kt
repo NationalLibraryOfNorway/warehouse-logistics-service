@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.application.hostapi.order
 
-import io.micrometer.core.instrument.config.validate.Validated.valid
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
@@ -20,7 +19,6 @@ import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
-import org.bouncycastle.pqc.legacy.math.linearalgebra.IntegerFunctions.order
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

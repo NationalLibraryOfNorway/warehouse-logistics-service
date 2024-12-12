@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
+
 @Schema(
     description = """Payload for updates about items sent from Hermes WLS to the appropriate catalogues.""",
     example = """
@@ -82,7 +83,7 @@ data class NotificationItemPayload(
     )
     val location: String?,
     @Schema(
-        description ="""Quantity on hand of the item, this easily denotes if the item is in the storage or not.
+        description = """Quantity on hand of the item, this easily denotes if the item is in the storage or not.
                 If the item is in storage then quantity is 1, if it's not in storage then quantity is 0.""",
         examples = [ "0.0", "1.0"],
         accessMode = READ_ONLY,

@@ -7,5 +7,8 @@ import no.nb.mlt.wls.domain.model.HostName
  * a storage system.
  */
 fun interface PickItems {
-    suspend fun pickItems(hostName: HostName, itemsPickedMap: Map<String, Int>)
+    suspend fun pickItems(
+        hostName: HostName,
+        itemsPickedMap: Map<String, Int>
+    )
 }

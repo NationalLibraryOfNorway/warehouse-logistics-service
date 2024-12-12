@@ -12,10 +12,6 @@ import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
-import org.bouncycastle.pqc.legacy.math.linearalgebra.IntegerFunctions.order
-import org.springframework.boot.util.LambdaSafe.callback
-import org.springframework.data.mongodb.core.aggregation.DensifyOperation.Range.full
-import org.springframework.data.mongodb.core.validation.Validator.schema
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal

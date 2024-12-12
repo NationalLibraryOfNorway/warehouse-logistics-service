@@ -7,5 +7,9 @@ import no.nb.mlt.wls.domain.model.HostName
  * indicates that the status in the Order Items need to be updated
  */
 fun interface PickOrderItems {
-    suspend fun pickOrderItems(hostName: HostName, pickedHostIds: List<String>, orderId: String)
+    suspend fun pickOrderItems(
+        hostName: HostName,
+        pickedHostIds: List<String>,
+        orderId: String
+    )
 }
