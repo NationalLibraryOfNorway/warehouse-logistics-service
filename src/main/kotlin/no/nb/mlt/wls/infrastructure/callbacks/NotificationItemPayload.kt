@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 
@@ -26,11 +27,15 @@ data class NotificationItemPayload(
         examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo"]
     )
     val description: String,
+    // TODO - Update this schema to reflect new categories
     @Schema(
         description = "What kind of item category the item belongs to, e.g. Books, Issues, Films, etc.",
-        examples = ["BOOK", "ISSUE", "Arkivmateriale", "Film_Frys"]
+        examples = [
+            "safetyfilm", "nitratfilm", "film", "plater", "fotografier", "papir",
+            "gjenstand", "lydbånd", "videobånd", "sekkepost", "magnetbånd"
+        ]
     )
-    val itemCategory: String,
+    val itemCategory: ItemCategory,
     @Schema(
         description = "What kind of environment the item should be stored in, e.g. NONE, FRYS, MUGG_CELLE, etc.",
         examples = ["NONE", "FRYS"]

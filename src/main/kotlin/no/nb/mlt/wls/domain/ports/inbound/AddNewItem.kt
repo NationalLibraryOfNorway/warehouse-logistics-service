@@ -3,6 +3,7 @@ package no.nb.mlt.wls.domain.ports.inbound
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 
@@ -14,7 +15,7 @@ data class ItemMetadata(
     val hostId: String,
     val hostName: HostName,
     val description: String,
-    val itemCategory: String,
+    val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val owner: Owner,
