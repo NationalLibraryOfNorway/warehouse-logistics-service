@@ -57,19 +57,6 @@ class ItemModelValidationTest {
             .hasMessageContaining("description")
     }
 
-// TODO - Since this is handled by Spring, remove?
-//    @Test
-//    fun `item with blank itemCategory should fail validation`() {
-//        val item = validItem.copy(itemCategory = "")
-//
-//        val thrown = catchThrowable(item::validate)
-//
-//        then(thrown)
-//            .isNotNull()
-//            .isInstanceOf(ValidationException::class.java)
-//            .hasMessageContaining("category")
-//    }
-
     @Test
     fun `item with blank location should fail validation`() {
         val item = validItem.copy(location = "")
