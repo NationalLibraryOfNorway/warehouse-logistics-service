@@ -62,7 +62,7 @@ jobs:
           #     In that case use the "@actions/cache" action
           cache: maven
 
-      # Since the self hosted runner does not come with Maven, it must be installed manually
+      # Since the self-hosted runner does not come with Maven, it must be installed manually
       # Same for git, it is needed to upload the test results, hence why repo is initialized using "git init"
       # Lastly gettext provides envsubst which is used in the [[verify-the-project]] step to replace env variables
       - name: Install Maven and Initialize Repo
@@ -81,7 +81,7 @@ jobs:
 
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing the secrets
       # GitHub does not permit to check secret value or re-use the secrets
-      # Speak with Plattform team to set up a namespace if needed
+      # Speak with Platform team to set up a namespace if needed
       # They should also create an approle "user" which allows fetching the secrets within a GitHub action
       #
       # The url must be in form: https://<URL>, while IDs are UUIDs
@@ -161,9 +161,9 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: secret/v1/application/k8s/mlt/data/harbor *
 
-      # Simple action that authenticates against the NLB's Harbor instance
+      # Simple action that authenticates against the NLN's Harbor instance
       # The url must be in form: https://<URL>, username and password should be for the GitHub robot user
-      # Ask Plattform team to create a robot user with access to your project(s) in Harbor registry
+      # Ask Platform team to create a robot user with access to your project(s) in Harbor registry
       - name: Log in to Harbor Registry
         uses: docker/login-action@v3
         with:
@@ -237,9 +237,9 @@ jobs:
       #
       # K8S_HOST_URL - URL pointing where to host the app, there are two default options for both stage and prod
       # K8S_STAGE_SERVER - URL to the stage server in form https://<IP_ADDRESS>:<PORT>
-      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Plattform team
-      # K8S_STAGE_USER - name of the robot user that can deploy to the given namespace, get it from the Plattform team
-      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Plattform team
+      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Platform team
+      # K8S_STAGE_USER - name of the robot user that can deploy to the given namespace, get it from the Platform team
+      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Platform team
       - name: Deploy to Stage
         run: |
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
@@ -259,7 +259,7 @@ jobs:
     name: Deploy to Kubernetes Prod
     needs: publish-image
     # Runs only on tags
-    if: startsWith(github.event.ref,"refs/tags/v")
+    if: startsWith(github.event.ref,'refs/tags/v')
     runs-on: self-hosted-linux
     environment: prod
     steps:
