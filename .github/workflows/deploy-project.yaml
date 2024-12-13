@@ -134,7 +134,7 @@ jobs:
     # Defines that test-project job must finish successfully first, before this one can run
     needs: test-project
     # The if statement limits the job to only run if action was triggered on main branch or one of the tags
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == "refs/heads/main" || startsWith(github.ref, "refs/tags/v")
     runs-on: self-hosted-linux
     # Outputs allows a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
@@ -208,7 +208,7 @@ jobs:
     needs: publish-image
     # Runs only on main branch
     # Can be changed to also run on tags, to ensure that stage & prod use same image after a new version release
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == "refs/heads/main"
     runs-on: self-hosted-linux
     # Defines what environment this job references, this allows for setting deployment protections in the project
     # Allows requiring a number of reviewers or specific reviewers, or allow only specific branches or tags
@@ -259,7 +259,7 @@ jobs:
     name: Deploy to Kubernetes Prod
     needs: publish-image
     # Runs only on tags
-    if: startsWith(github.event.ref, 'refs/tags/v')
+    if: startsWith(github.event.ref,"refs/tags/v")
     runs-on: self-hosted-linux
     environment: prod
     steps:

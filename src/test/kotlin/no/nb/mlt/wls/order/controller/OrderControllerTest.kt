@@ -476,7 +476,7 @@ class OrderControllerTest(
                 ),
             contactPerson = "named person",
             note = "note",
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback-wls.no/order"
         )
 
     /**
@@ -502,7 +502,7 @@ class OrderControllerTest(
                 ),
             contactPerson = "named person",
             note = "note",
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback-wls.no/order"
         )
 
     private val orderInProgress =
@@ -525,7 +525,7 @@ class OrderControllerTest(
                 ),
             contactPerson = "named person",
             note = "note",
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback-wls.no/order"
         )
 
     /**
@@ -553,7 +553,7 @@ class OrderControllerTest(
                                 owner = Owner.NB,
                                 location = "location",
                                 quantity = 1,
-                                callbackUrl = "https://callback.com/item"
+                                callbackUrl = "https://callback-wls.no/item"
                             )
                         }
                     )

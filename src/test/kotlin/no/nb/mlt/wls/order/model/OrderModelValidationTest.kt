@@ -223,7 +223,7 @@ class OrderModelValidationTest {
             orderType = Order.Type.LOAN,
             address = validAddress,
             contactPerson = "contactPerson",
-            callbackUrl = "https://callback.com/order",
+            callbackUrl = "https://callback-wls.no/order",
             note = "note"
         )
 
@@ -235,7 +235,7 @@ class OrderModelValidationTest {
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
             address = validAddress,
-            callbackUrl = "https://callback.com/order",
+            callbackUrl = "https://callback-wls.no/order",
             note = "note"
         )
 }

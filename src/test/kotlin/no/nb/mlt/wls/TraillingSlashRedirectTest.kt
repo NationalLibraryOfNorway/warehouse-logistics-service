@@ -86,7 +86,7 @@ class TraillingSlashRedirectTest(
             preferredEnvironment = NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
-            callbackUrl = "https://callback.com/item",
+            callbackUrl = "https://callback-wls.no/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1
         )

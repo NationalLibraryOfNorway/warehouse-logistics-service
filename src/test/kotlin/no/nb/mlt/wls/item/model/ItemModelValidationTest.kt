@@ -94,7 +94,7 @@ class ItemModelValidationTest {
 
     @Test
     fun `item with invalid callbackUrl should fail validation`() {
-        val item = validItem.copy(callbackUrl = "hppt://callback.com/item")
+        val item = validItem.copy(callbackUrl = "hppts://invalid-callback-wls.no/item")
 
         val thrown = catchThrowable(item::validate)
 
@@ -117,7 +117,7 @@ class ItemModelValidationTest {
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
-            callbackUrl = "https://callback.com/item",
+            callbackUrl = "https://callback-wls.no/item",
             location = "location",
             quantity = 1
         )

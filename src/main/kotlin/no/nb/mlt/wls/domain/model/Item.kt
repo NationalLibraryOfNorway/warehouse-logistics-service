@@ -24,7 +24,7 @@ data class Item(
         if (amountPicked > itemsInStockQuantity) {
             logger.error {
                 "Tried to pick too many items for item with id '$hostId'. " +
-                    "WLS DB has $itemsInStockQuantity stocked, and storage system tried to pick $amountPicked"
+                    "WLS DB has '$itemsInStockQuantity' stocked, and storage system tried to pick '$amountPicked'"
             }
         }
         val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
@@ -37,7 +37,7 @@ data class Item(
             } else {
                 // Rare edge case. Log it until we can determine if this actually happens in production
                 logger.error {
-                    "Item with ID $hostId for host $hostName without a location was picked. Location was set to \"UNKNOWN\"."
+                    "Item with ID '$hostId' for host '$hostName' without a location was picked. Location was set to 'UNKNOWN'."
                 }
                 "UNKNOWN"
             }

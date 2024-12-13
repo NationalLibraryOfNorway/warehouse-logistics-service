@@ -971,7 +971,7 @@
   }, {
     "id" : "e77adead-5964-4400-9368-3b1520d57bdd",
     "name" : "wls-item",
-    "description" : "A client scope used to add a 'item' scope to the JWT scope field",
+    "description" : "A client scope used to add a \"item\" scope to the JWT scope field",
     "protocol" : "openid-connect",
     "attributes" : {
       "include.in.token.scope" : "true",
@@ -1288,7 +1288,7 @@
   }, {
     "id" : "43e7474f-a3fe-4d44-a0e1-48518c8330f1",
     "name" : "wls-synq",
-    "description" : "A client scope used to add a 'synq' scope to the JWT scope field",
+    "description" : "A client scope used to add a \"synq\" scope to the JWT scope field",
     "protocol" : "openid-connect",
     "attributes" : {
       "include.in.token.scope" : "true",
@@ -1431,7 +1431,7 @@
   }, {
     "id" : "2f9f07c6-b866-402b-8f18-3f7baf021f12",
     "name" : "wls-order",
-    "description" : "A client scope used to add an 'order' scope to the JWT scope field",
+    "description" : "A client scope used to add an \"order\" scope to the JWT scope field",
     "protocol" : "openid-connect",
     "attributes" : {
       "include.in.token.scope" : "true",

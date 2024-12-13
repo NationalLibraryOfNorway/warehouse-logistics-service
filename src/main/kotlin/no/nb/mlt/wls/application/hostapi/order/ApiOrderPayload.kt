@@ -24,13 +24,15 @@ import org.apache.commons.validator.routines.UrlValidator
       ],
       "orderType": "LOAN",
       "owner": "NB",
-      "contactPerson": "Hermes the Great",
+      "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
-        "recipient": "Nasjonalbibliotekaren",
-        "addressLine1": "Henrik Ibsens gate 110",
-        "city": "Oslo",
-        "country": "Norway",
-        "postcode": "0255"
+        "recipient": "Doug Dimmadome",
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
+        "country": "United States",
+        "region": "California",
+        "postcode": "CA-55415"
       },
       "note": "Handle with care",
       "callbackUrl": "https://callback-wls.no/order"
@@ -70,29 +72,20 @@ data class ApiOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = "The name of the person to contact with manners related to this order",
-        example = "Hermes"
+        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
     @Schema(
-        description = "Any notes about the order",
-        example = "This is required in four weeks time"
-    )
-    val note: String?,
-    // TODO - Should this use custom DTO?
-    @Schema(
-        description = "The delivery address of this order",
-        example = """
-            "address": {
-                "recipient": "Nasjonalbibliotekaren",
-                "addressLine1": "Henrik Ibsens gate 110",
-                "city": "Oslo",
-                "country": "Norway",
-                "postcode": "0255"
-            }
-        """
+        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        example = "{...}"
     )
     val address: Order.Address?,
+    @Schema(
+        description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
+        example = "I need this order in four weeks, not right now."
+    )
+    val note: String?,
     @Schema(
         description = """Callback URL to use for sending order updates in the host system.
             For example when order items get picked or the order is cancelled.""",

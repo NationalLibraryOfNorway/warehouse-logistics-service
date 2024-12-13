@@ -125,7 +125,7 @@ data class Product(
     @NotBlank
     val productOwner: String,
     @Schema(
-        description = """Product version ID in the storage system, seems to always have value 'Default'.""",
+        description = """Product version ID in the storage system, seems to always have value "Default".""",
         example = "Default"
     )
     val productVersionId: String,

@@ -44,11 +44,15 @@ data class ShippingAddress(
     val address: Address
 ) {
     data class Address(
+        // SynQ does not have a field where we can put owner/contact person for the order, as such this field will be used for order's contact person
         val contactPerson: String,
+        // This will contain address.recipient, as contactPerson is used for something else, explained above ^
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine1: String? = null,
+        // This will contain address.addressLine1, as ...
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine2: String? = null,
+        // ...addressLine2...
         @JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine3: String? = null,
         @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -21,7 +21,7 @@ import kotlin.jvm.Throws
         }
       ],
       "orderType": "LOAN",
-      "contactPerson": "MLT Team",
+      "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
@@ -32,7 +32,7 @@ import kotlin.jvm.Throws
         "postcode": "CA-55415"
       },
       "note": "Handle with care",
-      "callbackUrl": "https://example.com/send/callback/here"
+      "callbackUrl": "https://callback-wls.no/order"
     }
     """
 )
@@ -58,34 +58,23 @@ data class ApiUpdateOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = """Who's the receiver of the material in the order.""",
-        example = "{...}"
+        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
     @Schema(
-        description = """
-            The delivery address of the order.
-            If delivering to a country with states (I.E. the United States), include the state name in the region.
-        """,
-        example = """
-            "address": {
-                "recipient": "Nasjonalbibliotekaren",
-                "addressLine1": "Henrik Ibsens gate 110",
-                "city": "Oslo",
-                "country": "Norway",
-                "postcode": "0255"
-            }
-        """
+        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        example = "{...}"
     )
     val address: Order.Address?,
     @Schema(
-        description = "Any notes about the order",
-        example = "This is required in four weeks time"
+        description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
+        example = "I need this order in four weeks, not right now."
     )
     val note: String?,
     @Schema(
         description = """URL to send a callback to when the order is completed.""",
-        example = "https://example.com/send/callback/here"
+        example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
 ) {
