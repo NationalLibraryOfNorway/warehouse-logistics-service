@@ -27,6 +27,7 @@ data class NotificationItemPayload(
         examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo"]
     )
     val description: String,
+    // TODO - Update this schema to reflect new categories
     @Schema(
         description = "What kind of item category the item belongs to, e.g. Books, Issues, Films, etc.",
         examples = [
