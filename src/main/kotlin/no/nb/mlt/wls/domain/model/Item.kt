@@ -8,7 +8,7 @@ data class Item(
     val hostId: String,
     val hostName: HostName,
     val description: String,
-    val itemCategory: String,
+    val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val owner: Owner,

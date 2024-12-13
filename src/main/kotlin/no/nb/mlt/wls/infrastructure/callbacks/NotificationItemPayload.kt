@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 
@@ -15,7 +16,7 @@ import no.nb.mlt.wls.domain.model.Packaging
       "hostId": "mlt-12345",
       "hostName": "AXIELL",
       "description": "Tyven, tyven skal du hete",
-      "itemCategory": "papir",
+      "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
       "owner": "NB",
@@ -44,11 +45,11 @@ data class NotificationItemPayload(
     )
     val description: String,
     @Schema(
-        description = """Category of the item, indicates that items sharing a category can be stored together.
-                For example, books, magazines, newspapers, etc. can be stored together.""",
-        examples = ["BOOK", "ISSUE", "Arkivmateriale", "Film_Frys"]
+        description = """Item's category, same category indicates that he items can be stored together without any preservation issues.
+                For example: books, magazines, newspapers, etc. can be stored together without damaging each other.""",
+        examples = ["PAPER", "DISC", "FILM", "PHOTO", "EQUIPMENT", "BULK_ITEMS", "MAGNETIC_TAPE"]
     )
-    val itemCategory: String,
+    val itemCategory: ItemCategory,
     @Schema(
         description = """What kind of environment the item should be stored in.
                 "NONE" is for normal storage for the item category, "FRYS" is for frozen storage, etc.
