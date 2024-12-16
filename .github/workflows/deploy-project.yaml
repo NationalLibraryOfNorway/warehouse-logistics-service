@@ -128,7 +128,7 @@ jobs:
           if-no-files-found: error # Fail if artifact is not found
           overwrite: true # Allow overwriting of previous artifacts
 
-  # This job build a Docker image with relevant tags and labels, and publish it in Harbor
+  # This job builds a Docker image with relevant tags and labels, and publishes it to Harbor
   publish-image:
     name: Build and Publish the Docker Image
     # Defines that test-project job must finish successfully first, before this one can run

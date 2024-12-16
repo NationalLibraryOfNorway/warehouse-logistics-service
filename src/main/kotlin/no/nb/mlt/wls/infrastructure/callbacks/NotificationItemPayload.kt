@@ -71,7 +71,7 @@ data class NotificationItemPayload(
     )
     val owner: Owner,
     @Schema(
-        description = """Callback URL to use for sending item updates in the host system.
+        description = """Callback URL to use for sending item updates to the host system.
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
     )

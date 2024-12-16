@@ -87,7 +87,7 @@ data class NotificationOrderPayload(
     )
     val note: String?,
     @Schema(
-        description = """Callback URL to use for sending order updates in the host system.
+        description = """Callback URL to use for sending order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )

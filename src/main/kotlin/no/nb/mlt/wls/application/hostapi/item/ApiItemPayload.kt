@@ -45,8 +45,8 @@ data class ApiItemPayload(
     )
     val description: String,
     @Schema(
-        description = """Item's category, same category indicates that he items can be stored together without any preservation issues.
-                For example: books, magazines, newspapers, etc. can be stored together without damaging each other.""",
+        description = """Item's category, same category indicates that the items can be stored together without any preservation issues.
+                For example: books, magazines, newspapers, etc. are of type PAPER, and can be stored together without damaging each other.""",
         examples = ["PAPER", "DISC", "FILM", "PHOTO", "EQUIPMENT", "BULK_ITEMS", "MAGNETIC_TAPE"]
     )
     val itemCategory: ItemCategory,
@@ -71,7 +71,7 @@ data class ApiItemPayload(
     )
     val owner: Owner,
     @Schema(
-        description = """Callback URL to use for sending item updates in the host system.
+        description = """Callback URL to use for sending item updates to the host system.
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
     )

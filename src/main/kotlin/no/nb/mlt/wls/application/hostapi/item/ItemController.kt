@@ -32,15 +32,12 @@ class ItemController(
     @Operation(
         summary = "Register an item in Hermes",
         description = """Register data about the item in Hermes WLS and appropriate storage systems.
-            This is required step to store the item in physical storage system.
+            This step is required to store the item in the physical storage system, as it needs to have metadata about the object.
             An item is also called product by some storage systems and users, those mean the same thing to Hermes.
-            NOTE: When registering new item quantity and location are set to default values (0 and null).
-            Hence you should be aware that these values will be overwritten."""
+            Do not provide quantity or location information in this step, as it is overridden with default values."""
     )
 
-    // ? TODO: Do we need to handle item location differently? Maybe set it to "UNKNOWN" instead of null?
-    // ? More explicit and shows we are aware of it.
-    // ? Also I think item model errors if location is null or empty string?
+    // ? TODO: Replace the schema with a model class without stuff like location, quantity, etc.
 
     @ApiResponses(
         value = [
@@ -51,7 +48,7 @@ class ItemController(
                     Existing item information is returned for inspection.
                     In some rare cases the response body may be empty.
                     That can happen if Hermes WLS does not have the information about the item stored in its database,
-                    and is unable to retrieve the existing item information from the storage system.""",
+                    and is unable to retrieve the existing item information from the storage system(s).""",
                 content = [
                     Content(
                         mediaType = "application/json",
@@ -62,7 +59,7 @@ class ItemController(
             ApiResponse(
                 responseCode = "201",
                 description = """Item payload is valid and the item information was registered successfully.
-                    Item was created in the appropriate storage systems.
+                    Item was created in the appropriate storage system(s).
                     New item information is returned for inspection.""",
                 content = [
                     Content(
