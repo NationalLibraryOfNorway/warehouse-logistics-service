@@ -28,6 +28,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.toItem
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -88,7 +89,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -108,7 +109,7 @@ class SynqControllerTest(
             webTestClient
                 .mutateWith(csrf())
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -127,7 +128,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -141,7 +142,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, " ")
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), " ")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -155,7 +156,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload.copy(warehouse = ""))
                 .exchange()
@@ -169,7 +170,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", order.owner, 404)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), 404)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -337,7 +338,7 @@ class SynqControllerTest(
             confidentialProduct = false,
             hostName = "AXIELL",
             productId = "mlt-54321",
-            productOwner = "NB",
+            productOwner = "AV",
             productVersionId = "Default",
             quantityOnHand = 69,
             suspect = false,
@@ -391,7 +392,6 @@ class SynqControllerTest(
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             contactPerson = "contactPerson",
             address =
                 Order.Address(

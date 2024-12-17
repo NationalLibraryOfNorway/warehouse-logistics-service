@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
@@ -75,7 +76,7 @@ fun Order.toSynqPayload() =
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
         orderDate = LocalDateTime.now(),
         priority = 5,
-        owner = owner.toSynqOwner(),
+        owner = toSynqOwner(hostName),
         orderLine =
             orderLine.mapIndexed { index, it ->
                 SynqOrderPayload.OrderLine(
@@ -111,6 +112,13 @@ fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
         Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD
         Order.Type.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
     }
+
+fun toSynqOwner(hostName: HostName): SynqOwner {
+    return when (hostName) {
+        HostName.ASTA -> SynqOwner.AV
+        else -> SynqOwner.NB
+    }
+}
 
 /**
  * Utility classed used to wrap the payload.

@@ -6,7 +6,6 @@ import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import no.nb.mlt.wls.infrastructure.callbacks.toNotificationOrderPayload
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
@@ -48,7 +47,6 @@ class OrderModelConversionTest {
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             contactPerson = "contactPerson",
             address =
                 Order.Address(
@@ -91,7 +89,6 @@ class OrderModelConversionTest {
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             address =
                 Order.Address(
                     recipient = "recipient",
@@ -130,7 +127,6 @@ class OrderModelConversionTest {
         assertThat(mongoOrder.status).isEqualTo(testOrder.status)
         assertThat(mongoOrder.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(mongoOrder.orderType).isEqualTo(testOrder.orderType)
-        assertThat(mongoOrder.owner).isEqualTo(testOrder.owner)
         assertThat(mongoOrder.contactPerson).isEqualTo(testOrder.contactPerson)
         assertThat(mongoOrder.address).isEqualTo(testOrder.address)
         assertThat(mongoOrder.callbackUrl).isEqualTo(testOrder.callbackUrl)
@@ -157,7 +153,6 @@ class OrderModelConversionTest {
         assertThat(testNotificationOrderPayload.status).isEqualTo(testOrderNotification.status)
         assertThat(testNotificationOrderPayload.orderLine[0].hostId).isEqualTo(testOrderNotification.orderLine[0].hostId)
         assertThat(testNotificationOrderPayload.orderType).isEqualTo(testOrderNotification.orderType)
-        assertThat(testNotificationOrderPayload.owner).isEqualTo(testOrderNotification.owner)
         assertThat(testNotificationOrderPayload.address).isEqualTo(testOrderNotification.address)
         assertThat(testNotificationOrderPayload.callbackUrl).isEqualTo(testOrderNotification.callbackUrl)
     }
@@ -222,7 +217,6 @@ class OrderModelConversionTest {
             status = status ?: Order.Status.NOT_STARTED,
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
-            owner = Owner.NB,
             contactPerson = contactPerson,
             address = address,
             callbackUrl = callbackUrl,

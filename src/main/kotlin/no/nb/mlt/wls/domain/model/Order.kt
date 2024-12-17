@@ -13,7 +13,6 @@ data class Order(
     val status: Status,
     val orderLine: List<OrderItem>,
     val orderType: Type,
-    val owner: Owner,
     val address: Address?,
     val contactPerson: String,
     val note: String?,

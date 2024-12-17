@@ -2,7 +2,6 @@ package no.nb.mlt.wls.infrastructure.repositories.order
 
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import org.bson.types.ObjectId
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.CompoundIndex
@@ -18,7 +17,6 @@ data class MongoOrder(
     val status: Order.Status,
     val orderLine: List<Order.OrderItem>,
     val orderType: Order.Type,
-    val owner: Owner,
     val contactPerson: String,
     val address: Order.Address?,
     val note: String?,
@@ -32,7 +30,6 @@ fun Order.toMongoOrder(): MongoOrder {
         status = status,
         orderLine = orderLine,
         orderType = orderType,
-        owner = owner,
         contactPerson = contactPerson,
         address = address,
         note = note,
@@ -47,7 +44,6 @@ fun MongoOrder.toOrder(): Order {
         status = status,
         orderLine = orderLine,
         orderType = orderType,
-        owner = owner,
         contactPerson = contactPerson,
         address = address,
         note = note,

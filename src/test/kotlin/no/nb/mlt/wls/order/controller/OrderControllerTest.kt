@@ -513,7 +513,6 @@ class OrderControllerTest(
             status = Order.Status.IN_PROGRESS,
             orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             address =
                 Order.Address(
                     recipient = "recipient",
@@ -571,7 +570,6 @@ class OrderControllerTest(
             status = status ?: Order.Status.NOT_STARTED,
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
-            owner = Owner.NB,
             address = address,
             contactPerson = contactPerson,
             note = note,
