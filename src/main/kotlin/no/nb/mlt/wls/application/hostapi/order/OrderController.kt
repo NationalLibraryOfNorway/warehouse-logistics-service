@@ -121,7 +121,7 @@ class OrderController(
     @PostMapping("/order")
     suspend fun createOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiOrderPayload
+        @RequestBody payload: ApiCreateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
 
