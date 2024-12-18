@@ -46,7 +46,7 @@ data class NotificationItemPayload(
     val description: String,
     @Schema(
         description = """Item's category, same category indicates that the items can be stored together without any preservation issues.
-                For example: books, magazines, newspapers, etc. can be stored together without damaging each other.""",
+                For example: books, magazines, newspapers, etc. are of type PAPER, and can be stored together without damaging each other.""",
         examples = ["PAPER", "DISC", "FILM", "PHOTO", "EQUIPMENT", "BULK_ITEMS", "MAGNETIC_TAPE"]
     )
     val itemCategory: ItemCategory,

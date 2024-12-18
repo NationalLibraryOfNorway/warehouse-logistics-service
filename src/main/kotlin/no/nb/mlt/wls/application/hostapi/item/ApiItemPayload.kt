@@ -22,7 +22,8 @@ import org.apache.commons.validator.routines.UrlValidator
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
-      "owner": "NB"
+      "owner": "NB",
+      "callbackUrl": "https://callback-wls.no/item"
     }
     """
 )
