@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
@@ -23,7 +22,6 @@ import org.apache.commons.validator.routines.UrlValidator
         }
       ],
       "orderType": "LOAN",
-      "owner": "NB",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
         "recipient": "Doug Dimmadome",
@@ -93,13 +91,12 @@ data class ApiOrderPayload(
     )
     val callbackUrl: String
 ) {
-    fun toCreateOrderDTO(owner: Owner) =
+    fun toCreateOrderDTO() =
         CreateOrderDTO(
             hostName = hostName,
             hostOrderId = hostOrderId,
             orderLine = orderLine.map { it.toCreateOrderItem() },
             orderType = orderType,
-            owner = owner,
             address = address,
             contactPerson = contactPerson,
             note = note,

@@ -11,7 +11,6 @@ data class Item(
     val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
-    val owner: Owner,
     val callbackUrl: String?,
     val location: String?,
     val quantity: Int?

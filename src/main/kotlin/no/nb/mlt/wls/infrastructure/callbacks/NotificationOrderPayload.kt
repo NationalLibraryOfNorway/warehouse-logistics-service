@@ -3,7 +3,6 @@ package no.nb.mlt.wls.infrastructure.callbacks
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 
 @Schema(
     description = """Payload for updates about orders sent from Hermes WLS to the appropriate catalogues.""",
@@ -19,7 +18,6 @@ import no.nb.mlt.wls.domain.model.Owner
         }
       ],
       "orderType": "LOAN",
-      "owner": "NB",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
         "recipient": "Doug Dimmadome",
@@ -67,11 +65,6 @@ data class NotificationOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = """Who's the owner of the material in the order.""",
-        examples = ["NB", "ARKIVVERKET"]
-    )
-    val owner: Owner?,
-    @Schema(
         description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
@@ -101,7 +94,6 @@ fun Order.toNotificationOrderPayload() =
         status = status,
         orderLine = orderLine,
         orderType = orderType,
-        owner = owner,
         contactPerson = contactPerson,
         address = address,
         note = note,

@@ -12,7 +12,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
@@ -61,7 +60,6 @@ class WLSServiceTest {
                         itemCategory = testItem.itemCategory,
                         preferredEnvironment = testItem.preferredEnvironment,
                         packaging = testItem.packaging,
-                        owner = testItem.owner,
                         callbackUrl = testItem.callbackUrl
                     )
                 )
@@ -91,7 +89,6 @@ class WLSServiceTest {
                         itemCategory = testItem.itemCategory,
                         preferredEnvironment = testItem.preferredEnvironment,
                         packaging = testItem.packaging,
-                        owner = testItem.owner,
                         callbackUrl = testItem.callbackUrl
                     )
                 )
@@ -417,7 +414,6 @@ class WLSServiceTest {
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = null,
             quantity = null
@@ -430,7 +426,6 @@ class WLSServiceTest {
             status = Order.Status.NOT_STARTED,
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             contactPerson = "contactPerson",
             address = createOrderAddress(),
             note = "note",
@@ -460,7 +455,6 @@ class WLSServiceTest {
             hostOrderId = testOrder.hostOrderId,
             orderLine = testOrder.orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
             orderType = testOrder.orderType,
-            owner = testOrder.owner,
             contactPerson = testOrder.contactPerson,
             address = testOrder.address,
             note = testOrder.note,

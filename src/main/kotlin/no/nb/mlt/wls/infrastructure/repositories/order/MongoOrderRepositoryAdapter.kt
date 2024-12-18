@@ -5,7 +5,6 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderUpdateException
@@ -68,7 +67,6 @@ class MongoOrderRepositoryAdapter(
             order.status,
             order.orderLine,
             order.orderType,
-            order.owner,
             order.contactPerson,
             order.address,
             order.callbackUrl
@@ -116,14 +114,13 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
     ): Mono<Void>
 
     @Query("{hostName: ?0, hostOrderId: ?1}")
-    @Update("{'\$set':{status: ?2,orderLine: ?3,orderType: ?4,owner: ?5,contactPerson: ?6,address: ?7, callbackUrl: ?8}}")
+    @Update("{'\$set':{status: ?2,orderLine: ?3,orderType: ?4,contactPerson: ?5,address: ?6, callbackUrl: ?7}}")
     fun findAndUpdateByHostNameAndHostOrderId(
         hostName: HostName,
         hostOrderId: String,
         status: Order.Status,
         orderLine: List<Order.OrderItem>,
         orderType: Order.Type,
-        owner: Owner?,
         contactPerson: String,
         address: Order.Address?,
         callbackUrl: String

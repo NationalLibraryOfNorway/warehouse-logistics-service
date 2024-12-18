@@ -11,7 +11,6 @@ import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.domain.model.Environment.NONE
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
@@ -243,7 +242,6 @@ class ItemControllerTest(
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = NONE,
             packaging = Packaging.BOX,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1
@@ -260,7 +258,6 @@ class ItemControllerTest(
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1

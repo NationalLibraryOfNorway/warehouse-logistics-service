@@ -1,20 +1,15 @@
 package no.nb.mlt.wls.infrastructure.synq
 
-import no.nb.mlt.wls.domain.model.Owner
+import no.nb.mlt.wls.domain.model.HostName
 
 enum class SynqOwner {
     NB,
     AV
 }
 
-fun SynqOwner.toOwner(): Owner =
-    when (this) {
-        SynqOwner.NB -> Owner.NB
-        SynqOwner.AV -> Owner.ARKIVVERKET
+fun toSynqOwner(hostName: HostName): SynqOwner {
+    return when (hostName) {
+        HostName.ASTA -> SynqOwner.AV
+        else -> SynqOwner.NB
     }
-
-fun Owner.toSynqOwner(): SynqOwner =
-    when (this) {
-        Owner.NB -> SynqOwner.NB
-        Owner.ARKIVVERKET -> SynqOwner.AV
-    }
+}

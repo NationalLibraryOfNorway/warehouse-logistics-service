@@ -4,7 +4,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 
 fun interface AddNewItem {
@@ -18,7 +17,6 @@ data class ItemMetadata(
     val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
-    val owner: Owner,
     val callbackUrl: String?
 )
 
@@ -37,7 +35,6 @@ fun ItemMetadata.toItem(
     this.itemCategory,
     this.preferredEnvironment,
     this.packaging,
-    this.owner,
     this.callbackUrl,
     location,
     quantity

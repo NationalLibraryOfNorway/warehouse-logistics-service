@@ -75,7 +75,7 @@ fun Order.toSynqPayload() =
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
         orderDate = LocalDateTime.now(),
         priority = 5,
-        owner = owner.toSynqOwner(),
+        owner = toSynqOwner(hostName),
         orderLine =
             orderLine.mapIndexed { index, it ->
                 SynqOrderPayload.OrderLine(

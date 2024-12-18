@@ -4,7 +4,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -16,7 +15,6 @@ data class MongoItem(
     val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
-    val owner: Owner,
     val callbackUrl: String?,
     val location: String?,
     val quantity: Int?
@@ -30,7 +28,6 @@ fun Item.toMongoItem() =
         this.itemCategory,
         this.preferredEnvironment,
         this.packaging,
-        this.owner,
         this.callbackUrl,
         this.location,
         this.quantity
@@ -44,7 +41,6 @@ fun MongoItem.toItem() =
         this.itemCategory,
         this.preferredEnvironment,
         this.packaging,
-        this.owner,
         this.callbackUrl,
         this.location,
         this.quantity

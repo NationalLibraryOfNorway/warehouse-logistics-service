@@ -69,9 +69,12 @@ class SynqAdapter(
     }
 
     override suspend fun deleteOrder(order: Order) {
+        // Special handling for Arkivverket is required for the storage systems
+        val owner = toSynqOwner(order.hostName)
+
         webClient
             .delete()
-            .uri(URI.create("$baseUrl/orders/${order.owner}/${order.hostOrderId}"))
+            .uri(URI.create("$baseUrl/orders/$owner/${order.hostOrderId}"))
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }

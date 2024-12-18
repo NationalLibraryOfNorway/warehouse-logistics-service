@@ -17,7 +17,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
@@ -513,7 +512,6 @@ class OrderControllerTest(
             status = Order.Status.IN_PROGRESS,
             orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
-            owner = Owner.NB,
             address =
                 Order.Address(
                     recipient = "recipient",
@@ -551,7 +549,6 @@ class OrderControllerTest(
                                 itemCategory = ItemCategory.PAPER,
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
-                                owner = Owner.NB,
                                 location = "location",
                                 quantity = 1,
                                 callbackUrl = "https://callback-wls.no/item"
@@ -571,7 +568,6 @@ class OrderControllerTest(
             status = status ?: Order.Status.NOT_STARTED,
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
-            owner = Owner.NB,
             address = address,
             contactPerson = contactPerson,
             note = note,

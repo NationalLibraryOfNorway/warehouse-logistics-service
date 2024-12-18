@@ -26,7 +26,7 @@ data class SynqProductPayload(
 fun Item.toSynqPayload() =
     SynqProductPayload(
         productId = hostId,
-        owner = owner.toSynqOwner(),
+        owner = toSynqOwner(hostName),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
         productCategory = toSynqCategory(itemCategory),

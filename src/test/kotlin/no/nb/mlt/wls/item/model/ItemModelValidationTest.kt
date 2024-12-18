@@ -4,7 +4,6 @@ import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.assertj.core.api.Assertions.catchThrowable
@@ -105,7 +104,6 @@ class ItemModelValidationTest {
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "location",
             quantity = 1
