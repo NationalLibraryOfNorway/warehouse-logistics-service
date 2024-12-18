@@ -111,7 +111,7 @@ class ItemController(
     @PostMapping("/item")
     suspend fun createItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiItemPayload
+        @RequestBody payload: ApiCreateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(payload.hostName)
         payload.validate()
