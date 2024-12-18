@@ -365,7 +365,7 @@ class SynqControllerTest(
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
-            callbackUrl = "https://callback.com/item",
+            callbackUrl = "https://callback-wls.no/item",
             location = null,
             quantity = 0
         )
@@ -379,7 +379,7 @@ class SynqControllerTest(
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
-            callbackUrl = "https://callback.com/item",
+            callbackUrl = "https://callback-wls.no/item",
             location = null,
             quantity = 0
         )
@@ -403,7 +403,7 @@ class SynqControllerTest(
                     null,
                     null
                 ),
-            callbackUrl = "https://callback.com/order",
+            callbackUrl = "https://callback-wls.no/order",
             note = "note"
         )
 

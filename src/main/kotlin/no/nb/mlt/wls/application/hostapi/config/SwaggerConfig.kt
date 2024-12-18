@@ -36,20 +36,23 @@ class SwaggerConfig {
                     .title("Hermes WLS (Warehouse and Logistics Service) middleware")
                     .description(
                         """
-                        Hermes is developed by the MLT (Warehouse and Logistics team) at the National Library of Norway (NLN).
-                        Hermes facilitates communication between the NLN's storage systems and the cataloging systems.
-                        Hermes' name is inspired by the Greek deity Hermes, who was the herald of the gods.
+                        Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
+                        Hermes facilitates communication between the NLN's storage systems and catalogues, serving as a master system.
+                        Hermes' name is inspired by the Greek deity Hermes, who was known as the herald of the gods.
 
-                        Applications that need to use Hermes must authenticate with a JWT token.
-                        They can get it from the NLN's instance of Keycloak with help of a Service Account client.
-                        If you are unsure how to do this, please contact the MLT team for help.
+                        This submodule of Hermes is responsible for receiving item masters and order requests from catalogues.
+                        These are then sent along to storage systems, so that items can be stored or retrieved, and orders can be processed.
+
+                        Applications that want to use Hermes must authenticate with a JWT token.
+                        It is provided by the NLN's instance of Keycloak with help of a Service Account client.
+                        Please contact the MLT team for help getting set up with one or to reset credentials.
                         """.trimIndent()
                     ).contact(
                         Contact()
                             .name("MLT team at the National Library of Norway")
                             .email("mlt@nb.no")
                             .url("https://www.nb.no")
-                    )
+                    ).version("1.0.0")
             )
             .addSecurityItem(
                 SecurityRequirement().addList("clientCredentials")
@@ -60,7 +63,7 @@ class SwaggerConfig {
     fun hostApi(): GroupedOpenApi {
         return GroupedOpenApi.builder()
             .group("Host API")
-            .displayName("Host API for catalogues")
+            .displayName("API for catalogues (hosts) to interact with Hermes WLS")
             .pathsToMatch("/v1/**")
             .build()
     }

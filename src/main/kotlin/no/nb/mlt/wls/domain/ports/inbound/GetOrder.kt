@@ -4,7 +4,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import kotlin.jvm.Throws
 
-interface GetOrder {
+fun interface GetOrder {
     @Throws(OrderNotFoundException::class)
     suspend fun getOrder(
         hostName: HostName,

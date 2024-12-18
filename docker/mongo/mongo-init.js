@@ -1,72 +1,73 @@
-// Create a WLS database, a user, and a collection for products
+// Create a WLS database, a user, and a collection for items and orders.
 // This file only runs once during container creation.
-// If for some reason it fails to load, re-create the container
-// (E.G. running "docker compose down")
-print('Start #################################################################');
+// If for some reason it fails to load, re-create the container.
+//     (by running "docker compose down")
+print("START ##################################################################");
 
 db = db.getSiblingDB('wls');
 db.createUser(
     {
-        user: 'bruker',
-        pwd: 'drossap',
-        roles: [{ role: 'readWrite', db: 'wls' }],
+        user: "bruker",
+        pwd: "drossap",
+        roles: [{ role: "readWrite", db: "wls" }],
     },
 );
-db.createCollection('items');
 
+
+db.createCollection("items");
 db.items.insertOne({
+    "hostId": "mlt-12345",
     "hostName": "AXIELL",
-    "hostId": "item-12345",
-    "itemCategory": "BOOK",
-    "description": "Tyv etter loven",
+    "description": "Tyven, tyven skal du hete",
+    "itemCategory": "PAPER",
+    "preferredEnvironment": "NONE",
     "packaging": "NONE",
+    "owner": "NB",
+    "callbackUrl": "https://callback-wls.no/item",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
+    "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
+})
+db.items.insertOne({
+    "hostId": "mlt-54321",
+    "hostName": "AXIELL",
+    "description": "Tyv etter loven",
+    "itemCategory": "PAPER",
     "preferredEnvironment": "NONE",
+    "packaging": "NONE",
     "owner": "NB",
+    "callbackUrl": "https://callback-wls.no/item",
+    "location": "SYNQ_WAREHOUSE",
+    "quantity": 1,
     "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
 })
 
-db.items.insertOne({
-    "hostName": "AXIELL",
-    "hostId": "item-54321",
-    "itemCategory": "BOOK",
-    "description": "Tyv etter loven",
-    "packaging": "NONE",
-    "location": "SYNQ_WAREHOUSE",
-    "quantity": 1,
-    "preferredEnvironment": "NONE",
-    "owner": "NB",
-    "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
-})
 
-
-db.createCollection('orders')
-
+db.createCollection("orders")
 db.orders.insertOne({
-    "hostName": "AXIELL",
-    "hostOrderId": "order-12345",
-    "status": "NOT_STARTED",
-    "orderLine": [
+      "hostName": "AXIELL",
+      "hostOrderId": "mlt-12345-order",
+      "status": "NOT_STARTED",
+      "orderLine": [
         {
-            "hostId": "item-12345",
-            "status": "NOT_STARTED"
+          "hostId": "mlt-12345",
+          "status": "NOT_STARTED"
         }
-    ],
-    "orderType": "LOAN",
-    "owner": "NB",
-    "contactPerson": "MLT Team",
-    "address": {
-        "recipient": "Doug Doug",
-        "addressLine1": "Somewhere",
-        "addressLine2": "Behind a cardboard box",
-        "city": "Las Vegas",
+      ],
+      "orderType": "LOAN",
+      "owner": "NB",
+      "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "address": {
+        "recipient": "Doug Dimmadome",
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
         "country": "United States",
-        "region": "Texas",
-        "postcode": "TX-55415"
-    },
-    "callbackUrl": "https://example.com/send/callback/here",
+        "region": "California",
+        "postcode": "CA-55415"
+      },
+      "callbackUrl": "https://callback-wls.no/order",
     "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
 })
 
-print('END #################################################################');
+print("END ####################################################################");

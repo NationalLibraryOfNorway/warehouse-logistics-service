@@ -34,11 +34,12 @@ class SwaggerConfig {
                     .title("SynQ updates port for Hermes WLS")
                     .description(
                         """
-                        Hermes is developed by the MLT (Warehouse and Logistics team) at the National Library of Norway (NLN).
-                        Hermes facilitates communication between the NLN's storage systems and the cataloging systems.
+                        Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
+                        Hermes facilitates communication between the NLN's storage systems and catalogues, serving as a master system.
+
                         This submodule of Hermes is responsible for receiving product/item and order updates from SynQ.
-                        Hermes will then use these to convert the updates into a format that can be used by the rest of the system.
-                        And send these updates along to appropriate catalogs and update internal item and order information.
+                        Hermes converts these updates into a format that can be used by the rest of the system.
+                        These are then sent along to appropriate catalogues, they also update internal item and order information.
                         """.trimIndent()
                     ).contact(
                         Contact()

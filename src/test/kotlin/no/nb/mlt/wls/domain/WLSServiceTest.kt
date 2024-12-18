@@ -227,7 +227,7 @@ class WLSServiceTest {
         runTest {
             val order =
                 cut.createOrder(
-                    createOrderDTO.copy(callbackUrl = "https://newurl.com")
+                    createOrderDTO.copy(callbackUrl = "https://new-callback-wls.no/order")
                 )
 
             assertThat(order).isEqualTo(testOrder)
@@ -418,7 +418,7 @@ class WLSServiceTest {
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             owner = Owner.NB,
-            callbackUrl = "https://callback.com/item",
+            callbackUrl = "https://callback-wls.no/item",
             location = null,
             quantity = null
         )
@@ -434,7 +434,7 @@ class WLSServiceTest {
             contactPerson = "contactPerson",
             address = createOrderAddress(),
             note = "note",
-            callbackUrl = "https://callback.com/order"
+            callbackUrl = "https://callback-wls.no/order"
         )
 
     private val updatedOrder =

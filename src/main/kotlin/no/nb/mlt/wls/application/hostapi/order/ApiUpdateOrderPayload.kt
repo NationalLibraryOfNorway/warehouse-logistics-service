@@ -5,11 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.URI
+import org.apache.commons.validator.routines.UrlValidator
 import kotlin.jvm.Throws
 
 @Schema(
-    description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
+    description = """Payload for editing an order in Hermes WLS, and appropriate storage system(s).""",
     example = """
     {
       "hostName": "AXIELL",
@@ -21,7 +21,7 @@ import kotlin.jvm.Throws
         }
       ],
       "orderType": "LOAN",
-      "contactPerson": "MLT Team",
+      "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
@@ -32,59 +32,49 @@ import kotlin.jvm.Throws
         "postcode": "CA-55415"
       },
       "note": "Handle with care",
-      "callbackUrl": "https://example.com/send/callback/here"
+      "callbackUrl": "https://callback-wls.no/order"
     }
     """
 )
 data class ApiUpdateOrderPayload(
     @Schema(
-        description = "Name of the host system which made the order.",
+        description = """Name of the host system which made the order.""",
         examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
     )
     val hostName: HostName,
     @Schema(
-        description = "Order ID from the host system which made the order.",
+        description = """Order ID from the host system which made the order.""",
         example = "mlt-12345-order"
     )
     val hostOrderId: String,
     @Schema(
-        description = "List of items in the order, also called order lines.",
+        description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = "Describes what type of order this is",
+        description = """Describes what type of order this is""",
         examples = [ "LOAN", "DIGITIZATION" ]
     )
     val orderType: Order.Type,
     @Schema(
-        description = "Who's the receiver of the material in the order."
+        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
     @Schema(
-        description = """
-            The delivery address of the order.
-            If delivering to a country with states (I.E. the United States), include the state name in the region.
-        """,
-        example = """
-            "address": {
-                "recipient": "Nasjonalbibliotekaren",
-                "addressLine1": "Henrik Ibsens gate 110",
-                "city": "Oslo",
-                "country": "Norway",
-                "postcode": "0255"
-            }
-        """
+        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        example = "{...}"
     )
     val address: Order.Address?,
     @Schema(
-        description = "Any notes about the order",
-        example = "This is required in four weeks time"
+        description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
+        example = "I need this order in four weeks, not right now."
     )
     val note: String?,
     @Schema(
-        description = "URL to send a callback to when the order is completed.",
-        example = "https://example.com/send/callback/here"
+        description = """URL to send a callback to when the order is completed.""",
+        example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
 ) {
@@ -110,11 +100,7 @@ data class ApiUpdateOrderPayload(
         // Yes I am aware that this function is duplicated in three places
         // But I prefer readability over DRY in cases like this
 
-        return try {
-            URI(url).toURL() // Try to create a URL object
-            true
-        } catch (_: Exception) {
-            false // If exception is thrown, it's not a valid URL
-        }
+        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
+        return validator.isValid(url)
     }
 }

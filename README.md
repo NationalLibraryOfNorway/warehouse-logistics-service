@@ -86,7 +86,7 @@ After building the JAR file, it can be used to build a Docker image using the fo
 
 ```shell
 # Move the jar to the Docker directory
-cp target/wls.jar docker/
+cp target/wls.jar docker/wls.jar
 
 # Use Docker Buildx to build the Docker Image
 docker buildx build --platform linux/amd64 -t wls:latest docker/
@@ -107,14 +107,14 @@ The images are built based on the `main` branch as well as project `tags`, and c
 # Pull the latest image
 docker pull harbor.nb.no/mlt/wls:latest
 
-# Or pull a specific tag (either a GitHub tag or 'main' for the latest main branch image)
+# Or pull a specific tag (either a GitHub tag or "main" for the latest main branch image)
 docker pull harbor.nb.no/mlt/wls:<TAG>
 ```
 
 With the image either built or pulled, it can be run using the following command:
 
 ```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE='local-dev' harbor.nb.no/mlt/wls:<TAG>
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG>
 ```
 
 ### Using an IDE

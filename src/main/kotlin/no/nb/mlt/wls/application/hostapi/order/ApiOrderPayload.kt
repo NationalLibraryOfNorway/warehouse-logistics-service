@@ -7,10 +7,10 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.URI
+import org.apache.commons.validator.routines.UrlValidator
 
 @Schema(
-    description = "Payload for creating and editing an order in Hermes WLS, and appropriate storage system(s).",
+    description = """Payload for creating orders in Hermes WLS, and appropriate storage system(s).""",
     example = """
     {
       "hostName": "AXIELL",
@@ -24,72 +24,72 @@ import java.net.URI
       ],
       "orderType": "LOAN",
       "owner": "NB",
-      "contactPerson": "Hermes the Great",
+      "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
-        "recipient": "Nasjonalbibliotekaren",
-        "addressLine1": "Henrik Ibsens gate 110",
-        "city": "Oslo",
-        "country": "Norway",
-        "postcode": "0255"
+        "recipient": "Doug Dimmadome",
+        "addressLine1": "Dimmsdale Dimmadome",
+        "addressLine2": "21st Texan Ave.",
+        "city": "Dimmsdale",
+        "country": "United States",
+        "region": "California",
+        "postcode": "CA-55415"
       },
       "note": "Handle with care",
-      "callbackUrl": "https://example.com/send/callback/here"
+      "callbackUrl": "https://callback-wls.no/order"
     }
     """
 )
 data class ApiOrderPayload(
     @Schema(
-        description = "Name of the host system which made the order.",
+        description = """Name of the host system which made the order.""",
         examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
     val hostName: HostName,
     @Schema(
-        description = "Order ID from the host system which made the order.",
+        description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
     val hostOrderId: String,
     @Schema(
-        description = "Current status of the order as a whole.",
-        examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "DELETED"]
+        description = """Current status for the whole order.
+            "COMPLETED" means that the order is finished and items are ready for pickup / sent to receiver.
+            "RETURNED" means that the order items have been returned to the storage.""",
+        examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "RETURNED", "DELETED"]
     )
     val status: Order.Status?,
     @Schema(
-        description = "List of items in the order, also called order lines.",
+        description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = "Describes what type of order this is",
+        description = """Describes what type of order this is.
+            "LOAN" means that the order is for borrowing items to external or internal users,
+            usually meaning the items will be viewed, inspected, etc.
+            "DIGITIZATION" means that the order is specifically for digitizing items,
+            usually meaning that the order will be delivered to digitization workstation.""",
         examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
     @Schema(
-        description = "The name of the person to contact with manners related to this order",
-        example = "Hermes"
+        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
     @Schema(
-        description = "Any notes about the order",
-        example = "This is required in four weeks time"
-    )
-    val note: String?,
-    // TODO - Should this use custom DTO?
-    @Schema(
-        description = "The delivery address of this order",
-        example = """
-            "address": {
-                "recipient": "Nasjonalbibliotekaren",
-                "addressLine1": "Henrik Ibsens gate 110",
-                "city": "Oslo",
-                "country": "Norway",
-                "postcode": "0255"
-            }
-        """
+        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        example = "{...}"
     )
     val address: Order.Address?,
     @Schema(
-        description = "Callback URL for the order used to update the order information in the host system.",
-        example = "https://example.com/send/callback/here"
+        description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
+        example = "I need this order in four weeks, not right now."
+    )
+    val note: String?,
+    @Schema(
+        description = """Callback URL to use for sending order updates to the host system.
+            For example when order items get picked or the order is cancelled.""",
+        example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
 ) {
@@ -106,6 +106,7 @@ data class ApiOrderPayload(
             callbackUrl = callbackUrl
         )
 
+    @Throws(ValidationException::class)
     fun validate() {
         if (hostOrderId.isBlank()) {
             throw ValidationException("The order's hostOrderId is required, and can not be blank")
@@ -127,12 +128,8 @@ data class ApiOrderPayload(
         // Yes I am aware that this function is duplicated in three places
         // But I prefer readability over DRY in cases like this
 
-        return try {
-            URI(url).toURL() // Try to create a URL object
-            true
-        } catch (_: Exception) {
-            false // If exception is thrown, it's not a valid URL
-        }
+        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
+        return validator.isValid(url)
     }
 }
 
@@ -150,7 +147,7 @@ fun Order.toApiOrderPayload() =
     )
 
 @Schema(
-    description = "Represents an order line in an order, containing information about ordered item.",
+    description = """Represents an order line in an order, containing information about the ordered item.""",
     example = """
     {
       "hostId": "mlt-12345",
@@ -160,12 +157,12 @@ fun Order.toApiOrderPayload() =
 )
 data class OrderLine(
     @Schema(
-        description = "Item ID from the host system.",
+        description = """Item ID from the host system.""",
         example = "mlt-12345"
     )
     val hostId: String,
     @Schema(
-        description = "Current status of the item in the order.",
+        description = """Current status for the ordered item.""",
         examples = ["NOT_STARTED", "PICKED", "FAILED"]
     )
     val status: Order.OrderItem.Status?

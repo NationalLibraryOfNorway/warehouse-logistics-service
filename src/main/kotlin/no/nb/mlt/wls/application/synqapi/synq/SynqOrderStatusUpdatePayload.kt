@@ -6,7 +6,7 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
-    description = "Payload for updating the status of an order placed in SynQ.",
+    description = """Payload with updated status information for an order placed in SynQ.""",
     example = """
     {
       "prevStatus": "PICKED",
@@ -17,26 +17,27 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 )
 data class SynqOrderStatusUpdatePayload(
     @Schema(
-        description = "Previous status of the order in SynQ.",
+        description = """Previous order status.""",
         example = "PICKED"
     )
     val prevStatus: SynqOrderStatus,
     @Schema(
-        description = "Current status of the order in SynQ.",
+        description = """Current order status.""",
         example = "COMPLETED"
     )
     val status: SynqOrderStatus,
     @Schema(
-        description = "Name of the host system which placed the order/owns the order products/items.",
+        description = """Name of the host system which placed the order.""",
         example = "AXIELL"
     )
     val hostName: HostName,
     @Schema(
-        description = "Name of the warehouse where the order products/items are located.",
+        description = """Name of the warehouse where the order products/items are located.""",
         example = "Sikringmagasin_2"
     )
     val warehouse: String
 ) {
+    @Throws(ValidationException::class)
     fun validate() {
         if (warehouse.isBlank()) {
             throw ValidationException("Order status update cannot hve a blank warehouse")

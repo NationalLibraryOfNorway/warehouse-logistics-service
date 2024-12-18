@@ -7,7 +7,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 
-interface AddNewItem {
+fun interface AddNewItem {
     suspend fun addItem(itemMetadata: ItemMetadata): Item
 }
 

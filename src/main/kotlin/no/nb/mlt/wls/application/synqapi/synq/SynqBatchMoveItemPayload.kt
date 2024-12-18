@@ -8,7 +8,7 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
-    description = "Payload for receiving Item updates in batch from SynQ storage system.",
+    description = """Payload with Product/Item movement updates from the SynQ storage system.""",
     example = """
     {
       "tuId" : "6942066642",
@@ -42,39 +42,42 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 )
 data class SynqBatchMoveItemPayload(
     @Schema(
-        description = "ID of the transport unit in the SynQ storage system.",
+        description = """ID of the transport unit in the SynQ storage system.""",
         example = "6942066642"
     )
     val tuId: String,
     @Schema(
-        description = "Current location of the transport unit and its contents in the SynQ storage system.",
+        description = """Current location of the transport unit and its contents in the SynQ storage system.""",
         example = "SYNQ_WAREHOUSE"
     )
     val location: String,
     @Schema(
-        description = "Previous location of the transport unit and its contents in the SynQ storage system.",
+        description = """Previous location of the transport unit and its contents in the SynQ storage system.""",
         example = "WS_PLUKKSENTER_1"
     )
     val prevLocation: String,
     @Schema(
-        description = "List of products in the transport unit.",
+        description = """List of products/items in the transport unit (referred to as load units in SynQ).
+            Since we only have unique items an LU is equivalent to a product.
+            In usual warehouses you have multiple copies of the same product, i.e. 100 shirts here, 100 shirts there...
+        """,
         example = "[{...}]"
     )
     val loadUnit: List<Product>,
     @Schema(
-        description = "User who initiated the update.",
+        description = """Identifier of user who caused the items to move, can be system if that was an automatic action.""",
         example = "per.person@nb.no"
     )
     val user: String,
     @Schema(
-        description = "Warehouse where the transport unit is located.",
+        description = """Warehouse in which the TU moved.""",
         example = "Sikringsmagasin_2"
     )
     val warehouse: String
 )
 
 @Schema(
-    description = "Product information class, this is equivalent to an Item in the Hermes WLS.",
+    description = """Information about a product/item (LU) in the transport unit (TU) in the SynQ storage system.""",
     example = """
     {
       "confidentialProduct" : false,
@@ -99,59 +102,58 @@ data class SynqBatchMoveItemPayload(
 )
 data class Product(
     @Schema(
-        description = "Marks the product as confidential, meaning only people with special access can modify or view the product.",
+        description = """Marks the product as confidential, meaning only people with special access can view, modify, or request the product.""",
         example = "false"
     )
     val confidentialProduct: Boolean,
     @Schema(
-        description = "Name of the host system where the product is registered.",
+        description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
     @NotBlank
     val hostName: String,
     @Schema(
-        description = "Product ID from the host system, usually a barcode or an equivalent ID.",
+        description = """Product ID from the host system, usually a barcode value or an equivalent ID.""",
         example = "mlt-12345"
     )
     @NotBlank
     val productId: String,
     @Schema(
-        description = "Owner of the product, usually the National Library of Norway (NB) or the National Archives of Norway (AV).",
+        description = """Product's owner, usually the National Library of Norway (NB) or the National Archives of Norway (AV).""",
         example = "NB"
     )
     @NotBlank
     val productOwner: String,
     @Schema(
-        description = "Product version ID in the storage system, seems to always have value 'Default'.",
+        description = """Product version ID in the storage system, seems to always have value "Default".""",
         example = "Default"
     )
     val productVersionId: String,
     @Schema(
-        description = """Quantity of the product in the transport unit.
-            Accepts doubles, but they will be converted to integers.""",
+        description = """Product quantity in the TU, SynQ uses doubles for quantity, however we convert it to integers.""",
         example = "1.0"
     )
     @PositiveOrZero
     val quantityOnHand: Int,
     @Schema(
-        description = "Signifies the product is marked as suspect in the storage system and needs to be manually verified.",
+        description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
         example = "false"
     )
     val suspect: Boolean,
     @Schema(
-        description = "List of attribute values for the product.",
+        description = """List of attributes for the product.""",
         example = "[{...}]"
     )
     val attributeValue: List<AttributeValue>,
     @Schema(
-        description = "Position of the product in the TU, not used by us so it always have default values of '1,1,1'.",
+        description = """Position of the product in the TU, not used by us so this is pretty irrelevant.""",
         example = "{...}"
     )
     val position: Position
 )
 
 @Schema(
-    description = "Represents an attribute value for the product.",
+    description = """Represents a product's attribute.""",
     example = """
     {
       "name" : "materialStatus",
@@ -160,16 +162,17 @@ data class Product(
 )
 data class AttributeValue(
     @Schema(
-        description = "Name of the attribute.",
+        description = """Name of the attribute.""",
         example = "materialStatus"
     )
     val name: String,
     @Schema(
-        description = "Value of the attribute.",
+        description = """Value of the attribute.""",
         example = "Available"
     )
     val value: String
 ) {
+    @Throws(ValidationException::class)
     fun validate() {
         if (name.isBlank()) {
             throw ValidationException("Attribute name cannot be blank")
@@ -182,7 +185,7 @@ data class AttributeValue(
 }
 
 @Schema(
-    description = "Represents position of the product in the TU.",
+    description = """Represents position of the product in the TU.""",
     example = """
     {
       "xPosition" : 1,
@@ -192,17 +195,17 @@ data class AttributeValue(
 )
 data class Position(
     @Schema(
-        description = "X position of the product in the TU.",
+        description = """X position of the product in the TU.""",
         example = "1"
     )
     val xPosition: Int,
     @Schema(
-        description = "Y position of the product in the TU.",
+        description = """Y position of the product in the TU.""",
         example = "1"
     )
     val yPosition: Int,
     @Schema(
-        description = "Z position of the product in the TU.",
+        description = """Z position of the product in the TU.""",
         example = "1"
     )
     val zPosition: Int

@@ -55,7 +55,7 @@ class SecurityConfig {
 }
 
 fun JwtAuthenticationToken.checkIfAuthorized(host: HostName) {
-    if (name.uppercase() == host.name || name == "wls") return
+    if (name.uppercase() == host.name) return
 
     throw ResponseStatusException(
         HttpStatus.FORBIDDEN,

@@ -24,29 +24,31 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 @RestController
 @RequestMapping(path = [ "/v1"])
-@Tag(name = "Item Controller", description = "API for managing items in Hermes WLS")
+@Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
 class ItemController(
     private val addNewItem: AddNewItem,
     private val getItem: GetItem
 ) {
     @Operation(
-        summary = "Register an items in the storage system",
-        description = """Register data about the item in Hermes WLS and appropriate storage system,
-            so that the physical item can be placed in the physical storage.
-            An item is also called item by some storage systems and users, those mean the same thing in Hermes.
-            NOTE: When registering new item quantity and location are set to default values (0 and null).
-            Hence you should not provide these values in the payload, or at least know they will be overwritten."""
+        summary = "Register an item in Hermes",
+        description = """Register data about the item in Hermes WLS and appropriate storage systems.
+            This step is required to store the item in the physical storage system, as it needs to have metadata about the object.
+            An item is also called product by some storage systems and users, those mean the same thing to Hermes.
+            Do not provide quantity or location information in this step, as it is overridden with default values."""
     )
+
+    // ? TODO: Replace the schema with a model class without stuff like location, quantity, etc.
+
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = """Item with given 'hostName' and 'hostId' already exists in the system.
+                description = """Item with given "hostName" and "hostId" already exists in the system.
                     No new item was created, neither was the old item updated.
                     Existing item information is returned for inspection.
-                    In rare cases the response body may be empty, that can happen if Hermes WLS
-                    does not have the information about the item stored in its database and
-                    is unable to retrieve the existing item information from the storage system.""",
+                    In some rare cases the response body may be empty.
+                    That can happen if Hermes WLS does not have the information about the item stored in its database,
+                    and is unable to retrieve the existing item information from the storage system(s).""",
                 content = [
                     Content(
                         mediaType = "application/json",
@@ -57,7 +59,7 @@ class ItemController(
             ApiResponse(
                 responseCode = "201",
                 description = """Item payload is valid and the item information was registered successfully.
-                    Item was created in the appropriate storage system.
+                    Item was created in the appropriate storage system(s).
                     New item information is returned for inspection.""",
                 content = [
                     Content(
@@ -68,18 +70,18 @@ class ItemController(
             ),
             ApiResponse(
                 responseCode = "400",
-                description = """Item payload is invalid and no new item was created.
-                    Error message contains information about the invalid fields.""",
+                description = """Item payload is invalid, no new item was created.
+                    Error message contains information about the invalid field(s).""",
                 content = [Content(schema = Schema())]
             ),
             ApiResponse(
                 responseCode = "401",
-                description = "Client sending the request is not authorized to create a new item.",
+                description = """Client sending the request is not authorized to operate on items.""",
                 content = [Content(schema = Schema())]
             ),
             ApiResponse(
                 responseCode = "403",
-                description = "A valid 'Authorization' header is missing from the request.",
+                description = """A valid "Authorization" header is missing from the request.""",
                 content = [Content(schema = Schema())]
             )
         ]
@@ -87,21 +89,19 @@ class ItemController(
     @Callbacks(
         Callback(
             name = "Item Callback",
-            callbackUrlExpression = "\$request.body#/callbackUrl",
+            callbackUrlExpression = "{\$request.body#/callbackUrl}",
             operation =
                 arrayOf(
                     Operation(
                         summary = "Notification of updated item",
                         description = """This callback triggers when an item is updated inside the storage systems.
                         It contains the full data of the item, including the current quantity and location of it.
-                    """,
+                        Situations where this callback is triggered may include: item moves in storage,
+                        item is picked for order, item is returned to storage, etc.""",
                         method = "post",
                         requestBody =
                             SwaggerRequestBody(
-                                content =
-                                    arrayOf(
-                                        Content(schema = Schema(implementation = NotificationItemPayload::class))
-                                    ),
+                                content = [Content(schema = Schema(implementation = NotificationItemPayload::class))],
                                 required = true
                             )
                     )
