@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
 import no.nb.mlt.wls.infrastructure.callbacks.toNotificationItemPayload
@@ -26,7 +25,6 @@ class ItemModelConversionTest {
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "",
             quantity = 1
@@ -40,7 +38,6 @@ class ItemModelConversionTest {
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "",
             quantity = 1
@@ -66,7 +63,6 @@ class ItemModelConversionTest {
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
-            owner = Owner.NB,
             callbackUrl = "https://callback-wls.no/item",
             location = "",
             quantity = 1
@@ -81,7 +77,6 @@ class ItemModelConversionTest {
         assertThat(payload.itemCategory).isEqualTo(testItemPayload.itemCategory)
         assertThat(payload.preferredEnvironment).isEqualTo(testItemPayload.preferredEnvironment)
         assertThat(payload.packaging).isEqualTo(testItemPayload.packaging)
-        assertThat(payload.owner).isEqualTo(testItemPayload.owner)
         assertThat(payload.callbackUrl).isEqualTo(testItemPayload.callbackUrl)
         assertThat(payload.location).isEqualTo(testItemPayload.location)
         assertThat(payload.quantity).isEqualTo(testItemPayload.quantity)
@@ -108,7 +103,6 @@ class ItemModelConversionTest {
         assertThat(payload.itemCategory).isEqualTo(testItemNotificationPayload.itemCategory)
         assertThat(payload.preferredEnvironment).isEqualTo(testItemNotificationPayload.preferredEnvironment)
         assertThat(payload.packaging).isEqualTo(testItemNotificationPayload.packaging)
-        assertThat(payload.owner).isEqualTo(testItemNotificationPayload.owner)
         assertThat(payload.callbackUrl).isEqualTo(testItemNotificationPayload.callbackUrl)
         assertThat(payload.location).isEqualTo(testItemNotificationPayload.location)
         assertThat(payload.quantity).isEqualTo(testItemNotificationPayload.quantity)
@@ -123,7 +117,6 @@ class ItemModelConversionTest {
         assertThat(item.itemCategory).isEqualTo(testItem.itemCategory)
         assertThat(item.preferredEnvironment).isEqualTo(testItem.preferredEnvironment)
         assertThat(item.packaging).isEqualTo(testItem.packaging)
-        assertThat(item.owner).isEqualTo(testItem.owner)
         assertThat(item.callbackUrl).isEqualTo(testItem.callbackUrl)
         assertThat(item.location).isEqualTo(testItem.location)
         assertThat(item.quantity).isEqualTo(testItem.quantity)

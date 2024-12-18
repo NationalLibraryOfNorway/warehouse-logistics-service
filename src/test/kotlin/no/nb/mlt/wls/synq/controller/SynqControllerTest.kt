@@ -20,7 +20,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.callbacks.InventoryNotifierAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -361,7 +360,6 @@ class SynqControllerTest(
         Item(
             hostId = "mlt-12345",
             hostName = HostName.AXIELL,
-            owner = Owner.NB,
             description = "Test item",
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.FRYS,
@@ -375,7 +373,6 @@ class SynqControllerTest(
         Item(
             hostId = "mlt-54321",
             hostName = HostName.AXIELL,
-            owner = Owner.NB,
             description = "Item test",
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.FRYS,

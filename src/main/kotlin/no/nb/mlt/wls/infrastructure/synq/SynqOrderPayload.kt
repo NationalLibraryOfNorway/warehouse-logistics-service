@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
@@ -112,13 +111,6 @@ fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
         Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD
         Order.Type.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
     }
-
-fun toSynqOwner(hostName: HostName): SynqOwner {
-    return when (hostName) {
-        HostName.ASTA -> SynqOwner.AV
-        else -> SynqOwner.NB
-    }
-}
 
 /**
  * Utility classed used to wrap the payload.

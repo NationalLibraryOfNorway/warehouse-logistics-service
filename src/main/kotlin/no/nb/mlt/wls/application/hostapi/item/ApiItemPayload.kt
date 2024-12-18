@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -22,7 +21,6 @@ import org.apache.commons.validator.routines.UrlValidator
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
-      "owner": "NB",
       "callbackUrl": "https://callback-wls.no/item"
     }
     """
@@ -67,11 +65,6 @@ data class ApiItemPayload(
     )
     val packaging: Packaging,
     @Schema(
-        description = """Who owns the item. Usually the National Library of Norway ("NB") or the National Archives of Norway ("ARKIVVERKET").""",
-        examples = ["NB", "ARKIVVERKET"]
-    )
-    val owner: Owner,
-    @Schema(
         description = """Callback URL to use for sending item updates to the host system.
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
@@ -101,7 +94,6 @@ data class ApiItemPayload(
             itemCategory = itemCategory,
             preferredEnvironment = preferredEnvironment,
             packaging = packaging,
-            owner = owner,
             callbackUrl = callbackUrl,
             location = location,
             quantity = quantity
@@ -115,7 +107,6 @@ data class ApiItemPayload(
             itemCategory = itemCategory,
             preferredEnvironment = preferredEnvironment,
             packaging = packaging,
-            owner = owner,
             callbackUrl = callbackUrl
         )
 
@@ -159,7 +150,6 @@ fun Item.toApiPayload() =
         itemCategory = itemCategory,
         preferredEnvironment = preferredEnvironment,
         packaging = packaging,
-        owner = owner,
         callbackUrl = callbackUrl,
         location = location,
         quantity = quantity

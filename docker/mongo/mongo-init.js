@@ -22,7 +22,6 @@ db.items.insertOne({
     "itemCategory": "PAPER",
     "preferredEnvironment": "NONE",
     "packaging": "NONE",
-    "owner": "NB",
     "callbackUrl": "https://callback-wls.no/item",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
@@ -35,7 +34,6 @@ db.items.insertOne({
     "itemCategory": "PAPER",
     "preferredEnvironment": "NONE",
     "packaging": "NONE",
-    "owner": "NB",
     "callbackUrl": "https://callback-wls.no/item",
     "location": "SYNQ_WAREHOUSE",
     "quantity": 1,
@@ -55,7 +53,6 @@ db.orders.insertOne({
         }
       ],
       "orderType": "LOAN",
-      "owner": "NB",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
       "address": {
         "recipient": "Doug Dimmadome",

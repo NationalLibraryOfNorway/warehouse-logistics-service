@@ -7,11 +7,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -93,7 +93,7 @@ class SynqController(
     @PutMapping("/pick-update/{owner}/{orderId}")
     suspend fun pickOrder(
         @Parameter(description = "Owner of the order items")
-        @PathVariable owner: Owner,
+        @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String,
         @RequestBody payload: SynqOrderPickingConfirmationPayload
@@ -152,7 +152,7 @@ class SynqController(
     suspend fun updateOrder(
         @RequestBody orderUpdatePayload: SynqOrderStatusUpdatePayload,
         @Parameter(description = "Owner of the order items")
-        @PathVariable owner: Owner,
+        @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
     ): ResponseEntity<String> {

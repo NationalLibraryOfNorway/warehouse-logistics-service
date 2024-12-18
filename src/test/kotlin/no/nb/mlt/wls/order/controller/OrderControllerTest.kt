@@ -17,7 +17,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Owner
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
@@ -550,7 +549,6 @@ class OrderControllerTest(
                                 itemCategory = ItemCategory.PAPER,
                                 preferredEnvironment = Environment.NONE,
                                 packaging = Packaging.NONE,
-                                owner = Owner.NB,
                                 location = "location",
                                 quantity = 1,
                                 callbackUrl = "https://callback-wls.no/item"
