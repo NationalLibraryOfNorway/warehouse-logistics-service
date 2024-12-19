@@ -16,7 +16,7 @@ data class Item(
     val quantity: Int
 ) {
     fun pickItem(amountPicked: Int): Item {
-        val itemsInStockQuantity = quantity ?: 0
+        val itemsInStockQuantity = quantity
 
         // In the case of over-picking, log it and set quantity to zero.
         // This is in hope that on return the database recovers

@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
 
@@ -93,17 +92,6 @@ data class ApiItemPayload(
             callbackUrl = callbackUrl,
             location = location,
             quantity = quantity
-        )
-
-    fun toItemMetadata(): ItemMetadata =
-        ItemMetadata(
-            hostId = hostId,
-            hostName = hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl
         )
 
     @Throws(ValidationException::class)
