@@ -79,7 +79,7 @@ data class ApiCreateItemPayload(
             preferredEnvironment = preferredEnvironment,
             packaging = packaging,
             callbackUrl = callbackUrl,
-            location = null,
+            location = "UNKNOWN",
             quantity = 0
         )
 
