@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -71,8 +70,7 @@ data class NotificationItemPayload(
     val callbackUrl: String?,
     @Schema(
         description = """Where the item is located, can be used for tracking item movement through storage systems.""",
-        examples = ["SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
-        accessMode = READ_ONLY,
+        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
         required = false
     )
     val location: String?,
@@ -80,7 +78,6 @@ data class NotificationItemPayload(
         description = """Quantity on hand of the item, this easily denotes if the item is in the storage or not.
                 If the item is in storage then quantity is 1, if it's not in storage then quantity is 0.""",
         examples = [ "0.0", "1.0"],
-        accessMode = READ_ONLY,
         required = false
     )
     val quantity: Int?

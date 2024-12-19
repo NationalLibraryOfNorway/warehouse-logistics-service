@@ -24,7 +24,7 @@ import org.apache.commons.validator.routines.UrlValidator
     }
     """
 )
-data class ApiItemPayload(
+data class ApiCreateItemPayload(
     @Schema(
         description = """The item ID from the host system, usually a barcode or an equivalent ID.""",
         example = "mlt-12345"
@@ -68,20 +68,7 @@ data class ApiItemPayload(
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
     )
-    val callbackUrl: String?,
-    @Schema(
-        description = """Where the item is located, can be used for tracking item movement through storage systems.""",
-        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
-        required = false
-    )
-    val location: String?,
-    @Schema(
-        description = """Quantity on hand of the item, this easily denotes if the item is in the storage or not.
-                If the item is in storage then quantity is 1, if it's not in storage then quantity is 0.""",
-        examples = [ "0", "1"],
-        required = false
-    )
-    val quantity: Int?
+    val callbackUrl: String?
 ) {
     fun toItem(): Item =
         Item(
@@ -92,8 +79,8 @@ data class ApiItemPayload(
             preferredEnvironment = preferredEnvironment,
             packaging = packaging,
             callbackUrl = callbackUrl,
-            location = location,
-            quantity = quantity
+            location = "UNKNOWN",
+            quantity = 0
         )
 
     fun toItemMetadata(): ItemMetadata =
@@ -117,14 +104,6 @@ data class ApiItemPayload(
             throw ValidationException("The item's 'description' is required, and it cannot be blank")
         }
 
-        if (location != null && location.isBlank()) {
-            throw ValidationException("The item's 'location' cannot be blank if set")
-        }
-
-        if (quantity != null && quantity != 0 && quantity != 1) {
-            throw ValidationException("The item's 'quantity' must be one or zero if set")
-        }
-
         if (callbackUrl != null && !isValidUrl(callbackUrl)) {
             throw ValidationException("The item's 'callback URL' must be valid if set")
         }
@@ -139,15 +118,13 @@ data class ApiItemPayload(
     }
 }
 
-fun Item.toApiPayload() =
-    ApiItemPayload(
+fun Item.toCreateApiPayload() =
+    ApiCreateItemPayload(
         hostId = hostId,
         hostName = hostName,
         description = description,
         itemCategory = itemCategory,
         preferredEnvironment = preferredEnvironment,
         packaging = packaging,
-        callbackUrl = callbackUrl,
-        location = location,
-        quantity = quantity
+        callbackUrl = callbackUrl
     )
