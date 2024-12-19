@@ -71,7 +71,7 @@ data class ApiItemPayload(
     val callbackUrl: String?,
     @Schema(
         description = """Where the item is located, can be used for tracking item movement through storage systems.""",
-        examples = ["UNKNOWN", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
+        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
         required = false
     )
     val location: String?,
