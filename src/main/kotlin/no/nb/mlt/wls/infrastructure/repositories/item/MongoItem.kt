@@ -16,8 +16,8 @@ data class MongoItem(
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
-    val location: String?,
-    val quantity: Int?
+    val location: String,
+    val quantity: Int
 )
 
 fun Item.toMongoItem() =

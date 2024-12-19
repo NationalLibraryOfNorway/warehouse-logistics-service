@@ -90,7 +90,7 @@ class ItemControllerTest(
             assertThat(item)
                 .isNotNull
                 .extracting("description", "location", "quantity")
-                .containsExactly(testItemPayload.description, null, 0)
+                .containsExactly(testItemPayload.description, "UNKNOWN", 0)
         }
 
     @Test

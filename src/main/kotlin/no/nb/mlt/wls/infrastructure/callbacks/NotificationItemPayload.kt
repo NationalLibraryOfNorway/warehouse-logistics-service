@@ -73,14 +73,13 @@ data class NotificationItemPayload(
         examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
         required = false
     )
-    val location: String?,
+    val location: String,
     @Schema(
         description = """Quantity on hand of the item, this easily denotes if the item is in the storage or not.
                 If the item is in storage then quantity is 1, if it's not in storage then quantity is 0.""",
-        examples = [ "0.0", "1.0"],
-        required = false
+        examples = [ "0.0", "1.0"]
     )
-    val quantity: Int?
+    val quantity: Int
 )
 
 fun NotificationItemPayload.toItem(): Item {

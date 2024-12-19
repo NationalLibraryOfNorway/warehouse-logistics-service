@@ -12,11 +12,11 @@ data class Item(
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
-    val location: String?,
-    val quantity: Int?
+    val location: String,
+    val quantity: Int
 ) {
     fun pickItem(amountPicked: Int): Item {
-        val itemsInStockQuantity = quantity ?: 0
+        val itemsInStockQuantity = quantity
 
         // In the case of over-picking, log it and set quantity to zero.
         // This is in hope that on return the database recovers
@@ -31,14 +31,8 @@ data class Item(
         val location: String =
             if (quantity == 0) {
                 "WITH_LENDER"
-            } else if (location != null) {
-                location
             } else {
-                // Rare edge case. Log it until we can determine if this actually happens in production
-                logger.error {
-                    "Item with ID '$hostId' for host '$hostName' without a location was picked. Location was set to 'UNKNOWN'."
-                }
-                "UNKNOWN"
+                location
             }
         return this.copy(quantity = quantity, location = location)
     }
