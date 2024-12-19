@@ -415,8 +415,8 @@ class WLSServiceTest {
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             callbackUrl = "https://callback-wls.no/item",
-            location = null,
-            quantity = null
+            location = "UNKNOWN",
+            quantity = 0
         )
 
     private val testOrder =
