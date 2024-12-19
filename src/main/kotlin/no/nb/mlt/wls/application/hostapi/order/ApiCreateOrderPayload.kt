@@ -14,7 +14,6 @@ import org.apache.commons.validator.routines.UrlValidator
     {
       "hostName": "AXIELL",
       "hostOrderId": "mlt-12345-order",
-      "status": "NOT_STARTED",
       "orderLine": [
         {
           "hostId": "mlt-12345",
@@ -124,10 +123,9 @@ data class ApiCreateOrderPayload(
 }
 
 fun Order.toCreateApiOrderPayload() =
-    ApiOrderPayload(
+    ApiCreateOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
-        status = status,
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
         contactPerson = contactPerson,

@@ -80,7 +80,7 @@ data class ApiCreateItemPayload(
             packaging = packaging,
             callbackUrl = callbackUrl,
             location = null,
-            quantity = null
+            quantity = 0
         )
 
     fun toItemMetadata(): ItemMetadata =
