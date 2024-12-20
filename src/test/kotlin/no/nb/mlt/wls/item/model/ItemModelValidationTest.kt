@@ -21,8 +21,8 @@ class ItemModelValidationTest {
     fun `item with minimal valid data should pass validation`() {
         val item =
             validItem.copy(
-                quantity = null,
-                location = null,
+                quantity = 0,
+                location = "UNKNOWN",
                 callbackUrl = null
             )
 

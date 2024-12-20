@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
 
@@ -71,17 +70,15 @@ data class ApiItemPayload(
     val callbackUrl: String?,
     @Schema(
         description = """Where the item is located, can be used for tracking item movement through storage systems.""",
-        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
-        required = false
+        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"]
     )
-    val location: String?,
+    val location: String,
     @Schema(
         description = """Quantity on hand of the item, this easily denotes if the item is in the storage or not.
                 If the item is in storage then quantity is 1, if it's not in storage then quantity is 0.""",
-        examples = [ "0", "1"],
-        required = false
+        examples = [ "0", "1"]
     )
-    val quantity: Int?
+    val quantity: Int
 ) {
     fun toItem(): Item =
         Item(
@@ -96,17 +93,6 @@ data class ApiItemPayload(
             quantity = quantity
         )
 
-    fun toItemMetadata(): ItemMetadata =
-        ItemMetadata(
-            hostId = hostId,
-            hostName = hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl
-        )
-
     @Throws(ValidationException::class)
     fun validate() {
         if (hostId.isBlank()) {
@@ -117,12 +103,12 @@ data class ApiItemPayload(
             throw ValidationException("The item's 'description' is required, and it cannot be blank")
         }
 
-        if (location != null && location.isBlank()) {
-            throw ValidationException("The item's 'location' cannot be blank if set")
+        if (location.isBlank()) {
+            throw ValidationException("The item's 'location' is required, and it cannot be blank")
         }
 
-        if (quantity != null && quantity != 0 && quantity != 1) {
-            throw ValidationException("The item's 'quantity' must be one or zero if set")
+        if (quantity != 0 && quantity != 1) {
+            throw ValidationException("The item's 'quantity' must be one or zero")
         }
 
         if (callbackUrl != null && !isValidUrl(callbackUrl)) {

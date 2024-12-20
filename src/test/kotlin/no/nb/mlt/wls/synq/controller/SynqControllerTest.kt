@@ -365,7 +365,7 @@ class SynqControllerTest(
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback-wls.no/item",
-            location = null,
+            location = "UNKNOWN",
             quantity = 0
         )
 
@@ -378,7 +378,7 @@ class SynqControllerTest(
             preferredEnvironment = Environment.FRYS,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback-wls.no/item",
-            location = null,
+            location = "UNKNOWN",
             quantity = 0
         )
 

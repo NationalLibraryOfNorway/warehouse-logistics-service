@@ -26,8 +26,8 @@ data class ItemMetadata(
  * are always zero/empty, as they must be registered before being inserted into storage
  */
 fun ItemMetadata.toItem(
-    quantity: Int? = 0,
-    location: String? = null
+    quantity: Int = 0,
+    location: String = "UNKNOWN"
 ) = Item(
     this.hostId,
     this.hostName,
