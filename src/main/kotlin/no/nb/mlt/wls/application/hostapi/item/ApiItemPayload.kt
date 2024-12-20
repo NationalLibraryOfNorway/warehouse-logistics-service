@@ -70,8 +70,7 @@ data class ApiItemPayload(
     val callbackUrl: String?,
     @Schema(
         description = """Where the item is located, can be used for tracking item movement through storage systems.""",
-        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"],
-        required = false
+        examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"]
     )
     val location: String,
     @Schema(
@@ -105,11 +104,11 @@ data class ApiItemPayload(
         }
 
         if (location.isBlank()) {
-            throw ValidationException("The item's 'location' cannot be blank if set")
+            throw ValidationException("The item's 'location' is required, and it cannot be blank")
         }
 
         if (quantity != 0 && quantity != 1) {
-            throw ValidationException("The item's 'quantity' must be one or zero if set")
+            throw ValidationException("The item's 'quantity' must be one or zero")
         }
 
         if (callbackUrl != null && !isValidUrl(callbackUrl)) {
