@@ -62,23 +62,6 @@ jobs:
           #     In that case use the "@actions/cache" action
           cache: maven
 
-      # Since the self-hosted runner does not come with Maven, it must be installed manually
-      # Same for git, it is needed to upload the test results, hence why repo is initialized using "git init"
-      # Lastly gettext provides envsubst which is used in the [[verify-the-project]] step to replace env variables
-      - name: Install Maven and Initialize Repo
-        # Map of environment variables available for this step only, you can define it on job or workflow level too
-        env:
-          MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
-        run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
-          sudo apt-get update -y
-          sudo apt-get install wget git gettext -y
-          wget https://downloads.apache.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-$MAVEN_VERSION-bin.tar.gz
-          sudo tar xzf apache-maven-$MAVEN_VERSION-bin.tar.gz -C /opt
-          sudo ln -s /opt/apache-maven-$MAVEN_VERSION/bin/mvn /usr/local/bin/mvn
-          echo "PATH=/opt/apache-maven-$MAVEN_VERSION/bin:$PATH" >> $GITHUB_ENV
-          git init
-          mvn -v
-
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing the secrets
       # GitHub does not permit to check secret value or re-use the secrets
       # Speak with Platform team to set up a namespace if needed
@@ -101,7 +84,7 @@ jobs:
         # Replace tags in settings.xml with values from environment and save it to a new file, then use it when running Maven
         run: |
           envsubst < .m2/settings.xml > .m2/replaced.xml
-          mvn -B -e -s .m2/replaced.xml verify
+          ./mvnw -B -e -s .m2/replaced.xml verify
 
       # This step uses the test-reporter action to publish test results in the workflow run #[[test-report-publisher]]
       # It looks for any file named "TEST-...xml" in the project and uses it to publish the test results
