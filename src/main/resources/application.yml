@@ -49,6 +49,9 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+email:
+  outgoingServer: ""
+
 ---
 
 # This is the configuration for the local-dev profile
@@ -72,6 +75,9 @@ spring:
       username: bruker
       password: drossap
       database: wls
+
+email:
+  outgoingServer: ${EMAIL_SERVER}
 
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
