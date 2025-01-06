@@ -9,6 +9,8 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
+import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
+import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
@@ -105,6 +107,20 @@ class OrderControllerTest(
                 .isNotNull
                 .extracting("callbackUrl", "status")
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
+
+            // TODO - Split this into its own test/check? Would then need flushing, as this test generates an e-mail
+            val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
+
+            // Create a temporary new client to check emails
+            WebTestClient
+                .bindToServer()
+                .build()
+                .get()
+                .uri(mailhogUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectBody()
+                .jsonPath("$.total").isEqualTo(1)
         }
 
     @Test

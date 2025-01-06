@@ -32,6 +32,7 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
 import java.time.Duration
 import java.util.concurrent.TimeoutException
@@ -101,8 +102,8 @@ class WLSService(
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    pickedItem.quantity!!,
-                    pickedItem.location!!
+                    pickedItem.quantity,
+                    pickedItem.location
                 )
 
             inventoryNotifier.itemChanged(movedItem)
@@ -142,10 +143,15 @@ class WLSService(
 
         val email = createEmail(order)
         if (email != null) {
-            logger.info {
-                "Email sent to ${email.allRecipients}"
+            try {
+                mailSender.send(email)
+                logger.info {
+                    "Email sent to ${email.allRecipients.first()}"
+                }
+            } catch (e: MailException) {
+                // TODO - Review. Should probably be explicitly logged?
+                e.printStackTrace()
             }
-            mailSender.send(email)
         }
         return order
     }
