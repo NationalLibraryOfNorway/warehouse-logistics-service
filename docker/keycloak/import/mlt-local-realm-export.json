@@ -4,7 +4,7 @@
   "displayName" : "Magasin og Logistikk (local development realm)",
   "displayNameHtml" : "magasin-og-logistikk-local",
   "notBefore" : 0,
-  "defaultSignatureAlgorithm" : "RS512",
+  "defaultSignatureAlgorithm" : "ES256",
   "revokeRefreshToken" : false,
   "refreshTokenMaxReuse" : 0,
   "accessTokenLifespan" : 28800,
@@ -72,6 +72,14 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
+      "id" : "da78bee7-7416-4a4b-b89d-292ac2d2b478",
+      "name" : "asta",
+      "description" : "Adds an \"asta\" role to the JWT to identify users/clients permitted to access material owned by Asta",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
       "id" : "16cce57d-d95b-4c53-b6a7-ac8d547cfc14",
       "name" : "default-roles-mlt-realm",
       "description" : "${role_default-roles}",
@@ -112,6 +120,7 @@
     } ],
     "client" : {
       "axiell" : [ ],
+      "asta" : [ ],
       "realm-management" : [ {
         "id" : "a30a6c80-c585-45fe-af9b-c1009aaa25d4",
         "name" : "manage-clients",
@@ -412,6 +421,20 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
+    "id" : "7d249c92-9621-4234-971a-c62e13c2cf17",
+    "username" : "service-account-asta",
+    "emailVerified" : false,
+    "createdTimestamp" : 1736247270688,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "asta",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "order", "item", "asta" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "a4cca17a-2b24-45fe-b4d5-bb03dc4ebbb2",
     "username" : "service-account-axiell",
     "emailVerified" : false,
@@ -547,6 +570,91 @@
     "nodeReRegistrationTimeout" : 0,
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+  }, {
+    "id" : "ce36887b-4097-445b-9ec0-6aac85a3038b",
+    "clientId" : "asta",
+    "name" : "Asta (Local Client)",
+    "description" : "A local development version of the client for Asta to use in communication with Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "HktStCCm3rVZmCXtkbZ0dYERGp8ClcMf",
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : false,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1736247290",
+      "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "+",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "db26ab2f-810c-4754-97fc-d31aaa9fb8de",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "73b05a1e-5783-4bab-b57b-0b10593baa1f",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "72c3d4be-f570-4393-bb87-41ce60809e30",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   }, {
     "id" : "902b430d-e2c9-4888-b94e-a410bceb26bc",
     "clientId" : "axiell",
@@ -863,9 +971,13 @@
       "protocolMapper" : "oidc-usermodel-realm-role-mapper",
       "consentRequired" : false,
       "config" : {
+        "usermodel.realmRoleMapping.rolePrefix" : "ROLE_",
         "introspection.token.claim" : "true",
         "multivalued" : "true",
+        "userinfo.token.claim" : "true",
         "user.attribute" : "foo",
+        "id.token.claim" : "false",
+        "lightweight.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "realm_access.roles",
         "jsonType.label" : "String"
@@ -1449,7 +1561,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1458,7 +1570,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
@@ -1470,6 +1582,17 @@
         "kid" : [ "ba9605e4-9e0d-4bc4-8cbe-d4e29025dfbe" ],
         "secret" : [ "FmC3a8Ya5mgrkPxvqcZIwQ" ],
         "priority" : [ "100" ]
+      }
+    }, {
+      "id" : "34a8ad1d-30be-4a24-9cdd-1387c2d33f76",
+      "name" : "fallback-ES256",
+      "providerId" : "ecdsa-generated",
+      "subComponents" : { },
+      "config" : {
+        "ecdsaPublicKey" : [ "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhwKy6LvUFu2k2+IPtngz85OHuis9R59xwJFCasccjNTlxr9ISSUo71+4uX7myyc2Z/r4WkrUFTwLyMAciyF7MQ==" ],
+        "ecdsaEllipticCurveKey" : [ "P-256" ],
+        "ecdsaPrivateKey" : [ "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAkNhuOkeFmuzt0N7lLcyGOpgCgaszfQ0rYfFx9tWG9+g==" ],
+        "priority" : [ "-100" ]
       }
     }, {
       "id" : "1e470434-d55a-4686-b6cb-0352f63e5c90",
@@ -1504,6 +1627,17 @@
         "certificate" : [ "MIICoTCCAYkCBgGQWXS+qzANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAltbHQtcmVhbG0wHhcNMjQwNjI3MTEyNzIxWhcNMzQwNjI3MTEyOTAxWjAUMRIwEAYDVQQDDAltbHQtcmVhbG0wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCLXY6q/mLRgLyllbJ0Cq43nHc6AJMBc6yjCw3D/PMcs9YfnjLwhhqEAcBGSYUdVKML8owaFtyzH7+f3Ss61Y0/VF9af/jyUwSLUgiw+w+zKeJU2197tmSkbMoKqVPuORSkAEc51Cr56PRBgH7CyVoBoDmatS+E1oqXU9BB+sJzS2LcgS7D6l9xGboGu5mKhvzdAAL9/RTu7wxLNZvZ1hISqoPdHG95JQ/ZYhgaPK1LE8zAvSazcLvW6bm8yjMYnVyZDwnHcHWCMSMx6um4uLOGOys6amp8ngov0bG/Bdo4wOdPAJ8TMZtonHkDO2J9DWc0b7GexJtG2mr0tqDQk+D7AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAGFl7XQCuNjy4Dw26fhNzC1SAe7UN67arynBtz++/lUH9vuq5sKNCRe86s4MRDUeSuLI63Nj/x5sz7LfJUpLBhwZOtCxIBzZdCdT7PqqmwlvvTBcWwYfoHSMTK866+r1XsVWnrSLkOdAtX2JDQzX+njOsrhiSpsxWScQSeblomt6QpDfbq+VPDyIYgty0FDJQb6AyZcHTON4z3lHptin3pNskm47poEcBnJLi8Kc7geJIZaGu8emT5ZV9+3guz53VTFYzRscPcJ9y5w9dpluJC6/QmLyI8pYHogzLrMD76NoRNZKiPuR0sRIyvWwQ2tYWoq0buiOOvpzdzLRA6HJ3as=" ],
         "priority" : [ "100" ],
         "algorithm" : [ "RSA-OAEP" ]
+      }
+    }, {
+      "id" : "f8120ae2-3e6e-48c9-8fdc-cf309574a4f4",
+      "name" : "fallback-RS512",
+      "providerId" : "rsa-generated",
+      "subComponents" : { },
+      "config" : {
+        "privateKey" : [ "MIIEowIBAAKCAQEAnafSt8rAjVj/EMFvYQwFBu6bOBUADyxEDf55t/yrGvOf56sFr84yUOB+VQm0uPeHjB//NijOXILbOUBUg23YS9CwN1QpEoaGENVnJFU5BohTv6ETgP5FVRMAHCE6c4CoS2WHssspnvSkRTtIrq5v4iQd+ShXUArfhFuwmrnBhlnPeHnNmpiK/PsoLpqxt+v/rWRLVeTr+QGYJebON11rwsFaoNyFo5Na5u/Izzv0mhofzeCJvZp0CjLTEqCV8Q5Nj3Jw0Hl/w/WmuyGzxjncm3IICJ/abyGnS3ya41ipsVYlln6uY+NEJvkWwzre6zOAzlM36WdNVDoE2uYUkrYufwIDAQABAoIBABftEkOmV5ab/Qmz8Y1O36xvpcrbFQk4dJOTHTHY/La4ZnooMFK//k7b4xBQysaPeli/umGjy72qdk63/pt7ninTYArlkN4o4EvJtz+CV4cwRVV9wpH/BNKmcYvTVyWUTvYyUGfIAWcIRa3kE2G/Q2eUh5/6iVWycL2LlL/GlSIoXiEEEquktmqFm5blmAv8bv7IhZ+MFehiMvVGQ5sDnooAhfvKL6N40q20F0IaEkfMX1JdRs/32/xwuCTv4i1Ye6LR2b0o/J6WYQZrrZ+DOL3DU6w0+DPJMsMnqmYQHvkfwjljYF76JMNztNb8sotWJkYKd/QoppwRRLYu92ra2iECgYEAzL5VPLLbDisv6jMgvAFggml2QphDHkoiE9ju2DjvE/wZML4ExhigiI6jkVrjs3H0ET8OllfyNitmMpTwjgZQEt13qLieneyyIVedanmYeb9rfaQV2pZXfWl7wA2J38pEvNQJKHuqCmDr8S3ickNO145pKE0++mvPvk1SebE5P3kCgYEAxR+0JW0v3sAVulcTphZib6TS5RCSELICsXXctNdhErPJ4c8SI5LC5EwT3/0JOdmt7g5rK6Fn5TevAxSEc64i8kieDi4gVOe2BJ8pYAWe23JxRNukgAHvoB5gQUiJ75qat7+wheXkzvec0HjxBGl76dmBaAhzncozYUjCQRuZh7cCgYBF6fybRIvu06qB88GK0YGOJsseRHYu4quuUVaF+TMShPRpI4nnx0MSPnr2SK4WeaQZO4oUpqVr//fe7+MQ7HDtcDjLIXfwf4H4Rr3XPPxnHolrFtvrj4kCp0F9vGHHTH+aZ2FVNJ1E/AG1krCPyhIjI1sfSvllc+k1l5vBOFZPKQKBgHfxa4beYiNSk6X3d/A2bJzsGJris03PUs4yHiI3b0yW8v8gJTRaB5YsKGfBKoz1w9w3D8TTiEkz0Zy5LkLJMWBlCS8tp+ShvOIhCmbv5JI4l21DjFuLUggGk6EFh1CwrPWjgMBoewnoJpW/EUATAx/uhcwMYHUhZJQMVo6RQaEPAoGBAMXoZ0P8KVNq3J639ek21q3OPefefoLDRvd9ah4bgABcL84KBVI9zGJGYAdjCP/cvk766lXqN4/aNlyuE8uzETXG0QaTiwVitELTWRoP79JO+pWzdC3hzQKIOtv2axRJK+gZtqRx7URtQDYfjhgsPxSHL+v/Fg7fNpk0PI6KUyKa" ],
+        "certificate" : [ "MIICoTCCAYkCBgGUQGwvaTANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAltbHQtbG9jYWwwHhcNMjUwMTA3MTA1ODM5WhcNMzUwMTA3MTEwMDE5WjAUMRIwEAYDVQQDDAltbHQtbG9jYWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCdp9K3ysCNWP8QwW9hDAUG7ps4FQAPLEQN/nm3/Ksa85/nqwWvzjJQ4H5VCbS494eMH/82KM5cgts5QFSDbdhL0LA3VCkShoYQ1WckVTkGiFO/oROA/kVVEwAcITpzgKhLZYeyyyme9KRFO0iurm/iJB35KFdQCt+EW7CaucGGWc94ec2amIr8+ygumrG36/+tZEtV5Ov5AZgl5s43XWvCwVqg3IWjk1rm78jPO/SaGh/N4Im9mnQKMtMSoJXxDk2PcnDQeX/D9aa7IbPGOdybcggIn9pvIadLfJrjWKmxViWWfq5j40Qm+RbDOt7rM4DOUzfpZ01UOgTa5hSSti5/AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAImrDWQvgfBDdrCvMaHa6n464pOYAm/SYvweVUSeHRjzRu0vOgfY4HJK2rYFSFX+3AXntNszlLSGGxDeZWjV+wizVVslblUvpA7RatGhSpwpHV5gFpxOWcR3dsk5Vf+WdYtFBMDntcLNM+t2w6nHFahT/ySf8xNSdns3f6wHowhPEu5L6zEJeYufgjy9TFqBeYYOdSJFPGBWe7vgIwkSS6Fja+rjXm1rq4jJG2EO3BqcsZT0kEgRvYNNcAtRZPjzQ6/UcaoMFi65pTSp+HDZKehjm5zOAmBmVPxvEsOR6TvuyoJUHkvdJ29V3mJMe3ED89APpJp+ywJgMq3YgWiAM4=" ],
+        "priority" : [ "-100" ],
+        "algorithm" : [ "RS512" ]
       }
     } ]
   },
