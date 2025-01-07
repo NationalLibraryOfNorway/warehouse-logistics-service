@@ -20,7 +20,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -158,11 +157,6 @@ class ItemControllerTest(
     }
 
     @Test
-    @EnabledIfSystemProperty(
-        named = "spring.profiles.active",
-        matches = "local-dev",
-        disabledReason = "Only local-dev has properly configured keycloak & JWT"
-    )
     fun `updateOrder with unauthorized user returns 403`() {
         webTestClient
             .mutateWith(csrf())
