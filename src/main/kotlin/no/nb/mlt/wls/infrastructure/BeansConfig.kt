@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure
 import no.nb.mlt.wls.domain.WLSService
 import no.nb.mlt.wls.infrastructure.callbacks.InventoryNotifierAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemRepositoryMongoAdapter
+import no.nb.mlt.wls.infrastructure.repositories.mail.MongoEmailRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.springframework.context.annotation.Bean
@@ -17,6 +18,7 @@ class BeansConfig {
         itemMongoAdapter: ItemRepositoryMongoAdapter,
         orderMongoAdapter: MongoOrderRepositoryAdapter,
         callbackHandler: InventoryNotifierAdapter,
+        emailAdapter: MongoEmailRepositoryAdapter,
         mailSender: JavaMailSender
-    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, mailSender)
+    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, emailAdapter, mailSender)
 }

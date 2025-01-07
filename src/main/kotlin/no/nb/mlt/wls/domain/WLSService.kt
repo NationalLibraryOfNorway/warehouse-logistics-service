@@ -27,6 +27,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
@@ -44,7 +45,8 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
-    private val mailSender: JavaMailSender
+    private val emailRepository: EmailRepository,
+    private val emailSender: JavaMailSender
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
@@ -144,7 +146,7 @@ class WLSService(
         val email = createEmail(order)
         if (email != null) {
             try {
-                mailSender.send(email)
+                emailSender.send(email)
                 logger.info {
                     "Email sent to ${email.allRecipients.first()}"
                 }
@@ -247,7 +249,7 @@ class WLSService(
     private fun createEmail(order: Order): MimeMessage? {
         order.note ?: return null
 
-        val mimeMessage = mailSender.createMimeMessage()
+        val mimeMessage = emailSender.createMimeMessage()
 
         val msg =
             """
