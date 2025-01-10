@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.config
 
+import no.nb.mlt.wls.application.hostapi.config.SecurityConfig.RealmAccessToAuthoritiesConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -33,11 +34,11 @@ class SecurityConfig {
                 authorize("/synq/swagger", permitAll)
                 authorize("/synq/swagger/**", permitAll)
                 authorize("/synq/webjars/swagger-ui/**", permitAll)
-                authorize("/synq/v1/**", hasAuthority("SCOPE_wls-synq"))
+                authorize("/synq/v1/**", hasRole("synq"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
-                jwt { }
+                jwt { jwtAuthenticationConverter = RealmAccessToAuthoritiesConverter() }
             }
         }
     }

@@ -4,7 +4,7 @@
   "displayName" : "Magasin og Logistikk (local development realm)",
   "displayNameHtml" : "magasin-og-logistikk-local",
   "notBefore" : 0,
-  "defaultSignatureAlgorithm" : "RS256",
+  "defaultSignatureAlgorithm" : "ES256",
   "revokeRefreshToken" : false,
   "refreshTokenMaxReuse" : 0,
   "accessTokenLifespan" : 28800,
@@ -56,6 +56,30 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
+      "id" : "a4e99e98-ede2-4cb6-8ec8-344f584443ac",
+      "name" : "order",
+      "description" : "Adds an \"order\" role to the JWT to identify users/clients permitted to access order endpoints",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
+      "id" : "d8878f75-5609-4ad3-8ff7-7a179e7ee6bf",
+      "name" : "item",
+      "description" : "Adds an \"item\" role to the JWT to identify users/clients permitted to access item endpoints",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
+      "id" : "da78bee7-7416-4a4b-b89d-292ac2d2b478",
+      "name" : "asta",
+      "description" : "Adds an \"asta\" role to the JWT to identify users/clients permitted to access material owned by Asta",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
       "id" : "16cce57d-d95b-4c53-b6a7-ac8d547cfc14",
       "name" : "default-roles-mlt-realm",
       "description" : "${role_default-roles}",
@@ -77,9 +101,26 @@
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
+    }, {
+      "id" : "419e5118-d269-464f-9193-248b34a2d873",
+      "name" : "synq",
+      "description" : "Adds a \"synq\" role to the JWT to identify users/clients permitted to access SynQ endpoints",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
+      "id" : "cf49fdba-4f23-4306-bea7-f3e132e803af",
+      "name" : "axiell",
+      "description" : "Adds an \"axiell\" role to the JWT to identify users/clients permitted to access material owned by Axiell",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
     } ],
     "client" : {
       "axiell" : [ ],
+      "asta" : [ ],
       "realm-management" : [ {
         "id" : "a30a6c80-c585-45fe-af9b-c1009aaa25d4",
         "name" : "manage-clients",
@@ -335,8 +376,7 @@
         "containerId" : "16862c54-915f-451c-bae6-41ea604d20eb",
         "attributes" : { }
       } ],
-      "synq" : [ ],
-      "wls" : [ ]
+      "synq" : [ ]
     }
   },
   "groups" : [ ],
@@ -381,6 +421,20 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
+    "id" : "7d249c92-9621-4234-971a-c62e13c2cf17",
+    "username" : "service-account-asta",
+    "emailVerified" : false,
+    "createdTimestamp" : 1736247270688,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "asta",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "order", "item", "asta" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "a4cca17a-2b24-45fe-b4d5-bb03dc4ebbb2",
     "username" : "service-account-axiell",
     "emailVerified" : false,
@@ -391,7 +445,7 @@
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-mlt-realm" ],
+    "realmRoles" : [ "order", "item", "axiell" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -405,21 +459,7 @@
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-mlt-realm" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "410e463f-84ed-4d1b-a8a4-3ddef6fc057d",
-    "username" : "service-account-wls",
-    "emailVerified" : false,
-    "createdTimestamp" : 1719488186956,
-    "enabled" : true,
-    "totp" : false,
-    "serviceAccountClientId" : "wls",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-mlt-realm" ],
+    "realmRoles" : [ "synq" ],
     "notBefore" : 0,
     "groups" : [ ]
   } ],
@@ -531,6 +571,91 @@
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
+    "id" : "ce36887b-4097-445b-9ec0-6aac85a3038b",
+    "clientId" : "asta",
+    "name" : "Asta (Local Client)",
+    "description" : "A local development version of the client for Asta to use in communication with Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "HktStCCm3rVZmCXtkbZ0dYERGp8ClcMf",
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : false,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1736247290",
+      "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "+",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "db26ab2f-810c-4754-97fc-d31aaa9fb8de",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "73b05a1e-5783-4bab-b57b-0b10593baa1f",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "72c3d4be-f570-4393-bb87-41ce60809e30",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
+  }, {
     "id" : "902b430d-e2c9-4888-b94e-a410bceb26bc",
     "clientId" : "axiell",
     "name" : "Axiell (Local Client)",
@@ -613,8 +738,8 @@
         "jsonType.label" : "String"
       }
     } ],
-    "defaultClientScopes" : [ "wls-item", "wls-audience", "wls-order", "wls-subject" ],
-    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "roles", "profile", "offline_access", "microprofile-jwt", "email" ]
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   }, {
     "id" : "2ce493fb-c784-410d-b03d-53d489653ad7",
     "clientId" : "broker",
@@ -801,100 +926,8 @@
         "jsonType.label" : "String"
       }
     } ],
-    "defaultClientScopes" : [ "wls-synq", "wls-audience", "wls-subject" ],
-    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "roles", "profile", "offline_access", "microprofile-jwt", "email" ]
-  }, {
-    "id" : "e84865db-9f5c-4213-b9c9-23c911520899",
-    "clientId" : "wls",
-    "name" : "Hermes WLS (Local client)",
-    "description" : "A local development version of the testing/development client for the Hermes WLS ",
-    "rootUrl" : "",
-    "adminUrl" : "",
-    "baseUrl" : "",
-    "surrogateAuthRequired" : false,
-    "enabled" : true,
-    "alwaysDisplayInConsole" : false,
-    "clientAuthenticatorType" : "client-secret",
-    "secret" : "fK15wNYM1OJORskA71EC40aDVoapkTWj",
-    "redirectUris" : [ "*" ],
-    "webOrigins" : [ "*" ],
-    "notBefore" : 0,
-    "bearerOnly" : false,
-    "consentRequired" : false,
-    "standardFlowEnabled" : false,
-    "implicitFlowEnabled" : false,
-    "directAccessGrantsEnabled" : false,
-    "serviceAccountsEnabled" : true,
-    "publicClient" : false,
-    "frontchannelLogout" : false,
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "client.secret.creation.time" : "1719488186",
-      "post.logout.redirect.uris" : "+",
-      "oauth2.device.authorization.grant.enabled" : "false",
-      "backchannel.logout.revoke.offline.tokens" : "false",
-      "use.refresh.tokens" : "true",
-      "oidc.ciba.grant.enabled" : "false",
-      "client.use.lightweight.access.token.enabled" : "false",
-      "backchannel.logout.session.required" : "false",
-      "client_credentials.use_refresh_token" : "false",
-      "tls.client.certificate.bound.access.tokens" : "false",
-      "require.pushed.authorization.requests" : "false",
-      "acr.loa.map" : "{}",
-      "display.on.consent.screen" : "false",
-      "token.response.type.bearer.lower-case" : "false"
-    },
-    "authenticationFlowBindingOverrides" : { },
-    "fullScopeAllowed" : true,
-    "nodeReRegistrationTimeout" : -1,
-    "protocolMappers" : [ {
-      "id" : "c9372339-b340-4e41-9c25-1b400d66b4b1",
-      "name" : "Client ID",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "client_id",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "client_id",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "3a0ab462-8ce2-4d2e-90d7-4328b280d65b",
-      "name" : "Client Host",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "clientHost",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "clientHost",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "64974a80-6717-4e89-b925-2d2ee711c577",
-      "name" : "Client IP Address",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "clientAddress",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "clientAddress",
-        "jsonType.label" : "String"
-      }
-    } ],
-    "defaultClientScopes" : [ "wls-synq", "wls-item", "wls-audience", "wls-order", "wls-subject" ],
-    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "roles", "profile", "offline_access", "microprofile-jwt", "email" ]
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   } ],
   "clientScopes" : [ {
     "id" : "f72419b3-e002-4619-99a3-46501fd7977a",
@@ -938,9 +971,13 @@
       "protocolMapper" : "oidc-usermodel-realm-role-mapper",
       "consentRequired" : false,
       "config" : {
+        "usermodel.realmRoleMapping.rolePrefix" : "ROLE_",
         "introspection.token.claim" : "true",
         "multivalued" : "true",
+        "userinfo.token.claim" : "true",
         "user.attribute" : "foo",
+        "id.token.claim" : "false",
+        "lightweight.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "realm_access.roles",
         "jsonType.label" : "String"
@@ -966,84 +1003,6 @@
         "introspection.token.claim" : "true",
         "access.token.claim" : "true",
         "userinfo.token.claim" : "true"
-      }
-    } ]
-  }, {
-    "id" : "e77adead-5964-4400-9368-3b1520d57bdd",
-    "name" : "wls-item",
-    "description" : "A client scope used to add a \"item\" scope to the JWT scope field",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "true",
-      "display.on.consent.screen" : "false",
-      "gui.order" : "",
-      "consent.screen.text" : ""
-    }
-  }, {
-    "id" : "e817c5f7-f0e9-4738-b9d6-09f6918a9a5f",
-    "name" : "phone",
-    "description" : "OpenID Connect built-in scope: phone",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "true",
-      "display.on.consent.screen" : "true",
-      "consent.screen.text" : "${phoneScopeConsentText}"
-    },
-    "protocolMappers" : [ {
-      "id" : "3e208bfc-3d22-45d1-8636-e5cf546eefb0",
-      "name" : "phone number verified",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "phoneNumberVerified",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "phone_number_verified",
-        "jsonType.label" : "boolean"
-      }
-    }, {
-      "id" : "fa821941-3117-4df5-885d-be22fddafd29",
-      "name" : "phone number",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usermodel-attribute-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "user.attribute" : "phoneNumber",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "phone_number",
-        "jsonType.label" : "String"
-      }
-    } ]
-  }, {
-    "id" : "52ecb084-2b29-49f5-88f4-6616ce51a233",
-    "name" : "wls-audience",
-    "description" : "A client scope used to add WLS to the JWT aud field",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "false",
-      "display.on.consent.screen" : "false",
-      "gui.order" : "",
-      "consent.screen.text" : ""
-    },
-    "protocolMappers" : [ {
-      "id" : "c4f832f1-6756-4634-a698-a59efe51d6f4",
-      "name" : "WLS Client Audience Mapper",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-audience-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "introspection.token.claim" : "true",
-        "included.custom.audience" : "http://localhost:8080",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "lightweight.claim" : "true",
-        "access.token.claim" : "true"
       }
     } ]
   }, {
@@ -1286,17 +1245,6 @@
       }
     } ]
   }, {
-    "id" : "43e7474f-a3fe-4d44-a0e1-48518c8330f1",
-    "name" : "wls-synq",
-    "description" : "A client scope used to add a \"synq\" scope to the JWT scope field",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "true",
-      "display.on.consent.screen" : "false",
-      "gui.order" : "",
-      "consent.screen.text" : ""
-    }
-  }, {
     "id" : "ebcb7370-bd5a-486c-97a8-5147b17a9494",
     "name" : "microprofile-jwt",
     "description" : "Microprofile - JWT built-in scope",
@@ -1359,6 +1307,47 @@
       }
     } ]
   }, {
+    "id" : "e817c5f7-f0e9-4738-b9d6-09f6918a9a5f",
+    "name" : "phone",
+    "description" : "OpenID Connect built-in scope: phone",
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "include.in.token.scope" : "true",
+      "display.on.consent.screen" : "true",
+      "consent.screen.text" : "${phoneScopeConsentText}"
+    },
+    "protocolMappers" : [ {
+      "id" : "3e208bfc-3d22-45d1-8636-e5cf546eefb0",
+      "name" : "phone number verified",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "phoneNumberVerified",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "phone_number_verified",
+        "jsonType.label" : "boolean"
+      }
+    }, {
+      "id" : "fa821941-3117-4df5-885d-be22fddafd29",
+      "name" : "phone number",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "user.attribute" : "phoneNumber",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "phone_number",
+        "jsonType.label" : "String"
+      }
+    } ]
+  }, {
     "id" : "75535813-0f25-4e72-8b2f-47b12fbc5188",
     "name" : "address",
     "description" : "OpenID Connect built-in scope: address",
@@ -1385,6 +1374,32 @@
         "user.attribute.region" : "region",
         "access.token.claim" : "true",
         "user.attribute.locality" : "locality"
+      }
+    } ]
+  }, {
+    "id" : "52ecb084-2b29-49f5-88f4-6616ce51a233",
+    "name" : "wls-audience",
+    "description" : "Adds WLS to the audience (aud) array in JWT, in order to identify WLS as intended recipient of the token",
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "include.in.token.scope" : "false",
+      "display.on.consent.screen" : "false",
+      "gui.order" : "",
+      "consent.screen.text" : ""
+    },
+    "protocolMappers" : [ {
+      "id" : "c4f832f1-6756-4634-a698-a59efe51d6f4",
+      "name" : "WLS Client Audience Mapper",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-audience-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "included.custom.audience" : "http://localhost:8080",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "lightweight.claim" : "true",
+        "access.token.claim" : "true"
       }
     } ]
   }, {
@@ -1429,20 +1444,9 @@
       }
     } ]
   }, {
-    "id" : "2f9f07c6-b866-402b-8f18-3f7baf021f12",
-    "name" : "wls-order",
-    "description" : "A client scope used to add an \"order\" scope to the JWT scope field",
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "include.in.token.scope" : "true",
-      "display.on.consent.screen" : "false",
-      "gui.order" : "",
-      "consent.screen.text" : ""
-    }
-  }, {
     "id" : "927a7df6-f078-4836-b850-51694f2692f2",
     "name" : "wls-subject",
-    "description" : "A client scope used to set the Client ID in the JWT sub field",
+    "description" : "Adds client ID to the subject (sub) field in JWT, in order to identify the client as subject of the token",
     "protocol" : "openid-connect",
     "attributes" : {
       "include.in.token.scope" : "false",
@@ -1478,7 +1482,7 @@
       "display.on.consent.screen" : "true"
     }
   } ],
-  "defaultDefaultClientScopes" : [ "wls-audience", "wls-order", "wls-subject", "wls-item", "wls-synq" ],
+  "defaultDefaultClientScopes" : [ "wls-audience", "wls-subject" ],
   "defaultOptionalClientScopes" : [ "offline_access", "address", "phone", "microprofile-jwt", "email", "profile", "acr", "role_list", "roles", "web-origins" ],
   "browserSecurityHeaders" : {
     "contentSecurityPolicyReportOnly" : "",
@@ -1557,7 +1561,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-address-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1566,7 +1570,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
@@ -1578,6 +1582,17 @@
         "kid" : [ "ba9605e4-9e0d-4bc4-8cbe-d4e29025dfbe" ],
         "secret" : [ "FmC3a8Ya5mgrkPxvqcZIwQ" ],
         "priority" : [ "100" ]
+      }
+    }, {
+      "id" : "34a8ad1d-30be-4a24-9cdd-1387c2d33f76",
+      "name" : "fallback-ES256",
+      "providerId" : "ecdsa-generated",
+      "subComponents" : { },
+      "config" : {
+        "ecdsaPublicKey" : [ "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEhwKy6LvUFu2k2+IPtngz85OHuis9R59xwJFCasccjNTlxr9ISSUo71+4uX7myyc2Z/r4WkrUFTwLyMAciyF7MQ==" ],
+        "ecdsaEllipticCurveKey" : [ "P-256" ],
+        "ecdsaPrivateKey" : [ "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAkNhuOkeFmuzt0N7lLcyGOpgCgaszfQ0rYfFx9tWG9+g==" ],
+        "priority" : [ "-100" ]
       }
     }, {
       "id" : "1e470434-d55a-4686-b6cb-0352f63e5c90",
@@ -1612,6 +1627,17 @@
         "certificate" : [ "MIICoTCCAYkCBgGQWXS+qzANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAltbHQtcmVhbG0wHhcNMjQwNjI3MTEyNzIxWhcNMzQwNjI3MTEyOTAxWjAUMRIwEAYDVQQDDAltbHQtcmVhbG0wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCLXY6q/mLRgLyllbJ0Cq43nHc6AJMBc6yjCw3D/PMcs9YfnjLwhhqEAcBGSYUdVKML8owaFtyzH7+f3Ss61Y0/VF9af/jyUwSLUgiw+w+zKeJU2197tmSkbMoKqVPuORSkAEc51Cr56PRBgH7CyVoBoDmatS+E1oqXU9BB+sJzS2LcgS7D6l9xGboGu5mKhvzdAAL9/RTu7wxLNZvZ1hISqoPdHG95JQ/ZYhgaPK1LE8zAvSazcLvW6bm8yjMYnVyZDwnHcHWCMSMx6um4uLOGOys6amp8ngov0bG/Bdo4wOdPAJ8TMZtonHkDO2J9DWc0b7GexJtG2mr0tqDQk+D7AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAGFl7XQCuNjy4Dw26fhNzC1SAe7UN67arynBtz++/lUH9vuq5sKNCRe86s4MRDUeSuLI63Nj/x5sz7LfJUpLBhwZOtCxIBzZdCdT7PqqmwlvvTBcWwYfoHSMTK866+r1XsVWnrSLkOdAtX2JDQzX+njOsrhiSpsxWScQSeblomt6QpDfbq+VPDyIYgty0FDJQb6AyZcHTON4z3lHptin3pNskm47poEcBnJLi8Kc7geJIZaGu8emT5ZV9+3guz53VTFYzRscPcJ9y5w9dpluJC6/QmLyI8pYHogzLrMD76NoRNZKiPuR0sRIyvWwQ2tYWoq0buiOOvpzdzLRA6HJ3as=" ],
         "priority" : [ "100" ],
         "algorithm" : [ "RSA-OAEP" ]
+      }
+    }, {
+      "id" : "f8120ae2-3e6e-48c9-8fdc-cf309574a4f4",
+      "name" : "fallback-RS512",
+      "providerId" : "rsa-generated",
+      "subComponents" : { },
+      "config" : {
+        "privateKey" : [ "MIIEowIBAAKCAQEAnafSt8rAjVj/EMFvYQwFBu6bOBUADyxEDf55t/yrGvOf56sFr84yUOB+VQm0uPeHjB//NijOXILbOUBUg23YS9CwN1QpEoaGENVnJFU5BohTv6ETgP5FVRMAHCE6c4CoS2WHssspnvSkRTtIrq5v4iQd+ShXUArfhFuwmrnBhlnPeHnNmpiK/PsoLpqxt+v/rWRLVeTr+QGYJebON11rwsFaoNyFo5Na5u/Izzv0mhofzeCJvZp0CjLTEqCV8Q5Nj3Jw0Hl/w/WmuyGzxjncm3IICJ/abyGnS3ya41ipsVYlln6uY+NEJvkWwzre6zOAzlM36WdNVDoE2uYUkrYufwIDAQABAoIBABftEkOmV5ab/Qmz8Y1O36xvpcrbFQk4dJOTHTHY/La4ZnooMFK//k7b4xBQysaPeli/umGjy72qdk63/pt7ninTYArlkN4o4EvJtz+CV4cwRVV9wpH/BNKmcYvTVyWUTvYyUGfIAWcIRa3kE2G/Q2eUh5/6iVWycL2LlL/GlSIoXiEEEquktmqFm5blmAv8bv7IhZ+MFehiMvVGQ5sDnooAhfvKL6N40q20F0IaEkfMX1JdRs/32/xwuCTv4i1Ye6LR2b0o/J6WYQZrrZ+DOL3DU6w0+DPJMsMnqmYQHvkfwjljYF76JMNztNb8sotWJkYKd/QoppwRRLYu92ra2iECgYEAzL5VPLLbDisv6jMgvAFggml2QphDHkoiE9ju2DjvE/wZML4ExhigiI6jkVrjs3H0ET8OllfyNitmMpTwjgZQEt13qLieneyyIVedanmYeb9rfaQV2pZXfWl7wA2J38pEvNQJKHuqCmDr8S3ickNO145pKE0++mvPvk1SebE5P3kCgYEAxR+0JW0v3sAVulcTphZib6TS5RCSELICsXXctNdhErPJ4c8SI5LC5EwT3/0JOdmt7g5rK6Fn5TevAxSEc64i8kieDi4gVOe2BJ8pYAWe23JxRNukgAHvoB5gQUiJ75qat7+wheXkzvec0HjxBGl76dmBaAhzncozYUjCQRuZh7cCgYBF6fybRIvu06qB88GK0YGOJsseRHYu4quuUVaF+TMShPRpI4nnx0MSPnr2SK4WeaQZO4oUpqVr//fe7+MQ7HDtcDjLIXfwf4H4Rr3XPPxnHolrFtvrj4kCp0F9vGHHTH+aZ2FVNJ1E/AG1krCPyhIjI1sfSvllc+k1l5vBOFZPKQKBgHfxa4beYiNSk6X3d/A2bJzsGJris03PUs4yHiI3b0yW8v8gJTRaB5YsKGfBKoz1w9w3D8TTiEkz0Zy5LkLJMWBlCS8tp+ShvOIhCmbv5JI4l21DjFuLUggGk6EFh1CwrPWjgMBoewnoJpW/EUATAx/uhcwMYHUhZJQMVo6RQaEPAoGBAMXoZ0P8KVNq3J639ek21q3OPefefoLDRvd9ah4bgABcL84KBVI9zGJGYAdjCP/cvk766lXqN4/aNlyuE8uzETXG0QaTiwVitELTWRoP79JO+pWzdC3hzQKIOtv2axRJK+gZtqRx7URtQDYfjhgsPxSHL+v/Fg7fNpk0PI6KUyKa" ],
+        "certificate" : [ "MIICoTCCAYkCBgGUQGwvaTANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDDAltbHQtbG9jYWwwHhcNMjUwMTA3MTA1ODM5WhcNMzUwMTA3MTEwMDE5WjAUMRIwEAYDVQQDDAltbHQtbG9jYWwwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCdp9K3ysCNWP8QwW9hDAUG7ps4FQAPLEQN/nm3/Ksa85/nqwWvzjJQ4H5VCbS494eMH/82KM5cgts5QFSDbdhL0LA3VCkShoYQ1WckVTkGiFO/oROA/kVVEwAcITpzgKhLZYeyyyme9KRFO0iurm/iJB35KFdQCt+EW7CaucGGWc94ec2amIr8+ygumrG36/+tZEtV5Ov5AZgl5s43XWvCwVqg3IWjk1rm78jPO/SaGh/N4Im9mnQKMtMSoJXxDk2PcnDQeX/D9aa7IbPGOdybcggIn9pvIadLfJrjWKmxViWWfq5j40Qm+RbDOt7rM4DOUzfpZ01UOgTa5hSSti5/AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAAImrDWQvgfBDdrCvMaHa6n464pOYAm/SYvweVUSeHRjzRu0vOgfY4HJK2rYFSFX+3AXntNszlLSGGxDeZWjV+wizVVslblUvpA7RatGhSpwpHV5gFpxOWcR3dsk5Vf+WdYtFBMDntcLNM+t2w6nHFahT/ySf8xNSdns3f6wHowhPEu5L6zEJeYufgjy9TFqBeYYOdSJFPGBWe7vgIwkSS6Fja+rjXm1rq4jJG2EO3BqcsZT0kEgRvYNNcAtRZPjzQ6/UcaoMFi65pTSp+HDZKehjm5zOAmBmVPxvEsOR6TvuyoJUHkvdJ29V3mJMe3ED89APpJp+ywJgMq3YgWiAM4=" ],
+        "priority" : [ "-100" ],
+        "algorithm" : [ "RS512" ]
       }
     } ]
   },

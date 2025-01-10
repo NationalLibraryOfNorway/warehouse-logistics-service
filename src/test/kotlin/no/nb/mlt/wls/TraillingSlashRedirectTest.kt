@@ -65,7 +65,9 @@ class TraillingSlashRedirectTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .mutateWith(
+                    mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_axiell"))
+                )
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(itemPayload)
