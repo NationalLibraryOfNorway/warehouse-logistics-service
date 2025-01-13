@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure
 
 import no.nb.mlt.wls.domain.WLSService
 import no.nb.mlt.wls.infrastructure.callbacks.InventoryNotifierAdapter
+import no.nb.mlt.wls.infrastructure.email.EmailAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemRepositoryMongoAdapter
 import no.nb.mlt.wls.infrastructure.repositories.mail.MongoEmailRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -18,7 +19,12 @@ class BeansConfig {
         itemMongoAdapter: ItemRepositoryMongoAdapter,
         orderMongoAdapter: MongoOrderRepositoryAdapter,
         callbackHandler: InventoryNotifierAdapter,
-        emailAdapter: MongoEmailRepositoryAdapter,
-        mailSender: JavaMailSender
-    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, emailAdapter, mailSender)
+        emailAdapter: EmailAdapter
+    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, emailAdapter)
+
+    @Bean
+    fun emailAdapter(
+        emailRepository: MongoEmailRepositoryAdapter,
+        emailSender: JavaMailSender
+    ) = EmailAdapter(emailRepository, emailSender)
 }

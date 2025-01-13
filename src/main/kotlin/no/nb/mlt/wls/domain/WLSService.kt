@@ -1,8 +1,6 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.mail.Message
-import jakarta.mail.internet.MimeMessage
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -27,14 +25,12 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
-import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
+import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import org.springframework.mail.MailException
-import org.springframework.mail.javamail.JavaMailSender
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 
@@ -45,8 +41,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
-    private val emailRepository: EmailRepository,
-    private val emailSender: JavaMailSender
+    private val emailAdapter: EmailNotifier
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
@@ -143,18 +138,7 @@ class WLSService(
 
         val order = orderRepository.createOrder(orderDTO.toOrder())
 
-        val email = createEmail(order)
-        if (email != null) {
-            try {
-                emailSender.send(email)
-                logger.info {
-                    "Email sent to ${email.allRecipients.first()}"
-                }
-            } catch (e: MailException) {
-                // TODO - Review. Should probably be explicitly logged?
-                e.printStackTrace()
-            }
-        }
+        emailAdapter.orderCreated(order)
         return order
     }
 
@@ -244,32 +228,5 @@ class WLSService(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
-    }
-
-    private fun createEmail(order: Order): MimeMessage? {
-        order.note ?: return null
-
-        val mimeMessage = emailSender.createMimeMessage()
-
-        val msg =
-            """
-        En ny bestilling har blitt mottatt fra ${order.hostName}
-        Ordrelinjer: ${order.orderLine.map { it.hostId }}
-        Type: ${order.orderType}
-
-        Bestiller: ${order.contactPerson}
-        Melding fra bestiller: ${order.note}
-
-        Referansenummer: ${order.hostOrderId}
-            """.trimMargin()
-
-        mimeMessage.setText(msg)
-        mimeMessage.setSubject("Test Bestilling fra WLS - ${order.hostOrderId}")
-        mimeMessage.setFrom("mlt@nb.no")
-        // TODO - Determine the right recipient in a good way
-        // TODO - Maybe via database?
-        mimeMessage.setRecipients(Message.RecipientType.TO, "noah.aanonli@nb.no")
-
-        return mimeMessage
     }
 }
