@@ -107,6 +107,24 @@ class OrderControllerTest(
                 .isNotNull
                 .extracting("callbackUrl", "status")
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
+        }
+
+    @Test
+    fun `createOrder with valid payload creates email`() {
+        // FIXME - Populate EmailRepository with a test email
+        runTest {
+            coEvery {
+                synqAdapterMock.createOrder(any())
+            } answers {}
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testOrderPayload)
+                .exchange()
+                .expectStatus().isCreated
 
             // TODO - Split this into its own test/check? Would then need flushing, as this test generates an e-mail
             val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
@@ -120,8 +138,11 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectBody()
-                .jsonPath("$.total").isEqualTo(1)
+                .jsonPath("$.total").value<Int> {
+                    if (it == 0) throw RuntimeException("No emails found", null)
+                }
         }
+    }
 
     @Test
     fun `createOrder with duplicate payload returns OK`() {
