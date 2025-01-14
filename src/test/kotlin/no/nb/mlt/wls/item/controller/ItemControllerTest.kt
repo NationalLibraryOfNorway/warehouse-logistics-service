@@ -54,7 +54,7 @@ class ItemControllerTest(
 
     private lateinit var webTestClient: WebTestClient
 
-    val client: String = HostName.AXIELL.name
+    val clientRole: String = "ROLE_${HostName.AXIELL.name.lowercase()}"
 
     @BeforeEach
     fun setUp() {
@@ -78,7 +78,7 @@ class ItemControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testItemPayload)
@@ -101,7 +101,7 @@ class ItemControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateItemPayload)
@@ -119,7 +119,7 @@ class ItemControllerTest(
     fun `createItem payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
@@ -138,7 +138,7 @@ class ItemControllerTest(
     fun `createItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload.copy(hostId = ""))
@@ -163,10 +163,10 @@ class ItemControllerTest(
         matches = "local-dev",
         disabledReason = "Only local-dev has properly configured keycloak & JWT"
     )
-    fun `updateOrder with unauthorized user returns 403`() {
+    fun `createItem with unauthorized user returns 403`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("other-client") }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
@@ -175,35 +175,13 @@ class ItemControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
             .expectStatus().isForbidden
     }
-
-    @Test
-    @EnabledIfSystemProperty(
-        named = "spring.profiles.active",
-        matches = "local-dev",
-        disabledReason = "Only local-dev has properly configured keycloak & JWT"
-    )
-    fun `updateOrder with wls user goes through`() =
-        runTest {
-            coEvery {
-                synqAdapterMock.createItem(any())
-            }.answers { }
-
-            webTestClient
-                .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject("wls") }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
-                .post()
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(testItemPayload)
-                .exchange()
-                .expectStatus().isCreated
-        }
 
     @Test
     fun `createItem handles SynQ error`() {
@@ -219,7 +197,7 @@ class ItemControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)

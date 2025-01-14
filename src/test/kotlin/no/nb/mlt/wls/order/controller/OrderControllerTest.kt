@@ -68,7 +68,7 @@ class OrderControllerTest(
 
     private lateinit var webTestClient: WebTestClient
 
-    val client: String = HostName.AXIELL.name
+    val clientRole: String = "ROLE_${HostName.AXIELL.name.lowercase()}"
 
     @BeforeEach
     fun setUp() {
@@ -92,7 +92,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
@@ -148,7 +148,7 @@ class OrderControllerTest(
     fun `createOrder with duplicate payload returns OK`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateOrderPayload)
@@ -166,7 +166,7 @@ class OrderControllerTest(
     fun `createOrder payload with different data but same ID returns DB entry`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
@@ -190,7 +190,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
@@ -203,7 +203,7 @@ class OrderControllerTest(
     fun `createOrder with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload.copy(hostOrderId = ""))
@@ -223,7 +223,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload)
@@ -235,7 +235,7 @@ class OrderControllerTest(
     fun `getOrder returns the order`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .get()
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .accept(MediaType.APPLICATION_JSON)
@@ -252,7 +252,7 @@ class OrderControllerTest(
     fun `getOrder when order doesn't exist returns 404`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .get()
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "not-an-id")
             .accept(MediaType.APPLICATION_JSON)
@@ -269,17 +269,19 @@ class OrderControllerTest(
     fun `getOrder for wrong client returns 403`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject("Alma") }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
             .get()
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
+            .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isForbidden
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .get()
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
+            .accept(MediaType.APPLICATION_JSON)
             .exchange()
             .expectStatus().isForbidden
     }
@@ -299,7 +301,7 @@ class OrderControllerTest(
 
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .put()
             .bodyValue(testPayload)
             .accept(MediaType.APPLICATION_JSON)
@@ -330,7 +332,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .put()
                 .bodyValue(testUpdatePayload)
                 .accept(MediaType.APPLICATION_JSON)
@@ -343,7 +345,7 @@ class OrderControllerTest(
     fun `updateOrder with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .put()
             .bodyValue(testOrderPayload.copy(hostOrderId = ""))
             .accept(MediaType.APPLICATION_JSON)
@@ -360,7 +362,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .put()
                 .bodyValue(testUpdatePayload)
                 .accept(MediaType.APPLICATION_JSON)
@@ -379,7 +381,7 @@ class OrderControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .put()
                 .bodyValue(testPayload)
                 .accept(MediaType.APPLICATION_JSON)
@@ -397,7 +399,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .delete()
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -423,7 +425,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .delete()
                 .uri("/{hostName}/{hostOrderId}", orderInProgress.hostName, orderInProgress.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -441,7 +443,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .delete()
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, " ")
                 .accept(MediaType.APPLICATION_JSON)
@@ -458,7 +460,7 @@ class OrderControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
                 .delete()
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "does-not-exist")
                 .accept(MediaType.APPLICATION_JSON)
@@ -478,7 +480,7 @@ class OrderControllerTest(
         )
         webTestClient
             .mutateWith(csrf())
-            .mutateWith(mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .delete()
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .exchange()

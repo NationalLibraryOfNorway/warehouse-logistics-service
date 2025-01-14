@@ -86,7 +86,7 @@ class SynqControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -125,7 +125,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-order")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -139,7 +139,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), " ")
                 .accept(MediaType.APPLICATION_JSON)
@@ -153,7 +153,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
@@ -167,7 +167,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), 404)
                 .accept(MediaType.APPLICATION_JSON)
@@ -185,7 +185,7 @@ class SynqControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
@@ -231,7 +231,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-item")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
@@ -245,7 +245,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
@@ -259,7 +259,7 @@ class SynqControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
@@ -269,7 +269,7 @@ class SynqControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
@@ -289,7 +289,7 @@ class SynqControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("SCOPE_wls-synq")))
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
