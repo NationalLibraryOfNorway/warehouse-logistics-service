@@ -45,7 +45,7 @@ class ItemRepositoryMongoAdapter(
         hostIds: List<String>,
         hostName: HostName
     ): List<Item> {
-        return mongoRepo.findAllByHostNameAndHostId(hostName, hostIds)
+        return mongoRepo.findAllByHostNameAndHostIdIn(hostName, hostIds)
             .collectList()
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
@@ -124,7 +124,7 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         location: String
     ): Mono<Long>
 
-    fun findAllByHostNameAndHostId(
+    fun findAllByHostNameAndHostIdIn(
         hostName: HostName,
         hostId: Collection<String>
     ): Flux<MongoItem>
