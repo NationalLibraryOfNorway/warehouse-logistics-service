@@ -138,7 +138,11 @@ class WLSService(
 
         val order = orderRepository.createOrder(orderDTO.toOrder())
 
-        emailAdapter.orderCreated(order)
+        // email handling
+        val items = order.orderLine.map { it.hostId }
+        val orderItems = getItems(items, order.hostName)
+        if (orderItems.isNotEmpty()) emailAdapter.orderCreated(order, orderItems)
+
         return order
     }
 

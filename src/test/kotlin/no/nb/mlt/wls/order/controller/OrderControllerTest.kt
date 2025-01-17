@@ -21,6 +21,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
@@ -29,7 +30,6 @@ import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
@@ -62,6 +62,7 @@ import reactor.core.publisher.Flux
 class OrderControllerTest(
     @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext,
+    @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository
 ) {
     @MockkBean
@@ -110,14 +111,13 @@ class OrderControllerTest(
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
 
-    @Disabled("work in progress, broken for now")
     @Test
     fun `createOrder with valid payload also creates email`() {
-        // FIXME - Populate EmailRepository with a test email
         runTest {
             coEvery {
                 synqAdapterMock.createOrder(any())
             } answers {}
+            emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
 
             webTestClient
                 .mutateWith(csrf())

@@ -202,8 +202,9 @@ class WLSServiceTest {
 
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
+        coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf() }
         coEvery { orderRepoMock.createOrder(any()) } answers { expectedOrder }
-        coEvery { emailAdapterMock.orderCreated(any()) } answers { }
+        coEvery { emailAdapterMock.orderCreated(any(), any()) } answers { }
         coJustRun { storageSystemRepoMock.createOrder(any()) }
 
         val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)

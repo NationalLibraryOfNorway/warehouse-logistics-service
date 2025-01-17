@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.repositories.mail
 
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import kotlinx.coroutines.reactive.awaitSingle
 import no.nb.mlt.wls.domain.model.HostEmail
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
@@ -14,6 +15,13 @@ import reactor.core.publisher.Mono
 class MongoEmailRepositoryAdapter(
     private val repository: MongoEmailRepository
 ) : EmailRepository {
+    override suspend fun createHostEmail(
+        hostName: HostName,
+        email: String
+    ) {
+        repository.save(HostEmail(hostName, email)).awaitSingle()
+    }
+
     override suspend fun getHostEmail(hostName: HostName): HostEmail? {
         return repository.findByHost(hostName).awaitFirstOrNull()
     }
