@@ -53,6 +53,8 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+mail:
+  storage: ""
 
 ---
 
@@ -88,6 +90,10 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+# Configures destination e-mails for receivers
+mail:
+  storage: ${EMAIL_STORAGE}
+
 ---
 
 # This is the configuration for the stage profile
@@ -122,6 +128,10 @@ synq:
   path:
     base: ${SYNQ_BASE_URL}
 
+# Configures destination e-mails for receivers
+mail:
+  storage: ${EMAIL_STORAGE}
+
 ---
 
 # This is the configuration for the prod profile
@@ -151,6 +161,10 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Configures destination e-mails for receivers
+mail:
+  storage: ${EMAIL_STORAGE}
 
 logging:
   level:
