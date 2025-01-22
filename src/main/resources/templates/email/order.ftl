@@ -29,7 +29,6 @@
     <div>
         En ny bestilling har blitt mottatt fra ${order.hostName}.
     </div>
-    <br>
     <div class="flexing">
         <div>
             Lån: ${order.hostOrderId}
@@ -39,15 +38,14 @@
         </div>
     </div>
     <div>
-        Type: ${order.orderType}<br>
+        Type: ${order.orderType}
     </div>
     <div>
-        Kontaktperson: ${order.contactPerson}<br>
+        Kontaktperson: ${order.contactPerson}
     </div>
     <div>
-        Melding fra bestiller: ${order.note}<br>
+        Melding fra bestiller: ${order.note}
     </div>
-    <br>
     <div>
         Er følgende felt viktige:
 
@@ -78,7 +76,6 @@
                         <div>
                             QR/STREKKODE HER
                         </div>
-                        <br>
                         ${orderItem.hostId}
                     </td>
                     <td>${orderItem.location}</td>

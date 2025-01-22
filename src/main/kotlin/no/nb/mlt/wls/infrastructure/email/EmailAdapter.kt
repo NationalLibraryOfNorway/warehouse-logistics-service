@@ -1,18 +1,23 @@
 package no.nb.mlt.wls.infrastructure.email
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.mail.Message
 import jakarta.mail.internet.MimeMessage
+import jakarta.mail.util.ByteArrayDataSource
 import no.nb.mlt.wls.domain.model.HostEmail
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
+import org.jsoup.Jsoup
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.MediaType.APPLICATION_PDF_VALUE
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
+import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
+import org.xhtmlrenderer.pdf.ITextRenderer
+import java.io.ByteArrayOutputStream
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,8 +33,7 @@ class EmailAdapter(
         order: Order,
         orderItems: List<Item>
     ) {
-        // TODO - Return guard here
-        val receiver = emailRepository.getHostEmail(order.hostName) ?: HostEmail(order.hostName, "noah.aanonli@nb.no")
+        val receiver = emailRepository.getHostEmail(order.hostName) ?: return
         try {
             sendOrderEmail(createOrderEmail(order, receiver))
             sendHostOrderEmail(createStorageOrderEmail(order, orderItems))
@@ -90,16 +94,17 @@ class EmailAdapter(
             }
 
         val mail = emailSender.createMimeMessage()
-
+        val helper = MimeMessageHelper(mail, false)
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
         val htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapOf("order" to order))
 
-        mail.setText(htmlBody, Charsets.UTF_8.name(), "html")
-        mail.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
-        mail.setFrom("noreply@nb.no")
+        // Email Metadata
+        helper.setText(htmlBody, true)
+        helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
+        helper.setFrom("noreply@nb.no")
+        helper.setTo(receiver.email)
 
-        mail.setRecipients(Message.RecipientType.TO, receiver.email)
-        return mail
+        return helper.mimeMessage
     }
 
     private fun createStorageOrderEmail(
@@ -113,6 +118,7 @@ class EmailAdapter(
             return null
         }
         val mail = emailSender.createMimeMessage()
+        val helper = MimeMessageHelper(mail, true)
         val type =
             when (order.orderType) {
                 Order.Type.LOAN -> "order.ftl"
@@ -125,10 +131,35 @@ class EmailAdapter(
             }
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
         val htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapOf("order" to order, "orderItems" to orderItems))
-        mail.setText(htmlBody, Charsets.UTF_8.name(), "html")
-        mail.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
-        mail.setFrom("noreply@nb.no")
-        mail.setRecipients(Message.RecipientType.TO, storageEmail)
-        return mail
+        helper.setText(htmlBody, true)
+        helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
+        helper.setFrom("noreply@nb.no")
+        helper.setTo(storageEmail)
+        attachPdf(helper, order, htmlBody)
+        return helper.mimeMessage
+    }
+
+    /**
+     * Parses a HTML-string into XHTML, converts it to PDF, and attaches it to the provided
+     * MimeMessageHelper
+     */
+    private fun attachPdf(
+        helper: MimeMessageHelper,
+        order: Order,
+        html: String
+    ) {
+        val xhtml = Jsoup.parse(html).html()
+        val renderer = ITextRenderer()
+        val sharedCtx = renderer.sharedContext
+        sharedCtx.isPrint = true
+        sharedCtx.isInteractive = false
+        renderer.setDocumentFromString(xhtml)
+        renderer.layout()
+        val outputStream = ByteArrayOutputStream()
+        renderer.createPDF(outputStream)
+        helper.addAttachment(
+            "wls-order-confirmation_${order.hostOrderId}.pdf",
+            ByteArrayDataSource(outputStream.toByteArray(), APPLICATION_PDF_VALUE)
+        )
     }
 }
