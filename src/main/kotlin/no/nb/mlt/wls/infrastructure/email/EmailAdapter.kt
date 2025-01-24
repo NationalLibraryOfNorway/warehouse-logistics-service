@@ -1,6 +1,9 @@
 package no.nb.mlt.wls.infrastructure.email
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.nayuki.qrcodegen.QrCode
+import jakarta.activation.DataHandler
+import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
 import jakarta.mail.util.ByteArrayDataSource
 import no.nb.mlt.wls.domain.model.HostEmail
@@ -11,13 +14,17 @@ import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import org.jsoup.Jsoup
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType.APPLICATION_PDF_VALUE
+import org.springframework.http.MediaType.IMAGE_PNG_VALUE
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
 import org.xhtmlrenderer.pdf.ITextRenderer
+import java.awt.image.BufferedImage
+import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 
 private val logger = KotlinLogging.logger {}
 
@@ -33,7 +40,7 @@ class EmailAdapter(
         order: Order,
         orderItems: List<Item>
     ) {
-        val receiver = emailRepository.getHostEmail(order.hostName) ?: return
+        val receiver = emailRepository.getHostEmail(order.hostName) ?: HostEmail(order.hostName, "noah.aanonli@nb.no")
         try {
             sendOrderEmail(createOrderEmail(order, receiver))
             sendHostOrderEmail(createStorageOrderEmail(order, orderItems))
@@ -81,18 +88,8 @@ class EmailAdapter(
     private fun createOrderEmail(
         order: Order,
         receiver: HostEmail
-    ): MimeMessage? {
-        val type =
-            when (order.orderType) {
-                Order.Type.LOAN -> "order-confirmation.ftl"
-                Order.Type.DIGITIZATION -> {
-                    logger.error {
-                        "WLS does not support sending emails for digitization"
-                    }
-                    return null
-                }
-            }
-
+    ): MimeMessage {
+        val type = "order-confirmation.ftl"
         val mail = emailSender.createMimeMessage()
         val helper = MimeMessageHelper(mail, false)
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
@@ -119,24 +116,43 @@ class EmailAdapter(
         }
         val mail = emailSender.createMimeMessage()
         val helper = MimeMessageHelper(mail, true)
-        val type =
-            when (order.orderType) {
-                Order.Type.LOAN -> "order.ftl"
-                Order.Type.DIGITIZATION -> {
-                    logger.error {
-                        "WLS does not support sending emails for digitization"
-                    }
-                    return null
-                }
-            }
+        val type = "order.ftl"
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
-        val htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapOf("order" to order, "orderItems" to orderItems))
+        val qrCodes = computeItemsWithQrCodes(orderItems)
+        addInlinedImage(toBufferedImage(QrCode.encodeText(order.hostOrderId, QrCode.Ecc.HIGH)), order.hostOrderId, helper)
+        val htmlBody =
+            FreeMarkerTemplateUtils.processTemplateIntoString(
+                template,
+                mapOf(
+                    "order" to order,
+                    "orderQrCode" to getQrHtmlString(order.hostOrderId),
+                    "orderItems" to qrCodes
+                )
+            )
         helper.setText(htmlBody, true)
         helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
         helper.setFrom("noreply@nb.no")
         helper.setTo(storageEmail)
-        attachPdf(helper, order, htmlBody)
+        for (qrCode in qrCodes) {
+            addInlinedImage(qrCode.image, qrCode.item.hostId, helper)
+        }
+        // attachPdf(helper, order, htmlBody)
         return helper.mimeMessage
+    }
+
+    private fun addInlinedImage(
+        image: BufferedImage,
+        cid: String,
+        helper: MimeMessageHelper
+    ) {
+        val imagePart = MimeBodyPart()
+        imagePart.disposition = MimeBodyPart.INLINE
+        imagePart.contentID = "qr-$cid"
+        val outputStream = ByteArrayOutputStream()
+        ImageIO.write(image, "png", outputStream)
+        val source = ByteArrayDataSource(outputStream.toByteArray(), IMAGE_PNG_VALUE)
+        imagePart.dataHandler = DataHandler(source)
+        helper.rootMimeMultipart.addBodyPart(imagePart)
     }
 
     /**
@@ -148,6 +164,7 @@ class EmailAdapter(
         order: Order,
         html: String
     ) {
+        // FIXME - Cannot convert XHTML image tags out of the box
         val xhtml = Jsoup.parse(html).html()
         val renderer = ITextRenderer()
         val sharedCtx = renderer.sharedContext
@@ -162,4 +179,51 @@ class EmailAdapter(
             ByteArrayDataSource(outputStream.toByteArray(), APPLICATION_PDF_VALUE)
         )
     }
+
+    private fun computeItemsWithQrCodes(items: List<Item>): List<EmailOrderItem> {
+        val list = mutableListOf<EmailOrderItem>()
+        for (item in items) {
+            val qrcode = QrCode.encodeText(item.hostId, QrCode.Ecc.HIGH)
+            list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), toBufferedImage(qrcode)))
+        }
+        return list
+    }
+
+    private fun toBufferedImage(
+        qr: QrCode,
+        scale: Int = 4,
+        border: Int = 4
+    ): BufferedImage {
+        if (scale <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
+        if (border <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
+        if (border >= Int.MAX_VALUE / 2 || qr.size + border * 2L > Int.MAX_VALUE / scale) {
+            throw IllegalArgumentException(
+                "Scale or border is too large"
+            )
+        }
+
+        val size = (qr.size + border * 2) * scale
+        val result = BufferedImage(size, size, TYPE_INT_RGB)
+
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val isDark = qr.getModule(x / scale - border, y / scale - border)
+                val color =
+                    if (isDark) {
+                        0xFFFFE0
+                    } else {
+                        0xAE4000
+                    }
+                result.setRGB(x, y, color)
+            }
+        }
+        return result
+    }
+
+    private fun getQrHtmlString(cid: String): String =
+        """
+            <img src="cid:qr-$cid" alt="qrcode"/></img>
+        """
+
+    data class EmailOrderItem(val item: Item, val qr: String, val image: BufferedImage)
 }

@@ -1,6 +1,11 @@
 <head>
     <title>WLS Bestillingsbekreftelse</title>
     <style>
+        #right {
+            display: flex;
+            flex-direction: column;
+        }
+
         .wrapper-class {
             display: flex;
             flex-direction: column;
@@ -9,10 +14,7 @@
         .flexing {
             display: flex;
             flex-direction: row;
-        }
-
-        .flexed {
-            margin: 0 0 0 40px;
+            justify-content: space-between;
         }
 
         .table-class {
@@ -26,33 +28,39 @@
 </head>
 
 <div class="wrapper-class">
-    <div>
-        En ny bestilling har blitt mottatt fra ${order.hostName}.
-    </div>
     <div class="flexing">
-        <div>
+        <div id="left">
+            <div>
+                En ny bestilling har blitt mottatt fra ${order.hostName}.
+            </div>
+            <div>
+                Type: ${order.orderType}
+            </div>
+            <div>
+                Kontaktperson: ${order.contactPerson}
+            </div>
+            <div>
+                Melding fra bestiller: ${order.note}
+            </div>
+            <div>
+                Er følgende felt viktige:
+
+                <ol>
+                    <li>Leveringsaddresse?</li>
+                    <li>Internt/Eksternt?</li>
+                </ol>
+            </div>
+        </div>
+        <div id="right">
+            <div>
+                ${orderQrCode}
+            </div>
+
             Lån: ${order.hostOrderId}
         </div>
-        <div class="flexed">
-            QR/STREKKODE HER
-        </div>
-    </div>
-    <div>
-        Type: ${order.orderType}
-    </div>
-    <div>
-        Kontaktperson: ${order.contactPerson}
-    </div>
-    <div>
-        Melding fra bestiller: ${order.note}
-    </div>
-    <div>
-        Er følgende felt viktige:
-
-        <ol>
-            <li>Leveringsaddresse?</li>
-            <li>Internt/Eksternt?</li>
-        </ol>
+        <!-- Yes, this abuses flexbox. You can thank Outlook for that -->
+        <div id="dummy"></div>
+        <div id="dummy2"></div>
     </div>
 
     <div>
@@ -71,14 +79,14 @@
             </tr>
             <#list orderItems as orderItem>
                 <tr>
-                    <td>${orderItem.description}</td>
+                    <td>${orderItem.item.description}</td>
                     <td>
                         <div>
-                            QR/STREKKODE HER
+                            ${orderItem.qr}
                         </div>
-                        ${orderItem.hostId}
+                        ${orderItem.item.hostId}
                     </td>
-                    <td>${orderItem.location}</td>
+                    <td>${orderItem.item.location}</td>
                 </tr>
             </#list>
         </table>
