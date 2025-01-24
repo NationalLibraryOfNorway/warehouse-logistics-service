@@ -11,16 +11,13 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
-import org.jsoup.Jsoup
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.MediaType.APPLICATION_PDF_VALUE
 import org.springframework.http.MediaType.IMAGE_PNG_VALUE
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
-import org.xhtmlrenderer.pdf.ITextRenderer
 import java.awt.image.BufferedImage
 import java.awt.image.BufferedImage.TYPE_INT_RGB
 import java.io.ByteArrayOutputStream
@@ -136,7 +133,6 @@ class EmailAdapter(
         for (qrCode in qrCodes) {
             addInlinedImage(qrCode.image, qrCode.item.hostId, helper)
         }
-        // attachPdf(helper, order, htmlBody)
         return helper.mimeMessage
     }
 
@@ -153,31 +149,6 @@ class EmailAdapter(
         val source = ByteArrayDataSource(outputStream.toByteArray(), IMAGE_PNG_VALUE)
         imagePart.dataHandler = DataHandler(source)
         helper.rootMimeMultipart.addBodyPart(imagePart)
-    }
-
-    /**
-     * Parses a HTML-string into XHTML, converts it to PDF, and attaches it to the provided
-     * MimeMessageHelper
-     */
-    private fun attachPdf(
-        helper: MimeMessageHelper,
-        order: Order,
-        html: String
-    ) {
-        // FIXME - Cannot convert XHTML image tags out of the box
-        val xhtml = Jsoup.parse(html).html()
-        val renderer = ITextRenderer()
-        val sharedCtx = renderer.sharedContext
-        sharedCtx.isPrint = true
-        sharedCtx.isInteractive = false
-        renderer.setDocumentFromString(xhtml)
-        renderer.layout()
-        val outputStream = ByteArrayOutputStream()
-        renderer.createPDF(outputStream)
-        helper.addAttachment(
-            "wls-order-confirmation_${order.hostOrderId}.pdf",
-            ByteArrayDataSource(outputStream.toByteArray(), APPLICATION_PDF_VALUE)
-        )
     }
 
     private fun computeItemsWithQrCodes(items: List<Item>): List<EmailOrderItem> {
