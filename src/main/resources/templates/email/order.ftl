@@ -42,14 +42,6 @@
             <div>
                 Melding fra bestiller: ${order.note}
             </div>
-            <div>
-                Er følgende felt viktige:
-
-                <ol>
-                    <li>Leveringsaddresse?</li>
-                    <li>Internt/Eksternt?</li>
-                </ol>
-            </div>
         </div>
         <div id="right">
             <div>
