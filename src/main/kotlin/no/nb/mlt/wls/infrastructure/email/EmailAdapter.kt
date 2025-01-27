@@ -1,27 +1,20 @@
 package no.nb.mlt.wls.infrastructure.email
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.nayuki.qrcodegen.QrCode
-import jakarta.activation.DataHandler
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
-import jakarta.mail.util.ByteArrayDataSource
 import no.nb.mlt.wls.domain.model.HostEmail
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.MediaType.IMAGE_PNG_VALUE
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
 import java.awt.image.BufferedImage
-import java.awt.image.BufferedImage.TYPE_INT_RGB
-import java.io.ByteArrayOutputStream
-import javax.imageio.ImageIO
 
 private val logger = KotlinLogging.logger {}
 
@@ -115,80 +108,46 @@ class EmailAdapter(
         val helper = MimeMessageHelper(mail, true)
         val type = "order.ftl"
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
-        val qrCodes = computeItemsWithQrCodes(orderItems)
-        addInlinedImage(toBufferedImage(QrCode.encodeText(order.hostOrderId, QrCode.Ecc.HIGH)), order.hostOrderId, helper)
+        val emailOrderItems = computeItemsWithQrCodes(orderItems)
         val htmlBody =
             FreeMarkerTemplateUtils.processTemplateIntoString(
                 template,
                 mapOf(
                     "order" to order,
                     "orderQrCode" to getQrHtmlString(order.hostOrderId),
-                    "orderItems" to qrCodes
+                    "orderItems" to emailOrderItems
                 )
             )
         helper.setText(htmlBody, true)
         helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
         helper.setFrom("noreply@nb.no")
         helper.setTo(storageEmail)
-        for (qrCode in qrCodes) {
-            addInlinedImage(qrCode.image, qrCode.item.hostId, helper)
+        // QR-Code image handling for order ID and order items
+        val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId)
+        helper.rootMimeMultipart.addBodyPart(createImagePart(orderIdQrImage, order.hostOrderId))
+        for (orderItem in emailOrderItems) {
+            helper.rootMimeMultipart.addBodyPart(createImagePart(orderItem.image, orderItem.item.hostId))
         }
         return helper.mimeMessage
     }
 
-    private fun addInlinedImage(
+    private fun createImagePart(
         image: BufferedImage,
-        cid: String,
-        helper: MimeMessageHelper
-    ) {
+        cid: String
+    ): MimeBodyPart {
         val imagePart = MimeBodyPart()
         imagePart.disposition = MimeBodyPart.INLINE
         imagePart.contentID = "qr-$cid"
-        val outputStream = ByteArrayOutputStream()
-        ImageIO.write(image, "png", outputStream)
-        val source = ByteArrayDataSource(outputStream.toByteArray(), IMAGE_PNG_VALUE)
-        imagePart.dataHandler = DataHandler(source)
-        helper.rootMimeMultipart.addBodyPart(imagePart)
+        imagePart.dataHandler = BarcodeUtils.createImageDataHandler(image)
+        return imagePart
     }
 
     private fun computeItemsWithQrCodes(items: List<Item>): List<EmailOrderItem> {
         val list = mutableListOf<EmailOrderItem>()
         for (item in items) {
-            val qrcode = QrCode.encodeText(item.hostId, QrCode.Ecc.HIGH)
-            list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), toBufferedImage(qrcode)))
+            list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), BarcodeUtils.createQrImage(item.hostId)))
         }
         return list
-    }
-
-    private fun toBufferedImage(
-        qr: QrCode,
-        scale: Int = 4,
-        border: Int = 4
-    ): BufferedImage {
-        if (scale <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
-        if (border <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
-        if (border >= Int.MAX_VALUE / 2 || qr.size + border * 2L > Int.MAX_VALUE / scale) {
-            throw IllegalArgumentException(
-                "Scale or border is too large"
-            )
-        }
-
-        val size = (qr.size + border * 2) * scale
-        val result = BufferedImage(size, size, TYPE_INT_RGB)
-
-        for (y in 0 until size) {
-            for (x in 0 until size) {
-                val isDark = qr.getModule(x / scale - border, y / scale - border)
-                val color =
-                    if (isDark) {
-                        0xFFFFE0
-                    } else {
-                        0xAE4000
-                    }
-                result.setRGB(x, y, color)
-            }
-        }
-        return result
     }
 
     private fun getQrHtmlString(cid: String): String =
