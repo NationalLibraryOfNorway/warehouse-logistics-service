@@ -16,8 +16,7 @@ import org.apache.commons.validator.routines.UrlValidator
       "hostOrderId": "mlt-12345-order",
       "orderLine": [
         {
-          "hostId": "mlt-12345",
-          "status": "NOT_STARTED"
+          "hostId": "mlt-12345"
         }
       ],
       "orderType": "LOAN",
