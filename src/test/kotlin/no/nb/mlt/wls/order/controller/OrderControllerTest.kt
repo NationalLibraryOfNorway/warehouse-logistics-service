@@ -354,6 +354,23 @@ class OrderControllerTest(
     }
 
     @Test
+    fun `updateOrder when order is complete returns 409`() {
+        val testPayload = completeOrder.toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        runTest {
+            repository.save(completeOrder.toMongoOrder()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .bodyValue(testPayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+        }
+    }
+
+    @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
@@ -513,6 +530,31 @@ class OrderControllerTest(
             hostOrderId = "order-in-progress",
             status = Order.Status.IN_PROGRESS,
             orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    postcode = "postcode",
+                    city = "city",
+                    region = "region",
+                    country = "country"
+                ),
+            contactPerson = "named person",
+            note = "note",
+            callbackUrl = "https://callback-wls.no/order"
+        )
+
+    private val completeOrder =
+        Order(
+            hostName = HostName.AXIELL,
+            hostOrderId = "order-completed",
+            status = Order.Status.COMPLETED,
+            orderLine =
+                listOf(
+                    Order.OrderItem("item-123", Order.OrderItem.Status.PICKED)
+                ),
             orderType = Order.Type.LOAN,
             address =
                 Order.Address(
