@@ -173,6 +173,27 @@ data class Order(
             FAILED,
             RETURNED
         }
+
+        fun isPickedOrFailed(): Boolean {
+            return when (this.status) {
+                Status.NOT_STARTED -> false
+                Status.PICKED -> true
+                Status.FAILED -> true
+                Status.RETURNED -> false
+            }
+        }
+
+        /**
+         * Used to infer from the OrderItems in OrderLines that the Order is complete
+         */
+        fun isComplete(): Boolean {
+            return when (this.status) {
+                Status.NOT_STARTED -> false
+                Status.PICKED -> true
+                Status.FAILED -> true
+                Status.RETURNED -> true
+            }
+        }
     }
 
     data class Address(
@@ -220,27 +241,6 @@ data class Order(
     enum class Type {
         LOAN,
         DIGITIZATION
-    }
-}
-
-fun OrderItem.isPickedOrFailed(): Boolean {
-    return when (this.status) {
-        OrderItem.Status.NOT_STARTED -> false
-        OrderItem.Status.PICKED -> true
-        OrderItem.Status.FAILED -> true
-        OrderItem.Status.RETURNED -> false
-    }
-}
-
-/**
- * Used to infer from the OrderItems in OrderLines that the Order is complete
- */
-fun OrderItem.isComplete(): Boolean {
-    return when (this.status) {
-        OrderItem.Status.NOT_STARTED -> false
-        OrderItem.Status.PICKED -> true
-        OrderItem.Status.FAILED -> true
-        OrderItem.Status.RETURNED -> true
     }
 }
 
