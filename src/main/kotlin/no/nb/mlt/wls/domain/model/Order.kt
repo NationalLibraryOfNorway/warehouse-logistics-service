@@ -1,8 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
 import no.nb.mlt.wls.domain.model.Order.Address
-import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.FAILED
-import no.nb.mlt.wls.domain.model.Order.OrderItem.Status.PICKED
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
@@ -35,7 +33,7 @@ data class Order(
         hostIds: List<String>,
         status: OrderItem.Status
     ): Order {
-        if (isOrderClosed()) {
+        if (isOrderClosed() && status != OrderItem.Status.RETURNED) {
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
 
@@ -72,7 +70,16 @@ data class Order(
     }
 
     private fun updateOrderStatusFromOrderLines(): Order {
+        // This might benefit from a small refactor of sorts
         return when {
+            orderLine.all(OrderItem::isReturned) -> {
+                this.copy(status = Status.RETURNED)
+            }
+
+            orderLine.all(OrderItem::isComplete) -> {
+                this.copy(status = Status.COMPLETED)
+            }
+
             orderLine.all(OrderItem::isPickedOrFailed) -> {
                 this.copy(status = Status.COMPLETED)
             }
@@ -86,7 +93,7 @@ data class Order(
     }
 
     private fun isOrderClosed(): Boolean {
-        return listOf(Status.COMPLETED, Status.DELETED).contains(status)
+        return listOf(Status.COMPLETED, Status.DELETED, Status.RETURNED).contains(status)
     }
 
     private fun isOrderProcessingStarted(): Boolean {
@@ -106,7 +113,8 @@ data class Order(
     ): Order {
         throwIfInProgress()
 
-        return this.setOrderLines(itemIds)
+        return this
+            .setOrderLines(itemIds)
             .setCallbackUrl(callbackUrl)
             .setOrderType(orderType)
             .setAddress(address)
@@ -143,7 +151,7 @@ data class Order(
     }
 
     fun pickOrder(itemIds: List<String>): Order {
-        return this.setOrderLineStatus(itemIds, PICKED)
+        return this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
     }
 
     private fun throwIfInvalidUrl(url: String) {
@@ -161,7 +169,33 @@ data class Order(
         enum class Status {
             NOT_STARTED,
             PICKED,
-            FAILED
+            FAILED,
+            RETURNED
+        }
+
+        fun isPickedOrFailed(): Boolean {
+            return when (this.status) {
+                Status.NOT_STARTED -> false
+                Status.PICKED -> true
+                Status.FAILED -> true
+                Status.RETURNED -> false
+            }
+        }
+
+        /**
+         * Used to infer from the OrderItems in OrderLines that the Order is complete
+         */
+        fun isComplete(): Boolean {
+            return when (this.status) {
+                Status.NOT_STARTED -> false
+                Status.PICKED -> true
+                Status.FAILED -> true
+                Status.RETURNED -> true
+            }
+        }
+
+        fun isReturned(): Boolean {
+            return this.status == Status.RETURNED
         }
     }
 
@@ -211,10 +245,6 @@ data class Order(
         LOAN,
         DIGITIZATION
     }
-}
-
-fun Order.OrderItem.isPickedOrFailed(): Boolean {
-    return this.status == PICKED || this.status == FAILED
 }
 
 fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
