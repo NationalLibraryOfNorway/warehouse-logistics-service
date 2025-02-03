@@ -160,7 +160,7 @@ data class OrderLine(
     val hostId: String,
     @Schema(
         description = """Current status for the ordered item.""",
-        examples = ["NOT_STARTED", "PICKED", "FAILED"],
+        examples = ["NOT_STARTED", "PICKED", "RETURNED", "FAILED"],
         accessMode = READ_ONLY
     )
     val status: Order.OrderItem.Status?
