@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
 import no.nb.mlt.wls.domain.model.Order.Address
-import no.nb.mlt.wls.domain.model.Order.OrderItem
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
@@ -73,7 +72,7 @@ data class Order(
     private fun updateOrderStatusFromOrderLines(): Order {
         // This might benefit from a small refactor of sorts
         return when {
-            orderLine.all { it.status == OrderItem.Status.RETURNED } -> {
+            orderLine.all(OrderItem::isReturned) -> {
                 this.copy(status = Status.RETURNED)
             }
 
@@ -193,6 +192,10 @@ data class Order(
                 Status.FAILED -> true
                 Status.RETURNED -> true
             }
+        }
+
+        fun isReturned(): Boolean {
+            return this.status == Status.RETURNED
         }
     }
 
