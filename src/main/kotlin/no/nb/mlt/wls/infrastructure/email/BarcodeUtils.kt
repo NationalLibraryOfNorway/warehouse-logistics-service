@@ -42,13 +42,10 @@ class BarcodeUtils {
             scale: Int = 4,
             border: Int = 4
         ): BufferedImage {
-            if (scale <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
-            if (border <= 0) throw IllegalArgumentException("Scale and border must be non-negative")
-            if (border >= Int.MAX_VALUE / 2 || qr.size + border * 2L > Int.MAX_VALUE / scale) {
-                throw IllegalArgumentException(
-                    "Scale or border is too large"
-                )
-            }
+            require(scale > 0) { "Scale must be non-negative" }
+            require(border > 0) { "Border must be non-negative" }
+            require(border < Int.MAX_VALUE / 2) { "Border is too large" }
+            require(qr.size + border * 2L < Int.MAX_VALUE / scale) { "Scale of this QR does not fit inside border" }
 
             val size = (qr.size + border * 2) * scale
             val result = BufferedImage(size, size, TYPE_INT_RGB)
