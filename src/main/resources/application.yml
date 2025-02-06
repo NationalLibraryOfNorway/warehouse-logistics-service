@@ -73,6 +73,10 @@ spring:
       password: drossap
       database: wls
 
+# Secret for the signature on callbacks for the local-dev profile
+callback:
+  secret: superdupersecretkey
+
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
   path:
@@ -108,6 +112,9 @@ synq:
   path:
     base: ${SYNQ_BASE_URL}
 
+# Secret for the signature on callbacks in stage environment
+callback:
+  secret: ${CALLBACK_SECRET}
 ---
 
 # This is the configuration for the prod profile
@@ -137,6 +144,10 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Secret for the signature on callbacks in prod environment
+callback:
+  secret: ${CALLBACK_SECRET}
 
 logging:
   level:

@@ -106,6 +106,20 @@ class OrderController(
                         description = """This callback triggers when the order is updated inside the storage systems.
                             It returns the same data as one would receive from the GET endpoint, meaning complete information about the order.""",
                         method = "post",
+                        parameters = arrayOf(
+                            Parameter(
+                                name = "X-Signature",
+                                description = "HMAC SHA-256 signature of timestamp and the payload",
+                                required = true,
+                                schema = Schema(type = "string")
+                            ),
+                            Parameter(
+                                name = "X-Timestamp",
+                                description = "Timestamp for when the message was sent",
+                                required = true,
+                                schema = Schema(type = "string")
+                            )
+                        ),
                         requestBody =
                             SwaggerRequestBody(
                                 content =
