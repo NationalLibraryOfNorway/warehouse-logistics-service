@@ -30,7 +30,7 @@ class EmailAdapter(
         order: Order,
         orderItems: List<Item>
     ) {
-        val receiver = emailRepository.getHostEmail(order.hostName) ?: HostEmail(order.hostName, "noah.aanonli@nb.no")
+        val receiver = emailRepository.getHostEmail(order.hostName) ?: return
         try {
             sendOrderEmail(createOrderEmail(order, receiver))
             sendHostOrderEmail(createStorageOrderEmail(order, orderItems))
@@ -123,7 +123,7 @@ class EmailAdapter(
         helper.setFrom("noreply@nb.no")
         helper.setTo(storageEmail)
         // QR-Code image handling for order ID and order items
-        val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId)
+        val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId, scale = 3, border = 4)
         helper.rootMimeMultipart.addBodyPart(createImagePart(orderIdQrImage, order.hostOrderId))
         for (orderItem in emailOrderItems) {
             helper.rootMimeMultipart.addBodyPart(createImagePart(orderItem.image, orderItem.item.hostId))

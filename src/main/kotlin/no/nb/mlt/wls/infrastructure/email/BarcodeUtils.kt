@@ -37,6 +37,12 @@ class BarcodeUtils {
 
         fun createQrImage(qrString: String): BufferedImage = createQrImage(qrFromString(qrString))
 
+        fun createQrImage(
+            qrString: String,
+            scale: Int = 4,
+            border: Int = 4
+        ): BufferedImage = createQrImage(qrFromString(qrString), scale, border)
+
         private fun createQrImage(
             qr: QrCode,
             scale: Int = 4,

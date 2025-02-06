@@ -1,20 +1,14 @@
 <head>
     <title>WLS Bestillingsbekreftelse</title>
     <style>
-        #right {
-            display: flex;
-            flex-direction: column;
-        }
-
         .wrapper-class {
             display: flex;
             flex-direction: column;
         }
 
-        .flexing {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
+        .requires-spacing {
+            margin-bottom: 15px;
+            gap: 5px;
         }
 
         .table-class {
@@ -28,33 +22,26 @@
 </head>
 
 <div class="wrapper-class">
-    <div class="flexing">
-        <div id="left">
-            <div>
-                En ny bestilling har blitt mottatt fra ${order.hostName}.
-            </div>
-            <div>
-                Type: ${order.orderType}
-            </div>
-            <div>
-                Kontaktperson: ${order.contactPerson}
-            </div>
-            <div>
-                Melding fra bestiller: ${order.note}
-            </div>
+    <div class="requires-spacing">
+        <div>
+            En ny bestilling har blitt mottatt fra ${order.hostName}.
         </div>
-        <div id="right">
-            <div>
-                ${orderQrCode}
-            </div>
-
+        <div>
+            ${orderQrCode}
+        </div>
+        <div>
             Lån: ${order.hostOrderId}
         </div>
-        <!-- Yes, this abuses flexbox. You can thank Outlook for that -->
-        <div id="dummy"></div>
-        <div id="dummy2"></div>
+        <div>
+            Type: ${order.orderType}
+        </div>
+        <div>
+            Kontaktperson: ${order.contactPerson}
+        </div>
+        <div>
+            Melding fra bestiller: ${order.note}
+        </div>
     </div>
-
     <div>
         <b>Ordrelinjer</b>
         <table class="table-class">
