@@ -54,7 +54,7 @@ data class NotificationOrderPayload(
         description = """List of items in the order, also called order lines.""",
         example = "NOT_STARTED"
     )
-    val orderLine: List<Order.OrderItem>,
+    val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
             "LOAN" means that the order is for borrowing items to external or internal users,
@@ -85,14 +85,19 @@ data class NotificationOrderPayload(
         example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
-)
+) {
+    data class OrderLine (
+        val hostId: String,
+        val status: Order.OrderItem.Status
+    )
+}
 
 fun Order.toNotificationOrderPayload() =
     NotificationOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
-        orderLine = orderLine,
+        orderLine = orderLine.map { NotificationOrderPayload.OrderLine(it.hostId, it.status) },
         orderType = orderType,
         contactPerson = contactPerson,
         address = address,
