@@ -57,7 +57,10 @@ class InventoryNotifierAdapter(
             .subscribe()
     }
 
-    private fun generateSignature(payload: String, timestamp: String): String {
+    private fun generateSignature(
+        payload: String,
+        timestamp: String
+    ): String {
         val hmacSHA256 = "HmacSHA256"
         val secretKeySpec = SecretKeySpec(signatureSecretKey.toByteArray(), hmacSHA256)
         val mac = Mac.getInstance(hmacSHA256)

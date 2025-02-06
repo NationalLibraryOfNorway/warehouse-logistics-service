@@ -100,20 +100,21 @@ class ItemController(
                         Situations where this callback is triggered may include: item moves in storage,
                         item is picked for order, item is returned to storage, etc.""",
                         method = "post",
-                        parameters = arrayOf(
-                            Parameter(
-                                name = "X-Signature",
-                                description = "HMAC SHA-256 signature of timestamp and the payload",
-                                required = true,
-                                schema = Schema(type = "string")
+                        parameters =
+                            arrayOf(
+                                Parameter(
+                                    name = "X-Signature",
+                                    description = "HMAC SHA-256 signature of timestamp and the payload",
+                                    required = true,
+                                    schema = Schema(type = "string")
+                                ),
+                                Parameter(
+                                    name = "X-Timestamp",
+                                    description = "Timestamp for when the message was sent",
+                                    required = true,
+                                    schema = Schema(type = "string")
+                                )
                             ),
-                            Parameter(
-                                name = "X-Timestamp",
-                                description = "Timestamp for when the message was sent",
-                                required = true,
-                                schema = Schema(type = "string")
-                            )
-                        ),
                         requestBody =
                             SwaggerRequestBody(
                                 content = [Content(schema = Schema(implementation = NotificationItemPayload::class))],

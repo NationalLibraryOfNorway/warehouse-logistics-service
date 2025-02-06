@@ -20,7 +20,6 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 class InventoryNotifierAdapterTest {
-
     private lateinit var mockWebServer: MockWebServer
     private lateinit var inventoryNotifierAdapter: InventoryNotifierAdapter
     private val secretKey = "your-secret-key"
@@ -34,28 +33,30 @@ class InventoryNotifierAdapterTest {
         mockWebServer.start()
         val webClient = WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build()
         inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, secretKey, jacksonObjectMapper())
-        testItem = Item(
-            hostId = "item-id",
-            hostName = HostName.AXIELL,
-            description = "item-description",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = mockWebServer.url("/item-callback").toString(),
-            location = "location",
-            quantity = 1
-        )
-        testOrder = Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-id",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem("item-id", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address = null,
-            contactPerson = "contact-person",
-            note = null,
-            callbackUrl = mockWebServer.url("/order-callback").toString()
-        )
+        testItem =
+            Item(
+                hostId = "item-id",
+                hostName = HostName.AXIELL,
+                description = "item-description",
+                itemCategory = ItemCategory.PAPER,
+                preferredEnvironment = Environment.NONE,
+                packaging = Packaging.NONE,
+                callbackUrl = mockWebServer.url("/item-callback").toString(),
+                location = "location",
+                quantity = 1
+            )
+        testOrder =
+            Order(
+                hostName = HostName.AXIELL,
+                hostOrderId = "order-id",
+                status = Order.Status.NOT_STARTED,
+                orderLine = listOf(Order.OrderItem("item-id", Order.OrderItem.Status.NOT_STARTED)),
+                orderType = Order.Type.LOAN,
+                address = null,
+                contactPerson = "contact-person",
+                note = null,
+                callbackUrl = mockWebServer.url("/order-callback").toString()
+            )
     }
 
     @AfterEach
@@ -70,17 +71,20 @@ class InventoryNotifierAdapterTest {
         assertEquals("/item-callback", request.path)
         assertEquals("POST", request.method)
         val requestItem: NotificationItemPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
-        assertEquals(NotificationItemPayload(
-            hostId = testItem.hostId,
-            hostName = testItem.hostName,
-            description = testItem.description,
-            itemCategory = testItem.itemCategory,
-            preferredEnvironment = testItem.preferredEnvironment,
-            packaging = testItem.packaging,
-            location = testItem.location,
-            quantity = testItem.quantity,
-            callbackUrl = testItem.callbackUrl
-        ), requestItem)
+        assertEquals(
+            NotificationItemPayload(
+                hostId = testItem.hostId,
+                hostName = testItem.hostName,
+                description = testItem.description,
+                itemCategory = testItem.itemCategory,
+                preferredEnvironment = testItem.preferredEnvironment,
+                packaging = testItem.packaging,
+                location = testItem.location,
+                quantity = testItem.quantity,
+                callbackUrl = testItem.callbackUrl
+            ),
+            requestItem
+        )
     }
 
     @Test
@@ -90,17 +94,20 @@ class InventoryNotifierAdapterTest {
         assertEquals("/order-callback", request.path)
         assertEquals("POST", request.method)
         val requestOrder: NotificationOrderPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
-        assertEquals(NotificationOrderPayload(
-            hostName = testOrder.hostName,
-            hostOrderId = testOrder.hostOrderId,
-            status = testOrder.status,
-            orderLine = testOrder.orderLine.map { NotificationOrderPayload.OrderLine(it.hostId, it.status) },
-            orderType = testOrder.orderType,
-            address = testOrder.address,
-            contactPerson = testOrder.contactPerson,
-            note = testOrder.note,
-            callbackUrl = testOrder.callbackUrl
-        ), requestOrder)
+        assertEquals(
+            NotificationOrderPayload(
+                hostName = testOrder.hostName,
+                hostOrderId = testOrder.hostOrderId,
+                status = testOrder.status,
+                orderLine = testOrder.orderLine.map { NotificationOrderPayload.OrderLine(it.hostId, it.status) },
+                orderType = testOrder.orderType,
+                address = testOrder.address,
+                contactPerson = testOrder.contactPerson,
+                note = testOrder.note,
+                callbackUrl = testOrder.callbackUrl
+            ),
+            requestOrder
+        )
     }
 
     @Test

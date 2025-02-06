@@ -86,7 +86,7 @@ data class NotificationOrderPayload(
     )
     val callbackUrl: String
 ) {
-    data class OrderLine (
+    data class OrderLine(
         val hostId: String,
         val status: Order.OrderItem.Status
     )
