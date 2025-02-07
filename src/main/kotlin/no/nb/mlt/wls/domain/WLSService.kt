@@ -135,13 +135,8 @@ class WLSService(
             // TODO: Should we recover by updating the DB?
             throw ServerException("Order already exists in storage system but not in DB", e)
         }
-
         val order = orderRepository.createOrder(orderDTO.toOrder())
-
-        // email handling
-        val items = order.orderLine.map { it.hostId }
-        val orderItems = getItems(items, order.hostName)
-        if (orderItems.isNotEmpty()) emailAdapter.orderCreated(order, orderItems)
+        createAndSendEmails(order)
 
         return order
     }
@@ -232,5 +227,16 @@ class WLSService(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+    }
+
+    /**
+     * Email handling for order receivers and order handlers
+     */
+    private suspend fun createAndSendEmails(order: Order) {
+        val items = order.orderLine.map { it.hostId }
+        val orderItems = getItems(items, order.hostName)
+        if (orderItems.isNotEmpty()) {
+            emailAdapter.orderCreated(order, orderItems)
+        }
     }
 }
