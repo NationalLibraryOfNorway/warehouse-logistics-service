@@ -30,9 +30,11 @@ class InventoryNotifierAdapter(
                 .post()
                 .uri(item.callbackUrl)
                 .bodyValue(payload)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("X-Signature", signature)
-                .header("X-Timestamp", timestamp)
+                .headers {
+                    it.contentType = MediaType.APPLICATION_JSON
+                    it.set("X-Signature", signature)
+                    it.set("X-Timestamp", timestamp)
+                }
                 .retrieve()
                 .bodyToMono(Void::class.java)
                 .retry(5)
@@ -51,9 +53,11 @@ class InventoryNotifierAdapter(
             .post()
             .uri(order.callbackUrl)
             .bodyValue(payload)
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .header("X-Signature", signature)
-            .header("X-Timestamp", timestamp)
+            .headers {
+                it.contentType = MediaType.APPLICATION_JSON
+                it.set("X-Signature", signature)
+                it.set("X-Timestamp", timestamp)
+            }
             .retrieve()
             .bodyToMono(Void::class.java)
             .retry(5)
