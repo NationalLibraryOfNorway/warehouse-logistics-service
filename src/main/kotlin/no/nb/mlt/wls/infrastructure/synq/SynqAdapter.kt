@@ -8,6 +8,7 @@ import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -21,6 +22,10 @@ class SynqAdapter(
     @Value("\${synq.path.base}")
     private val baseUrl: String
 ) : StorageSystemFacade {
+    override fun isKnownLocation(location: String): Boolean {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun createItem(item: Item) {
         val uri = URI.create("$baseUrl/nbproducts")
 

@@ -4,6 +4,9 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 
 interface StorageSystemFacade {
+
+    fun isKnownLocation(location: String): Boolean
+
     @Throws(StorageSystemException::class)
     suspend fun createItem(item: Item)
 

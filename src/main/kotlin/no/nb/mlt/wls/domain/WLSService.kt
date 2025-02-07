@@ -38,7 +38,7 @@ private val logger = KotlinLogging.logger {}
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val storageSystemFacade: StorageSystemFacade,
+    private val storageSystemFacades: List<StorageSystemFacade>,
     private val inventoryNotifier: InventoryNotifier
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -49,7 +49,7 @@ class WLSService(
 
         val item = itemMetadata.toItem()
         // TODO - Should we handle the case where the item is saved in storage system but not in WLS database?
-        storageSystemFacade.createItem(item)
+        storageSystemFacades.createItem(item)
         return itemRepository.createItem(item)
             // TODO - See if timeouts can be made configurable
             .timeout(Duration.ofSeconds(6))
@@ -128,7 +128,26 @@ class WLSService(
         }
 
         try {
-            storageSystemFacade.createOrder(orderDTO.toOrder())
+            val items = itemRepository.getItems(
+                orderDTO.orderLine.map { it.hostId },
+                orderDTO.hostName
+            )
+
+            val itemPerFacade = items.groupBy {
+                storageSystemFacades.find { facade ->
+                    facade.isKnownLocation(it.location)
+                } ?: throw RuntimeException("No facade can handle item")
+            }
+
+            itemPerFacade.forEach { (facade, items) ->
+                val orderCopy = orderDTO.copy(
+                    orderLine = items.map {
+                        CreateOrderDTO.OrderItem(it.hostId)
+                    }
+                ).toOrder()
+
+                facade.createOrder(orderCopy)
+            }
         } catch (e: DuplicateResourceException) {
             // TODO: Should we recover by updating the DB?
             throw ServerException("Order already exists in storage system but not in DB", e)
@@ -144,7 +163,7 @@ class WLSService(
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
         order.deleteOrder()
-        storageSystemFacade.deleteOrder(order)
+        storageSystemFacades.deleteOrder(order)
         orderRepository.deleteOrder(hostName, hostOrderId)
     }
 
@@ -174,7 +193,7 @@ class WLSService(
                 note = note,
                 contactPerson = contactPerson
             )
-        val result = storageSystemFacade.updateOrder(updatedOrder)
+        val result = storageSystemFacades.updateOrder(updatedOrder)
         return orderRepository.updateOrder(result)
     }
 
