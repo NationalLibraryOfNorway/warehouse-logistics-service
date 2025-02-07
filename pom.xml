@@ -92,6 +92,7 @@
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.languageVersion>2.0</kotlin.compiler.languageVersion>
     <kotlin.logging.version>7.0.0</kotlin.logging.version>
+    <mockwebserver.version>4.12.0</mockwebserver.version>
   </properties>
 
   <dependencies>
@@ -221,7 +222,7 @@
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
       <artifactId>mockwebserver</artifactId>
-      <version>4.12.0</version>
+      <version>${mockwebserver.version}</version>
       <scope>test</scope>
     </dependency>
 
