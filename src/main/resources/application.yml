@@ -115,6 +115,7 @@ synq:
 # Secret for the signature on callbacks in stage environment
 callback:
   secret: ${CALLBACK_SECRET}
+
 ---
 
 # This is the configuration for the prod profile
