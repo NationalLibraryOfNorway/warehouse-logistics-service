@@ -5,6 +5,8 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
@@ -28,6 +30,7 @@ class InventoryNotifierAdapter(
                 .post()
                 .uri(item.callbackUrl)
                 .bodyValue(payload)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header("X-Signature", signature)
                 .header("X-Timestamp", timestamp)
                 .retrieve()
@@ -48,6 +51,7 @@ class InventoryNotifierAdapter(
             .post()
             .uri(order.callbackUrl)
             .bodyValue(payload)
+            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .header("X-Signature", signature)
             .header("X-Timestamp", timestamp)
             .retrieve()
