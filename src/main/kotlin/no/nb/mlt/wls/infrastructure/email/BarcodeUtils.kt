@@ -59,12 +59,7 @@ class BarcodeUtils {
             for (y in 0 until size) {
                 for (x in 0 until size) {
                     val isDark = qr.getModule(x / scale - border, y / scale - border)
-                    val color =
-                        if (isDark) {
-                            0xFFFFE0
-                        } else {
-                            0xAE4000
-                        }
+                    val color = if (isDark) 0x000000 else 0xFFFFFE
                     result.setRGB(x, y, color)
                 }
             }

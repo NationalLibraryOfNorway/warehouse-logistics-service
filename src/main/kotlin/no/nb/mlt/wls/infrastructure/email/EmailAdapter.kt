@@ -88,7 +88,7 @@ class EmailAdapter(
         // Email Metadata
         helper.setText(htmlBody, true)
         helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
-        helper.setFrom("noreply@nb.no")
+        helper.setFrom("noreply@wls-api.no")
         helper.setTo(receiver.email)
 
         return helper.mimeMessage
@@ -120,7 +120,7 @@ class EmailAdapter(
             )
         helper.setText(htmlBody, true)
         helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
-        helper.setFrom("noreply@nb.no")
+        helper.setFrom("noreply@wls-api.no")
         helper.setTo(storageEmail)
         // QR-Code image handling for order ID and order items
         val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId, scale = 3, border = 4)
