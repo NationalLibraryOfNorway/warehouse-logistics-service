@@ -162,7 +162,7 @@ class EmailAdapter(
 
     private fun getQrHtmlString(cid: String): String =
         """
-            <img src="cid:qr-$cid" alt="qrcode"/></img>
+            <img src="cid:qr-$cid" alt="qrcode of '$cid'"/></img>
         """
 
     data class EmailOrderItem(val item: Item, val qr: String, val image: BufferedImage)
