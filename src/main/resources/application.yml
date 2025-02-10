@@ -53,8 +53,10 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
-mail:
-  storage: ""
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 ---
 
@@ -91,8 +93,10 @@ synq:
     base: http://localhost:8181/synq/resources
 
 # Configures destination e-mails for receivers
-mail:
-  storage: ${EMAIL_STORAGE}
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 ---
 
@@ -129,8 +133,10 @@ synq:
     base: ${SYNQ_BASE_URL}
 
 # Configures destination e-mails for receivers
-mail:
-  storage: ${EMAIL_STORAGE}
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 ---
 
@@ -163,8 +169,10 @@ synq:
     base: ${SYNQ_BASE_URL}
 
 # Configures destination e-mails for receivers
-mail:
-  storage: ${EMAIL_STORAGE}
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 logging:
   level:
