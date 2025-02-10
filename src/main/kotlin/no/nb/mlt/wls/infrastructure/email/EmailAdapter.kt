@@ -35,13 +35,13 @@ class EmailAdapter(
             "Sending emails for order ${order.hostOrderId}"
         }
         sendEmail(
-            createOrderEmail(order, receiver),
+            createOrderConfirmationEmail(order, receiver),
             "Email sent to host"
         ) { error ->
             "Failed to send order confirmation emails: ${error.message}"
         }
         sendEmail(
-            createStorageOrderEmail(order, orderItems),
+            createOrderHandlerEmail(order, orderItems),
             "Email sent to order handlers"
         ) { error ->
             "Failed to send orders: ${error.message}"
@@ -73,7 +73,7 @@ class EmailAdapter(
         }
     }
 
-    private fun createOrderEmail(
+    private fun createOrderConfirmationEmail(
         order: Order,
         receiver: HostEmail
     ): MimeMessage {
@@ -107,7 +107,7 @@ class EmailAdapter(
         }
     }
 
-    private fun createStorageOrderEmail(
+    private fun createOrderHandlerEmail(
         order: Order,
         orderItems: List<Item>
     ): MimeMessage? {
