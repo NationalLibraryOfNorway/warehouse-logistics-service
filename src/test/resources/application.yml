@@ -52,3 +52,8 @@ synq:
 # Secret for the signature on callbacks for the local-dev profile
 callback:
   secret: superdupersecretkey
+
+wls:
+  order:
+    handler:
+      email: test2@example.com
