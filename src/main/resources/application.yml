@@ -12,10 +12,6 @@ spring:
   # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
-  # E-mail settings for test containers
-  mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
 
 # Server port for the main application
 server:
@@ -82,10 +78,9 @@ spring:
       password: drossap
       database: wls
 
-  # E-mail settings for testing locally
-  mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
+# Secret for the signature on callbacks for the local-dev profile
+callback:
+  secret: superdupersecretkey
 
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
@@ -122,15 +117,15 @@ spring:
       password: ${MONGODB_PASSWORD}
       database: ${MONGODB_DATABASE}
       host: ${MONGODB_URL}
-  # E-mail settings for testing in stage environment
-  mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
 
 # Set base path to SynQ API in stage environment
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Secret for the signature on callbacks in stage environment
+callback:
+  secret: ${CALLBACK_SECRET}
 
 # Configures destination e-mails for receivers
 wls:
@@ -167,6 +162,10 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Secret for the signature on callbacks in prod environment
+callback:
+  secret: ${CALLBACK_SECRET}
 
 # Configures destination e-mails for receivers
 wls:

@@ -87,7 +87,7 @@ class OrderModelConversionTest {
             hostName = HostName.AXIELL,
             hostOrderId = "hostOrderId",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
+            orderLine = listOf(NotificationOrderPayload.OrderLine("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             address =
                 Order.Address(
