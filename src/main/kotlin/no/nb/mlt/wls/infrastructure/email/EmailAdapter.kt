@@ -84,7 +84,10 @@ class EmailAdapter(
         val htmlBody =
             FreeMarkerTemplateUtils.processTemplateIntoString(
                 template,
-                mapOf("order" to order, "ordertype" to translateOrderType(order.orderType))
+                mapOf(
+                    "order" to order,
+                    "orderType" to translateOrderType(order.orderType)
+                )
             )
 
         // Email Metadata
@@ -125,7 +128,8 @@ class EmailAdapter(
                 mapOf(
                     "order" to order,
                     "orderQrCode" to getQrHtmlString(order.hostOrderId),
-                    "orderItems" to emailOrderItems
+                    "orderItems" to emailOrderItems,
+                    "orderType" to translateOrderType(order.orderType)
                 )
             )
         helper.setText(htmlBody, true)

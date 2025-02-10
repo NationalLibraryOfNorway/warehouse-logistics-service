@@ -19,7 +19,7 @@
     </p>
         <dl>
             <dt>Bestillingstype:</dt>
-            <dd>${ordertype}</dd>
+            <dd>${orderType}</dd>
             <dt>Bestiller:</dt>
             <dd>${order.contactPerson}</dd>
             <dt>Melding fra bestiller:</dt>

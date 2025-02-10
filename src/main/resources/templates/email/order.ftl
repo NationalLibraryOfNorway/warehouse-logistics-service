@@ -30,16 +30,16 @@
             ${orderQrCode}
         </div>
         <div>
-            Lån: ${order.hostOrderId}
+            <b>Lån:</b> ${order.hostOrderId}
         </div>
         <div>
-            Type: ${order.orderType}
+            <b>Bestillingstype:</b> ${orderType}
         </div>
         <div>
-            Kontaktperson: ${order.contactPerson}
+            <b>Kontaktperson:</b> ${order.contactPerson}
         </div>
         <div>
-            Melding fra bestiller: ${order.note}
+            <b>Melding fra bestiller:</b> ${order.note}
         </div>
     </div>
     <div>
