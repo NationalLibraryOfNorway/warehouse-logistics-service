@@ -31,15 +31,20 @@ class EmailAdapter(
         orderItems: List<Item>
     ) {
         val receiver = emailRepository.getHostEmail(order.hostName) ?: return
-        try {
-            sendOrderEmail(createOrderEmail(order, receiver))
-            sendHostOrderEmail(createStorageOrderEmail(order, orderItems))
-            logger.info {
-                "Emails sent for order ${order.hostOrderId}"
-            }
-        } catch (e: MailException) {
-            // TODO - Review. Should probably be explicitly logged?
-            e.printStackTrace()
+        logger.info {
+            "Sending emails for order ${order.hostOrderId}"
+        }
+        sendEmail(
+            createOrderEmail(order, receiver),
+            "Email sent to host"
+        ) { error ->
+            "Failed to send order confirmation emails: ${error.message}"
+        }
+        sendEmail(
+            createStorageOrderEmail(order, orderItems),
+            "Email sent to order handlers"
+        ) { error ->
+            "Failed to send orders: ${error.message}"
         }
     }
 
@@ -47,29 +52,22 @@ class EmailAdapter(
         TODO("Not yet implemented")
     }
 
-    private fun sendOrderEmail(message: MimeMessage?) {
-        if (message != null) {
-            try {
-                emailSender.send(message)
-                logger.info {
-                    "Email sent to host"
-                }
-            } catch (e: MailException) {
-                // TODO - Review. Should probably be explicitly logged?
-                e.printStackTrace()
+    /**
+     * Send an email and log any exceptions
+     */
+    private fun sendEmail(
+        email: MimeMessage?,
+        successInfo: String,
+        errorHandler: (e: Exception) -> Any
+    ) {
+        try {
+            emailSender.send(email)
+            logger.info {
+                successInfo
             }
-        }
-    }
-
-    private fun sendHostOrderEmail(message: MimeMessage?) {
-        if (message != null) {
-            try {
-                emailSender.send(message)
-                logger.info {
-                    "Email sent to storage"
-                }
-            } catch (e: MailException) {
-                // TODO - Review. Should probably be explicitly logged?
+        } catch (e: MailException) {
+            errorHandler(e)
+            if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
         }
@@ -83,7 +81,11 @@ class EmailAdapter(
         val mail = emailSender.createMimeMessage()
         val helper = MimeMessageHelper(mail, false)
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
-        val htmlBody = FreeMarkerTemplateUtils.processTemplateIntoString(template, mapOf("order" to order))
+        val htmlBody =
+            FreeMarkerTemplateUtils.processTemplateIntoString(
+                template,
+                mapOf("order" to order, "ordertype" to translateOrderType(order.orderType))
+            )
 
         // Email Metadata
         helper.setText(htmlBody, true)
@@ -92,6 +94,14 @@ class EmailAdapter(
         helper.setTo(receiver.email)
 
         return helper.mimeMessage
+    }
+
+    // TODO - Is this relevant for the domain, or should translations be handled explicitly somewhere else?
+    private fun translateOrderType(orderType: Order.Type): String {
+        return when (orderType) {
+            Order.Type.LOAN -> "Lån"
+            Order.Type.DIGITIZATION -> "Digitalisering"
+        }
     }
 
     private fun createStorageOrderEmail(
