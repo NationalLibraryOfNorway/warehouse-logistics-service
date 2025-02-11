@@ -3,7 +3,6 @@ package no.nb.mlt.wls.infrastructure.email
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
-import no.nb.mlt.wls.domain.model.HostEmail
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
@@ -30,12 +29,11 @@ class EmailAdapter(
         order: Order,
         orderItems: List<Item>
     ) {
-        val receiver = emailRepository.getHostEmail(order.hostName) ?: return
         logger.info {
             "Sending emails for order ${order.hostOrderId}"
         }
         sendEmail(
-            createOrderConfirmationEmail(order, receiver),
+            createOrderConfirmationEmail(order),
             "Email sent to host"
         ) { error ->
             "Failed to send order confirmation emails: ${error.message}"
@@ -73,10 +71,14 @@ class EmailAdapter(
         }
     }
 
-    private fun createOrderConfirmationEmail(
-        order: Order,
-        receiver: HostEmail
-    ): MimeMessage {
+    private suspend fun createOrderConfirmationEmail(order: Order): MimeMessage? {
+        val receiver = emailRepository.getHostEmail(order.hostName)
+        if (receiver == null || receiver.email.isBlank()) {
+            logger.warn {
+                "Email address for ${order.hostName} not found, and email was not sent"
+            }
+            return null
+        }
         val type = "order-confirmation.ftl"
         val mail = emailSender.createMimeMessage()
         val helper = MimeMessageHelper(mail, false)
