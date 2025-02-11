@@ -96,6 +96,16 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: SYNQ_BASE_URL
+            - name: EMAIL_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: EMAIL_SERVER
+            - name: EMAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: EMAIL_PORT
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
