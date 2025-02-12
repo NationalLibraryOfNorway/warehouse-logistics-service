@@ -9,6 +9,8 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
+import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
+import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
@@ -19,6 +21,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
@@ -59,6 +62,7 @@ import reactor.core.publisher.Flux
 class OrderControllerTest(
     @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext,
+    @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository
 ) {
     @MockkBean
@@ -106,6 +110,40 @@ class OrderControllerTest(
                 .extracting("callbackUrl", "status")
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
+
+    @Test
+    fun `createOrder with valid payload also creates email`() {
+        runTest {
+            coEvery {
+                synqAdapterMock.createOrder(any())
+            } answers {}
+            emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testOrderPayload)
+                .exchange()
+                .expectStatus().isCreated
+
+            val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
+
+            // Create a temporary new client to check emails
+            WebTestClient
+                .bindToServer()
+                .build()
+                .get()
+                .uri(mailhogUrl)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectBody()
+                .jsonPath("$.total").value<Int> {
+                    if (it == 0) throw RuntimeException("No emails found", null)
+                }
+        }
+    }
 
     @Test
     fun `createOrder with duplicate payload returns OK`() {

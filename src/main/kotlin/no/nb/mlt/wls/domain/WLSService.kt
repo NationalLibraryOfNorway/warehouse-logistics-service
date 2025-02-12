@@ -25,6 +25,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
@@ -39,7 +40,8 @@ class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
-    private val inventoryNotifier: InventoryNotifier
+    private val inventoryNotifier: InventoryNotifier,
+    private val emailAdapter: EmailNotifier
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
@@ -97,8 +99,8 @@ class WLSService(
                 itemRepository.moveItem(
                     item.hostId,
                     item.hostName,
-                    pickedItem.quantity!!,
-                    pickedItem.location!!
+                    pickedItem.quantity,
+                    pickedItem.location
                 )
 
             inventoryNotifier.itemChanged(movedItem)
@@ -133,8 +135,9 @@ class WLSService(
             // TODO: Should we recover by updating the DB?
             throw ServerException("Order already exists in storage system but not in DB", e)
         }
-
         val order = orderRepository.createOrder(orderDTO.toOrder())
+        createAndSendEmails(order)
+
         return order
     }
 
@@ -224,5 +227,16 @@ class WLSService(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+    }
+
+    /**
+     * Email handling for order receivers and order handlers
+     */
+    private suspend fun createAndSendEmails(order: Order) {
+        val items = order.orderLine.map { it.hostId }
+        val orderItems = getItems(items, order.hostName)
+        if (orderItems.isNotEmpty()) {
+            emailAdapter.orderCreated(order, orderItems)
+        }
     }
 }

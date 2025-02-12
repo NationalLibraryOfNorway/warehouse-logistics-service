@@ -242,6 +242,8 @@ The following environment variables are relevant to configuring the application:
 - `MONGODB_DATABASE`: Is the name of the database that Hermes should use (required)
 - `MONGODB_URL`: Is the base URL at which a MongoDB instance runs (required)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (required)
+- `EMAIL_SERVER`: Is the URL used for the email adapters email server (optional)
+- `EMAIL_PORT`: Is the port used for the email server (optional)
 
 # Deployment
 

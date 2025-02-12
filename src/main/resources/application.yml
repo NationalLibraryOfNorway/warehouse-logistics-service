@@ -49,6 +49,11 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
+
 ---
 
 # This is the configuration for the local-dev profile
@@ -81,6 +86,12 @@ callback:
 synq:
   path:
     base: http://localhost:8181/synq/resources
+
+# Configures destination e-mails for receivers
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 ---
 
@@ -116,6 +127,12 @@ synq:
 callback:
   secret: ${CALLBACK_SECRET}
 
+# Configures destination e-mails for receivers
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
+
 ---
 
 # This is the configuration for the prod profile
@@ -149,6 +166,12 @@ synq:
 # Secret for the signature on callbacks in prod environment
 callback:
   secret: ${CALLBACK_SECRET}
+
+# Configures destination e-mails for receivers
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
 
 logging:
   level:
