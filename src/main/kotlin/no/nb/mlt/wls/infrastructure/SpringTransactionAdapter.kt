@@ -11,7 +11,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class SpringTransactionAdapter(
     private val transactionalOperator: TransactionalOperator
-): TransactionPort {
+) : TransactionPort {
     override suspend fun <T> executeInTransaction(action: suspend () -> T): T? {
         return transactionalOperator.executeAndAwait {
             action()

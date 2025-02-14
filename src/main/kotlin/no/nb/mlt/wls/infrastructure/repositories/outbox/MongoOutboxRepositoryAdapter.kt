@@ -15,7 +15,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class MongoOutboxRepositoryAdapter(
     private val mongoOutboxRepository: MongoOutboxRepository
-): OutboxRepository {
+) : OutboxRepository {
     override suspend fun save(outboxMessage: OutboxMessage): OutboxMessage {
         logger.info { "Saving outbox message" }
         return mongoOutboxRepository
@@ -52,8 +52,7 @@ class MongoOutboxRepositoryAdapter(
             .onErrorMap { RuntimeException("Could not fetch from outbox") }
             .awaitSingle()
     }
-
 }
 
 @Repository
-interface MongoOutboxRepository: ReactiveMongoRepository<MongoOutboxMessage, String>
+interface MongoOutboxRepository : ReactiveMongoRepository<MongoOutboxMessage, String>

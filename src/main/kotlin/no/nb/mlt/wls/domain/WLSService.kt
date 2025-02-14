@@ -24,7 +24,6 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
-import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository

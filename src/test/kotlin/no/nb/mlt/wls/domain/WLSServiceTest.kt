@@ -71,7 +71,6 @@ class WLSServiceTest {
 
             assertThat(itemResult).isEqualTo(expectedItem)
             coVerify(exactly = 1) { itemRepoMock.createItem(any()) }
-
         }
     }
 
@@ -101,7 +100,6 @@ class WLSServiceTest {
             assertThat(newItem).isEqualTo(testItem)
 
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
-
         }
     }
 
@@ -147,7 +145,6 @@ class WLSServiceTest {
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 1) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-
         }
     }
 
@@ -163,7 +160,6 @@ class WLSServiceTest {
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-
         }
     }
 
@@ -179,7 +175,6 @@ class WLSServiceTest {
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-
         }
     }
 
@@ -195,7 +190,6 @@ class WLSServiceTest {
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-
         }
     }
 
@@ -235,7 +229,6 @@ class WLSServiceTest {
             assertThat(order).isEqualTo(testOrder)
             assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
-
         }
     }
 
@@ -251,7 +244,6 @@ class WLSServiceTest {
                 cut.createOrder(createOrderDTO)
             }
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
-
         }
     }
 
@@ -267,7 +259,6 @@ class WLSServiceTest {
             cut.deleteOrder(HostName.AXIELL, "12345")
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 1) { orderRepoMock.deleteOrder(any(), any()) }
-
         }
     }
 

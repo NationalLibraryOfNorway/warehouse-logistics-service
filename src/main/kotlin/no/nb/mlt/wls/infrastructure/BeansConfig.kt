@@ -14,15 +14,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.mail.javamail.JavaMailSender
-import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
-import org.springframework.web.reactive.result.view.freemarker.FreeMarkerViewResolver
 import org.springframework.data.mongodb.ReactiveMongoDatabaseFactory
 import org.springframework.data.mongodb.ReactiveMongoTransactionManager
 import org.springframework.data.mongodb.config.EnableReactiveMongoAuditing
+import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.transaction.ReactiveTransactionManager
 import org.springframework.transaction.reactive.TransactionalOperator
-
+import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
+import org.springframework.web.reactive.result.view.freemarker.FreeMarkerViewResolver
 
 // TODO - Rename and split this file into relevant/specific configs?
 @Configuration
@@ -70,9 +69,7 @@ class BeansConfig {
     }
 
     @Bean
-    fun transactionalOperator(
-        reactiveTransactionManager: ReactiveTransactionManager
-    ): TransactionalOperator {
+    fun transactionalOperator(reactiveTransactionManager: ReactiveTransactionManager): TransactionalOperator {
         return TransactionalOperator.create(reactiveTransactionManager)
     }
 }

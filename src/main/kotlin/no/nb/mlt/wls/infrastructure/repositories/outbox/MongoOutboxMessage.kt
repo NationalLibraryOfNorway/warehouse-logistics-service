@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
 @Document(collection = "outbox")
-data class MongoOutboxMessage (
+data class MongoOutboxMessage(
     @CreatedDate
     val createdTimestamp: Instant = Instant.now(),
     val processedTimestamp: Instant? = null,

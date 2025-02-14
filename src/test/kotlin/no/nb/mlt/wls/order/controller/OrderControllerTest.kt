@@ -11,7 +11,6 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
-import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
@@ -21,7 +20,6 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.OrderCreatedMessage
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -29,7 +27,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxMessageMapper
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepository
 import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
@@ -69,6 +67,7 @@ class OrderControllerTest(
     @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
     @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
+    @Autowired val mongoOutboxRepository: MongoOutboxRepository,
     @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
 ) {
     @MockkBean
@@ -620,6 +619,7 @@ class OrderControllerTest(
 
     fun populateDb() {
         runBlocking {
+            mongoOutboxRepository.deleteAll().awaitSingleOrNull()
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database

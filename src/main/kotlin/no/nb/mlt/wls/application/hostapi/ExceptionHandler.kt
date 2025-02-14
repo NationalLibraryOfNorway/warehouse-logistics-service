@@ -14,13 +14,13 @@ import org.springframework.web.bind.support.WebExchangeBindException
 
 @RestControllerAdvice
 class ExceptionHandler {
-
     @ExceptionHandler(WebExchangeBindException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleMethodArgumentNotValidException(exception: WebExchangeBindException): ResponseEntity<ErrorMessage> {
-        val message = exception.bindingResult.fieldErrors.joinToString {
-            it.field + ":" + it.defaultMessage
-        }
+        val message =
+            exception.bindingResult.fieldErrors.joinToString {
+                it.field + ":" + it.defaultMessage
+            }
 
         return ResponseEntity
             .badRequest()
