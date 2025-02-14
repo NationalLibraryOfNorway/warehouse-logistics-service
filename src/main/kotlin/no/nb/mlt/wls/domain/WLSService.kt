@@ -5,6 +5,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.OrderCreatedMessage
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -19,7 +20,6 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
@@ -30,6 +30,7 @@ import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import java.time.Duration
 import java.util.concurrent.TimeoutException
@@ -41,6 +42,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
+    private val orderCreatedOutbox: OutboxRepository,
     private val emailAdapter: EmailNotifier
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -129,13 +131,8 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        try {
-            storageSystemFacade.createOrder(orderDTO.toOrder())
-        } catch (e: DuplicateResourceException) {
-            // TODO: Should we recover by updating the DB?
-            throw ServerException("Order already exists in storage system but not in DB", e)
-        }
         val order = orderRepository.createOrder(orderDTO.toOrder())
+        orderCreatedOutbox.save(OrderCreatedMessage(order))
         createAndSendEmails(order)
 
         return order

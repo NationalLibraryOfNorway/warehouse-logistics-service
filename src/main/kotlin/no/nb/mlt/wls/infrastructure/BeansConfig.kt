@@ -8,6 +8,7 @@ import no.nb.mlt.wls.infrastructure.email.EmailAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemRepositoryMongoAdapter
 import no.nb.mlt.wls.infrastructure.repositories.mail.MongoEmailRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -16,9 +17,16 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerViewResolver
+import org.springframework.data.mongodb.ReactiveMongoDatabaseFactory
+import org.springframework.data.mongodb.ReactiveMongoTransactionManager
+import org.springframework.data.mongodb.config.EnableReactiveMongoAuditing
+import org.springframework.transaction.ReactiveTransactionManager
+import org.springframework.transaction.reactive.TransactionalOperator
+
 
 // TODO - Rename and split this file into relevant/specific configs?
 @Configuration
+@EnableReactiveMongoAuditing
 class BeansConfig {
     @Bean
     fun addNewItem(
@@ -26,8 +34,9 @@ class BeansConfig {
         itemMongoAdapter: ItemRepositoryMongoAdapter,
         orderMongoAdapter: MongoOrderRepositoryAdapter,
         callbackHandler: InventoryNotifierAdapter,
+        orderCreatedOutbox: MongoOutboxRepositoryAdapter,
         emailAdapter: EmailNotifier
-    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, emailAdapter)
+    ) = WLSService(itemMongoAdapter, orderMongoAdapter, synqAdapter, callbackHandler, orderCreatedOutbox, emailAdapter)
 
     @ConditionalOnProperty("spring.mail.host")
     @Bean
@@ -53,5 +62,17 @@ class BeansConfig {
         val freeMarkerConfigurer = FreeMarkerConfigurer()
         freeMarkerConfigurer.setTemplateLoaderPath("classpath:/templates/email/")
         return freeMarkerConfigurer
+    }
+
+    @Bean
+    fun transactionManager(dbFactory: ReactiveMongoDatabaseFactory): ReactiveMongoTransactionManager {
+        return ReactiveMongoTransactionManager(dbFactory)
+    }
+
+    @Bean
+    fun transactionalOperator(
+        reactiveTransactionManager: ReactiveTransactionManager
+    ): TransactionalOperator {
+        return TransactionalOperator.create(reactiveTransactionManager)
     }
 }

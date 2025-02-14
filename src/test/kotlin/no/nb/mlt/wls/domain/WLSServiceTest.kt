@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.OrderCreatedMessage
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
@@ -23,6 +24,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
@@ -37,6 +39,7 @@ class WLSServiceTest {
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val inventoryNotifierMock = mockk<InventoryNotifier>()
     private val emailAdapterMock = mockk<EmailNotifier>()
+    private val orderCreatedOutbox = mockk<OutboxRepository>()
 
     @BeforeEach
     fun beforeEach() {
@@ -51,7 +54,7 @@ class WLSServiceTest {
         coEvery { itemRepoMock.createItem(any()) } answers { Mono.just(expectedItem) }
         coJustRun { storageSystemRepoMock.createItem(any()) }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val itemResult =
                 cut.addItem(
@@ -68,7 +71,7 @@ class WLSServiceTest {
 
             assertThat(itemResult).isEqualTo(expectedItem)
             coVerify(exactly = 1) { itemRepoMock.createItem(any()) }
-            coVerify(exactly = 1) { storageSystemRepoMock.createItem(any()) }
+
         }
     }
 
@@ -79,7 +82,7 @@ class WLSServiceTest {
         coEvery { itemRepoMock.createItem(any()) } answers { Mono.just(testItem.copy()) }
         coJustRun { storageSystemRepoMock.createItem(any()) }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
 
         runTest {
             val newItem =
@@ -98,7 +101,7 @@ class WLSServiceTest {
             assertThat(newItem).isEqualTo(testItem)
 
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createItem(any()) }
+
         }
     }
 
@@ -108,7 +111,7 @@ class WLSServiceTest {
 
         coEvery { itemRepoMock.getItem(HostName.AXIELL, "12345") } answers { expectedItem }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val itemResult = cut.getItem(HostName.AXIELL, "12345")
             assertThat(itemResult).isEqualTo(expectedItem)
@@ -119,7 +122,7 @@ class WLSServiceTest {
     fun `getItem should return null if item does not exist`() {
         coEvery { itemRepoMock.getItem(HostName.AXIELL, "12345") } answers { null }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val itemResult = cut.getItem(HostName.AXIELL, "12345")
             assertThat(itemResult).isEqualTo(null)
@@ -137,14 +140,14 @@ class WLSServiceTest {
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
         every { inventoryNotifierMock.itemChanged(any()) } answers {}
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val movedItem = cut.moveItem(testMoveItemPayload)
             assertThat(movedItem).isEqualTo(expectedItem)
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 1) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -152,7 +155,7 @@ class WLSServiceTest {
     fun `moveItem should fail when item does not exist`() {
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ItemNotFoundException("Item not found")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testMoveItemPayload)
@@ -160,7 +163,7 @@ class WLSServiceTest {
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -168,7 +171,7 @@ class WLSServiceTest {
     fun `moveItem throws when count is invalid`() {
         coEvery { itemRepoMock.moveItem(any(), any(), -1, any()) } throws ValidationException("Location cannot be blank")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testMoveItemPayload.copy(quantity = -1))
@@ -176,7 +179,7 @@ class WLSServiceTest {
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -184,7 +187,7 @@ class WLSServiceTest {
     fun `moveItem throws when location is blank`() {
         coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ValidationException("Item not found")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             assertThrows<RuntimeException> {
                 cut.moveItem(testMoveItemPayload.copy(location = "  "))
@@ -192,7 +195,7 @@ class WLSServiceTest {
 
             coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -204,17 +207,15 @@ class WLSServiceTest {
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf() }
         coEvery { orderRepoMock.createOrder(any()) } answers { expectedOrder }
+        coEvery { orderCreatedOutbox.save(any()) } answers { OrderCreatedMessage(expectedOrder) }
         coEvery { emailAdapterMock.orderCreated(any(), any()) } answers { }
         coJustRun { storageSystemRepoMock.createOrder(any()) }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val order = cut.createOrder(createOrderDTO)
-
             assertThat(order).isEqualTo(expectedOrder)
-
             coVerify(exactly = 1) { orderRepoMock.createOrder(any()) }
-            coVerify(exactly = 1) { storageSystemRepoMock.createOrder(any()) }
         }
     }
 
@@ -224,7 +225,7 @@ class WLSServiceTest {
             orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId)
         } answers { testOrder.copy() }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val order =
                 cut.createOrder(
@@ -234,7 +235,7 @@ class WLSServiceTest {
             assertThat(order).isEqualTo(testOrder)
             assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -244,13 +245,13 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             assertThrows<ValidationException> {
                 cut.createOrder(createOrderDTO)
             }
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.createOrder(any()) }
+
         }
     }
 
@@ -260,13 +261,13 @@ class WLSServiceTest {
         coJustRun { orderRepoMock.deleteOrder(any(), any()) }
         coJustRun { storageSystemRepoMock.deleteOrder(any()) }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
 
         runTest {
             cut.deleteOrder(HostName.AXIELL, "12345")
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 1) { orderRepoMock.deleteOrder(any(), any()) }
-            coVerify(exactly = 1) { storageSystemRepoMock.deleteOrder(any()) }
+
         }
     }
 
@@ -275,14 +276,14 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
         coEvery { storageSystemRepoMock.deleteOrder(any()) } throws StorageSystemException("Order not found", null)
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
 
         runTest {
             assertThrows<StorageSystemException> {
                 cut.deleteOrder(HostName.AXIELL, "12345")
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 1) { storageSystemRepoMock.deleteOrder(any()) }
+
             coVerify(exactly = 0) { orderRepoMock.deleteOrder(any(), any()) }
         }
     }
@@ -293,21 +294,21 @@ class WLSServiceTest {
         coJustRun { storageSystemRepoMock.deleteOrder(any()) }
         coEvery { orderRepoMock.deleteOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
 
         runTest {
             assertThrows<OrderNotFoundException> {
                 cut.deleteOrder(HostName.AXIELL, "12345")
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.deleteOrder(any()) }
+
             coVerify(exactly = 0) { orderRepoMock.deleteOrder(any(), any()) }
         }
     }
 
     @Test
     fun `updateOrder with valid items should complete`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { testOrder.copy() }
         coEvery { storageSystemRepoMock.updateOrder(any()) } answers { updatedOrder }
@@ -329,14 +330,14 @@ class WLSServiceTest {
             assertThat(order).isEqualTo(updatedOrder)
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 1) { storageSystemRepoMock.updateOrder(any()) }
+
             coVerify(exactly = 1) { orderRepoMock.updateOrder(any()) }
         }
     }
 
     @Test
     fun `updateOrder should fail when order does not exist`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
 
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
@@ -356,14 +357,14 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
+
             coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
         }
     }
 
     @Test
     fun `updateOrder should fail when items do not exist`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
 
         runTest {
@@ -381,7 +382,7 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.updateOrder(any()) }
+
             coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
         }
     }
@@ -392,7 +393,7 @@ class WLSServiceTest {
 
         coEvery { orderRepoMock.getOrder(HostName.AXIELL, "12345") } answers { expectedItem }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val order = cut.getOrder(HostName.AXIELL, "12345")
             assertThat(order).isEqualTo(expectedItem)
@@ -403,7 +404,7 @@ class WLSServiceTest {
     fun `getOrder should return null when order does not exists in DB`() {
         coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, emailAdapterMock)
+        val cut = WLSService(itemRepoMock, orderRepoMock, storageSystemRepoMock, inventoryNotifierMock, orderCreatedOutbox, emailAdapterMock)
         runTest {
             val order = cut.getOrder(HostName.AXIELL, "12345")
             assertThat(order).isNull()

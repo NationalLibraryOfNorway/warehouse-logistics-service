@@ -8,10 +8,25 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.bind.support.WebExchangeBindException
 
 @RestControllerAdvice
 class ExceptionHandler {
+
+    @ExceptionHandler(WebExchangeBindException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleMethodArgumentNotValidException(exception: WebExchangeBindException): ResponseEntity<ErrorMessage> {
+        val message = exception.bindingResult.fieldErrors.joinToString {
+            it.field + ":" + it.defaultMessage
+        }
+
+        return ResponseEntity
+            .badRequest()
+            .body(ErrorMessage(message))
+    }
+
     @ExceptionHandler(ValidationException::class)
     fun handleValidationException(e: ValidationException): ResponseEntity<ErrorMessage> {
         return ResponseEntity

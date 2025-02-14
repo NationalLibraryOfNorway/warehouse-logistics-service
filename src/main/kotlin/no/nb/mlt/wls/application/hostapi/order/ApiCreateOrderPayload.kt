@@ -2,11 +2,13 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import org.apache.commons.validator.routines.UrlValidator
+import org.hibernate.validator.constraints.URL
 
 @Schema(
     description = """Payload for creating orders in Hermes WLS, and appropriate storage system(s).""",
@@ -40,16 +42,19 @@ data class ApiCreateOrderPayload(
         description = """Name of the host system which made the order.""",
         examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
+    @field:NotNull
     val hostName: HostName,
     @Schema(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
+    @field:NotEmpty()
     val hostOrderId: String,
     @Schema(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
+    @field:NotEmpty
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
@@ -64,6 +69,7 @@ data class ApiCreateOrderPayload(
         description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
+    @field:NotEmpty
     val contactPerson: String,
     @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
@@ -80,6 +86,9 @@ data class ApiCreateOrderPayload(
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
+    @field:NotEmpty
+    @field:URL
+    @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
 ) {
     fun toCreateOrderDTO() =
@@ -93,32 +102,6 @@ data class ApiCreateOrderPayload(
             note = note,
             callbackUrl = callbackUrl
         )
-
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (hostOrderId.isBlank()) {
-            throw ValidationException("The order's hostOrderId is required, and can not be blank")
-        }
-
-        if (orderLine.isEmpty()) {
-            throw ValidationException("The order must have at least one order line")
-        }
-
-        if (!isValidUrl(callbackUrl)) {
-            throw ValidationException("The order's callback URL is required, and must be a valid URL")
-        }
-
-        orderLine.forEach(OrderLine::validate)
-        address?.validate()
-    }
-
-    private fun isValidUrl(url: String): Boolean {
-        // Yes I am aware that this function is duplicated in three places
-        // But I prefer readability over DRY in cases like this
-
-        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
-        return validator.isValid(url)
-    }
 }
 
 fun Order.toCreateApiOrderPayload() =

@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.hostapi.order
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
@@ -9,10 +10,11 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import no.nb.mlt.wls.application.WLSApplicationService
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -32,14 +34,16 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
+private val logger = KotlinLogging.logger {}
+
 @RestController
 @RequestMapping(path = ["/v1"])
 @Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
 class OrderController(
-    private val createOrder: CreateOrder,
     private val getOrder: GetOrder,
     private val deleteOrder: DeleteOrder,
-    private val updateOrder: UpdateOrder
+    private val updateOrder: UpdateOrder,
+    private val wlsApplicationService: WLSApplicationService
 ) {
     @Operation(
         summary = "Creates an order for items from the storage system",
@@ -136,24 +140,15 @@ class OrderController(
     @PostMapping("/order")
     suspend fun createOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiCreateOrderPayload
+        @RequestBody @Valid payload: ApiCreateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
 
-        payload.validate()
-
-        // Return 200 OK and existing order if it exists
-        getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
-            return ResponseEntity
-                .status(HttpStatus.OK)
-                .body(it.toApiOrderPayload())
-        }
-
-        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
+        val result = wlsApplicationService.createOrder(payload.toCreateOrderDTO())
 
         return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(createdOrder.toApiOrderPayload())
+            .status(if (result.isNew) HttpStatus.CREATED else HttpStatus.OK)
+            .body(result.order.toApiOrderPayload())
     }
 
     @Operation(
