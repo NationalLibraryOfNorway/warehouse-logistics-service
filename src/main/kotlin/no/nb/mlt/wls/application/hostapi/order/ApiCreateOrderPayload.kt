@@ -48,13 +48,13 @@ data class ApiCreateOrderPayload(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
-    @field:NotEmpty()
+    @field:NotEmpty(message = "The order's hostOrderId is required, and can not be blank")
     val hostOrderId: String,
     @Schema(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
-    @field:NotEmpty
+    @field:NotEmpty(message = "The order must have at least one order line")
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
@@ -86,8 +86,8 @@ data class ApiCreateOrderPayload(
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
-    @field:NotEmpty
-    @field:URL
+    @field:NotEmpty(message = "The callback URL is required, and can not be blank")
+    @field:URL(message = "The callback URL must be a valid URL")
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
 ) {
