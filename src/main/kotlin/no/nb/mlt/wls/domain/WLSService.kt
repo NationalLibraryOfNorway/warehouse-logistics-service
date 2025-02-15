@@ -1,11 +1,12 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.OrderCreatedMessage
+import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -31,8 +32,6 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import java.time.Duration
-import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
 
@@ -41,7 +40,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
-    private val orderCreatedOutbox: OutboxRepository,
+    private val outboxRepository: OutboxRepository,
     private val emailAdapter: EmailNotifier
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -50,18 +49,10 @@ class WLSService(
             return it
         }
 
-        val item = itemMetadata.toItem()
-        // TODO - Should we handle the case where the item is saved in storage system but not in WLS database?
-        storageSystemFacade.createItem(item)
-        return itemRepository.createItem(item)
-            // TODO - See if timeouts can be made configurable
-            .timeout(Duration.ofSeconds(6))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while saving to WLS database, but saved in storage system. item: $itemMetadata"
-                }
-            }
-            .awaitSingle()
+        val createdItem = itemRepository.createItem(itemMetadata.toItem())
+        outboxRepository.save(ItemCreated(createdItem))
+
+        return createdItem
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
@@ -121,7 +112,7 @@ class WLSService(
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
         orderRepository.getOrder(orderDTO.hostName, orderDTO.hostOrderId)?.let {
-            logger.info { "Order already exists: $it" }
+            logger.info { "Order already exists: $it, returning existing order" }
             return it
         }
 
@@ -131,7 +122,7 @@ class WLSService(
         }
 
         val order = orderRepository.createOrder(orderDTO.toOrder())
-        orderCreatedOutbox.save(OrderCreatedMessage(order))
+        outboxRepository.save(OrderCreated(order))
         createAndSendEmails(order)
 
         return order
@@ -165,16 +156,19 @@ class WLSService(
         val order = getOrderOrThrow(hostName, hostOrderId)
 
         val updatedOrder =
-            order.updateOrder(
-                itemIds = itemHostIds,
-                callbackUrl = callbackUrl,
-                orderType = orderType,
-                address = address ?: order.address,
-                note = note,
-                contactPerson = contactPerson
+            orderRepository.updateOrder(
+                order.updateOrder(
+                    itemIds = itemHostIds,
+                    callbackUrl = callbackUrl,
+                    orderType = orderType,
+                    address = address ?: order.address,
+                    note = note,
+                    contactPerson = contactPerson
+                )
             )
-        val result = storageSystemFacade.updateOrder(updatedOrder)
-        return orderRepository.updateOrder(result)
+        outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+
+        return updatedOrder
     }
 
     override suspend fun getOrder(

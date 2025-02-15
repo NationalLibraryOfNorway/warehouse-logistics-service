@@ -17,10 +17,11 @@ class MongoOutboxRepositoryAdapter(
     private val mongoOutboxRepository: MongoOutboxRepository
 ) : OutboxRepository {
     override suspend fun save(outboxMessage: OutboxMessage): OutboxMessage {
-        logger.info { "Saving outbox message" }
+        val mongoMessage = MongoOutboxMessage(body = outboxMessage)
         return mongoOutboxRepository
-            .save(MongoOutboxMessageMapper.mapToMongoOutboxMessage(outboxMessage))
-            .map { MongoOutboxMessageMapper.mapFromMongoOutboxMessage(it) }
+            .save(mongoMessage)
+            .map { it.body }
+            .doOnEach { logger.info { "Saved outbox message: $it" } }
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
@@ -30,14 +31,12 @@ class MongoOutboxRepositoryAdapter(
                         "Error while saving to outbox"
                     }
                 }
-            }
-            .onErrorMap { RuntimeException("Could not save to outbox") }
-            .awaitSingle()
+            }.awaitSingle()
     }
 
     override suspend fun getAll(): List<OutboxMessage> {
         return mongoOutboxRepository.findAll()
-            .map { MongoOutboxMessageMapper.mapFromMongoOutboxMessage(it) }
+            .map { it.body }
             .collectList()
             .timeout(Duration.ofSeconds(8))
             .doOnError {

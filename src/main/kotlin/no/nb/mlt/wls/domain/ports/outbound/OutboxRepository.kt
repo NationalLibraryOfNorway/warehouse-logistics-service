@@ -6,4 +6,6 @@ interface OutboxRepository {
     suspend fun getAll(): List<OutboxMessage>
 }
 
-interface OutboxMessage
+interface OutboxMessage {
+    val body: Any
+}

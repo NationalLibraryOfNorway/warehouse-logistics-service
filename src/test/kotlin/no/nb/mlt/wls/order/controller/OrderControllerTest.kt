@@ -18,8 +18,8 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.OrderCreatedMessage
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -111,11 +111,11 @@ class OrderControllerTest(
 
             assertThat(outbox)
                 .hasSize(1)
-                .filteredOn { it is OrderCreatedMessage }
+                .filteredOn { it is OrderCreated }
                 .first()
                 .matches {
-                    val message = it as OrderCreatedMessage
-                    message.order == testOrderPayload.toOrder()
+                    val message = it as OrderCreated
+                    message.createdOrder == testOrderPayload.toOrder()
                 }
 
             assertThat(order)

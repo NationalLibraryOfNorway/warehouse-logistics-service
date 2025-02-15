@@ -183,28 +183,6 @@ class ItemControllerTest(
             .expectStatus().isForbidden
     }
 
-    @Test
-    fun `createItem handles SynQ error`() {
-        coEvery {
-            synqAdapterMock.createItem(any())
-        }.throws(
-            ServerErrorException(
-                "Failed to create item in SynQ, the storage system responded with " +
-                    "error code: '1002' and error text: 'Unknown item category TEST.'",
-                HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
-            )
-        )
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload)
-            .exchange()
-            .expectStatus().is5xxServerError
-    }
-
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////

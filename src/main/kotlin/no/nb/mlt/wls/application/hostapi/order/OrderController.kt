@@ -269,15 +269,15 @@ class OrderController(
         payload.validate()
 
         val updatedOrder =
-            updateOrder.updateOrder(
-                hostName = payload.hostName,
-                hostOrderId = payload.hostOrderId,
-                itemHostIds = payload.orderLine.map { it.hostId },
-                orderType = payload.orderType,
-                contactPerson = payload.contactPerson,
-                address = payload.address,
-                note = payload.note,
-                callbackUrl = payload.callbackUrl
+            wlsApplicationService.updateOrder(
+                payload.hostName,
+                payload.hostOrderId,
+                payload.orderLine.map { it.hostId },
+                payload.orderType,
+                payload.contactPerson,
+                payload.callbackUrl,
+                payload.address,
+                payload.note
             )
 
         return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
