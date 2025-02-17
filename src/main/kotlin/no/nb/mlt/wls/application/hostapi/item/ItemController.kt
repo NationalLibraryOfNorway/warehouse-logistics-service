@@ -12,8 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import no.nb.mlt.wls.application.WLSApplicationService
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
-import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
-import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
