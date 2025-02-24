@@ -1,12 +1,17 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -43,25 +48,23 @@ class WLSService(
     private val transactionPort: TransactionPort,
     private val outboxMessageProcessor: OutboxMessageProcessor
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
+    private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
             return it
         }
 
-        val (createdItem, outboxMessage) = transactionPort.executeInTransaction {
-            val createdItem = itemRepository.createItem(itemMetadata.toItem())
-            val message= outboxRepository.save(ItemCreated(createdItem))
+        val (createdItem, outboxMessage) =
+            transactionPort.executeInTransaction {
+                val createdItem = itemRepository.createItem(itemMetadata.toItem())
+                val message = outboxRepository.save(ItemCreated(createdItem))
 
-            return@executeInTransaction (createdItem to message)
-        } ?: throw RuntimeException("Could not create item")
+                return@executeInTransaction (createdItem to message)
+            } ?: throw RuntimeException("Could not create item")
 
-        try {
-            outboxMessageProcessor.handleEvent(outboxMessage)
-        } catch (e: Exception) {
-            logger.error(e) { "Error while processing outbox message: $outboxMessage" }
-        }
-
+        processMessage(outboxMessage)
         return createdItem
     }
 
@@ -131,20 +134,15 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val (order, orderUpdatedMessage) = transactionPort.executeInTransaction {
-            val order = orderRepository.createOrder(orderDTO.toOrder())
-            val orderUpdatedMessage = outboxRepository.save(OrderUpdated(updatedOrder = order))
+        val (order, orderUpdatedMessage) =
+            transactionPort.executeInTransaction {
+                val order = orderRepository.createOrder(orderDTO.toOrder())
+                val orderUpdatedMessage = outboxRepository.save(OrderUpdated(updatedOrder = order))
 
-            return@executeInTransaction (order to orderUpdatedMessage)
-        } ?: throw RuntimeException("Could not create order")
+                return@executeInTransaction (order to orderUpdatedMessage)
+            } ?: throw RuntimeException("Could not create order")
 
-        try {
-            outboxMessageProcessor.handleEvent(orderUpdatedMessage)
-        } catch (e: Exception) {
-            logger.error(e) {
-                "Error while processing outbox message: $orderUpdatedMessage. Try again later"
-            }
-        }
+        processMessage(orderUpdatedMessage)
 
         return order
     }
@@ -155,10 +153,11 @@ class WLSService(
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
         order.deleteOrder()
-        val outBoxMessage = transactionPort.executeInTransaction {
-            orderRepository.deleteOrder(hostName, hostOrderId)
-            outboxRepository.save(OrderDeleted(hostName, hostOrderId))
-        } ?: throw RuntimeException("Could not delete order")
+        val outBoxMessage =
+            transactionPort.executeInTransaction {
+                orderRepository.deleteOrder(hostName, hostOrderId)
+                outboxRepository.save(OrderDeleted(hostName, hostOrderId))
+            } ?: throw RuntimeException("Could not delete order")
 
         outboxMessageProcessor.handleEvent(outBoxMessage)
     }
@@ -181,27 +180,24 @@ class WLSService(
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        val (updatedOrder, outboxMessage) = transactionPort.executeInTransaction {
-            val updatedOrder =
-                orderRepository.updateOrder(
-                    order.updateOrder(
-                        itemIds = itemHostIds,
-                        callbackUrl = callbackUrl,
-                        orderType = orderType,
-                        address = address ?: order.address,
-                        note = note,
-                        contactPerson = contactPerson
+        val (updatedOrder, outboxMessage) =
+            transactionPort.executeInTransaction {
+                val updatedOrder =
+                    orderRepository.updateOrder(
+                        order.updateOrder(
+                            itemIds = itemHostIds,
+                            callbackUrl = callbackUrl,
+                            orderType = orderType,
+                            address = address ?: order.address,
+                            note = note,
+                            contactPerson = contactPerson
+                        )
                     )
-                )
-            val message = outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
-            return@executeInTransaction(updatedOrder to message)
-        } ?: throw RuntimeException("Could not update order")
+                val message = outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+                return@executeInTransaction (updatedOrder to message)
+            } ?: throw RuntimeException("Could not update order")
 
-        try {
-            outboxMessageProcessor.handleEvent(outboxMessage)
-        } catch (e: Exception) {
-            logger.error(e) { "Error while processing outbox message: $outboxMessage" }
-        }
+        processMessage(outboxMessage)
 
         return updatedOrder
     }
@@ -254,5 +250,14 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-
+    fun processMessage(outboxMessage: OutboxMessage) =
+        coroutineContext.launch {
+            try {
+                outboxMessageProcessor.handleEvent(outboxMessage)
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Error while processing outbox message: $outboxMessage. Try again later"
+                }
+            }
+        }
 }
