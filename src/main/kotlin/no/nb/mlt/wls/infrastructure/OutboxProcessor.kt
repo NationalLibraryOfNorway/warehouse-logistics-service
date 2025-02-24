@@ -39,11 +39,30 @@ class OutboxProcessor(
             is ItemCreated -> handleItemCreated(event)
             is OrderCreated -> handleOrderCreated(event)
             is OrderDeleted -> TODO("Deleting orders is not implemented yet.")
-            is OrderUpdated -> TODO("OrderUpdated is not implemented yet.")
+            is OrderUpdated -> handleOrderUpdated(event)
         }
 
         val processedEvent = outboxRepository.markAsProcessed(event)
         logger.info { "Marked event as processed: $processedEvent" }
+    }
+
+    private suspend fun handleOrderUpdated(event: OrderUpdated) {
+        logger.info { "Processing OrderUpdated: $event" }
+        val updatedOrder = event.updatedOrder
+        val items =
+            itemRepository.getItems(
+                updatedOrder.orderLine.map { it.hostId },
+                updatedOrder.hostName
+            )
+
+        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
+            if (storageSystemFacade == null) {
+                logger.info { "Could not find a storage system to handle items: $itemList" }
+            }
+            storageSystemFacade?.updateOrder(updatedOrder)
+            // TODO - How to handle emails when an order is updated?
+            // createAndSendEmails(order)
+        }
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
