@@ -257,7 +257,9 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
         coJustRun { orderRepoMock.deleteOrder(any(), any()) }
         coJustRun { storageSystemRepoMock.deleteOrder(any()) }
-        coEvery { outboxRepository.save(OrderDeleted(testOrder.hostName, testOrder.hostOrderId)) } answers { OrderDeleted(testOrder.hostName, testOrder.hostOrderId) }
+        coEvery {
+            outboxRepository.save(OrderDeleted(testOrder.hostName, testOrder.hostOrderId))
+        } answers { OrderDeleted(testOrder.hostName, testOrder.hostOrderId) }
 
         val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
 

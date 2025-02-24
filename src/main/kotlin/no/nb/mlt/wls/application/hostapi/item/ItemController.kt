@@ -140,7 +140,6 @@ class ItemController(
 
         val itemCreated = addNewItem.addItem(payload.toItemMetadata())
 
-
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(itemCreated.toApiPayload())

@@ -4,7 +4,6 @@ import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
-import io.mockk.mockk
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
@@ -300,7 +299,6 @@ class OrderControllerTest(
         val testOrder = testOrderPayload.toOrder()
 
         runTest {
-
             coEvery { outboxRepository.save(OrderCreated(testOrder)) } throws RuntimeException("Testing: Failed to save outbox message")
 
             webTestClient

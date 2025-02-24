@@ -275,16 +275,17 @@ class OrderController(
         jwt.checkIfAuthorized(payload.hostName)
         payload.validate()
 
-        val updatedOrder = updateOrder.updateOrder(
-            hostName = payload.hostName,
-            hostOrderId = payload.hostOrderId,
-            itemHostIds = payload.orderLine.map { it.hostId },
-            orderType = payload.orderType,
-            contactPerson = payload.contactPerson,
-            address = payload.address,
-            note = payload.note,
-            callbackUrl = payload.callbackUrl
-        )
+        val updatedOrder =
+            updateOrder.updateOrder(
+                hostName = payload.hostName,
+                hostOrderId = payload.hostOrderId,
+                itemHostIds = payload.orderLine.map { it.hostId },
+                orderType = payload.orderType,
+                contactPerson = payload.contactPerson,
+                address = payload.address,
+                note = payload.note,
+                callbackUrl = payload.callbackUrl
+            )
 
         return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }
