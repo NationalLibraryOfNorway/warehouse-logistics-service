@@ -25,8 +25,7 @@ class OutboxProcessor(
     private val storageSystems: List<StorageSystemFacade>,
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
-): OutboxMessageProcessor {
-
+) : OutboxMessageProcessor {
     // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
@@ -37,7 +36,7 @@ class OutboxProcessor(
 
     override suspend fun handleEvent(event: OutboxMessage) {
         when (event) {
-            is ItemCreated -> TODO("ItemCreated is not implemented yet.")
+            is ItemCreated -> handleItemCreated(event)
             is OrderCreated -> handleOrderCreated(event)
             is OrderDeleted -> TODO("Deleting orders is not implemented yet.")
             is OrderUpdated -> TODO("OrderUpdated is not implemented yet.")
@@ -47,32 +46,44 @@ class OutboxProcessor(
         logger.info { "Marked event as processed: $processedEvent" }
     }
 
+    private suspend fun handleItemCreated(event: ItemCreated) {
+        logger.info { "Processing ItemCreated: $event" }
+        val item = event.createdItem
+        storageSystems.forEach { storageSystem ->
+            if (storageSystem.canHandleLocation(item.location)) {
+                storageSystem.createItem(item)
+            }
+        }
+    }
+
     private suspend fun handleOrderCreated(event: OrderCreated) {
         logger.info { "Processing OrderCreated: $event" }
         val createdOrder = event.createdOrder
 
-        val items = itemRepository.getItems(
-            createdOrder.orderLine.map { it.hostId },
-            createdOrder.hostName
-        )
+        val items =
+            itemRepository.getItems(
+                createdOrder.orderLine.map { it.hostId },
+                createdOrder.hostName
+            )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
                 logger.info { "Could not find a storage system to handle items: $itemList" }
             }
 
-            val orderCopy = createdOrder.copy(
-                orderLine = itemList.map {
-                    Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-                }
-            )
+            val orderCopy =
+                createdOrder.copy(
+                    orderLine =
+                        itemList.map {
+                            Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                        }
+                )
             storageSystemFacade?.createOrder(orderCopy)
             createAndSendEmails(orderCopy)
         }
-
     }
 
-    private suspend fun mapItemsOnLocation(items : List<Item>) : Map<StorageSystemFacade?, List<Item>> {
+    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> {
         return items.groupBy { item ->
             storageSystems.firstOrNull { it.canHandleLocation(item.location) }
         }
