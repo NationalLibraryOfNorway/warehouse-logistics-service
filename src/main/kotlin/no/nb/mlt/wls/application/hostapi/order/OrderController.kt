@@ -11,13 +11,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import no.nb.mlt.wls.application.WLSApplicationService
+import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
-import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import org.springframework.http.HttpStatus
@@ -41,9 +41,9 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
 class OrderController(
     private val getOrder: GetOrder,
-    private val deleteOrder: DeleteOrder,
+    private val createOrder: CreateOrder,
     private val updateOrder: UpdateOrder,
-    private val wlsApplicationService: WLSApplicationService
+    private val deleteOrder: DeleteOrder
 ) {
     @Operation(
         summary = "Creates an order for items from the storage system",
@@ -144,11 +144,18 @@ class OrderController(
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
 
-        val result = wlsApplicationService.createOrder(payload.toCreateOrderDTO())
+        getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
+            logger.debug { "Order already exists: $it" }
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(it.toApiOrderPayload())
+        }
+
+        val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
 
         return ResponseEntity
-            .status(if (result.isNew) HttpStatus.CREATED else HttpStatus.OK)
-            .body(result.order.toApiOrderPayload())
+            .status(HttpStatus.CREATED)
+            .body(createdOrder.toApiOrderPayload())
     }
 
     @Operation(
@@ -268,17 +275,16 @@ class OrderController(
         jwt.checkIfAuthorized(payload.hostName)
         payload.validate()
 
-        val updatedOrder =
-            wlsApplicationService.updateOrder(
-                payload.hostName,
-                payload.hostOrderId,
-                payload.orderLine.map { it.hostId },
-                payload.orderType,
-                payload.contactPerson,
-                payload.callbackUrl,
-                payload.address,
-                payload.note
-            )
+        val updatedOrder = updateOrder.updateOrder(
+            hostName = payload.hostName,
+            hostOrderId = payload.hostOrderId,
+            itemHostIds = payload.orderLine.map { it.hostId },
+            orderType = payload.orderType,
+            contactPerson = payload.contactPerson,
+            address = payload.address,
+            note = payload.note,
+            callbackUrl = payload.callbackUrl
+        )
 
         return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
     }
@@ -311,23 +317,11 @@ class OrderController(
     @DeleteMapping("/order/{hostName}/{hostOrderId}")
     suspend fun deleteOrder(
         @PathVariable hostName: HostName,
-        @PathVariable hostOrderId: String,
+        @PathVariable @NotBlank hostOrderId: String,
         @AuthenticationPrincipal jwt: JwtAuthenticationToken
     ): ResponseEntity<String> {
         jwt.checkIfAuthorized(hostName)
-
-        if (hostOrderId.isBlank()) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body("The order's hostOrderId is required, and can not be blank")
-        }
-
-        try {
-            deleteOrder.deleteOrder(hostName, hostOrderId)
-        } catch (_: OrderNotFoundException) {
-            return ResponseEntity.notFound().build()
-        }
-
+        deleteOrder.deleteOrder(hostName, hostOrderId)
         return ResponseEntity.ok().build()
     }
 }

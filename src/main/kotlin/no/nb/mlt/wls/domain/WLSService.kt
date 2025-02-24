@@ -5,7 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
@@ -25,23 +25,23 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 
 private val logger = KotlinLogging.logger {}
 
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
     private val outboxRepository: OutboxRepository,
-    private val emailAdapter: EmailNotifier
+    private val transactionPort: TransactionPort,
+    private val outboxMessageProcessor: OutboxMessageProcessor
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
@@ -49,8 +49,18 @@ class WLSService(
             return it
         }
 
-        val createdItem = itemRepository.createItem(itemMetadata.toItem())
-        outboxRepository.save(ItemCreated(createdItem))
+        val (createdItem, outboxMessage) = transactionPort.executeInTransaction {
+            val createdItem = itemRepository.createItem(itemMetadata.toItem())
+            val message= outboxRepository.save(ItemCreated(createdItem))
+
+            return@executeInTransaction (createdItem to message)
+        } ?: throw RuntimeException("Could not create item")
+
+        try {
+            outboxMessageProcessor.handleEvent(outboxMessage)
+        } catch (e: Exception) {
+            logger.error(e) { "Error while processing outbox message: $outboxMessage" }
+        }
 
         return createdItem
     }
@@ -121,9 +131,20 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val order = orderRepository.createOrder(orderDTO.toOrder())
-        outboxRepository.save(OrderCreated(order))
-        createAndSendEmails(order)
+        val (order, orderUpdatedMessage) = transactionPort.executeInTransaction {
+            val order = orderRepository.createOrder(orderDTO.toOrder())
+            val orderUpdatedMessage = outboxRepository.save(OrderUpdated(updatedOrder = order))
+
+            return@executeInTransaction (order to orderUpdatedMessage)
+        } ?: throw RuntimeException("Could not create order")
+
+        try {
+            outboxMessageProcessor.handleEvent(orderUpdatedMessage)
+        } catch (e: Exception) {
+            logger.error(e) {
+                "Error while processing outbox message: $orderUpdatedMessage. Try again later"
+            }
+        }
 
         return order
     }
@@ -134,8 +155,12 @@ class WLSService(
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
         order.deleteOrder()
-        storageSystemFacade.deleteOrder(order)
-        orderRepository.deleteOrder(hostName, hostOrderId)
+        val outBoxMessage = transactionPort.executeInTransaction {
+            orderRepository.deleteOrder(hostName, hostOrderId)
+            outboxRepository.save(OrderDeleted(hostName, hostOrderId))
+        } ?: throw RuntimeException("Could not delete order")
+
+        outboxMessageProcessor.handleEvent(outBoxMessage)
     }
 
     override suspend fun updateOrder(
@@ -149,24 +174,34 @@ class WLSService(
         callbackUrl: String
     ): Order {
         val itemIds = itemHostIds.map { ItemId(hostName, it) }
+
         if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        val updatedOrder =
-            orderRepository.updateOrder(
-                order.updateOrder(
-                    itemIds = itemHostIds,
-                    callbackUrl = callbackUrl,
-                    orderType = orderType,
-                    address = address ?: order.address,
-                    note = note,
-                    contactPerson = contactPerson
+        val (updatedOrder, outboxMessage) = transactionPort.executeInTransaction {
+            val updatedOrder =
+                orderRepository.updateOrder(
+                    order.updateOrder(
+                        itemIds = itemHostIds,
+                        callbackUrl = callbackUrl,
+                        orderType = orderType,
+                        address = address ?: order.address,
+                        note = note,
+                        contactPerson = contactPerson
+                    )
                 )
-            )
-        outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+            val message = outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+            return@executeInTransaction(updatedOrder to message)
+        } ?: throw RuntimeException("Could not update order")
+
+        try {
+            outboxMessageProcessor.handleEvent(outboxMessage)
+        } catch (e: Exception) {
+            logger.error(e) { "Error while processing outbox message: $outboxMessage" }
+        }
 
         return updatedOrder
     }
@@ -219,14 +254,5 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    /**
-     * Email handling for order receivers and order handlers
-     */
-    private suspend fun createAndSendEmails(order: Order) {
-        val items = order.orderLine.map { it.hostId }
-        val orderItems = getItems(items, order.hostName)
-        if (orderItems.isNotEmpty()) {
-            emailAdapter.orderCreated(order, orderItems)
-        }
-    }
+
 }

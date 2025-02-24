@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.infrastructure.repositories.outbox
 
-import no.nb.mlt.wls.domain.ports.outbound.OutboxMessage
+import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant

@@ -10,8 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import no.nb.mlt.wls.application.WLSApplicationService
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
+import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -27,7 +28,8 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 @RequestMapping(path = ["/v1"])
 @Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
 class ItemController(
-    private val wlsApplicationService: WLSApplicationService
+    private val getItem: GetItem,
+    private val addNewItem: AddNewItem
 ) {
     @Operation(
         summary = "Register an item in Hermes",
@@ -129,10 +131,18 @@ class ItemController(
         @RequestBody @Valid payload: ApiCreateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(payload.hostName)
-        val itemCreated = wlsApplicationService.createItem(payload.toItemMetadata())
+
+        getItem.getItem(payload.hostName, payload.hostId)?.let {
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(it.toApiPayload())
+        }
+
+        val itemCreated = addNewItem.addItem(payload.toItemMetadata())
+
 
         return ResponseEntity
-            .status(if (itemCreated.isNew) HttpStatus.CREATED else HttpStatus.OK)
-            .body(itemCreated.item.toApiPayload())
+            .status(HttpStatus.CREATED)
+            .body(itemCreated.toApiPayload())
     }
 }

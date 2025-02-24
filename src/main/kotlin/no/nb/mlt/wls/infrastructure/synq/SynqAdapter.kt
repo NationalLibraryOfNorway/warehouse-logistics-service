@@ -92,6 +92,10 @@ class SynqAdapter(
             .onErrorMap(WebClientResponseException::class.java, ::createServerError)
             .awaitSingle()
     }
+
+    override suspend fun canHandleLocation(location: String): Boolean {
+        TODO("Not yet implemented")
+    }
 }
 
 /**

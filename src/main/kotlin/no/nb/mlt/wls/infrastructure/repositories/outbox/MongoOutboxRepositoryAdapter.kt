@@ -2,7 +2,7 @@ package no.nb.mlt.wls.infrastructure.repositories.outbox
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.ports.outbound.OutboxMessage
+import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.stereotype.Component
@@ -50,6 +50,14 @@ class MongoOutboxRepositoryAdapter(
             }
             .onErrorMap { RuntimeException("Could not fetch from outbox") }
             .awaitSingle()
+    }
+
+    override suspend fun getUnprocessedSortedByCreatedTime(): List<OutboxMessage> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun markAsProcessed(outboxMessage: OutboxMessage): OutboxMessage {
+        TODO("Not yet implemented")
     }
 }
 
