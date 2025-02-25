@@ -96,6 +96,11 @@ class SynqAdapter(
     override suspend fun canHandleLocation(location: String): Boolean {
         TODO("Not yet implemented")
     }
+
+    override fun canHandleItem(item: Item): Boolean {
+        // TODO - Handle item categories based on ruleset
+        return true
+    }
 }
 
 /**

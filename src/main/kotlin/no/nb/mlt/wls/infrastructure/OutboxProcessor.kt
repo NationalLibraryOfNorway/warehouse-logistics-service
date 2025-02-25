@@ -38,12 +38,16 @@ class OutboxProcessor(
         when (event) {
             is ItemCreated -> handleItemCreated(event)
             is OrderCreated -> handleOrderCreated(event)
-            is OrderDeleted -> TODO("Deleting orders is not implemented yet.")
+            is OrderDeleted -> handleOrderDeleted(event)
             is OrderUpdated -> handleOrderUpdated(event)
         }
 
         val processedEvent = outboxRepository.markAsProcessed(event)
         logger.info { "Marked event as processed: $processedEvent" }
+    }
+
+    private fun handleOrderDeleted(event: OrderDeleted) {
+        TODO("Not yet implemented")
     }
 
     private suspend fun handleOrderUpdated(event: OrderUpdated) {
@@ -68,10 +72,13 @@ class OutboxProcessor(
     private suspend fun handleItemCreated(event: ItemCreated) {
         logger.info { "Processing ItemCreated: $event" }
         val item = event.createdItem
-        storageSystems.forEach { storageSystem ->
-            if (storageSystem.canHandleLocation(item.location)) {
-                storageSystem.createItem(item)
-            }
+        val storageCandidates = mapCanStorageHandle(item)
+        if (storageCandidates.isEmpty()) {
+            logger.info { "Could not find a storage system to handle item: $item" }
+            return
+        }
+        storageCandidates.forEach {
+            it.createItem(item)
         }
     }
 
@@ -105,6 +112,15 @@ class OutboxProcessor(
     private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> {
         return items.groupBy { item ->
             storageSystems.firstOrNull { it.canHandleLocation(item.location) }
+        }
+    }
+
+    private suspend fun mapCanStorageHandle(item: Item): List<StorageSystemFacade> {
+        return storageSystems.mapNotNull {
+            if (it.canHandleLocation(item.location)) {
+                return@mapNotNull it
+            }
+            null
         }
     }
 
