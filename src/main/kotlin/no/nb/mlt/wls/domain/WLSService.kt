@@ -9,6 +9,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
@@ -134,15 +135,15 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val (order, orderUpdatedMessage) =
+        val (order, orderCreatedMessage) =
             transactionPort.executeInTransaction {
                 val order = orderRepository.createOrder(orderDTO.toOrder())
-                val orderUpdatedMessage = outboxRepository.save(OrderUpdated(updatedOrder = order))
+                val orderCreatedMessage = outboxRepository.save(OrderCreated(createdOrder = order))
 
-                return@executeInTransaction (order to orderUpdatedMessage)
+                return@executeInTransaction (order to orderCreatedMessage)
             } ?: throw RuntimeException("Could not create order")
 
-        processMessage(orderUpdatedMessage)
+        processMessage(orderCreatedMessage)
 
         return order
     }
@@ -250,7 +251,7 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    fun processMessage(outboxMessage: OutboxMessage) =
+    private fun processMessage(outboxMessage: OutboxMessage) =
         coroutineContext.launch {
             try {
                 outboxMessageProcessor.handleEvent(outboxMessage)
