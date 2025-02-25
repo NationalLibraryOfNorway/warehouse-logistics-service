@@ -296,10 +296,13 @@ class OrderControllerTest(
 
     @Test
     fun `Should not save order if outbox message fails to persist`() {
-        val testOrder = testOrderPayload.toOrder()
+        // Just calling "toOrder" on a payload fails, as it does not
+        // do the same mapping as the OrderDTO
+        val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
 
         runTest {
             coEvery { outboxRepository.save(OrderCreated(testOrder)) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
                 .mutateWith(csrf())
