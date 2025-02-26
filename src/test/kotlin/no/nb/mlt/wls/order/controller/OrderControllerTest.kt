@@ -4,11 +4,15 @@ import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
@@ -23,6 +27,7 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -133,6 +138,7 @@ class OrderControllerTest(
             coEvery {
                 synqAdapterMock.createOrder(any())
             } answers {}
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
             emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
 
             webTestClient
@@ -143,6 +149,16 @@ class OrderControllerTest(
                 .bodyValue(testOrderPayload)
                 .exchange()
                 .expectStatus().isCreated
+
+            // FIXME - This test finishes before emails go through
+            // Letting it run for too long will also crash, since the application will try
+            // To process messages in the outbox
+            // Wait a few seconds for the emails to go through
+            async {
+                withContext(Dispatchers.Default) {
+                    delay(200L)
+                }
+            }.await()
 
             val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
 
