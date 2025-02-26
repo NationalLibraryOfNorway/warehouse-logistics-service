@@ -116,12 +116,7 @@ class OutboxProcessor(
     }
 
     private suspend fun mapCanStorageHandle(item: Item): List<StorageSystemFacade> {
-        return storageSystems.mapNotNull {
-            if (it.canHandleLocation(item.location)) {
-                return@mapNotNull it
-            }
-            null
-        }
+        return storageSystems.filter { it.canHandleLocation(item.location) }
     }
 
     private suspend fun createAndSendEmails(order: Order) {
