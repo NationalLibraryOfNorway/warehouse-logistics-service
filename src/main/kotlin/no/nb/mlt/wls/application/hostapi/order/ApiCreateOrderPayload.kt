@@ -103,15 +103,3 @@ data class ApiCreateOrderPayload(
             callbackUrl = callbackUrl
         )
 }
-
-fun Order.toCreateApiOrderPayload() =
-    ApiCreateOrderPayload(
-        hostName = hostName,
-        hostOrderId = hostOrderId,
-        orderLine = orderLine.map { it.toApiOrderLine() },
-        orderType = orderType,
-        contactPerson = contactPerson,
-        address = address,
-        note = note,
-        callbackUrl = callbackUrl
-    )
