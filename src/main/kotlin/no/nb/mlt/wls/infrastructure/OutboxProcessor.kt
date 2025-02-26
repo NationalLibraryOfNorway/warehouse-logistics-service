@@ -72,7 +72,7 @@ class OutboxProcessor(
     private suspend fun handleItemCreated(event: ItemCreated) {
         logger.info { "Processing ItemCreated: $event" }
         val item = event.createdItem
-        val storageCandidates = mapCanStorageHandle(item)
+        val storageCandidates = findValidStorages(item)
         if (storageCandidates.isEmpty()) {
             logger.info { "Could not find a storage system to handle item: $item" }
             return
@@ -115,8 +115,8 @@ class OutboxProcessor(
         }
     }
 
-    private suspend fun mapCanStorageHandle(item: Item): List<StorageSystemFacade> {
-        return storageSystems.filter { it.canHandleLocation(item.location) }
+    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> {
+        return storageSystems.filter { it.canHandleItem(item) }
     }
 
     private suspend fun createAndSendEmails(order: Order) {
