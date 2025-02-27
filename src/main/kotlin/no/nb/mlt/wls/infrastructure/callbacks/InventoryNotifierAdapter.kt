@@ -35,8 +35,8 @@ class InventoryNotifierAdapter(
                 .bodyValue(payload)
                 .headers {
                     it.contentType = MediaType.APPLICATION_JSON
-                    it.set("X-Signature", signature)
-                    it.set("X-Timestamp", timestamp)
+                    it["X-Signature"] = signature
+                    it["X-Timestamp"] = timestamp
                 }
                 .retrieve()
                 .bodyToMono(Void::class.java)
@@ -61,8 +61,8 @@ class InventoryNotifierAdapter(
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
-                it.set("X-Signature", signature)
-                it.set("X-Timestamp", timestamp)
+                it["X-Signature"] = signature
+                it["X-Timestamp"] = timestamp
             }
             .retrieve()
             .bodyToMono(Void::class.java)

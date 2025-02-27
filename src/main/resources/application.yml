@@ -54,6 +54,13 @@ wls:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
 
+proxy:
+  http-proxy-host: ${HTTP_PROXY_HOST}
+  http-proxy-port: ${HTTP_PROXY_PORT}
+  https-proxy-host: ${HTTPS_PROXY_HOST}
+  https-proxy-port: ${HTTPS_PROXY_PORT}
+  non-proxy-hosts: localhost|127.0.0.1|docker
+
 ---
 
 # This is the configuration for the local-dev profile
