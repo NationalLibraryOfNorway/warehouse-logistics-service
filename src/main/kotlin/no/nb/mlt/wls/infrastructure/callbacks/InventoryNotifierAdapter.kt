@@ -37,7 +37,9 @@ class InventoryNotifierAdapter(
                 .retrieve()
                 .bodyToMono(Void::class.java)
                 .retry(5)
-                .onErrorComplete()
+                .doOnError {
+                    logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+                }
                 .subscribe()
         }
     }
@@ -60,7 +62,9 @@ class InventoryNotifierAdapter(
             .retrieve()
             .bodyToMono(Void::class.java)
             .retry(5)
-            .onErrorComplete()
+            .doOnError {
+                logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+            }
             .subscribe()
     }
 
