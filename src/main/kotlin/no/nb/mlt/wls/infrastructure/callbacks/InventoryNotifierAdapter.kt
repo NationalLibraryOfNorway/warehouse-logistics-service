@@ -43,7 +43,7 @@ class InventoryNotifierAdapter(
                 .retry(5)
                 .timeout(Duration.ofSeconds(10))
                 .doOnError {
-                    logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+                    logger.error(it) { "Error while sending item update to callback URL: ${item.callbackUrl}" }
                 }
                 .subscribe()
         }
