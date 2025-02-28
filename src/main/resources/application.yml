@@ -52,7 +52,7 @@ synq:
 wls:
   order:
     handler:
-      email: ${ORDER_HANDLER_EMAIL}
+      email: daniel@mlt.hermes.no
 
 ---
 
@@ -91,7 +91,7 @@ synq:
 wls:
   order:
     handler:
-      email: ${ORDER_HANDLER_EMAIL}
+      email: daniel@mlt.hermes.no
 
 ---
 
