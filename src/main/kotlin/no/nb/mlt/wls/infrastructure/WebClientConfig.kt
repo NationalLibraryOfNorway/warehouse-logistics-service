@@ -10,13 +10,17 @@ import reactor.netty.transport.ProxyProvider
 @Configuration
 class WebClientConfig {
     @Bean
-    fun webClient(builder: WebClient.Builder, proxyConfig: ProxyConfig): WebClient {
-        val httpClient = HttpClient.create().proxy {
-            it.type(ProxyProvider.Proxy.HTTP)
-                .host(proxyConfig.httpProxyHost)
-                .port(proxyConfig.httpProxyPort)
-                .nonProxyHosts(proxyConfig.nonProxyHosts)
-        }
+    fun webClient(
+        builder: WebClient.Builder,
+        proxyConfig: ProxyConfig
+    ): WebClient {
+        val httpClient =
+            HttpClient.create().proxy {
+                it.type(ProxyProvider.Proxy.HTTP)
+                    .host(proxyConfig.httpProxyHost)
+                    .port(proxyConfig.httpProxyPort)
+                    .nonProxyHosts(proxyConfig.nonProxyHosts)
+            }
 
         return builder
             .clientConnector(ReactorClientHttpConnector(httpClient))
