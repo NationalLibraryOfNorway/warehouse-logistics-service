@@ -106,6 +106,26 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: EMAIL_PORT
+            - name: HTTP_PROXY_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTP_PROXY_HOST
+            - name: HTTP_PROXY_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTP_PROXY_PORT
+            - name: HTTPS_PROXY_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTPS_PROXY_HOST
+            - name: HTTPS_PROXY_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTPS_PROXY_PORT
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
@@ -118,7 +138,7 @@ spec:
               ephemeral-storage: 42Gi
             limits:
               cpu: 1000m
-              memory: 1024Mi
+              memory: 1024Mich
               ephemeral-storage: 69Gi
 
           # Define settings for running the container's liveness probe
