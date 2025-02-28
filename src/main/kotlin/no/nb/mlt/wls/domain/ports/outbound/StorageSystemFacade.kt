@@ -14,6 +14,10 @@ interface StorageSystemFacade {
 
     @Throws(StorageSystemException::class)
     suspend fun updateOrder(order: Order): Order
+
+    suspend fun canHandleLocation(location: String): Boolean
+
+    fun canHandleItem(item: Item): Boolean
 }
 
 class StorageSystemException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

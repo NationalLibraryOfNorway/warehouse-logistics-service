@@ -56,8 +56,17 @@ class ItemRepositoryMongoAdapter(
             .map { it.toItem() }
     }
 
-    override fun createItem(item: Item): Mono<Item> {
-        return mongoRepo.save(item.toMongoItem()).map(MongoItem::toItem)
+    override suspend fun createItem(item: Item): Item {
+        return mongoRepo
+            .save(item.toMongoItem())
+            .map(MongoItem::toItem)
+            .timeout(Duration.ofSeconds(6))
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while saving to WLS database. item: $item"
+                }
+            }
+            .awaitSingle()
     }
 
     override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean {

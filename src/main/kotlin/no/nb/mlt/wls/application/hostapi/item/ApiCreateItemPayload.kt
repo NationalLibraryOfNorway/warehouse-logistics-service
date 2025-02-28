@@ -1,14 +1,15 @@
 package no.nb.mlt.wls.application.hostapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import org.apache.commons.validator.routines.UrlValidator
+import org.hibernate.validator.constraints.URL
 
 @Schema(
     description = """Payload for registering an item in Hermes WLS, and appropriate storage systems.""",
@@ -29,6 +30,7 @@ data class ApiCreateItemPayload(
         description = """The item ID from the host system, usually a barcode or an equivalent ID.""",
         example = "mlt-12345"
     )
+    @field:NotEmpty(message = "The item's 'hostId' is required, and it cannot be blank")
     val hostId: String,
     @Schema(
         description = """Name of the host system which the item originates from.
@@ -41,6 +43,7 @@ data class ApiCreateItemPayload(
                 Usually an item title/name, e.g. book title, film name, etc. or contents description.""",
         examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo"]
     )
+    @field:NotEmpty(message = "The item's 'description' is required, and it cannot be blank")
     val description: String,
     @Schema(
         description = """Item's category, same category indicates that the items can be stored together without any preservation issues.
@@ -68,6 +71,11 @@ data class ApiCreateItemPayload(
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
     )
+    @field:URL(message = "The item's 'callback URL' must be valid if set")
+    @field:Pattern(
+        regexp = "^(http|https)://.*",
+        message = "The item's 'callback URL' must start with 'http://' or 'https://'"
+    )
     val callbackUrl: String?
 ) {
     fun toItem(): Item =
@@ -93,29 +101,6 @@ data class ApiCreateItemPayload(
             packaging = packaging,
             callbackUrl = callbackUrl
         )
-
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (hostId.isBlank()) {
-            throw ValidationException("The item's 'hostId' is required, and it cannot be blank")
-        }
-
-        if (description.isBlank()) {
-            throw ValidationException("The item's 'description' is required, and it cannot be blank")
-        }
-
-        if (callbackUrl != null && !isValidUrl(callbackUrl)) {
-            throw ValidationException("The item's 'callback URL' must be valid if set")
-        }
-    }
-
-    private fun isValidUrl(url: String): Boolean {
-        // Yes I am aware that this function is duplicated in three places
-        // But I prefer readability to DRY in cases like this
-
-        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
-        return validator.isValid(url)
-    }
 }
 
 fun Item.toCreateApiPayload() =
