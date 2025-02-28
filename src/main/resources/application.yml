@@ -59,8 +59,6 @@ wls:
 proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
-  https-proxy-host: localhost
-  https-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
@@ -106,8 +104,6 @@ wls:
 proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
-  https-proxy-host: localhost
-  https-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
@@ -154,8 +150,6 @@ wls:
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
   http-proxy-port: ${HTTP_PROXY_PORT}
-  https-proxy-host: ${HTTPS_PROXY_HOST}
-  https-proxy-port: ${HTTPS_PROXY_PORT}
   non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
@@ -202,8 +196,6 @@ wls:
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
   http-proxy-port: ${HTTP_PROXY_PORT}
-  https-proxy-host: ${HTTPS_PROXY_HOST}
-  https-proxy-port: ${HTTPS_PROXY_PORT}
   non-proxy-hosts: localhost|127.0.0.1|docker
 
 logging:
