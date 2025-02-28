@@ -106,6 +106,16 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: EMAIL_PORT
+            - name: HTTP_PROXY_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTP_PROXY_HOST
+            - name: HTTP_PROXY_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: HTTP_PROXY_PORT
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always

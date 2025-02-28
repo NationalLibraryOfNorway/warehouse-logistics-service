@@ -49,10 +49,17 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+# Configures destination e-mails for receivers
 wls:
   order:
     handler:
-      email: ${ORDER_HANDLER_EMAIL}
+      email: daniel@mlt.hermes.no
+
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: localhost
+  http-proxy-port: 3128
+  non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
 
@@ -92,6 +99,12 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: localhost
+  http-proxy-port: 3128
+  non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
 
@@ -133,6 +146,12 @@ wls:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
 
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: ${HTTP_PROXY_HOST}
+  http-proxy-port: ${HTTP_PROXY_PORT}
+  non-proxy-hosts: localhost|127.0.0.1|docker
+
 ---
 
 # This is the configuration for the prod profile
@@ -172,6 +191,12 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: ${HTTP_PROXY_HOST}
+  http-proxy-port: ${HTTP_PROXY_PORT}
+  non-proxy-hosts: localhost|127.0.0.1|docker
 
 logging:
   level:

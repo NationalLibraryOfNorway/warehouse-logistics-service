@@ -53,7 +53,63 @@ synq:
 callback:
   secret: superdupersecretkey
 
+# Configures destination e-mails for receivers
 wls:
   order:
     handler:
-      email: test2@example.com
+      email: daniel@mlt.hermes.no
+
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: localhost
+  http-proxy-port: 3128
+  https-proxy-host: localhost
+  https-proxy-port: 3128
+  non-proxy-hosts: localhost|127.0.0.1|docker
+
+---
+
+# This is the configuration for the local-dev profile
+spring:
+  config:
+    activate:
+      # This part of the app config is only activated when the profile is local-dev
+      on-profile: local-dev
+
+  # Set the security settings for the local-dev profile
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8082/realms/mlt-local
+          audiences: http://localhost:8080
+
+  # Set the database settings for the local-dev profile
+  data:
+    mongodb:
+      username: bruker
+      password: drossap
+      database: wls
+
+# Secret for the signature on callbacks for the local-dev profile
+callback:
+  secret: superdupersecretkey
+
+# Set a dummycatalog base path to SynQ for testing purposes
+synq:
+  path:
+    base: http://localhost:8181/synq/resources
+
+# Configures destination e-mails for receivers
+wls:
+  order:
+    handler:
+      email: daniel@mlt.hermes.no
+
+# Set the proxy settings for the application
+proxy:
+  http-proxy-host: localhost
+  http-proxy-port: 3128
+  https-proxy-host: localhost
+  https-proxy-port: 3128
+  non-proxy-hosts: localhost|127.0.0.1|docker

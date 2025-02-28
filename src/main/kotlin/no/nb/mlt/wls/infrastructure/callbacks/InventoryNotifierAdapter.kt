@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
@@ -8,9 +9,12 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import java.time.Duration
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+
+private val logger = KotlinLogging.logger {}
 
 @Component
 class InventoryNotifierAdapter(
@@ -31,13 +35,16 @@ class InventoryNotifierAdapter(
                 .bodyValue(payload)
                 .headers {
                     it.contentType = MediaType.APPLICATION_JSON
-                    it.set("X-Signature", signature)
-                    it.set("X-Timestamp", timestamp)
+                    it["X-Signature"] = signature
+                    it["X-Timestamp"] = timestamp
                 }
                 .retrieve()
                 .bodyToMono(Void::class.java)
                 .retry(5)
-                .onErrorComplete()
+                .timeout(Duration.ofSeconds(10))
+                .doOnError {
+                    logger.error(it) { "Error while sending item update to callback URL: ${item.callbackUrl}" }
+                }
                 .subscribe()
         }
     }
@@ -54,13 +61,16 @@ class InventoryNotifierAdapter(
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
-                it.set("X-Signature", signature)
-                it.set("X-Timestamp", timestamp)
+                it["X-Signature"] = signature
+                it["X-Timestamp"] = timestamp
             }
             .retrieve()
             .bodyToMono(Void::class.java)
             .retry(5)
-            .onErrorComplete()
+            .timeout(Duration.ofSeconds(10))
+            .doOnError {
+                logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+            }
             .subscribe()
     }
 
