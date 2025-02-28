@@ -10,4 +10,9 @@ interface OutboxRepository {
     suspend fun getUnprocessedSortedByCreatedTime(): List<OutboxMessage>
 
     suspend fun markAsProcessed(outboxMessage: OutboxMessage): OutboxMessage
+
+    class RepositoryException(
+        message: String,
+        cause: Throwable? = null
+    ) : RuntimeException(message, cause)
 }

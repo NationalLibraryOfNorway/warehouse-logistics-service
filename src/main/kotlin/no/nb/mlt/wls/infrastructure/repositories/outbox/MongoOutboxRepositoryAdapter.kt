@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
 import java.time.Duration
 import java.util.concurrent.TimeoutException
 
@@ -31,7 +32,9 @@ class MongoOutboxRepositoryAdapter(
                         "Error while saving to outbox"
                     }
                 }
-            }.awaitSingle()
+            }
+            .onErrorMap { OutboxRepository.RepositoryException("Could not save to outbox", it) }
+            .awaitSingle()
     }
 
     override suspend fun getAll(): List<OutboxMessage> {
@@ -48,18 +51,49 @@ class MongoOutboxRepositoryAdapter(
                     }
                 }
             }
-            .onErrorMap { RuntimeException("Could not fetch from outbox") }
+            .onErrorMap { OutboxRepository.RepositoryException("Could not fetch from outbox", it) }
             .awaitSingle()
     }
 
     override suspend fun getUnprocessedSortedByCreatedTime(): List<OutboxMessage> {
-        TODO("Not yet implemented")
+        return mongoOutboxRepository
+            .findAllByProcessedTimestampIsNull()
+            .map { it.body }
+            .collectList()
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while fetching unprocessed from outbox"
+                    } else {
+                        "Error while fetching unprocessed from outbox"
+                    }
+                }
+            }
+            .onErrorMap { OutboxRepository.RepositoryException("Could not fetch unprocessed from outbox", it) }
+            .awaitSingle()
     }
 
     override suspend fun markAsProcessed(outboxMessage: OutboxMessage): OutboxMessage {
-        TODO("Not yet implemented")
+        return mongoOutboxRepository
+            .save(MongoOutboxMessage(body = outboxMessage, processedTimestamp = java.time.Instant.now()))
+            .map { it.body }
+            .timeout(Duration.ofSeconds(8))
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while marking as processed in outbox. Message: $outboxMessage"
+                    } else {
+                        "Error while marking as processed in outbox"
+                    }
+                }
+            }
+            .onErrorMap { OutboxRepository.RepositoryException("Could not mark as processed in outbox", it) }
+            .awaitSingle()
     }
 }
 
 @Repository
-interface MongoOutboxRepository : ReactiveMongoRepository<MongoOutboxMessage, String>
+interface MongoOutboxRepository : ReactiveMongoRepository<MongoOutboxMessage, String> {
+    fun findAllByProcessedTimestampIsNull(): Flux<MongoOutboxMessage>
+}
