@@ -91,7 +91,7 @@ synq:
 wls:
   order:
     handler:
-      email: daniel@mlt.hermes.no
+      email: ${ORDER_HANDLER_EMAIL}
 
 ---
 
