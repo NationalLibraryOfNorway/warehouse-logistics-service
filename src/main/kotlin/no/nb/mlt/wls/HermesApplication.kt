@@ -14,11 +14,4 @@ class HermesApplication
 fun main(args: Array<String>) {
     val context: ApplicationContext = runApplication<HermesApplication>(*args)
     val proxyConfig = context.getBean(ProxyConfig::class.java)
-
-    System.setProperty("http.proxyHost", proxyConfig.httpProxyHost)
-    System.setProperty("http.proxyPort", proxyConfig.httpProxyPort)
-    System.setProperty("http.nonProxyHosts", proxyConfig.nonProxyHosts)
-    System.setProperty("https.proxyHost", proxyConfig.httpsProxyHost)
-    System.setProperty("https.proxyPort", proxyConfig.httpsProxyPort)
-    System.setProperty("https.nonProxyHosts", proxyConfig.nonProxyHosts)
 }
