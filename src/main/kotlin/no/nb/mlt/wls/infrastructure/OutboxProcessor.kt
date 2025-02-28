@@ -29,9 +29,14 @@ class OutboxProcessor(
     // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
-        outboxRepository
-            .getUnprocessedSortedByCreatedTime()
-            .forEach { handleEvent(it) }
+        val outboxMessages =
+            outboxRepository
+                .getUnprocessedSortedByCreatedTime()
+
+        if (outboxMessages.isNotEmpty()) {
+            logger.info { "Processing ${outboxMessages.size} outbox messages" }
+            outboxMessages.forEach { handleEvent(it) }
+        }
     }
 
     override suspend fun handleEvent(event: OutboxMessage) {
