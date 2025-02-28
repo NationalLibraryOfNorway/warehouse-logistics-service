@@ -52,7 +52,7 @@ synq:
 wls:
   order:
     handler:
-      email: ${ORDER_HANDLER_EMAIL}
+      email: daniel@mlt.hermes.no
 
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
