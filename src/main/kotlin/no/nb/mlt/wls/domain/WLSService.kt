@@ -65,7 +65,7 @@ class WLSService(
                 return@executeInTransaction (createdItem to message)
             } ?: throw RuntimeException("Could not create item")
 
-        processMessage(outboxMessage)
+        processMessageAsync(outboxMessage)
         return createdItem
     }
 
@@ -143,7 +143,7 @@ class WLSService(
                 return@executeInTransaction (order to orderCreatedMessage)
             } ?: throw RuntimeException("Could not create order")
 
-        processMessage(orderCreatedMessage)
+        processMessageAsync(orderCreatedMessage)
 
         return order
     }
@@ -198,7 +198,7 @@ class WLSService(
                 return@executeInTransaction (updatedOrder to message)
             } ?: throw RuntimeException("Could not update order")
 
-        processMessage(outboxMessage)
+        processMessageAsync(outboxMessage)
 
         return updatedOrder
     }
@@ -251,7 +251,7 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    private fun processMessage(outboxMessage: OutboxMessage) =
+    private fun processMessageAsync(outboxMessage: OutboxMessage) =
         coroutineContext.launch {
             try {
                 outboxMessageProcessor.handleEvent(outboxMessage)
