@@ -83,8 +83,9 @@ class OutboxProcessorTest {
             )
 
         runTest {
-            outboxProcessor.handleEvent(OrderCreated(order))
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(OrderCreated(order))
+            val event = OrderCreated(order)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { storageSystemMock.createOrder(any()) }
         }
     }

@@ -317,7 +317,7 @@ class OrderControllerTest(
         val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
 
         runTest {
-            coEvery { outboxRepository.save(OrderCreated(testOrder)) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { outboxRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient

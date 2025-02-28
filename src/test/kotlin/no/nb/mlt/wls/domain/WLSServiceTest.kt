@@ -17,6 +17,7 @@ import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.util.UUID
 
 class WLSServiceTest {
     private val orderRepoMock = mockk<OrderRepository>()
@@ -205,18 +207,24 @@ class WLSServiceTest {
     @Test
     fun `createOrder should save order in db and storage system`() {
         val expectedOrder = createOrderDTO.toOrder().copy()
-        val orderCreatedMessage = OrderCreated(expectedOrder)
+        val orderCreatedMessage = OrderCreated(expectedOrder, UUID.randomUUID().toString())
+        val transactionPortMock =
+            object : TransactionPort {
+                override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return (expectedOrder to orderCreatedMessage) as T
+                }
+            }
 
         coEvery { orderRepoMock.getOrder(createOrderDTO.hostName, createOrderDTO.hostOrderId) } answers { null }
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf() }
         coEvery { orderRepoMock.createOrder(createOrderDTO.toOrder()) } answers { expectedOrder }
-        coEvery { outboxRepository.save(orderCreatedMessage) } answers { orderCreatedMessage }
+        coEvery { outboxRepository.save(any() as OutboxMessage) } answers { orderCreatedMessage }
         coEvery { emailAdapterMock.orderCreated(any(), any()) } answers { }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedOrder to OrderCreated(expectedOrder))
         coEvery { outboxProcessor.handleEvent(orderCreatedMessage) } answers {}
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
+        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPortMock, outboxProcessor)
         runTest {
             val order = cut.createOrder(createOrderDTO)
             assertThat(order).isEqualTo(expectedOrder)
