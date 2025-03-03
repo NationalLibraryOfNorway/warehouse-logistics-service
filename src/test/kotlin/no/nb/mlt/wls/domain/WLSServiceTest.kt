@@ -205,7 +205,7 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `createOrder should save order in db and storage system`() {
+    fun `createOrder should save order in db and outbox`() {
         val expectedOrder = createOrderDTO.toOrder().copy()
         val orderCreatedMessage = OrderCreated(expectedOrder, UUID.randomUUID().toString())
         val transactionPortMock =
