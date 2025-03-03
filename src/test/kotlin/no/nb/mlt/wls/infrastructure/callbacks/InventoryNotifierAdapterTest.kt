@@ -2,6 +2,9 @@ package no.nb.mlt.wls.infrastructure.callbacks
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.ninjasquad.springmockk.SpykBean
+import com.ninjasquad.springmockk.SpykDefinition
+import io.mockk.verify
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -14,6 +17,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.ResolvableType
 import org.springframework.web.reactive.function.client.WebClient
 import java.util.*
 import javax.crypto.Mac
@@ -22,6 +27,14 @@ import javax.crypto.spec.SecretKeySpec
 class InventoryNotifierAdapterTest {
     private lateinit var mockWebServer: MockWebServer
     private lateinit var inventoryNotifierAdapter: InventoryNotifierAdapter
+
+    @SpykBean
+    @Qualifier("proxyWebClient")
+    private lateinit var proxyWebClient: WebClient
+
+    @SpykBean
+    @Qualifier("nonProxyWebClient")
+    private lateinit var webClient: WebClient
     private val secretKey = "your-secret-key"
 
     private lateinit var testItem: Item
@@ -31,8 +44,16 @@ class InventoryNotifierAdapterTest {
     fun setUp() {
         mockWebServer = MockWebServer()
         mockWebServer.start()
-        val webClient = WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build()
-        val proxyWebClient = WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build()
+        webClient =
+            SpykDefinition(
+                "nonProxyWebClient",
+                ResolvableType.forClass(WebClient::class.java)
+            ).createSpy(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
+        proxyWebClient =
+            SpykDefinition(
+                "proxyWebClient",
+                ResolvableType.forClass(WebClient::class.java)
+            ).createSpy(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
         inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper())
         testItem =
             Item(
@@ -86,6 +107,8 @@ class InventoryNotifierAdapterTest {
             ),
             requestItem
         )
+        verify(exactly = 0) { proxyWebClient.post() }
+        verify(exactly = 1) { webClient.post() }
     }
 
     @Test
@@ -109,6 +132,30 @@ class InventoryNotifierAdapterTest {
             ),
             requestOrder
         )
+        verify(exactly = 0) { proxyWebClient.post() }
+        verify(exactly = 1) { webClient.post() }
+    }
+
+    @Test
+    fun `should use proxied web client when notifying of item belonging to proxied host`() {
+        val item = testItem.copy(hostName = HostName.ASTA)
+        inventoryNotifierAdapter.itemChanged(item)
+        val request = mockWebServer.takeRequest()
+        assertEquals("/item-callback", request.path)
+        assertEquals("POST", request.method)
+        verify(exactly = 1) { proxyWebClient.post() }
+        verify(exactly = 0) { webClient.post() }
+    }
+
+    @Test
+    fun `should use proxied web client when notifying of order belonging to proxied host`() {
+        val order = testOrder.copy(hostName = HostName.ASTA)
+        inventoryNotifierAdapter.orderChanged(order)
+        val request = mockWebServer.takeRequest()
+        assertEquals("/order-callback", request.path)
+        assertEquals("POST", request.method)
+        verify(exactly = 1) { proxyWebClient.post() }
+        verify(exactly = 0) { webClient.post() }
     }
 
     @Test
