@@ -63,8 +63,6 @@ wls:
 proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
-  https-proxy-host: localhost
-  https-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
@@ -110,6 +108,4 @@ wls:
 proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
-  https-proxy-host: localhost
-  https-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
