@@ -2,9 +2,11 @@ package no.nb.mlt.wls.infrastructure.callbacks
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -18,24 +20,26 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class InventoryNotifierAdapter(
+    @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
+    @Qualifier("proxyWebClient")
+    private val proxyWebClient: WebClient,
     @Value("\${callback.secret}")
     private val signatureSecretKey: String,
     private val objectMapper: ObjectMapper
 ) : InventoryNotifier {
     override fun itemChanged(item: Item) {
-        val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload())
-        val timestamp = System.currentTimeMillis().toString()
-        val signature = generateSignature(payload, timestamp)
-
         if (item.callbackUrl != null) {
-            webClient
+            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload())
+            val timestamp = System.currentTimeMillis().toString()
+
+            getAppropriateWebClient(item.hostName)
                 .post()
                 .uri(item.callbackUrl)
                 .bodyValue(payload)
                 .headers {
                     it.contentType = MediaType.APPLICATION_JSON
-                    it["X-Signature"] = signature
+                    it["X-Signature"] = generateSignature(payload, timestamp)
                     it["X-Timestamp"] = timestamp
                 }
                 .retrieve()
@@ -52,16 +56,15 @@ class InventoryNotifierAdapter(
     override fun orderChanged(order: Order) {
         val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload())
         val timestamp = System.currentTimeMillis().toString()
-        val signature = generateSignature(payload, timestamp)
 
         // TODO: Should probably have a more robust retry mechanism, what if receiver is down for a while?
-        webClient
+        getAppropriateWebClient(order.hostName)
             .post()
             .uri(order.callbackUrl)
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
-                it["X-Signature"] = signature
+                it["X-Signature"] = generateSignature(payload, timestamp)
                 it["X-Timestamp"] = timestamp
             }
             .retrieve()
@@ -86,5 +89,9 @@ class InventoryNotifierAdapter(
         val signatureData = "$timestamp.$payload"
         val hmacBytes = mac.doFinal(signatureData.toByteArray())
         return Base64.getEncoder().encodeToString(hmacBytes)
+    }
+
+    private fun getAppropriateWebClient(hostName: HostName): WebClient {
+        return if (hostName == HostName.ASTA) proxyWebClient else webClient
     }
 }

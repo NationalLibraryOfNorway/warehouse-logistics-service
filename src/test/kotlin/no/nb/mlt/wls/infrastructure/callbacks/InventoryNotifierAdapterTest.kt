@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.web.reactive.function.client.WebClient
-import java.util.Base64
+import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -32,7 +32,8 @@ class InventoryNotifierAdapterTest {
         mockWebServer = MockWebServer()
         mockWebServer.start()
         val webClient = WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build()
-        inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, secretKey, jacksonObjectMapper())
+        val proxyWebClient = WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build()
+        inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper())
         testItem =
             Item(
                 hostId = "item-id",

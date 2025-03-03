@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -17,6 +18,7 @@ import java.net.URI
 
 @Component
 class SynqAdapter(
+    @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
     @Value("\${synq.path.base}")
     private val baseUrl: String
