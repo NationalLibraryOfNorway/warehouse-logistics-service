@@ -38,11 +38,11 @@ fun Item.toSynqPayload() =
 fun toSynqCategory(category: ItemCategory): String {
     return when (category) {
         ItemCategory.PAPER -> "papir"
-        ItemCategory.DISC -> "plater"
+        ItemCategory.DISC -> "plate"
         ItemCategory.FILM -> "film"
-        ItemCategory.PHOTO -> "foto"
         ItemCategory.EQUIPMENT -> "gjenstand"
         ItemCategory.BULK_ITEMS -> "sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
+        ItemCategory.FRAGILE -> "glass"
     }
 }
