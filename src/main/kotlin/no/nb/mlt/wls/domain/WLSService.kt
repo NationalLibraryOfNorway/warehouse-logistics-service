@@ -111,7 +111,9 @@ class WLSService(
 
             inventoryNotifier.itemChanged(movedItem)
         }
-        // TODO - Should we log this once completed?
+        logger.debug {
+            "Items picked for $hostName"
+        }
     }
 
     override suspend fun pickOrderItems(

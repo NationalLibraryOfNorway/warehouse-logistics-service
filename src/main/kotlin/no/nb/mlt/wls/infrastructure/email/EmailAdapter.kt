@@ -47,7 +47,7 @@ class EmailAdapter(
     }
 
     override suspend fun orderUpdated(order: Order) {
-        TODO("Not yet implemented")
+        // Noah 05.03.25: Intentionally a NO-OP, as this might not be used until much later
     }
 
     /**

@@ -38,9 +38,6 @@ class ItemController(
             An item is also called product by some storage systems and users, those mean the same thing to Hermes.
             Do not provide quantity or location information in this step, as it is overridden with default values."""
     )
-
-    // ? TODO: Replace the schema with a model class without stuff like location, quantity, etc.
-
     @ApiResponses(
         value = [
             ApiResponse(

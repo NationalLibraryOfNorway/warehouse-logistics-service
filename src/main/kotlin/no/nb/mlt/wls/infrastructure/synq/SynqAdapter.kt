@@ -94,7 +94,10 @@ class SynqAdapter(
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
-        TODO("Not yet implemented")
+        return when (location) {
+            "SYNQ_WAREHOUSE", "AUTOSTORE" -> true
+            else -> false
+        }
     }
 
     override fun canHandleItem(item: Item): Boolean {

@@ -69,8 +69,6 @@ class OutboxProcessor(
                 logger.info { "Could not find a storage system to handle items: $itemList" }
             }
             storageSystemFacade?.updateOrder(updatedOrder)
-            // TODO - How to handle emails when an order is updated?
-            // createAndSendEmails(order)
         }
     }
 
