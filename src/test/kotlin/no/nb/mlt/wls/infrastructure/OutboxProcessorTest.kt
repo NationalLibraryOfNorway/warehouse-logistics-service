@@ -10,15 +10,19 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class OutboxProcessorTest {
     private val outboxRepoMock =
@@ -41,6 +45,16 @@ class OutboxProcessorTest {
             }
         }
 
+    private val happyStorageSystemMock =
+        mockk<StorageSystemFacade> {
+            coEvery { canHandleItem(any()) } returns true
+            coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
+            coEvery { canHandleLocation("SOMEWHERE") } returns false
+            coEvery { createOrder(any()) } returns Unit
+            coEvery { createItem(any()) } returns Unit
+            coEvery { deleteOrder(any()) } returns Unit
+        }
+
     private val emailNotifierMock =
         object : EmailNotifier {
             var orderCreatedCount = 0
@@ -59,42 +73,35 @@ class OutboxProcessorTest {
         }
 
     @Test
-    fun `Should handle OrderCreated and mark as processed if everything is ok`() {
+    fun `OrderCreated should mark as processed when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns itemList
-                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(itemList[0])
-                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(itemList[1])
-            }
-
-        val storageSystemMock =
-            mockk<StorageSystemFacade> {
-                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
-                coEvery { canHandleLocation("SOMEWHERE") } returns false
-                coEvery { createOrder(any()) } returns Unit
+                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(testItemList[0])
+                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(testItemList[1])
             }
 
         val outboxProcessor =
             OutboxProcessor(
                 outboxRepository = outboxRepoMock,
-                storageSystems = listOf(storageSystemMock),
+                storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
             )
 
         runTest {
-            val event = OrderCreated(order)
+            val event = OrderCreated(testOrder)
             outboxProcessor.handleEvent(event)
             assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { storageSystemMock.createOrder(any()) }
+            coVerify(exactly = 1) { happyStorageSystemMock.createOrder(any()) }
         }
     }
 
     @Test
-    fun `Should send mail on OrderCreated`() {
+    fun `OrderCreated should send mail when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns itemList
+                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
             }
 
         val outboxProcessor =
@@ -106,19 +113,19 @@ class OutboxProcessorTest {
             )
 
         runTest {
-            outboxProcessor.handleEvent(OrderCreated(order))
+            outboxProcessor.handleEvent(OrderCreated(testOrder))
             assertThat(emailNotifierMock.orderCreatedCount).isEqualTo(1)
         }
     }
 
     @Test
-    fun `Should not mark as processed if anything fails`() {
+    fun `OrderCreated Should not mark as processed if anything fails`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns itemList
+                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
             }
         val errorMessage = "Some exception when sending to storage system"
-        val storageSystemMock =
+        val invalidStorageMock =
             mockk<StorageSystemFacade> {
                 coEvery { canHandleLocation(any()) } returns true
                 coEvery {
@@ -129,20 +136,148 @@ class OutboxProcessorTest {
         val outboxProcessor =
             OutboxProcessor(
                 outboxRepository = outboxRepoMock,
-                storageSystems = listOf(storageSystemMock),
+                storageSystems = listOf(invalidStorageMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
             )
 
         assertThatThrownBy {
             runTest {
-                outboxProcessor.handleEvent(OrderCreated(order))
+                outboxProcessor.handleEvent(OrderCreated(testOrder))
             }
         }
         assertThat(outboxRepoMock.processed).hasSize(0)
     }
 
-    private val order =
+    @Test
+    fun `ItemCreated should mark as processed when successful`() {
+        val itemRepoMock =
+            mockk<ItemRepository> {
+                coEvery { getItem(HostName.AXIELL, "test-item-1") } returns null
+            }
+
+        val outboxProcessor =
+            OutboxProcessor(
+                outboxRepository = outboxRepoMock,
+                storageSystems = listOf(happyStorageSystemMock),
+                itemRepository = itemRepoMock,
+                emailNotifier = emailNotifierMock
+            )
+
+        runTest {
+            val event = ItemCreated(testItem)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+        }
+    }
+
+    // FIXME - When does this case (if ever) occur?
+    @Test
+    fun `ItemCreated should fail if item already exists`() {
+        val itemRepoMock =
+            mockk<ItemRepository> {
+                coEvery { getItem(HostName.AXIELL, "test-item-1") } returns testItem
+            }
+
+        val storageSystemMock =
+            mockk<StorageSystemFacade> {
+                coEvery { canHandleItem(any()) } returns true
+                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
+                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { createItem(any()) } throws StorageSystemException("Duplicate product")
+            }
+
+        val outboxProcessor =
+            OutboxProcessor(
+                outboxRepository = outboxRepoMock,
+                storageSystems = listOf(storageSystemMock),
+                itemRepository = itemRepoMock,
+                emailNotifier = emailNotifierMock
+            )
+
+        runTest {
+            val event = ItemCreated(testItem)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertDoesNotThrow {
+                itemRepoMock.getItem(HostName.AXIELL, "test-item-1")
+            }
+        }
+    }
+
+    @Test
+    fun `ItemCreated should succeed despite no valid locations existing`() {
+        val itemRepoMock =
+            mockk<ItemRepository> {
+                coEvery { getItem(HostName.AXIELL, "test-item-1") } returns null
+            }
+
+        val testItem = testItem.copy(location = "SOMEWHERE")
+
+        val outboxProcessor =
+            OutboxProcessor(
+                outboxRepository = outboxRepoMock,
+                storageSystems = listOf(happyStorageSystemMock),
+                itemRepository = itemRepoMock,
+                emailNotifier = emailNotifierMock
+            )
+
+        runTest {
+            val event = ItemCreated(testItem)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+        }
+    }
+
+    @Test
+    fun `UpdateOrder should mark as processed if successful`() {
+        val extendedTestItemList = testItemList.plus(testItem.copy(hostId = "item-id-3"))
+        val itemRepoMock =
+            mockk<ItemRepository> {
+                coEvery { getItems(listOf("item-id-1", "item-id-2", "item-id-3"), HostName.AXIELL) } returns extendedTestItemList
+                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(extendedTestItemList[0])
+                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(extendedTestItemList[1])
+                coEvery { getItems(listOf("item-id-3"), HostName.AXIELL) } returns listOf(extendedTestItemList[2])
+            }
+
+        val expectedOrder =
+            testOrder.copy(
+                note = "I want this soon",
+                orderLine = testOrder.orderLine.plus(Order.OrderItem("item-id-3", status = Order.OrderItem.Status.NOT_STARTED))
+            )
+
+        val storageSystemMock =
+            mockk<StorageSystemFacade> {
+                coEvery { canHandleItem(any()) } returns true
+                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
+                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { updateOrder(expectedOrder) } returns expectedOrder
+            }
+
+        val outboxProcessor =
+            OutboxProcessor(
+                outboxRepository = outboxRepoMock,
+                storageSystems = listOf(storageSystemMock),
+                itemRepository = itemRepoMock,
+                emailNotifier = emailNotifierMock
+            )
+
+        runTest {
+            val event = OrderUpdated(expectedOrder)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            coVerify(exactly = 1) { storageSystemMock.updateOrder(any()) }
+        }
+    }
+
+    fun `DeleteOrder should mark as processed if successful`() {
+        TODO("Not implemented")
+    }
+
+    //
+    // TEST OBJECTS
+    //
+    private val testOrder =
         Order(
             hostName = HostName.AXIELL,
             hostOrderId = "some-order-id",
@@ -159,7 +294,20 @@ class OutboxProcessorTest {
             callbackUrl = "https://callback.url"
         )
 
-    private val itemList =
+    private val testItem =
+        Item(
+            hostName = HostName.AXIELL,
+            hostId = "item-id-1",
+            description = "Tyven, tyven skal du hete",
+            itemCategory = ItemCategory.PAPER,
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            callbackUrl = "https://callback-wls.no/item",
+            location = "SOMEWHERE",
+            quantity = 1
+        )
+
+    private val testItemList =
         listOf(
             Item(
                 hostName = HostName.AXIELL,
