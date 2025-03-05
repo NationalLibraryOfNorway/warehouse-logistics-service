@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.synq
 
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 
 data class SynqProductPayload(
     val productId: String,
@@ -38,11 +39,11 @@ fun Item.toSynqPayload() =
 fun toSynqCategory(category: ItemCategory): String {
     return when (category) {
         ItemCategory.PAPER -> "papir"
-        ItemCategory.DISC -> "plater"
+        ItemCategory.DISC -> "plate"
         ItemCategory.FILM -> "film"
-        ItemCategory.PHOTO -> "foto"
         ItemCategory.EQUIPMENT -> "gjenstand"
         ItemCategory.BULK_ITEMS -> "sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
+        else -> throw StorageSystemException("$category items cannot go into SynQ")
     }
 }

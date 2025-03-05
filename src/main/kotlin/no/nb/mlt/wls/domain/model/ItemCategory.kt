@@ -4,8 +4,8 @@ enum class ItemCategory {
     PAPER,
     DISC,
     FILM,
-    PHOTO,
     EQUIPMENT,
     BULK_ITEMS,
-    MAGNETIC_TAPE
+    MAGNETIC_TAPE,
+    FRAGILE
 }
