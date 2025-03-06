@@ -51,8 +51,11 @@ class OutboxProcessor(
         logger.info { "Marked event as processed: $processedEvent" }
     }
 
-    private fun handleOrderDeleted(event: OrderDeleted) {
-        TODO("Not yet implemented")
+    private suspend fun handleOrderDeleted(event: OrderDeleted) {
+        logger.info { "Processing OrderDeleted: $event" }
+        storageSystems.forEach {
+            it.deleteOrder(event.hostOrderId, event.host)
+        }
     }
 
     private suspend fun handleOrderUpdated(event: OrderUpdated) {

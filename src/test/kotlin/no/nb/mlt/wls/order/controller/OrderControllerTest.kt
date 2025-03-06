@@ -488,6 +488,10 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
+            coEvery {
+                synqAdapterMock.deleteOrder(any(), any())
+            } answers {}
+
             webTestClient
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))

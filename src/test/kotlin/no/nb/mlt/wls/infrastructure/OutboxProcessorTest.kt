@@ -12,17 +12,18 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 
 class OutboxProcessorTest {
     private val outboxRepoMock =
@@ -52,7 +53,6 @@ class OutboxProcessorTest {
             coEvery { canHandleLocation("SOMEWHERE") } returns false
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
-            coEvery { deleteOrder(any()) } returns Unit
         }
 
     private val emailNotifierMock =
@@ -184,7 +184,7 @@ class OutboxProcessorTest {
                 coEvery { canHandleItem(any()) } returns true
                 coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
                 coEvery { canHandleLocation("SOMEWHERE") } returns false
-                coEvery { createItem(any()) } throws StorageSystemException("Duplicate product")
+                coEvery { createItem(any()) } throws DuplicateResourceException("Duplicate product")
             }
 
         val outboxProcessor =
@@ -197,11 +197,10 @@ class OutboxProcessorTest {
 
         runTest {
             val event = ItemCreated(testItem)
-            outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
-            assertDoesNotThrow {
-                itemRepoMock.getItem(HostName.AXIELL, "test-item-1")
+            assertThrows<DuplicateResourceException> {
+                outboxProcessor.handleEvent(event)
             }
+            assertThat(outboxRepoMock.processed).hasSize(0)
         }
     }
 
@@ -270,8 +269,37 @@ class OutboxProcessorTest {
         }
     }
 
+    @Test
     fun `DeleteOrder should mark as processed if successful`() {
-        TODO("Not implemented")
+        val itemRepoMock =
+            mockk<ItemRepository> {
+                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(testItemList[0])
+                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(testItemList[1])
+            }
+
+        val storageSystemMock =
+            mockk<StorageSystemFacade> {
+                coEvery { canHandleItem(any()) } returns true
+                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
+                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { deleteOrder(testOrder.hostOrderId, testOrder.hostName) } returns Unit
+            }
+
+        val outboxProcessor =
+            OutboxProcessor(
+                outboxRepository = outboxRepoMock,
+                storageSystems = listOf(storageSystemMock),
+                itemRepository = itemRepoMock,
+                emailNotifier = emailNotifierMock
+            )
+
+        runTest {
+            val event = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
+            outboxProcessor.handleEvent(event)
+            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            coVerify(exactly = 1) { storageSystemMock.deleteOrder(testOrder.hostOrderId, testOrder.hostName) }
+        }
     }
 
     //
