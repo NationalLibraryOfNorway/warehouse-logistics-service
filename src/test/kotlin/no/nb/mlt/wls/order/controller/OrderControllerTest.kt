@@ -541,7 +541,7 @@ class OrderControllerTest(
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -562,7 +562,7 @@ class OrderControllerTest(
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient

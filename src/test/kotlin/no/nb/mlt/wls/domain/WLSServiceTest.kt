@@ -271,7 +271,7 @@ class WLSServiceTest {
         val deletedOrderMessage = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
         coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
         coJustRun { orderRepoMock.deleteOrder(any(), any()) }
-        coJustRun { storageSystemRepoMock.deleteOrder(any()) }
+        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
         coEvery { transactionPort.executeInTransaction<Any>(any()) } returns deletedOrderMessage
         coEvery { outboxProcessor.handleEvent(deletedOrderMessage) } answers {}
         coEvery {
@@ -290,7 +290,7 @@ class WLSServiceTest {
     @Disabled
     fun `deleteOrder should fail when order does not exist in storage system`() {
         coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
-        coEvery { storageSystemRepoMock.deleteOrder(any()) } throws StorageSystemException("Order not found", null)
+        coEvery { storageSystemRepoMock.deleteOrder(any(), any()) } throws StorageSystemException("Order not found", null)
 
         val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
 
@@ -306,7 +306,7 @@ class WLSServiceTest {
     @Test
     fun `deleteOrder should fail when order does not exist in WLS database`() {
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
-        coJustRun { storageSystemRepoMock.deleteOrder(any()) }
+        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
         coEvery { orderRepoMock.deleteOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
         val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
