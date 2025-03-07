@@ -14,8 +14,4 @@ class DisabledEmailAdapter : EmailNotifier {
     ) {
         logger.debug { "Sending emails for orders is disabled" }
     }
-
-    override suspend fun orderUpdated(order: Order) {
-        logger.debug { "Sending emails for orders is disabled" }
-    }
 }

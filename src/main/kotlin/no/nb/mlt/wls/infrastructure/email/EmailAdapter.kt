@@ -46,10 +46,6 @@ class EmailAdapter(
         }
     }
 
-    override suspend fun orderUpdated(order: Order) {
-        // Noah 05.03.25: Intentionally a NO-OP, as this might not be used until much later
-    }
-
     /**
      * Send an email and log any exceptions
      */
