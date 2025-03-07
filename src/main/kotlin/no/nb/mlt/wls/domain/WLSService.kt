@@ -62,7 +62,7 @@ class WLSService(
                 val createdItem = itemRepository.createItem(itemMetadata.toItem())
                 val message = outboxRepository.save(ItemCreated(createdItem))
 
-                return@executeInTransaction (createdItem to message)
+                (createdItem to message)
             } ?: throw RuntimeException("Could not create item")
 
         processMessageAsync(outboxMessage)
@@ -142,7 +142,7 @@ class WLSService(
                 val order = orderRepository.createOrder(orderDTO.toOrder())
                 val orderCreatedMessage = outboxRepository.save(OrderCreated(createdOrder = order))
 
-                return@executeInTransaction (order to orderCreatedMessage)
+                (order to orderCreatedMessage)
             } ?: throw RuntimeException("Could not create order")
 
         processMessageAsync(orderCreatedMessage)
@@ -197,7 +197,7 @@ class WLSService(
                         )
                     )
                 val message = outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
-                return@executeInTransaction (updatedOrder to message)
+                (updatedOrder to message)
             } ?: throw RuntimeException("Could not update order")
 
         processMessageAsync(outboxMessage)
