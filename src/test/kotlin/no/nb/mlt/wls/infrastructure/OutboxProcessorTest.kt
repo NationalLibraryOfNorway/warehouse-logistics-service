@@ -58,17 +58,12 @@ class OutboxProcessorTest {
     private val emailNotifierMock =
         object : EmailNotifier {
             var orderCreatedCount = 0
-            var orderUpdatedCount = 0
 
             override suspend fun orderCreated(
                 order: Order,
                 orderItems: List<Item>
             ) {
                 orderCreatedCount++
-            }
-
-            override suspend fun orderUpdated(order: Order) {
-                orderUpdatedCount++
             }
         }
 
