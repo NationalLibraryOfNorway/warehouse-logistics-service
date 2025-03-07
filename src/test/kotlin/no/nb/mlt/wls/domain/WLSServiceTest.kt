@@ -270,7 +270,7 @@ class WLSServiceTest {
     fun `deleteOrder should complete when order exists`() {
         val deletedOrderMessage = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
         coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
-        coJustRun { orderRepoMock.deleteOrder(any(), any()) }
+        coJustRun { orderRepoMock.deleteOrder(any()) }
         coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
         coEvery { transactionPort.executeInTransaction<Any>(any()) } returns deletedOrderMessage
         coEvery { outboxProcessor.handleEvent(deletedOrderMessage) } answers {}
@@ -299,7 +299,7 @@ class WLSServiceTest {
                 cut.deleteOrder(HostName.AXIELL, "12345")
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any(), any()) }
+            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any()) }
         }
     }
 
@@ -307,7 +307,7 @@ class WLSServiceTest {
     fun `deleteOrder should fail when order does not exist in WLS database`() {
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
         coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
-        coEvery { orderRepoMock.deleteOrder(any(), any()) } throws OrderNotFoundException("Order not found")
+        coEvery { orderRepoMock.deleteOrder(any()) } throws OrderNotFoundException("Order not found")
 
         val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
 
@@ -317,7 +317,7 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
 
-            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any(), any()) }
+            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any()) }
         }
     }
 

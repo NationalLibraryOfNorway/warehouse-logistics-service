@@ -76,9 +76,6 @@ class OrderControllerTest(
     @Autowired val mongoOutboxRepository: MongoOutboxRepository,
     @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
 ) {
-//    @Autowired
-//    private lateinit var outboxRepository: OutboxRepository
-
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
 
@@ -150,7 +147,7 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
-            // FIXME - This test finishes before emails go through
+            // This test finishes before emails go through
             // Letting it run for too long will also crash, since the application will try
             // To process messages in the outbox
             // Wait a few seconds for the emails to go through
@@ -159,7 +156,6 @@ class OrderControllerTest(
                     delay(200L)
                 }
             }.await()
-
             val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
 
             // Create a temporary new client to check emails
@@ -507,7 +503,7 @@ class OrderControllerTest(
                     duplicateOrderPayload.hostOrderId
                 ).awaitSingleOrNull()
 
-            assertThat(order).isNull()
+            assertThat(order?.status).isEqualTo(Order.Status.DELETED)
 
             val outBoxMessages = outboxRepositoryAdapter.getAll()
             assertThat(outBoxMessages)

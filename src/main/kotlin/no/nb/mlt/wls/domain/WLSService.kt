@@ -154,12 +154,11 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        val order = getOrderOrThrow(hostName, hostOrderId)
-        order.deleteOrder()
+        val order = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
         val outBoxMessage =
             transactionPort.executeInTransaction {
-                orderRepository.deleteOrder(hostName, hostOrderId)
-                outboxRepository.save(OrderDeleted(hostName, hostOrderId))
+                orderRepository.deleteOrder(order)
+                outboxRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
         outboxMessageProcessor.handleEvent(outBoxMessage)
