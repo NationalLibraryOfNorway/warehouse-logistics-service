@@ -264,7 +264,7 @@ class WLSService(
                 }
             } catch (e: DuplicateResourceException) {
                 // TODO - What to do in this case? Should we try to recover?
-                logger.error(e) {
+                logger.warn(e) {
                     "Outbox message produced a duplicate resource. Message: $outboxMessage"
                 }
             } catch (e: Exception) {
