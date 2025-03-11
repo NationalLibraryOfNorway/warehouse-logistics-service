@@ -31,12 +31,14 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
+import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
 import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 
 private val logger = KotlinLogging.logger {}
@@ -256,9 +258,18 @@ class WLSService(
         coroutineContext.launch {
             try {
                 outboxMessageProcessor.handleEvent(outboxMessage)
+            } catch (e: StorageSystemException) {
+                logger.error(e) {
+                    "Storage system reported error while processing outbox message: $outboxMessage. Try again later"
+                }
+            } catch (e: DuplicateResourceException) {
+                // TODO - What to do in this case? Should we try to recover?
+                logger.error(e) {
+                    "Outbox message produced a duplicate resource. Message: $outboxMessage"
+                }
             } catch (e: Exception) {
                 logger.error(e) {
-                    "Error while processing outbox message: $outboxMessage. Try again later"
+                    "Unexpected error while processing outbox message: $outboxMessage. Try again later"
                 }
             }
         }
