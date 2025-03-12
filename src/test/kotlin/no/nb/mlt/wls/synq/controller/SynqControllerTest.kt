@@ -390,6 +390,7 @@ class SynqControllerTest(
             orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             address =
                 Order.Address(
                     recipient = "recipient",
