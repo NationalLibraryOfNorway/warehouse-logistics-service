@@ -63,6 +63,11 @@ data class ApiUpdateOrderPayload(
     )
     val contactPerson: String,
     @Schema(
+        description = """Email address to send emails with communication or updates regarding the order.""",
+        example = "heinz@Doofenshmir.tz"
+    )
+    val contactEmail: String?,
+    @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
         example = "{...}"
     )

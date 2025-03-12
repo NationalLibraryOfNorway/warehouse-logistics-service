@@ -604,7 +604,8 @@ class OrderControllerTest(
                     region = "region",
                     country = "country"
                 ),
-            contactPerson = "named person",
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "https://callback-wls.no/order"
         )
@@ -630,7 +631,8 @@ class OrderControllerTest(
                     region = "region",
                     country = "country"
                 ),
-            contactPerson = "named person",
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "https://callback-wls.no/order"
         )
@@ -652,7 +654,8 @@ class OrderControllerTest(
                     region = "region",
                     country = "country"
                 ),
-            contactPerson = "named person",
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "https://callback-wls.no/order"
         )
@@ -677,7 +680,8 @@ class OrderControllerTest(
                     region = "region",
                     country = "country"
                 ),
-            contactPerson = "named person",
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "https://callback-wls.no/order"
         )
@@ -726,6 +730,7 @@ class OrderControllerTest(
             orderType = orderType,
             address = address,
             contactPerson = contactPerson,
+            contactEmail = contactEmail,
             note = note,
             callbackUrl = callbackUrl
         )

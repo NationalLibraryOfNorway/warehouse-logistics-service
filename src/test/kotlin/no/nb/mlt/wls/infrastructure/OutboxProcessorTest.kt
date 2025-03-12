@@ -312,9 +312,10 @@ class OutboxProcessorTest {
                 ),
             orderType = Order.Type.LOAN,
             address = null,
-            contactPerson = "Ole Nordmann",
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = null,
-            callbackUrl = "https://callback.url"
+            callbackUrl = "https://callback-wls.no/order"
         )
 
     private val testItem =

@@ -3,6 +3,7 @@ package no.nb.mlt.wls.application.hostapi.order
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
@@ -73,6 +74,12 @@ data class ApiCreateOrderPayload(
     @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
+        description = """Email address to send emails with communication or updates regarding the order.""",
+        example = "heinz@Doofenshmir.tz"
+    )
+    @field:Email(message = "Provided email address is not valid")
+    val contactEmail: String?,
+    @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
         example = "{...}"
     )
@@ -100,6 +107,7 @@ data class ApiCreateOrderPayload(
             orderType = orderType,
             address = address,
             contactPerson = contactPerson,
+            contactEmail = contactEmail,
             note = note,
             callbackUrl = callbackUrl
         )

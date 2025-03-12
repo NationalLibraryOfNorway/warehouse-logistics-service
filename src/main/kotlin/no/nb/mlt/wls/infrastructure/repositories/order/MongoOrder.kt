@@ -18,6 +18,7 @@ data class MongoOrder(
     val orderLine: List<Order.OrderItem>,
     val orderType: Order.Type,
     val contactPerson: String,
+    val contactEmail: String?,
     val address: Order.Address?,
     val note: String?,
     val callbackUrl: String
@@ -31,6 +32,7 @@ fun Order.toMongoOrder(): MongoOrder {
         orderLine = orderLine,
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl
@@ -45,6 +47,7 @@ fun MongoOrder.toOrder(): Order {
         orderLine = orderLine,
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl

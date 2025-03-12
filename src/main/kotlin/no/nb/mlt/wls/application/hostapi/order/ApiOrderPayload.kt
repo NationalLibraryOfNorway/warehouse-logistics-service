@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Email
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -83,6 +84,12 @@ data class ApiOrderPayload(
     @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
+        description = """Email address to send emails with communication or updates regarding the order.""",
+        example = "heinz@Doofenshmir.tz"
+    )
+    @field:Email(message = "Provided email address is not valid")
+    val contactEmail: String?,
+    @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
         example = "{...}"
     )
@@ -110,6 +117,7 @@ data class ApiOrderPayload(
             orderType = orderType,
             address = address,
             contactPerson = contactPerson,
+            contactEmail = contactEmail,
             note = note,
             callbackUrl = callbackUrl
         )
@@ -149,6 +157,7 @@ fun Order.toApiOrderPayload() =
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl
