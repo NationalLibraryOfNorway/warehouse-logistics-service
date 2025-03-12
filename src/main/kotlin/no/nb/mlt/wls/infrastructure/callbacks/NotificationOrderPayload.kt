@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import jakarta.validation.constraints.NotEmpty
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 
@@ -70,6 +72,11 @@ data class NotificationOrderPayload(
     )
     val contactPerson: String,
     @Schema(
+        description = """Email address to send emails with communication or updates regarding the order.""",
+        example = "heinz@Doofenshmir.tz"
+    )
+    val contactEmail: String?,
+    @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
         example = "{...}"
     )
@@ -87,7 +94,15 @@ data class NotificationOrderPayload(
     val callbackUrl: String
 ) {
     data class OrderLine(
+        @Schema(
+            description = """Item ID from the host system.""",
+            example = "mlt-12345"
+        )
         val hostId: String,
+        @Schema(
+            description = """Current status for the ordered item.""",
+            examples = ["NOT_STARTED", "PICKED", "RETURNED", "FAILED"]
+        )
         val status: Order.OrderItem.Status
     )
 }
