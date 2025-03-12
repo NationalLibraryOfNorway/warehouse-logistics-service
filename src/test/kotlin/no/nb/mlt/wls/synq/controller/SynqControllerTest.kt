@@ -307,7 +307,7 @@ class SynqControllerTest(
         }
 
     @Test
-    fun `Reconciliation does respon with 200 ok`() {
+    fun `Reconciliation does responds with 200 ok`() {
         val loadUnitTest = LoadUnit(
             productId = "mlt-12345",
             productOwner = "NB",
