@@ -46,7 +46,7 @@ internal class ArchitectureTest {
     }
 
     @ArchTest
-    fun `A adapter should not access another adapter`(javaClasses: JavaClasses) {
+    fun `An adapter should not access another adapter`(javaClasses: JavaClasses) {
         slices()
             .matching("no.nb.mlt.wls.infrastructure..(*)")
             .should()
