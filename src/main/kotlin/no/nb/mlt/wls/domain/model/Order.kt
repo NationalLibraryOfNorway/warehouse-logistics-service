@@ -17,7 +17,6 @@ data class Order(
     val note: String?,
     val callbackUrl: String
 ) {
-
     private fun setOrderLines(listOfHostIds: List<String>): Order {
         if (isOrderProcessingStarted()) {
             throw IllegalOrderStateException("Order processing is already started")

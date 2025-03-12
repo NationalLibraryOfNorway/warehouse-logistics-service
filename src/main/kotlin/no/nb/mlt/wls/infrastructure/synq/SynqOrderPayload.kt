@@ -7,9 +7,9 @@ import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
-import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import java.time.LocalDateTime
 
 data class SynqOrderPayload(
