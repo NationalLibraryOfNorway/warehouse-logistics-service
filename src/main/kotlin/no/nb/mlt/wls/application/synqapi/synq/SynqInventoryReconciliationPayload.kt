@@ -11,13 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema
             {
                 "productId" : "001a72b4-19bf-4371-8b47-76caa273fc52",
                 "productOwner" : "AV",
-                "productVersionId" : "Default",
                 "quantityOnHand" : 1.0,
-                "suspect" : false,
-                "attributeValue" : [ {
-                  "name" : "materialStatus",
-                  "value" : "Available"
-                } ],
                 "hostName" : "Asta",
                 "confidentalProduct" : false
             }
