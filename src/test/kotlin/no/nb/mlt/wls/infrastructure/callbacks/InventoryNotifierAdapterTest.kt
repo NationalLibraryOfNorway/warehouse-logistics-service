@@ -128,6 +128,7 @@ class InventoryNotifierAdapterTest {
                 orderType = testOrder.orderType,
                 address = testOrder.address,
                 contactPerson = testOrder.contactPerson,
+                contactEmail = testOrder.contactEmail,
                 note = testOrder.note,
                 callbackUrl = testOrder.callbackUrl
             ),

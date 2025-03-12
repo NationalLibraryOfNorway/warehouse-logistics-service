@@ -56,6 +56,7 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         ],
         "orderType": "LOAN",
         "contactPerson": "Dr. Heinz Doofenshmirtz",
+        "contactEmail": "heinz@doofenshmir.tz",
         "address": {
             "recipient": "Doug Dimmadome",
             "addressLine1": "Dimmsdale Dimmadome",
@@ -71,4 +72,3 @@ if (!db.system.users.findOne({ user: "bruker" })) {
 
     print("END ####################################################################");
 }
-

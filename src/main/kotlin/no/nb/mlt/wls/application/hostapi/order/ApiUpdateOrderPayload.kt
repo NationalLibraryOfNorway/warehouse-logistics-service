@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -22,6 +21,7 @@ import kotlin.jvm.Throws
       ],
       "orderType": "LOAN",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "contactEmail": "heinz@doofenshmir.tz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",

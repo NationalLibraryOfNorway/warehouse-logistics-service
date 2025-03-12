@@ -102,6 +102,7 @@ class OrderModelConversionTest {
                     country = "country"
                 ),
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "callbackUrl"
         )

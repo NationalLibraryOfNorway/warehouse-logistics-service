@@ -25,6 +25,7 @@ import org.hibernate.validator.constraints.URL
       ],
       "orderType": "LOAN",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "contactEmail": "heinz@doofenshmir.tz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",

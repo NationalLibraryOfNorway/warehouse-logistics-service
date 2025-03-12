@@ -1,8 +1,6 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
-import jakarta.validation.constraints.NotEmpty
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 
@@ -21,6 +19,7 @@ import no.nb.mlt.wls.domain.model.Order
       ],
       "orderType": "LOAN",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "contactEmail": "heinz@doofenshmir.tz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
@@ -115,6 +114,7 @@ fun Order.toNotificationOrderPayload() =
         orderLine = orderLine.map { NotificationOrderPayload.OrderLine(it.hostId, it.status) },
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl
