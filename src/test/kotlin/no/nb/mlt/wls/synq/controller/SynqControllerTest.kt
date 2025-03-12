@@ -10,9 +10,11 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
+import no.nb.mlt.wls.application.synqapi.synq.LoadUnit
 import no.nb.mlt.wls.application.synqapi.synq.Position
 import no.nb.mlt.wls.application.synqapi.synq.Product
 import no.nb.mlt.wls.application.synqapi.synq.SynqBatchMoveItemPayload
+import no.nb.mlt.wls.application.synqapi.synq.SynqInventoryReconciliationPayload
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.domain.model.Environment
@@ -303,6 +305,37 @@ class SynqControllerTest(
             assertThat(item.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
         }
+
+    @Test
+    fun `Reconciliation does respond with 200 ok`() {
+        val loadUnitTest =
+            LoadUnit(
+                productId = "mlt-12345",
+                productOwner = "NB",
+                quantityOnHand = 1.0,
+                hostName = "AXIELL",
+                confidentialProduct = false
+            )
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
+            .put()
+            .uri("/inventory-reconciliation")
+            .bodyValue(
+                SynqInventoryReconciliationPayload(
+                    warehouse = "Sikringsmagasin_2",
+                    loadUnit =
+                        listOf(
+                            loadUnitTest,
+                            loadUnitTest.copy(productId = "mlt-54321", hostName = null),
+                            loadUnitTest.copy(productId = "mlt-23456", hostName = "mellomlager")
+                        )
+                )
+            )
+            .exchange()
+            .expectStatus().isOk
+    }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////

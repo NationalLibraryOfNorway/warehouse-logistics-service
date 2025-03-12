@@ -27,6 +27,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
@@ -50,7 +51,7 @@ class WLSService(
     private val outboxRepository: OutboxRepository,
     private val transactionPort: TransactionPort,
     private val outboxMessageProcessor: OutboxMessageProcessor
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
+) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems, SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -273,4 +274,9 @@ class WLSService(
                 }
             }
         }
+
+    override fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
+        // TODO: Implement synchronization (reconciliation) of items from storage systems.
+        logger.warn { "Synchronizing items not implemented" }
+    }
 }
