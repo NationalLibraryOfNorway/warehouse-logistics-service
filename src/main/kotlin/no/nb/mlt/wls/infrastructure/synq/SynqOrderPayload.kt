@@ -9,6 +9,7 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
+import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import java.time.LocalDateTime
 
 data class SynqOrderPayload(
@@ -103,6 +104,7 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
     when (this) {
         Packaging.NONE -> OBJ
         Packaging.BOX -> ESK
+        Packaging.ABOX -> ABOX
     }
 
 fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =

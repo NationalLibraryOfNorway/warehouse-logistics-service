@@ -16,7 +16,8 @@ data class SynqProductPayload(
 ) {
     enum class SynqPackaging {
         OBJ,
-        ESK
+        ESK,
+        ABOX
     }
 
     data class Barcode(val barcodeId: String)
