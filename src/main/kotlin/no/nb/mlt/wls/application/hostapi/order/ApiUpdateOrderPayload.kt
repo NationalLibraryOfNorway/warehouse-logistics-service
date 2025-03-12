@@ -48,8 +48,7 @@ data class ApiUpdateOrderPayload(
     )
     val hostOrderId: String,
     @Schema(
-        description = """List of items in the order, also called order lines.""",
-        accessMode = READ_ONLY
+        description = """List of items in the order, also called order lines."""
     )
     val orderLine: List<OrderLine>,
     @Schema(
