@@ -8,10 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -29,7 +31,8 @@ class SynqController(
     private val moveItem: MoveItem,
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
-    private val orderStatusUpdate: OrderStatusUpdate
+    private val orderStatusUpdate: OrderStatusUpdate,
+    private val synchronizeItems: SynchronizeItems
 ) {
     @Operation(
         summary = "Updates item's status and location",
@@ -202,14 +205,43 @@ class SynqController(
     suspend fun inventoryReconciliation(
         @RequestBody payload: SynqInventoryReconciliationPayload
     ): ResponseEntity<Void> {
-        logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnit count=${payload.loadUnit.size}" }
+        logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnits=${payload.loadUnit.size}" }
 
-        payload.loadUnit.filter { it.hostName == null }.forEach {
-            logger.warn { "Inventory reconciliation payload contains a load unit with a null hostName: $it" }
-        }
+        val units =
+            payload.loadUnit.map {
+                val mappedHostName = mapHostNameString(it.hostName)
 
-        logger.warn { "/inventory-reconciliation in SynqController not implemented, just answers OK" }
+                if (mappedHostName == null) {
+                    logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
+                    return@map null
+                }
+
+                SynchronizeItems.ItemToSynchronize(
+                    hostId = it.productId,
+                    hostName = mappedHostName,
+                    location = payload.warehouse,
+                    quantity = it.quantityOnHand.toInt()
+                )
+            }.filterNotNull()
+
+        logger.info { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
+
+        synchronizeItems.synchronizeItems(units)
 
         return ResponseEntity.ok().build()
+    }
+}
+
+private fun mapHostNameString(hostNameString: String?): HostName? {
+    if (hostNameString.isNullOrBlank()) {
+        return HostName.NONE
+    }
+
+    return when (hostNameString.lowercase()) {
+        "alma" -> HostName.ALMA
+        "asta" -> HostName.ASTA
+        "mavis" -> HostName.MAVIS
+        "axiell" -> HostName.AXIELL
+        else -> null
     }
 }
