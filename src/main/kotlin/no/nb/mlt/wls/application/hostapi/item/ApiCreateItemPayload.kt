@@ -63,7 +63,7 @@ data class ApiCreateItemPayload(
         description = """Whether the item is a single object or a container with other items inside.
                 "NONE" is for single objects, "ABOX" is for archival boxes, etc.
                 NOTE: It is up to the catalogue to keep track of the items inside a container.""",
-        examples = ["NONE", "BOX", "ABOX", "CRATE"]
+        examples = ["NONE", "BOX", "ABOX"]
     )
     val packaging: Packaging,
     @Schema(
