@@ -100,7 +100,7 @@ class SynqAdapter(
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
-        return when (location) {
+        return when (location.uppercase()) {
             "SYNQ_WAREHOUSE", "AUTOSTORE" -> true
             else -> false
         }

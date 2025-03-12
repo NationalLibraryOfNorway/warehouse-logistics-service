@@ -145,7 +145,7 @@ class OrderController(
         jwt.checkIfAuthorized(payload.hostName)
 
         getOrder.getOrder(payload.hostName, payload.hostOrderId)?.let {
-            logger.debug { "Order already exists: $it" }
+            logger.warn { "Order already exists: $it" }
             return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(it.toApiOrderPayload())

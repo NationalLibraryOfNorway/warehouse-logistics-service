@@ -2,6 +2,7 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
@@ -55,7 +56,7 @@ data class ApiCreateOrderPayload(
         accessMode = READ_ONLY
     )
     @field:NotEmpty(message = "The order must have at least one order line")
-    val orderLine: List<OrderLine>,
+    val orderLine: List<@Valid OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
             "LOAN" means that the order is for borrowing items to external or internal users,
@@ -69,7 +70,7 @@ data class ApiCreateOrderPayload(
         description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
-    @field:NotEmpty
+    @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
         description = """Address for the order, used in cases where storage operator sends out the order directly.""",
