@@ -308,13 +308,14 @@ class SynqControllerTest(
 
     @Test
     fun `Reconciliation does responds with 200 ok`() {
-        val loadUnitTest = LoadUnit(
-            productId = "mlt-12345",
-            productOwner = "NB",
-            quantityOnHand = 1.0,
-            hostName = "AXIELL",
-            confidentialProduct = false
-        )
+        val loadUnitTest =
+            LoadUnit(
+                productId = "mlt-12345",
+                productOwner = "NB",
+                quantityOnHand = 1.0,
+                hostName = "AXIELL",
+                confidentialProduct = false
+            )
 
         webTestClient
             .mutateWith(csrf())
@@ -324,11 +325,12 @@ class SynqControllerTest(
             .bodyValue(
                 SynqInventoryReconciliationPayload(
                     warehouse = "Sikringsmagasin_2",
-                    loadUnit = listOf(
-                        loadUnitTest,
-                        loadUnitTest.copy(productId = "mlt-54321", hostName = null),
-                        loadUnitTest.copy(productId = "mlt-23456", hostName = "mellomlager")
-                    )
+                    loadUnit =
+                        listOf(
+                            loadUnitTest,
+                            loadUnitTest.copy(productId = "mlt-54321", hostName = null),
+                            loadUnitTest.copy(productId = "mlt-23456", hostName = "mellomlager")
+                        )
                 )
             )
             .exchange()
