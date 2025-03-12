@@ -59,5 +59,5 @@ data class LoadUnit(
         description = """Whether the product is confidential""",
         example = "false"
     )
-    val confidentialProduct: Boolean,
+    val confidentialProduct: Boolean
 )

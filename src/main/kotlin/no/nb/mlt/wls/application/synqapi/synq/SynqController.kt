@@ -199,7 +199,9 @@ class SynqController(
         )
     )
     @PutMapping("/inventory-reconciliation")
-    suspend fun inventoryReconciliation(@RequestBody payload: SynqInventoryReconciliationPayload): ResponseEntity<Void> {
+    suspend fun inventoryReconciliation(
+        @RequestBody payload: SynqInventoryReconciliationPayload
+    ): ResponseEntity<Void> {
         logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnit count=${payload.loadUnit.size}" }
 
         payload.loadUnit.filter { it.hostName == null }.forEach {
@@ -209,6 +211,5 @@ class SynqController(
         logger.warn { "/inventory-reconciliation in SynqController not implemented, just answers OK" }
 
         return ResponseEntity.ok().build()
-
     }
 }
