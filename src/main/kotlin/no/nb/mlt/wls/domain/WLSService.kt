@@ -1,10 +1,18 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -19,48 +27,48 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import java.time.Duration
-import java.util.concurrent.TimeoutException
+import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
+import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
+import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 
 private val logger = KotlinLogging.logger {}
 
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val storageSystemFacade: StorageSystemFacade,
     private val inventoryNotifier: InventoryNotifier,
-    private val emailAdapter: EmailNotifier
+    private val outboxRepository: OutboxRepository,
+    private val transactionPort: TransactionPort,
+    private val outboxMessageProcessor: OutboxMessageProcessor
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems {
+    private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
         getItem(itemMetadata.hostName, itemMetadata.hostId)?.let {
             logger.info { "Item already exists: $it" }
             return it
         }
 
-        val item = itemMetadata.toItem()
-        // TODO - Should we handle the case where the item is saved in storage system but not in WLS database?
-        storageSystemFacade.createItem(item)
-        return itemRepository.createItem(item)
-            // TODO - See if timeouts can be made configurable
-            .timeout(Duration.ofSeconds(6))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while saving to WLS database, but saved in storage system. item: $itemMetadata"
-                }
-            }
-            .awaitSingle()
+        val (createdItem, outboxMessage) =
+            transactionPort.executeInTransaction {
+                val createdItem = itemRepository.createItem(itemMetadata.toItem())
+                val message = outboxRepository.save(ItemCreated(createdItem))
+
+                (createdItem to message)
+            } ?: throw RuntimeException("Could not create item")
+
+        processMessageAsync(outboxMessage)
+        return createdItem
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
@@ -105,7 +113,9 @@ class WLSService(
 
             inventoryNotifier.itemChanged(movedItem)
         }
-        // TODO - Should we log this once completed?
+        logger.debug {
+            "Items picked for $hostName"
+        }
     }
 
     override suspend fun pickOrderItems(
@@ -120,7 +130,7 @@ class WLSService(
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
         orderRepository.getOrder(orderDTO.hostName, orderDTO.hostOrderId)?.let {
-            logger.info { "Order already exists: $it" }
+            logger.info { "Order already exists: $it, returning existing order" }
             return it
         }
 
@@ -129,14 +139,15 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        try {
-            storageSystemFacade.createOrder(orderDTO.toOrder())
-        } catch (e: DuplicateResourceException) {
-            // TODO: Should we recover by updating the DB?
-            throw ServerException("Order already exists in storage system but not in DB", e)
-        }
-        val order = orderRepository.createOrder(orderDTO.toOrder())
-        createAndSendEmails(order)
+        val (order, orderCreatedMessage) =
+            transactionPort.executeInTransaction {
+                val order = orderRepository.createOrder(orderDTO.toOrder())
+                val orderCreatedMessage = outboxRepository.save(OrderCreated(createdOrder = order))
+
+                (order to orderCreatedMessage)
+            } ?: throw RuntimeException("Could not create order")
+
+        processMessageAsync(orderCreatedMessage)
 
         return order
     }
@@ -145,10 +156,14 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        val order = getOrderOrThrow(hostName, hostOrderId)
-        order.deleteOrder()
-        storageSystemFacade.deleteOrder(order)
-        orderRepository.deleteOrder(hostName, hostOrderId)
+        val order = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
+        val outBoxMessage =
+            transactionPort.executeInTransaction {
+                orderRepository.deleteOrder(order)
+                outboxRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
+            } ?: throw RuntimeException("Could not delete order")
+
+        outboxMessageProcessor.handleEvent(outBoxMessage)
     }
 
     override suspend fun updateOrder(
@@ -162,23 +177,33 @@ class WLSService(
         callbackUrl: String
     ): Order {
         val itemIds = itemHostIds.map { ItemId(hostName, it) }
+
         if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ValidationException("All order items in order must exist")
         }
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        val updatedOrder =
-            order.updateOrder(
-                itemIds = itemHostIds,
-                callbackUrl = callbackUrl,
-                orderType = orderType,
-                address = address ?: order.address,
-                note = note,
-                contactPerson = contactPerson
-            )
-        val result = storageSystemFacade.updateOrder(updatedOrder)
-        return orderRepository.updateOrder(result)
+        val (updatedOrder, outboxMessage) =
+            transactionPort.executeInTransaction {
+                val updatedOrder =
+                    orderRepository.updateOrder(
+                        order.updateOrder(
+                            itemIds = itemHostIds,
+                            callbackUrl = callbackUrl,
+                            orderType = orderType,
+                            address = address ?: order.address,
+                            note = note,
+                            contactPerson = contactPerson
+                        )
+                    )
+                val message = outboxRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+                (updatedOrder to message)
+            } ?: throw RuntimeException("Could not update order")
+
+        processMessageAsync(outboxMessage)
+
+        return updatedOrder
     }
 
     override suspend fun getOrder(
@@ -229,14 +254,23 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    /**
-     * Email handling for order receivers and order handlers
-     */
-    private suspend fun createAndSendEmails(order: Order) {
-        val items = order.orderLine.map { it.hostId }
-        val orderItems = getItems(items, order.hostName)
-        if (orderItems.isNotEmpty()) {
-            emailAdapter.orderCreated(order, orderItems)
+    private fun processMessageAsync(outboxMessage: OutboxMessage) =
+        coroutineContext.launch {
+            try {
+                outboxMessageProcessor.handleEvent(outboxMessage)
+            } catch (e: StorageSystemException) {
+                logger.error(e) {
+                    "Storage system reported error while processing outbox message: $outboxMessage. Try again later"
+                }
+            } catch (e: DuplicateResourceException) {
+                // TODO - What to do in this case? Should we try to recover?
+                logger.warn(e) {
+                    "Outbox message produced a duplicate resource. Message: $outboxMessage"
+                }
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Unexpected error while processing outbox message: $outboxMessage. Try again later"
+                }
+            }
         }
-    }
 }

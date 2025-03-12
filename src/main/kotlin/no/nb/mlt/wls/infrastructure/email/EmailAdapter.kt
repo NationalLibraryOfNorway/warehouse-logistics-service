@@ -46,10 +46,6 @@ class EmailAdapter(
         }
     }
 
-    override suspend fun orderUpdated(order: Order) {
-        TODO("Not yet implemented")
-    }
-
     /**
      * Send an email and log any exceptions
      */

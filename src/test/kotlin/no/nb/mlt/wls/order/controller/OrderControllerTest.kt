@@ -1,17 +1,21 @@
 package no.nb.mlt.wls.order.controller
 
 import com.ninjasquad.springmockk.MockkBean
+import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
-import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
@@ -20,13 +24,19 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
+import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
+import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
+import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepository
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -41,7 +51,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -50,7 +59,6 @@ import org.springframework.security.test.web.reactive.server.SecurityMockServerC
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Flux
 
 @EnableTestcontainers
@@ -63,10 +71,16 @@ class OrderControllerTest(
     @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val emailRepository: EmailRepository,
-    @Autowired val repository: OrderMongoRepository
+    @Autowired val repository: OrderMongoRepository,
+    @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
+    @Autowired val mongoOutboxRepository: MongoOutboxRepository,
+    @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
 ) {
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
+
+    @SpykBean
+    private lateinit var outboxRepository: OutboxRepository
 
     private lateinit var webTestClient: WebTestClient
 
@@ -86,12 +100,8 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `createOrder with valid payload creates order`() =
+    fun `createOrder with valid payload creates order and outbox message`() =
         runTest {
-            coEvery {
-                synqAdapterMock.createOrder(any())
-            } answers {}
-
             webTestClient
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
@@ -101,9 +111,17 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
-            val order =
-                repository.findByHostNameAndHostOrderId(testOrderPayload.hostName, testOrderPayload.hostOrderId)
-                    .awaitSingle()
+            val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
+            val outbox = outboxRepositoryAdapter.getAll()
+
+            assertThat(outbox)
+                .hasSize(1)
+                .filteredOn { it is OrderCreated }
+                .first()
+                .matches {
+                    val message = it as OrderCreated
+                    message.createdOrder == testOrderPayload.toOrder()
+                }
 
             assertThat(order)
                 .isNotNull
@@ -117,6 +135,7 @@ class OrderControllerTest(
             coEvery {
                 synqAdapterMock.createOrder(any())
             } answers {}
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
             emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
 
             webTestClient
@@ -128,6 +147,15 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
+            // This test finishes before emails go through
+            // Letting it run for too long will also crash, since the application will try
+            // To process messages in the outbox
+            // Wait a few seconds for the emails to go through
+            async {
+                withContext(Dispatchers.Default) {
+                    delay(200L)
+                }
+            }.await()
             val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
 
             // Create a temporary new client to check emails
@@ -146,58 +174,51 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `createOrder with duplicate payload returns OK`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(duplicateOrderPayload)
-            .exchange()
-            .expectStatus().isOk
-            .expectBody<ApiOrderPayload>()
-            .consumeWith { response ->
-                assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
-                assertThat(response.responseBody?.hostName).isEqualTo(duplicateOrderPayload.hostName)
-                assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
-            }
+    fun `createOrder with duplicate payload returns OK but does not create outbox message`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(duplicateOrderPayload)
+                .exchange()
+                .expectStatus().isOk
+                .expectBody<ApiOrderPayload>()
+                .consumeWith { response ->
+                    assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
+                    assertThat(response.responseBody?.hostName).isEqualTo(duplicateOrderPayload.hostName)
+                    assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
+                }
+
+            val outbox = outboxRepositoryAdapter.getAll()
+            assertThat(outbox).isEmpty()
+        }
     }
 
     @Test
-    fun `createOrder payload with different data but same ID returns DB entry`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(
-                duplicateOrderPayload.copy(
-                    orderLine = listOf(OrderLine("AAAAAAAAA", Order.OrderItem.Status.PICKED))
+    fun `createOrder payload with different data but same ID returns DB entry and does not create outbox message`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    duplicateOrderPayload.copy(
+                        orderLine = listOf(OrderLine("AAAAAAAAA", Order.OrderItem.Status.PICKED))
+                    )
                 )
-            )
-            .exchange()
-            .expectStatus().isOk
-            .expectBody<ApiOrderPayload>()
-            .consumeWith { response ->
-                assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
-            }
-    }
+                .exchange()
+                .expectStatus().isOk
+                .expectBody<ApiOrderPayload>()
+                .consumeWith { response ->
+                    assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
+                }
 
-    @Test
-    fun `createOrder where SynQ says it's a duplicate but we don't have it in the DB returns Server error`() {
-        coEvery {
-            synqAdapterMock.createOrder(any())
-        } throws (DuplicateResourceException("Order already exists"))
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload)
-            .exchange()
-            .expectStatus().is5xxServerError
-            .expectBody<ErrorMessage>()
+            val outbox = outboxRepositoryAdapter.getAll()
+            assertThat(outbox).isEmpty()
+        }
     }
 
     @Test
@@ -207,29 +228,27 @@ class OrderControllerTest(
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload.copy(hostOrderId = ""))
+            .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
             .exchange()
             .expectStatus().isBadRequest
-    }
-
-    @Test
-    fun `createOrder handles SynQ error`() {
-        coEvery {
-            synqAdapterMock.createOrder(any())
-        } throws
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
 
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
             .post()
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testOrderPayload)
+            .bodyValue(testOrderPayload.copy(hostOrderId = ""))
             .exchange()
-            .expectStatus().is5xxServerError
+            .expectStatus().isBadRequest
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .post()
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testOrderPayload.copy(callbackUrl = "testing.no"))
+            .exchange()
+            .expectStatus().isBadRequest
     }
 
     @Test
@@ -288,7 +307,33 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `updateOrder with valid payload updates order`() {
+    fun `Should not save order if outbox message fails to persist`() {
+        // Just calling "toOrder" on a payload fails, as it does not
+        // do the same mapping as the OrderDTO
+        val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
+
+        runTest {
+            coEvery { outboxRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .post()
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testOrderPayload)
+                .exchange()
+                .expectStatus().is5xxServerError
+
+            val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
+            assertThat(order).isNull()
+
+            assertThat(outboxRepository.getAll()).isEmpty()
+        }
+    }
+
+    @Test
+    fun `updateOrder with valid payload updates order and creates outbox message`() {
         val testPayload =
             duplicateOrderPayload.copy(
                 contactPerson = "new person",
@@ -296,27 +341,33 @@ class OrderControllerTest(
                 orderLine = listOf(OrderLine("item-123", null))
             )
 
-        coEvery {
-            synqAdapterMock.updateOrder(any())
-        } answers { testPayload.toOrder() }
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .put()
-            .bodyValue(testPayload)
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isOk
-            .expectBody<ApiOrderPayload>()
-            .consumeWith { response ->
-                val orderLines = response.responseBody?.orderLine
-                orderLines?.map { it ->
-                    assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .bodyValue(testPayload)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk
+                .expectBody<ApiOrderPayload>()
+                .consumeWith { response ->
+                    val orderLines = response.responseBody?.orderLine
+                    orderLines?.map { it ->
+                        assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
+                    }
+                    assertThat(response.responseBody?.contactPerson).isEqualTo(testPayload.contactPerson)
+                    assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
                 }
-                assertThat(response.responseBody?.contactPerson).isEqualTo(testPayload.contactPerson)
-                assertThat(response.responseBody?.callbackUrl).isEqualTo(testPayload.callbackUrl)
-            }
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(1)
+                .first()
+                .matches {
+                    it is OrderUpdated && it.updatedOrder == testPayload.toOrder()
+                }
+        }
     }
 
     @Test
@@ -339,19 +390,29 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
     }
 
     @Test
     fun `updateOrder with invalid fields returns 400`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .put()
-            .bodyValue(testOrderPayload.copy(hostOrderId = ""))
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus().isBadRequest
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .bodyValue(testOrderPayload.copy(hostOrderId = ""))
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isBadRequest
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
+        }
     }
 
     @Test
@@ -369,6 +430,10 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
     }
 
@@ -388,6 +453,10 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
     }
 
@@ -405,6 +474,10 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
     }
 
@@ -412,7 +485,7 @@ class OrderControllerTest(
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -430,7 +503,15 @@ class OrderControllerTest(
                     duplicateOrderPayload.hostOrderId
                 ).awaitSingleOrNull()
 
-            assertThat(order).isNull()
+            assertThat(order?.status).isEqualTo(Order.Status.DELETED)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(1)
+                .first()
+                .matches {
+                    it is OrderDeleted && it.hostOrderId == duplicateOrderPayload.hostOrderId
+                }
         }
 
     @Test
@@ -449,6 +530,10 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
     }
 
@@ -456,7 +541,7 @@ class OrderControllerTest(
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -467,13 +552,17 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isBadRequest
+
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
         }
 
     @Test
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any())
+                synqAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -484,27 +573,11 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isNotFound
-        }
 
-    @Test
-    fun `deleteOrder handles synq error`() {
-        coEvery {
-            synqAdapterMock.deleteOrder(any())
-        } throws (
-            StorageSystemException(
-                "Unexpected error",
-                WebClientResponseException.create(500, "Unexpected error", HttpHeaders.EMPTY, ByteArray(0), null)
-            )
-        )
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .delete()
-            .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
-            .exchange()
-            .expectStatus().is5xxServerError
-        assertThat(true)
-    }
+            val outBoxMessages = outboxRepositoryAdapter.getAll()
+            assertThat(outBoxMessages)
+                .hasSize(0)
+        }
 
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
@@ -615,6 +688,7 @@ class OrderControllerTest(
 
     fun populateDb() {
         runBlocking {
+            mongoOutboxRepository.deleteAll().awaitSingleOrNull()
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database

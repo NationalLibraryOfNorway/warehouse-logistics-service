@@ -2,7 +2,6 @@ package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
-import reactor.core.publisher.Mono
 
 interface ItemRepository {
     suspend fun getItem(
@@ -15,7 +14,7 @@ interface ItemRepository {
         hostName: HostName
     ): List<Item>
 
-    fun createItem(item: Item): Mono<Item>
+    suspend fun createItem(item: Item): Item
 
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
 

@@ -8,6 +8,4 @@ interface EmailNotifier {
         order: Order,
         orderItems: List<Item>
     )
-
-    suspend fun orderUpdated(order: Order)
 }

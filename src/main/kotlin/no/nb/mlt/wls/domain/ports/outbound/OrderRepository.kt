@@ -3,6 +3,7 @@ package no.nb.mlt.wls.domain.ports.outbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import kotlin.jvm.Throws
 
 interface OrderRepository {
     suspend fun getOrder(
@@ -11,10 +12,7 @@ interface OrderRepository {
     ): Order?
 
     @Throws(OrderNotFoundException::class)
-    suspend fun deleteOrder(
-        hostName: HostName,
-        hostOrderId: String
-    )
+    suspend fun deleteOrder(order: Order)
 
     suspend fun updateOrder(order: Order): Order
 

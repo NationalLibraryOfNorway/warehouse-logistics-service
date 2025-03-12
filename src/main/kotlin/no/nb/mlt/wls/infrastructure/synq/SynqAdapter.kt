@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -70,13 +71,16 @@ class SynqAdapter(
             .awaitSingle()
     }
 
-    override suspend fun deleteOrder(order: Order) {
+    override suspend fun deleteOrder(
+        orderId: String,
+        hostName: HostName
+    ) {
         // Special handling for Arkivverket is required for the storage systems
-        val owner = toSynqOwner(order.hostName)
+        val owner = toSynqOwner(hostName)
 
         webClient
             .delete()
-            .uri(URI.create("$baseUrl/orders/$owner/${order.hostOrderId}"))
+            .uri(URI.create("$baseUrl/orders/$owner/$orderId"))
             .retrieve()
             .toEntity(SynqError::class.java)
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
@@ -93,6 +97,18 @@ class SynqAdapter(
             .map { order }
             .onErrorMap(WebClientResponseException::class.java, ::createServerError)
             .awaitSingle()
+    }
+
+    override suspend fun canHandleLocation(location: String): Boolean {
+        return when (location.uppercase()) {
+            "SYNQ_WAREHOUSE", "AUTOSTORE" -> true
+            else -> false
+        }
+    }
+
+    override fun canHandleItem(item: Item): Boolean {
+        // TODO - Handle item categories based on ruleset
+        return true
     }
 }
 

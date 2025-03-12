@@ -1,32 +1,39 @@
 # Define what services to set up for local development
 services:
-  # Set up a simple mongo database for local development
-  mongo-db:
+    # Set up a local mongo instance for local development
+  mongo1:
     image: mongo:4.4.22 # Same as the version in the prod env
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: toor
-      MONGO_INITDB_DATABASE: wls
+    hostname: mongo1
+    restart: unless-stopped
+    entrypoint: >
+      /bin/bash -c '
+      openssl rand -base64 756 > /data/keyfile.key &&
+      chmod 400 /data/keyfile.key &&
+      chown mongodb:mongodb /data/keyfile.key &&
+      /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: wls
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: toor
     volumes:
-      # Copy script to populate the database with test data
-      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo/mongo-init.js:/mongo-init.js:ro
+      - mongodata1:/data/db
+      - mongoconfig:/data/configdb
+      - mongoshared:/data
 
   # Set up a mongo-express instance to view the mongo database
   # Makes GUI available at: http://localhost:8081
   mongo-express:
     image: mongo-express:1.0.2
-    restart: always
+    restart: unless-stopped
     ports:
       - "8081:8081"
     depends_on:
-      - mongo-db # Needs to have mongo-db container running
+      - mongo1
     environment:
-      ME_CONFIG_MONGODB_SERVER: mongo-db
-      ME_CONFIG_MONGODB_ADMINUSERNAME: root
-      ME_CONFIG_MONGODB_ADMINPASSWORD: toor
+      ME_CONFIG_MONGODB_URL: mongodb://root:toor@mongo1:27017/?replicaSet=rs0
       ME_CONFIG_OPTIONS_EDITORTHEME: "gruvbox-dark"
       ME_CONFIG_BASICAUTH: false
 
@@ -62,3 +69,8 @@ services:
     restart: always
     ports:
       - "8181:8181"
+
+volumes:
+  mongodata1:
+  mongoconfig:
+  mongoshared:

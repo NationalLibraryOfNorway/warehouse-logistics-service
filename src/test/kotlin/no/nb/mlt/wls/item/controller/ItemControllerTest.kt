@@ -28,7 +28,6 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
@@ -36,8 +35,6 @@ import org.springframework.security.test.web.reactive.server.SecurityMockServerC
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.server.ServerErrorException
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -181,28 +178,6 @@ class ItemControllerTest(
             .bodyValue(testItemPayload)
             .exchange()
             .expectStatus().isForbidden
-    }
-
-    @Test
-    fun `createItem handles SynQ error`() {
-        coEvery {
-            synqAdapterMock.createItem(any())
-        }.throws(
-            ServerErrorException(
-                "Failed to create item in SynQ, the storage system responded with " +
-                    "error code: '1002' and error text: 'Unknown item category TEST.'",
-                HttpClientErrorException(HttpStatus.NOT_FOUND, "Not found")
-            )
-        )
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
-            .post()
-            .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemPayload)
-            .exchange()
-            .expectStatus().is5xxServerError
     }
 
 // /////////////////////////////////////////////////////////////////////////////

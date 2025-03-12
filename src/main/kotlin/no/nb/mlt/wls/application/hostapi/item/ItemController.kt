@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
@@ -24,11 +25,11 @@ import org.springframework.web.bind.annotation.RestController
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
-@RequestMapping(path = [ "/v1"])
+@RequestMapping(path = ["/v1"])
 @Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
 class ItemController(
-    private val addNewItem: AddNewItem,
-    private val getItem: GetItem
+    private val getItem: GetItem,
+    private val addNewItem: AddNewItem
 ) {
     @Operation(
         summary = "Register an item in Hermes",
@@ -37,9 +38,6 @@ class ItemController(
             An item is also called product by some storage systems and users, those mean the same thing to Hermes.
             Do not provide quantity or location information in this step, as it is overridden with default values."""
     )
-
-    // ? TODO: Replace the schema with a model class without stuff like location, quantity, etc.
-
     @ApiResponses(
         value = [
             ApiResponse(
@@ -127,17 +125,20 @@ class ItemController(
     @PostMapping("/item")
     suspend fun createItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiCreateItemPayload
+        @RequestBody @Valid payload: ApiCreateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(payload.hostName)
-        payload.validate()
 
         getItem.getItem(payload.hostName, payload.hostId)?.let {
-            return ResponseEntity.ok(it.toApiPayload())
+            return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(it.toApiPayload())
         }
 
-        val item = addNewItem.addItem(payload.toItemMetadata())
+        val itemCreated = addNewItem.addItem(payload.toItemMetadata())
 
-        return ResponseEntity(item.toApiPayload(), HttpStatus.CREATED)
+        return ResponseEntity
+            .status(HttpStatus.CREATED)
+            .body(itemCreated.toApiPayload())
     }
 }

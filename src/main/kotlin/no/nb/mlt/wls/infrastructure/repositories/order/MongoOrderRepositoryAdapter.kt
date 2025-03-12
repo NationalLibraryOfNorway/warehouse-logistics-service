@@ -43,21 +43,28 @@ class MongoOrderRepositoryAdapter(
             .awaitSingleOrNull()?.toOrder()
     }
 
-    override suspend fun deleteOrder(
-        hostName: HostName,
-        hostOrderId: String
-    ) {
-        getOrder(hostName, hostOrderId) ?: throw OrderNotFoundException("Could not find order for $hostName with hostId $hostOrderId")
-
-        orderMongoRepository.deleteByHostNameAndHostOrderId(hostName, hostOrderId)
-            // TODO - See if timeouts can be made configurable
-            .timeout(Duration.ofSeconds(8))
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while deleting order from WLS database. Order ID: $hostOrderId, Host: $hostName"
+    override suspend fun deleteOrder(order: Order) {
+        val modified =
+            orderMongoRepository.findAndUpdateByHostNameAndHostOrderId(
+                order.hostName,
+                order.hostOrderId,
+                status = Order.Status.DELETED,
+                orderLine = order.orderLine,
+                orderType = order.orderType,
+                contactPerson = order.contactPerson,
+                address = order.address,
+                callbackUrl = order.callbackUrl
+            )
+                // TODO - See if timeouts can be made configurable
+                .timeout(Duration.ofSeconds(8))
+                .doOnError(TimeoutException::class.java) {
+                    logger.error(it) {
+                        "Timed out while deleting order from WLS database. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
+                    }
                 }
-            }
-            .awaitSingleOrNull()
+                .awaitSingleOrNull()
+
+        if (modified == 0L) throw OrderNotFoundException("Order ${order.hostOrderId} for ${order.hostName} was not found for deletion")
     }
 
     override suspend fun updateOrder(order: Order): Order {
@@ -108,11 +115,6 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         hostOrderId: String
     ): Mono<MongoOrder>
 
-    fun deleteByHostNameAndHostOrderId(
-        hostName: HostName,
-        hostOrderId: String
-    ): Mono<Void>
-
     @Query("{hostName: ?0, hostOrderId: ?1}")
     @Update("{'\$set':{status: ?2,orderLine: ?3,orderType: ?4,contactPerson: ?5,address: ?6, callbackUrl: ?7}}")
     fun findAndUpdateByHostNameAndHostOrderId(
@@ -124,5 +126,5 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         contactPerson: String,
         address: Order.Address?,
         callbackUrl: String
-    ): Mono<Void>
+    ): Mono<Long>
 }

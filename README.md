@@ -189,7 +189,12 @@ This will spin up the following services:
 To start the services, run the following command:
 
 ```shell
-docker compose -f docker/compose.yaml -p wls-local up -d
+cd docker
+docker compose -p wls-local up -d
+
+# If its the first time setting up, run the following command to setup replica set for MongoDB
+sudo chmod 755 ./setup-replicaset.sh
+./setup-replicaset.sh
 ```
 
 And to stop the services, run the following command:

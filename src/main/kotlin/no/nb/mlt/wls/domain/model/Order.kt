@@ -131,11 +131,12 @@ data class Order(
     /**
      * Delete the order as long as it is possible.
      *
-     * At the moment this function only does validation, as deleting it from the system is
-     * handled by the service and infrastructure
+     * This validates if the order can be deleted, and sets the status on it if it can.
+     * Deleting it from the storage systems is handled by the outbox processor.
      */
-    fun deleteOrder() {
+    fun deleteOrder(): Order {
         throwIfInProgress()
+        return this.copy(status = Status.DELETED)
     }
 
     /**
