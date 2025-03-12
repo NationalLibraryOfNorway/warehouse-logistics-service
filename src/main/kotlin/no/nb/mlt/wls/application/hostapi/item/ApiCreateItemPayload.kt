@@ -53,10 +53,10 @@ data class ApiCreateItemPayload(
     val itemCategory: ItemCategory,
     @Schema(
         description = """What kind of environment the item should be stored in.
-                "NONE" is for normal storage for the item category, "FRYS" is for frozen storage, etc.
+                "NONE" is for normal storage for the item category, "FREEZE" is for frozen storage, etc.
                 NOTE: This is not a guarantee that the item will be stored in the preferred environment.
                 In cases where storage space is limited, the item may be stored in a different environment.""",
-        examples = ["NONE", "FRYS"]
+        examples = ["NONE", "FREEZE"]
     )
     val preferredEnvironment: Environment,
     @Schema(
