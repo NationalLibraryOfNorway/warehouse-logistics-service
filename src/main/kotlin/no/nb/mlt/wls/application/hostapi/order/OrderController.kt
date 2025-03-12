@@ -298,7 +298,7 @@ class OrderController(
     )
     @ApiResponses(
         ApiResponse(
-            responseCode = "200",
+            responseCode = "204",
             description = """Order with given "hostName" and "hostOrderId" was deleted from the system.""",
             content = [Content(schema = Schema())]
         ),
@@ -323,6 +323,6 @@ class OrderController(
     ): ResponseEntity<String> {
         jwt.checkIfAuthorized(hostName)
         deleteOrder.deleteOrder(hostName, hostOrderId)
-        return ResponseEntity.ok().build()
+        return ResponseEntity.noContent().build()
     }
 }

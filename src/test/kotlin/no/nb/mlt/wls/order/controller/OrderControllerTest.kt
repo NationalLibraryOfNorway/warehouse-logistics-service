@@ -495,7 +495,7 @@ class OrderControllerTest(
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus().isNoContent
 
             val order =
                 repository.findByHostNameAndHostOrderId(
