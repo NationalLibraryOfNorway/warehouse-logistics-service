@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+
+private val logger = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping(path = ["/synq/v1"])
@@ -167,5 +170,45 @@ class SynqController(
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
+    }
+
+    @Operation(
+        summary = "Inventory reconciliation",
+        description = """Reconciles the inventory in SynQ with the inventory in Hermes WLS."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Inventory was reconciled successfully.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Inventory reconciliation payload was invalid.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [Content(schema = Schema())]
+        )
+    )
+    @PutMapping("/inventory-reconciliation")
+    suspend fun inventoryReconciliation(@RequestBody payload: SynqInventoryReconciliationPayload): ResponseEntity<Void> {
+        logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnit count=${payload.loadUnit.size}" }
+
+        payload.loadUnit.filter { it.hostName == null }.forEach {
+            logger.warn { "Inventory reconciliation payload contains a load unit with a null hostName: $it" }
+        }
+
+        logger.warn { "/inventory-reconciliation in SynqController not implemented, just answers OK" }
+
+        return ResponseEntity.ok().build()
+
     }
 }
