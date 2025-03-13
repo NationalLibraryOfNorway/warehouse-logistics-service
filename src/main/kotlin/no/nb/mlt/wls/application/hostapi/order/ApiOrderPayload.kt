@@ -3,7 +3,7 @@ package no.nb.mlt.wls.application.hostapi.order
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import jakarta.validation.constraints.Email
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.HostName
@@ -54,7 +54,7 @@ data class ApiOrderPayload(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
-    @field:NotEmpty(message = "The order's hostOrderId is required, and can not be blank")
+    @field:NotBlank(message = "The order's hostOrderId is required, and can not be blank")
     val hostOrderId: String,
     @Schema(
         description = """Current status for the whole order.
@@ -67,7 +67,7 @@ data class ApiOrderPayload(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
-    @field:NotEmpty(message = "The order must have at least one order line")
+    @field:NotBlank(message = "The order must have at least one order line")
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
@@ -82,7 +82,7 @@ data class ApiOrderPayload(
         description = """Who to contact in relation to the order in case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
-    @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
+    @field:NotBlank(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
         description = """Where to send emails with communication or updates regarding the order.""",
@@ -105,7 +105,7 @@ data class ApiOrderPayload(
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
-    @field:NotEmpty(message = "The callback URL is required, and can not be blank")
+    @field:NotBlank(message = "The callback URL is required, and can not be blank")
     @field:URL(message = "The callback URL must be a valid URL")
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
@@ -178,7 +178,7 @@ data class OrderLine(
         description = """Item ID from the host system.""",
         example = "mlt-12345"
     )
-    @field:NotEmpty(message = "The order items's hostId is required, and can not be blank")
+    @field:NotBlank(message = "The order items's hostId is required, and can not be blank")
     val hostId: String,
     @Schema(
         description = """Current status for the ordered item.""",

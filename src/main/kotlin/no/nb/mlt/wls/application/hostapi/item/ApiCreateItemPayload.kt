@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.application.hostapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -30,7 +30,7 @@ data class ApiCreateItemPayload(
         description = """The item ID from the host system, usually a barcode or any equivalent ID.""",
         example = "mlt-12345"
     )
-    @field:NotEmpty(message = "The item's 'hostId' is required, and it cannot be blank")
+    @field:NotBlank(message = "The item's 'hostId' is required, and it cannot be blank")
     val hostId: String,
     @Schema(
         description = """Name of the host system that owns the item, and where the request comes from.
@@ -43,7 +43,7 @@ data class ApiCreateItemPayload(
             Usually item's title/name, or contents description.""",
         examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo", "Photo Collection, Hemnes, 2025-03-12"]
     )
-    @field:NotEmpty(message = "The item's 'description' is required, and it cannot be blank")
+    @field:NotBlank(message = "The item's 'description' is required, and it cannot be blank")
     val description: String,
     @Schema(
         description = """Item's storage category or grouping.
