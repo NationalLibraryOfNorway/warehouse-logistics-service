@@ -37,7 +37,7 @@ data class SynqOrderPickingConfirmationPayload(
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = """User who picked the products/items.""",
+        description = """Who picked the products/items.""",
         example = "per@person@nb.no"
     )
     val operator: String,

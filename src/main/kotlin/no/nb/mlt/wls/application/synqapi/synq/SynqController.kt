@@ -30,7 +30,8 @@ class SynqController(
 ) {
     @Operation(
         summary = "Updates item's status and location",
-        description = """Extracts information about every item, updates their location and quantity, and sends an update to the host systems."""
+        description = """Extracts information about every item, updates their location and quantity,
+            and sends an update to the host systems."""
     )
     @ApiResponses(
         ApiResponse(
@@ -40,7 +41,7 @@ class SynqController(
         ),
         ApiResponse(
             responseCode = "400",
-            description = """The payload for moving items was invalid and nothing got updated.""",
+            description = """Moved item payload was invalid and nothing got updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -58,7 +59,7 @@ class SynqController(
     @PutMapping("/move-item")
     suspend fun moveItem(
         @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
         return ResponseEntity.ok().build()
     }
@@ -76,7 +77,7 @@ class SynqController(
         ),
         ApiResponse(
             responseCode = "400",
-            description = """Order update payload was invalid and nothing got updated.""",
+            description = """Picking confirmation payload was invalid and nothing got updated.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -104,6 +105,7 @@ class SynqController(
 
         payload.validate()
 
+        // TODO: filter out host name from order ID
         val hostName = payload.getValidHostName()
         val hostIds = payload.mapProductsToQuantity()
 
@@ -156,6 +158,7 @@ class SynqController(
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
     ): ResponseEntity<String> {
+        // TODO: filter out host name from order ID
         if (orderId.isBlank()) {
             return ResponseEntity.badRequest().body("Order ID cannot be blank")
         }

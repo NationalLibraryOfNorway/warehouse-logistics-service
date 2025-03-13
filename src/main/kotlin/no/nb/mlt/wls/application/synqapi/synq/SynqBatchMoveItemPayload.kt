@@ -58,14 +58,13 @@ data class SynqBatchMoveItemPayload(
     val prevLocation: String,
     @Schema(
         description = """List of products/items in the transport unit (referred to as load units in SynQ).
-            Since we only have unique items an LU is equivalent to a product.
-            In usual warehouses you have multiple copies of the same product, i.e. 100 shirts here, 100 shirts there...
-        """,
+            Since we only have unique items an LU is equivalent to product.
+            In usual warehouses you have multiple copies of the same product, so an LU can be a stack of products.""",
         example = "[{...}]"
     )
     val loadUnit: List<Product>,
     @Schema(
-        description = """Identifier of user who caused the items to move, can be system if that was an automatic action.""",
+        description = """Who cause the load unit to move, can be system if that was an automatic action.""",
         example = "per.person@nb.no"
     )
     val user: String,
