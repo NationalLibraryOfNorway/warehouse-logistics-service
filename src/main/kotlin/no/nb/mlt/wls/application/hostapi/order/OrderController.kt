@@ -335,7 +335,8 @@ class OrderController(
             allowEmptyValue = false,
             example = "mlt-12345-order"
         )
-        @PathVariable("hostOrderId") @NotBlank hostOrderId: String
+        @PathVariable("hostOrderId")
+        @NotBlank hostOrderId: String
     ): ResponseEntity<String> {
         jwt.checkIfAuthorized(hostName)
         deleteOrder.deleteOrder(hostName, hostOrderId)
