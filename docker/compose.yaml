@@ -1,9 +1,9 @@
 # Define what services to set up for local development
 services:
     # Set up a local mongo instance for local development
-  mongo1:
+  mongo-db:
     image: mongo:4.4.22 # Same as the version in the prod env
-    hostname: mongo1
+    hostname: mongo-db
     restart: unless-stopped
     entrypoint: >
       /bin/bash -c '
