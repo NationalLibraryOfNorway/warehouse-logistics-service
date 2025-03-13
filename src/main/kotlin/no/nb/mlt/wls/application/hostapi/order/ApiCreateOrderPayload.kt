@@ -69,19 +69,19 @@ data class ApiCreateOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        description = """Who to contact in relation to the order in case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
     @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
-        description = """Email address to send emails with communication or updates regarding the order.""",
+        description = """Where to send emails with communication or updates regarding the order.""",
         example = "heinz@Doofenshmir.tz"
     )
     @field:Email(message = "Provided email address is not valid")
     val contactEmail: String?,
     @Schema(
-        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
     val address: Order.Address?,
@@ -91,7 +91,7 @@ data class ApiCreateOrderPayload(
     )
     val note: String?,
     @Schema(
-        description = """Callback URL to use for sending order updates to the host system.
+        description = """This URL will be used for POSTing order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )

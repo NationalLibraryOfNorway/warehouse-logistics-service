@@ -43,7 +43,7 @@ data class ApiUpdateOrderPayload(
     )
     val hostName: HostName,
     @Schema(
-        description = """Order ID from the host system which made the order.""",
+        description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
     val hostOrderId: String,
@@ -52,22 +52,26 @@ data class ApiUpdateOrderPayload(
     )
     val orderLine: List<OrderLine>,
     @Schema(
-        description = """Describes what type of order this is""",
+        description = """Describes what type of order this is.
+            "LOAN" means that the order is for borrowing items to external or internal users,
+            usually meaning the items will be viewed, inspected, etc.
+            "DIGITIZATION" means that the order is specifically for digitizing items,
+            usually meaning that the order will be delivered to digitization workstation.""",
         examples = [ "LOAN", "DIGITIZATION" ]
     )
     val orderType: Order.Type,
     @Schema(
-        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        description = """Who to contact in relation to the order in case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
     @Schema(
-        description = """Email address to send emails with communication or updates regarding the order.""",
+        description = """Where to send emails with communication or updates regarding the order.""",
         example = "heinz@Doofenshmir.tz"
     )
     val contactEmail: String?,
     @Schema(
-        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
     val address: Order.Address?,
@@ -77,7 +81,8 @@ data class ApiUpdateOrderPayload(
     )
     val note: String?,
     @Schema(
-        description = """URL to send a callback to when the order is completed.""",
+        description = """This URL will be used for POSTing order updates to the host system.
+            For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
