@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
@@ -334,7 +335,7 @@ class OrderController(
             allowEmptyValue = false,
             example = "mlt-12345-order"
         )
-        @PathVariable("hostOrderId") hostOrderId: String
+        @PathVariable("hostOrderId") @NotBlank hostOrderId: String
     ): ResponseEntity<String> {
         jwt.checkIfAuthorized(hostName)
         deleteOrder.deleteOrder(hostName, hostOrderId)

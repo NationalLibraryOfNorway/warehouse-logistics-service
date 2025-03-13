@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.HostName
@@ -67,7 +68,7 @@ data class ApiOrderPayload(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
-    @field:NotBlank(message = "The order must have at least one order line")
+    @field:NotEmpty(message = "The order must have at least one order line")
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
