@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -7,10 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -19,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+private val logger = KotlinLogging.logger {}
+
 @RestController
 @RequestMapping(path = ["/synq/v1"])
 @Tag(name = "SynQ Controller", description = """API for receiving product and order updates from SynQ in Hermes WLS""")
@@ -26,7 +31,8 @@ class SynqController(
     private val moveItem: MoveItem,
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
-    private val orderStatusUpdate: OrderStatusUpdate
+    private val orderStatusUpdate: OrderStatusUpdate,
+    private val synchronizeItems: SynchronizeItems
 ) {
     @Operation(
         summary = "Updates item's status and location",
@@ -170,5 +176,75 @@ class SynqController(
         orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
+    }
+
+    @Operation(
+        summary = "Inventory reconciliation",
+        description = """Reconciles the inventory in SynQ with the inventory in Hermes WLS."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Inventory was reconciled successfully.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Inventory reconciliation payload was invalid.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [Content(schema = Schema())]
+        )
+    )
+    @PutMapping("/inventory-reconciliation")
+    suspend fun inventoryReconciliation(
+        @RequestBody payload: SynqInventoryReconciliationPayload
+    ): ResponseEntity<Void> {
+        logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnits=${payload.loadUnit.size}" }
+
+        val units =
+            payload.loadUnit.map {
+                val mappedHostName = mapHostNameString(it.hostName)
+
+                if (mappedHostName == null) {
+                    logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
+                    return@map null
+                }
+
+                SynchronizeItems.ItemToSynchronize(
+                    hostId = it.productId,
+                    hostName = mappedHostName,
+                    location = payload.warehouse,
+                    quantity = it.quantityOnHand.toInt()
+                )
+            }.filterNotNull()
+
+        logger.info { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
+
+        synchronizeItems.synchronizeItems(units)
+
+        return ResponseEntity.ok().build()
+    }
+}
+
+private fun mapHostNameString(hostNameString: String?): HostName? {
+    if (hostNameString.isNullOrBlank()) {
+        return HostName.NONE
+    }
+
+    return when (hostNameString.lowercase()) {
+        "alma" -> HostName.ALMA
+        "asta" -> HostName.ASTA
+        "mavis" -> HostName.MAVIS
+        "axiell" -> HostName.AXIELL
+        else -> null
     }
 }
