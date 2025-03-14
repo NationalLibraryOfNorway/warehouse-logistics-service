@@ -67,7 +67,7 @@ data class ApiUpdateOrderPayload(
     val contactPerson: String,
     @Schema(
         description = """Where to send emails with communication or updates regarding the order.""",
-        example = "heinz@Doofenshmir.tz"
+        example = "heinz@doofenshmir.tz"
     )
     val contactEmail: String?,
     @Schema(
