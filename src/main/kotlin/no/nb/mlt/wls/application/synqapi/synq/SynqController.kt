@@ -111,12 +111,12 @@ class SynqController(
 
         payload.validate()
 
-        // TODO: filter out host name from order ID
+        val orderIdWithoutPrefix = normalizeOrderId(orderId)
         val hostName = payload.getValidHostName()
         val hostIds = payload.mapProductsToQuantity()
 
         pickItems.pickItems(hostName, hostIds)
-        pickOrderItems.pickOrderItems(hostName, hostIds.keys.toList(), orderId)
+        pickOrderItems.pickOrderItems(hostName, hostIds.keys.toList(), orderIdWithoutPrefix)
 
         return ResponseEntity.ok().build()
     }
@@ -164,16 +164,17 @@ class SynqController(
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String
     ): ResponseEntity<String> {
-        // TODO: filter out host name from order ID
         if (orderId.isBlank()) {
             return ResponseEntity.badRequest().body("Order ID cannot be blank")
         }
+
+        val orderIdWithoutPrefix = normalizeOrderId(orderId)
 
         if (orderUpdatePayload.warehouse.isBlank()) {
             return ResponseEntity.badRequest().body("Warehouse cannot be blank")
         }
 
-        orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderId, orderUpdatePayload.getConvertedStatus())
+        orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
     }
@@ -207,7 +208,7 @@ class SynqController(
     @PutMapping("/inventory-reconciliation")
     suspend fun inventoryReconciliation(
         @RequestBody payload: SynqInventoryReconciliationPayload
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnits=${payload.loadUnit.size}" }
 
         val units =
@@ -247,4 +248,13 @@ private fun mapHostNameString(hostNameString: String?): HostName? {
         "axiell" -> HostName.AXIELL
         else -> null
     }
+}
+
+private fun normalizeOrderId(orderId: String): String {
+    val orderIdWithoutPrefix = orderId.substringAfter("---", orderId)
+    // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
+    if (orderIdWithoutPrefix == orderId) {
+        logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
+    }
+    return orderIdWithoutPrefix
 }
