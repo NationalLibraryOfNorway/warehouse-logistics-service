@@ -13,6 +13,7 @@ data class Order(
     val orderType: Type,
     val address: Address?,
     val contactPerson: String,
+    val contactEmail: String?,
     val note: String?,
     val callbackUrl: String
 ) {

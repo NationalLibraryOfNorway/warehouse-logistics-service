@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure
+package no.nb.mlt.wls.infrastructure.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

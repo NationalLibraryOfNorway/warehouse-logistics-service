@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure
+package no.nb.mlt.wls.infrastructure.config
 
 import no.nb.mlt.wls.infrastructure.email.DisabledEmailAdapter
 import no.nb.mlt.wls.infrastructure.email.EmailAdapter

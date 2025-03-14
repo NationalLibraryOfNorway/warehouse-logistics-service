@@ -75,7 +75,8 @@ class InventoryNotifierAdapterTest {
                 orderLine = listOf(Order.OrderItem("item-id", Order.OrderItem.Status.NOT_STARTED)),
                 orderType = Order.Type.LOAN,
                 address = null,
-                contactPerson = "contact-person",
+                contactPerson = "contactPerson",
+                contactEmail = "contact@ema.il",
                 note = null,
                 callbackUrl = mockWebServer.url("/order-callback").toString()
             )
@@ -127,6 +128,7 @@ class InventoryNotifierAdapterTest {
                 orderType = testOrder.orderType,
                 address = testOrder.address,
                 contactPerson = testOrder.contactPerson,
+                contactEmail = testOrder.contactEmail,
                 note = testOrder.note,
                 callbackUrl = testOrder.callbackUrl
             ),

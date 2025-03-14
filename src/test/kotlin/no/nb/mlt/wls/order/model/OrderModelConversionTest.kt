@@ -26,6 +26,7 @@ class OrderModelConversionTest {
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             address =
                 Order.Address(
                     recipient = "recipient",
@@ -48,6 +49,7 @@ class OrderModelConversionTest {
             orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             address =
                 Order.Address(
                     recipient = "recipient",
@@ -100,6 +102,7 @@ class OrderModelConversionTest {
                     country = "country"
                 ),
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "callbackUrl"
         )
@@ -218,6 +221,7 @@ class OrderModelConversionTest {
             orderLine = orderLine.map { it.toOrderItem() },
             orderType = orderType,
             contactPerson = contactPerson,
+            contactEmail = contactEmail,
             address = address,
             callbackUrl = callbackUrl,
             note = note

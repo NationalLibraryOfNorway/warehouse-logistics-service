@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.application.hostapi.item
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -27,47 +27,49 @@ import org.hibernate.validator.constraints.URL
 )
 data class ApiCreateItemPayload(
     @Schema(
-        description = """The item ID from the host system, usually a barcode or an equivalent ID.""",
+        description = """The item ID from the host system, usually a barcode or any equivalent ID.""",
         example = "mlt-12345"
     )
-    @field:NotEmpty(message = "The item's 'hostId' is required, and it cannot be blank")
+    @field:NotBlank(message = "The item's 'hostId' is required, and it cannot be blank")
     val hostId: String,
     @Schema(
-        description = """Name of the host system which the item originates from.
-                Host system is usually the catalogue that the item is registered in.""",
+        description = """Name of the host system that owns the item, and where the request comes from.
+            Host system is usually the catalogue that the item is registered in.""",
         examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
     )
     val hostName: HostName,
     @Schema(
         description = """Description of the item for easy identification in the warehouse system.
-                Usually an item title/name, e.g. book title, film name, etc. or contents description.""",
-        examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo"]
+            Usually item's title/name, or contents description.""",
+        examples = ["Tyven, tyven skal du hete", "Avisa Hemnes", "Kill Buljo", "Photo Collection, Hemnes, 2025-03-12"]
     )
-    @field:NotEmpty(message = "The item's 'description' is required, and it cannot be blank")
+    @field:NotBlank(message = "The item's 'description' is required, and it cannot be blank")
     val description: String,
     @Schema(
-        description = """Item's category, same category indicates that the items can be stored together without any preservation issues.
-                For example: books, magazines, newspapers, etc. are of type PAPER, and can be stored together without damaging each other.""",
+        description = """Item's storage category or grouping.
+            Items sharing a category can be stored together without any issues.
+            For example: books and photo positives are of type PAPER, and can be stored without damaging each other.""",
         examples = ["PAPER", "DISC", "FILM", "PHOTO", "EQUIPMENT", "BULK_ITEMS", "MAGNETIC_TAPE"]
     )
     val itemCategory: ItemCategory,
     @Schema(
         description = """What kind of environment the item should be stored in.
-                "NONE" is for normal storage for the item category, "FRYS" is for frozen storage, etc.
-                NOTE: This is not a guarantee that the item will be stored in the preferred environment.
-                In cases where storage space is limited, the item may be stored in a different environment.""",
-        examples = ["NONE", "FRYS"]
+            "NONE" means item has no preference for storage environment,
+            "FREEZE" means that item should be stored frozen when stored, etc.
+            NOTE: This is not a guarantee that the item will be stored in the preferred environment.
+            In cases where storage space is limited, the item may be stored in regular environment.""",
+        examples = ["NONE", "FREEZE"]
     )
     val preferredEnvironment: Environment,
     @Schema(
         description = """Whether the item is a single object or a container with other items inside.
-                "NONE" is for single objects, "ABOX" is for archival boxes, etc.
-                NOTE: It is up to the catalogue to keep track of the items inside a container.""",
-        examples = ["NONE", "BOX", "ABOX", "CRATE"]
+            "NONE" is for single objects, "ABOX" is for archival boxes, etc.
+            NOTE: It is up to the catalogue to keep track of the items inside a container.""",
+        examples = ["NONE", "BOX", "ABOX"]
     )
     val packaging: Packaging,
     @Schema(
-        description = """Callback URL to use for sending item updates to the host system.
+        description = """This URL will be used for POSTing item updates to the host system.
             For example when item moves or changes quantity in storage.""",
         example = "https://callback-wls.no/item"
     )
@@ -102,14 +104,3 @@ data class ApiCreateItemPayload(
             callbackUrl = callbackUrl
         )
 }
-
-fun Item.toCreateApiPayload() =
-    ApiCreateItemPayload(
-        hostId = hostId,
-        hostName = hostName,
-        description = description,
-        itemCategory = itemCategory,
-        preferredEnvironment = preferredEnvironment,
-        packaging = packaging,
-        callbackUrl = callbackUrl
-    )

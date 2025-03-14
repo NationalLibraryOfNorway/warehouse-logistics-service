@@ -19,6 +19,7 @@ import no.nb.mlt.wls.domain.model.Order
       ],
       "orderType": "LOAN",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "contactEmail": "heinz@doofenshmir.tz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
@@ -45,7 +46,7 @@ data class NotificationOrderPayload(
     val hostOrderId: String,
     @Schema(
         description = """Current status for the whole order.
-            "COMPLETED" means that the order is finished and items are ready for pickup / sent to receiver.
+            "COMPLETED" means that the order is finished and items are ready for pickup / shipping to receiver.
             "RETURNED" means that the order items have been returned to the storage.""",
         examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "RETURNED", "DELETED"]
     )
@@ -70,7 +71,12 @@ data class NotificationOrderPayload(
     )
     val contactPerson: String,
     @Schema(
-        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        description = """Where to send emails with communication or updates regarding the order.""",
+        example = "heinz@doofenshmir.tz"
+    )
+    val contactEmail: String?,
+    @Schema(
+        description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
     val address: Order.Address?,
@@ -80,14 +86,22 @@ data class NotificationOrderPayload(
     )
     val note: String?,
     @Schema(
-        description = """Callback URL to use for sending order updates to the host system.
+        description = """This URL will be used for POSTing order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
     val callbackUrl: String
 ) {
     data class OrderLine(
+        @Schema(
+            description = """Item ID from the host system.""",
+            example = "mlt-12345"
+        )
         val hostId: String,
+        @Schema(
+            description = """Current status for the ordered item.""",
+            examples = ["NOT_STARTED", "PICKED", "RETURNED", "FAILED"]
+        )
         val status: Order.OrderItem.Status
     )
 }
@@ -100,6 +114,7 @@ fun Order.toNotificationOrderPayload() =
         orderLine = orderLine.map { NotificationOrderPayload.OrderLine(it.hostId, it.status) },
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl

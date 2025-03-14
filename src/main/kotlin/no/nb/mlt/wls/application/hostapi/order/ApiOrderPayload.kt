@@ -2,6 +2,8 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import jakarta.validation.constraints.Email
+import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
@@ -27,6 +29,7 @@ import org.hibernate.validator.constraints.URL
       ],
       "orderType": "LOAN",
       "contactPerson": "Dr. Heinz Doofenshmirtz",
+      "contactEmail": "heinz@doofenshmir.tz",
       "address": {
         "recipient": "Doug Dimmadome",
         "addressLine1": "Dimmsdale Dimmadome",
@@ -52,11 +55,11 @@ data class ApiOrderPayload(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
-    @field:NotEmpty(message = "The order's hostOrderId is required, and can not be blank")
+    @field:NotBlank(message = "The order's hostOrderId is required, and can not be blank")
     val hostOrderId: String,
     @Schema(
         description = """Current status for the whole order.
-            "COMPLETED" means that the order is finished and items are ready for pickup / sent to receiver.
+            "COMPLETED" means that the order is finished and items are ready for pickup / shipping to receiver.
             "RETURNED" means that the order items have been returned to the storage.""",
         examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "RETURNED", "DELETED"]
     )
@@ -77,13 +80,19 @@ data class ApiOrderPayload(
     )
     val orderType: Order.Type,
     @Schema(
-        description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
+        description = """Who to contact in relation to the order in case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
-    @field:NotEmpty(message = "The order's contactPerson is required, and can not be blank")
+    @field:NotBlank(message = "The order's contactPerson is required, and can not be blank")
     val contactPerson: String,
     @Schema(
-        description = """Address for the order, used in cases where storage operator sends out the order directly.""",
+        description = """Where to send emails with communication or updates regarding the order.""",
+        example = "heinz@doofenshmir.tz"
+    )
+    @field:Email(message = "Provided email address is not valid")
+    val contactEmail: String?,
+    @Schema(
+        description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
     val address: Order.Address?,
@@ -93,11 +102,11 @@ data class ApiOrderPayload(
     )
     val note: String?,
     @Schema(
-        description = """Callback URL to use for sending order updates to the host system.
+        description = """This URL will be used for POSTing order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
-    @field:NotEmpty(message = "The callback URL is required, and can not be blank")
+    @field:NotBlank(message = "The callback URL is required, and can not be blank")
     @field:URL(message = "The callback URL must be a valid URL")
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
@@ -110,6 +119,7 @@ data class ApiOrderPayload(
             orderType = orderType,
             address = address,
             contactPerson = contactPerson,
+            contactEmail = contactEmail,
             note = note,
             callbackUrl = callbackUrl
         )
@@ -149,6 +159,7 @@ fun Order.toApiOrderPayload() =
         orderLine = orderLine.map { it.toApiOrderLine() },
         orderType = orderType,
         contactPerson = contactPerson,
+        contactEmail = contactEmail,
         address = address,
         note = note,
         callbackUrl = callbackUrl
@@ -168,7 +179,7 @@ data class OrderLine(
         description = """Item ID from the host system.""",
         example = "mlt-12345"
     )
-    @field:NotEmpty(message = "The order items's hostId is required, and can not be blank")
+    @field:NotBlank(message = "The order items's hostId is required, and can not be blank")
     val hostId: String,
     @Schema(
         description = """Current status for the ordered item.""",

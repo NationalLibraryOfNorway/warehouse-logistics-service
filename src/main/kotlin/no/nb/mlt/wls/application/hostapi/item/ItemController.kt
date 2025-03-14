@@ -34,9 +34,8 @@ class ItemController(
     @Operation(
         summary = "Register an item in Hermes",
         description = """Register data about the item in Hermes WLS and appropriate storage systems.
-            This step is required to store the item in the physical storage system, as it needs to have metadata about the object.
-            An item is also called product by some storage systems and users, those mean the same thing to Hermes.
-            Do not provide quantity or location information in this step, as it is overridden with default values."""
+            This step is required to store the item in the physical storage systems, as they need to have metadata about the object.
+            An item is also called product by some storage systems and users, those mean the same thing to Hermes."""
     )
     @ApiResponses(
         value = [
@@ -44,10 +43,7 @@ class ItemController(
                 responseCode = "200",
                 description = """Item with given "hostName" and "hostId" already exists in the system.
                     No new item was created, neither was the old item updated.
-                    Existing item information is returned for inspection.
-                    In some rare cases the response body may be empty.
-                    That can happen if Hermes WLS does not have the information about the item stored in its database,
-                    and is unable to retrieve the existing item information from the storage system(s).""",
+                    Existing item information is returned for inspection.""",
                 content = [
                     Content(
                         mediaType = "application/json",
@@ -57,8 +53,8 @@ class ItemController(
             ),
             ApiResponse(
                 responseCode = "201",
-                description = """Item payload is valid and the item information was registered successfully.
-                    Item was created in the appropriate storage system(s).
+                description = """Item payload is valid and the item information was registered successfully in Hermes WLS.
+                    Item metadata will be created in the appropriate storage system(s).
                     New item information is returned for inspection.""",
                 content = [
                     Content(
@@ -92,8 +88,8 @@ class ItemController(
             operation =
                 arrayOf(
                     Operation(
-                        summary = "Notification of updated item",
-                        description = """This callback triggers when an item is updated inside the storage systems.
+                        summary = "Notification about updated item",
+                        description = """This callback triggers when item information is updated inside the storage systems.
                         It contains the full data of the item, including the current quantity and location of it.
                         Situations where this callback is triggered may include: item moves in storage,
                         item is picked for order, item is returned to storage, etc.""",

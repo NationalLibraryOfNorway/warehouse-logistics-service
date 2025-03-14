@@ -447,6 +447,7 @@ class WLSServiceTest {
             orderLine = listOf(),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             address = createOrderAddress(),
             note = "note",
             callbackUrl = "https://callback-wls.no/order"
@@ -476,6 +477,7 @@ class WLSServiceTest {
             orderLine = testOrder.orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
             orderType = testOrder.orderType,
             contactPerson = testOrder.contactPerson,
+            contactEmail = testOrder.contactEmail,
             address = testOrder.address,
             note = testOrder.note,
             callbackUrl = testOrder.callbackUrl

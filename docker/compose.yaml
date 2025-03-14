@@ -1,9 +1,9 @@
 # Define what services to set up for local development
 services:
     # Set up a local mongo instance for local development
-  mongo1:
+  mongo-db:
     image: mongo:4.4.22 # Same as the version in the prod env
-    hostname: mongo1
+    hostname: mongo-db
     restart: unless-stopped
     entrypoint: >
       /bin/bash -c '
@@ -19,7 +19,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: toor
     volumes:
       - ./mongo/mongo-init.js:/mongo-init.js:ro
-      - mongodata1:/data/db
+      - mongodata:/data/db
       - mongoconfig:/data/configdb
       - mongoshared:/data
 
@@ -31,9 +31,9 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - mongo1
+      - mongo-db
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://root:toor@mongo1:27017/?replicaSet=rs0
+      ME_CONFIG_MONGODB_URL: mongodb://root:toor@mongo-db:27017/?replicaSet=rs0
       ME_CONFIG_OPTIONS_EDITORTHEME: "gruvbox-dark"
       ME_CONFIG_BASICAUTH: false
 
@@ -71,6 +71,6 @@ services:
       - "8181:8181"
 
 volumes:
-  mongodata1:
+  mongodata:
   mongoconfig:
   mongoshared:

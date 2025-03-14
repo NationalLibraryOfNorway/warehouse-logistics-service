@@ -395,7 +395,7 @@ class SynqControllerTest(
             hostName = HostName.AXIELL,
             description = "Test item",
             itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.FRYS,
+            preferredEnvironment = Environment.FREEZE,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback-wls.no/item",
             location = "UNKNOWN",
@@ -408,7 +408,7 @@ class SynqControllerTest(
             hostName = HostName.AXIELL,
             description = "Item test",
             itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.FRYS,
+            preferredEnvironment = Environment.FREEZE,
             packaging = Packaging.BOX,
             callbackUrl = "https://callback-wls.no/item",
             location = "UNKNOWN",
@@ -423,6 +423,7 @@ class SynqControllerTest(
             orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
             address =
                 Order.Address(
                     recipient = "recipient",

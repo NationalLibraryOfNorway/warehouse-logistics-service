@@ -68,7 +68,7 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "201",
-            description = """Created order for specified items to appropriate systems""",
+            description = """Order was created in Hermes, and will be sent to the appropriate storage systems.""",
             content = [
                 Content(
                     mediaType = "application/json",
@@ -79,8 +79,7 @@ class OrderController(
         ApiResponse(
             responseCode = "400",
             description = """Order payload is invalid and was not created.
-                An empty error message means the order already exists with the current ID.
-                Otherwise, the error message contains information about the invalid fields.""",
+                The error message contains information about the invalid fields.""",
             content = [
                 Content(
                     mediaType = "application/json",
@@ -106,7 +105,7 @@ class OrderController(
             operation =
                 arrayOf(
                     Operation(
-                        summary = "Notification of updated order",
+                        summary = "Notification about updated order",
                         description = """This callback triggers when the order is updated inside the storage systems.
                             It returns the same data as one would receive from the GET endpoint, meaning complete information about the order.""",
                         method = "post",
@@ -164,7 +163,7 @@ class OrderController(
             Order status is updated based on information provided from the storage systems.
             As such there might be a delay in the status update.
             Some systems don't give any status updates and the order might be stuck in "NOT_STARTED" status until it's manually marked as "COMPLETED".
-            The caller must "own" the order, e.g. be the creator of the order."""
+            The caller must "own" the order, e.g. be the creator of the order, in order to request it."""
     )
     @ApiResponses(
         ApiResponse(
@@ -230,7 +229,7 @@ class OrderController(
         summary = "Update an existing order in the WLS",
         description = """Updates the specified order in Hermes WLS and appropriate storage systems.
             The order must have a status of "NOT_STARTED" to be updated.
-            The caller must "own" the order, e.g. be the creator of the order."""
+            The caller must "own" the order, e.g. be the creator of the order, in order to update it."""
     )
     @ApiResponses(
         ApiResponse(
@@ -247,7 +246,7 @@ class OrderController(
         ApiResponse(
             responseCode = "400",
             description = """Order payload is invalid and the order was not updated.
-                This error is also produced if the order specified does not exist.
+                This error might also happen if the order does not exist.
                 Otherwise, the error message contains information about the invalid fields.""",
             content = [Content(schema = Schema())]
         ),
@@ -259,6 +258,11 @@ class OrderController(
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
+            content = [Content(schema = Schema())]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
             content = [Content(schema = Schema())]
         ),
         ApiResponse(
@@ -294,11 +298,11 @@ class OrderController(
         summary = "Deletes an order from the storage system",
         description = """Deletes an order from the appropriate storage systems via Hermes WLS.
             To delete an order it must have a status of "NOT_STARTED".
-            Additionally the caller must "own", e.g. be the creator of the order."""
+            Additionally the caller must "own", e.g. be the creator of the order, in order to delete it."""
     )
     @ApiResponses(
         ApiResponse(
-            responseCode = "200",
+            responseCode = "204",
             description = """Order with given "hostName" and "hostOrderId" was deleted from the system.""",
             content = [Content(schema = Schema())]
         ),
@@ -317,12 +321,25 @@ class OrderController(
     )
     @DeleteMapping("/order/{hostName}/{hostOrderId}")
     suspend fun deleteOrder(
-        @PathVariable hostName: HostName,
-        @PathVariable @NotBlank hostOrderId: String,
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @Parameter(
+            description = """Name of the host system which made the order.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "AXIELL"
+        )
+        @PathVariable("hostName") hostName: HostName,
+        @Parameter(
+            description = """ID of the order which you wish to retrieve.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "mlt-12345-order"
+        )
+        @PathVariable("hostOrderId")
+        @NotBlank hostOrderId: String
     ): ResponseEntity<String> {
         jwt.checkIfAuthorized(hostName)
         deleteOrder.deleteOrder(hostName, hostOrderId)
-        return ResponseEntity.ok().build()
+        return ResponseEntity.noContent().build()
     }
 }
