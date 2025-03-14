@@ -90,6 +90,31 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(orderStatusUpdatePayload)
+                .exchange()
+                .expectStatus().isOk
+
+            val res = orderRepository.findByHostNameAndHostOrderId(order.hostName, order.hostOrderId).awaitSingle()
+
+            assertThat(res).isNotNull
+            assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
+
+            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS)) }
+        }
+
+    @Test
+    fun `updateOrder short order ID updates order and sends callback`() =
+        runTest {
+            every {
+                inventoryNotifierAdapterMock.orderChanged(any())
+            }.answers { }
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
+                .put()
                 .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
@@ -110,7 +135,7 @@ class SynqControllerTest(
             webTestClient
                 .mutateWith(csrf())
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -129,7 +154,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
@@ -157,7 +182,7 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload.copy(warehouse = ""))
                 .exchange()
@@ -437,6 +462,8 @@ class SynqControllerTest(
             callbackUrl = "https://callback-wls.no/order",
             note = "note"
         )
+
+    private val orderIdInSynq = "${order.hostName.toString().uppercase()}---${order.hostOrderId}"
 
     private val orderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(

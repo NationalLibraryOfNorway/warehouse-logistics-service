@@ -69,7 +69,7 @@ data class ShippingAddress(
 
 fun Order.toSynqPayload() =
     SynqOrderPayload(
-        orderId = hostName.toString().uppercase() + "_" + hostOrderId,
+        orderId = hostName.toString().uppercase() + "---" + hostOrderId,
         orderType = orderType.toSynqOrderType(),
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
