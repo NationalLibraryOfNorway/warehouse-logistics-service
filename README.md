@@ -190,17 +190,17 @@ To start the services, run the following command:
 
 ```shell
 cd docker
-docker compose -p wls-local up -d
+docker compose up -d
 
 # If its the first time setting up, run the following command to setup replica set for MongoDB
-sudo chmod 755 ./setup-replicaset.sh
+chmod 755 ./setup-replicaset.sh
 ./setup-replicaset.sh
 ```
 
 And to stop the services, run the following command:
 
 ```shell
-docker compose -p wls-local down
+docker compose down
 ```
 
 ## Deployment Dependencies
