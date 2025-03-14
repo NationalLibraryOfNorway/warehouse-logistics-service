@@ -213,7 +213,6 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
-    // TODO: @Tom @Noah, shouldn't this just be part of ApiOrderPayload class?
     private fun ApiOrderPayload.toOrder() =
         Order(
             hostName = hostName,
