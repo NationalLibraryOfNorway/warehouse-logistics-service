@@ -137,7 +137,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to SynQ payload`() {
-        val synqPayload = testOrder.toSynqPayload()
+        val synqPayload = testOrder.toSynqPayload(testSynqOrderPayload.orderType)
 
         // Dates are not compared as they are generated in the function
         assertThat(synqPayload.orderId).isEqualTo(testSynqOrderPayload.orderId)

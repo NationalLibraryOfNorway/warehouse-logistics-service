@@ -32,7 +32,8 @@ data class SynqOrderPayload(
     )
 
     enum class SynqOrderType(private val type: String) {
-        STANDARD("Standard");
+        STANDARD("Standard"),
+        AUTOSTORE("Autostore");
 
         @JsonValue
         override fun toString(): String {
@@ -67,10 +68,10 @@ data class ShippingAddress(
     )
 }
 
-fun Order.toSynqPayload() =
+fun Order.toSynqPayload(orderType: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
         orderId = hostName.toString().uppercase() + "---" + hostOrderId,
-        orderType = orderType.toSynqOrderType(),
+        orderType = orderType,
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
@@ -105,13 +106,6 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.NONE -> OBJ
         Packaging.BOX -> ESK
         Packaging.ABOX -> ABOX
-    }
-
-fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
-    when (this) {
-        // Since mock api defined more types than Synq has we map both to standard
-        Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD
-        Order.Type.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
     }
 
 /**
