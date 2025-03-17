@@ -107,8 +107,14 @@ class SynqAdapter(
     }
 
     override fun canHandleItem(item: Item): Boolean {
-        // TODO - Handle item categories based on ruleset
-        return true
+        // SynQ can handle both NONE and FREEZE environments, so this is not checked
+        return when (item.itemCategory) {
+            ItemCategory.PAPER -> true
+            ItemCategory.FILM -> true
+            ItemCategory.BULK_ITEMS -> false
+            ItemCategory.FRAGILE -> false
+            else -> false
+        }
     }
 }
 
