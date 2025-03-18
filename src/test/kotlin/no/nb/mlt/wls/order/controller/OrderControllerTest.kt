@@ -29,7 +29,6 @@ import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
-import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -72,15 +71,12 @@ class OrderControllerTest(
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
-    @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
+    @SpykBean @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
     @Autowired val mongoOutboxRepository: MongoOutboxRepository,
     @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
 ) {
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
-
-    @SpykBean
-    private lateinit var outboxRepository: OutboxRepository
 
     private lateinit var webTestClient: WebTestClient
 
@@ -313,7 +309,7 @@ class OrderControllerTest(
         val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
 
         runTest {
-            coEvery { outboxRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { mongoRepository.createOrder(testOrder) } throws RuntimeException("Testing: Failed to save outbox message")
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
@@ -328,7 +324,7 @@ class OrderControllerTest(
             val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
             assertThat(order).isNull()
 
-            assertThat(outboxRepository.getAll()).isEmpty()
+            assertThat(outboxRepositoryAdapter.getAll()).isEmpty()
         }
     }
 
