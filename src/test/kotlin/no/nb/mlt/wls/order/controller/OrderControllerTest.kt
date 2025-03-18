@@ -24,19 +24,19 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
+import no.nb.mlt.wls.domain.model.storageMessages.OrderCreated
+import no.nb.mlt.wls.domain.model.storageMessages.OrderDeleted
+import no.nb.mlt.wls.domain.model.storageMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
-import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
+import no.nb.mlt.wls.domain.ports.outbound.StorageMessageRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepository
-import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoOutboxRepositoryAdapter
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoStorageMessageRepository
+import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoStorageMessageRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -73,14 +73,14 @@ class OrderControllerTest(
     @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
     @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
-    @Autowired val mongoOutboxRepository: MongoOutboxRepository,
-    @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
+    @Autowired val mongoStorageMessageRepository: MongoStorageMessageRepository,
+    @Autowired val outboxRepositoryAdapter: MongoStorageMessageRepositoryAdapter
 ) {
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
 
     @SpykBean
-    private lateinit var outboxRepository: OutboxRepository
+    private lateinit var storageMessageRepository: StorageMessageRepository
 
     private lateinit var webTestClient: WebTestClient
 
@@ -313,7 +313,7 @@ class OrderControllerTest(
         val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
 
         runTest {
-            coEvery { outboxRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { storageMessageRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
@@ -328,7 +328,7 @@ class OrderControllerTest(
             val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
             assertThat(order).isNull()
 
-            assertThat(outboxRepository.getAll()).isEmpty()
+            assertThat(storageMessageRepository.getAll()).isEmpty()
         }
     }
 
@@ -692,7 +692,7 @@ class OrderControllerTest(
 
     fun populateDb() {
         runBlocking {
-            mongoOutboxRepository.deleteAll().awaitSingleOrNull()
+            mongoStorageMessageRepository.deleteAll().awaitSingleOrNull()
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
