@@ -47,7 +47,7 @@ class SynqAutostoreAdapter(
 
     override suspend fun createOrder(order: Order) {
         // Wrap the order in the way SynQ likes it
-        val orders = SynqOrder(listOf(order.toSynqPayload(SynqOrderPayload.SynqOrderType.AUTOSTORE)))
+        val orders = SynqOrder(listOf(order.toSynqPayload()))
 
         webClient
             .post()
@@ -90,7 +90,7 @@ class SynqAutostoreAdapter(
         return webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .bodyValue(SynqOrder(listOf(order.toSynqPayload(SynqOrderPayload.SynqOrderType.AUTOSTORE))))
+            .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
             .retrieve()
             .toBodilessEntity()
             .map { order }

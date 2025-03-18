@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload.Companion.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
@@ -40,6 +41,10 @@ data class SynqOrderPayload(
             return type
         }
     }
+
+    companion object {
+        const val DELIMITER = "---"
+    }
 }
 
 data class ShippingAddress(
@@ -68,10 +73,18 @@ data class ShippingAddress(
     )
 }
 
-fun Order.toSynqPayload(orderType: SynqOrderPayload.SynqOrderType) =
+fun Order.toAutostorePayload(): SynqOrderPayload {
+    val payload = this.toSynqPayload()
+    return payload.copy(
+        orderId = hostName.toString().uppercase() + "-AS" + DELIMITER + hostOrderId,
+        orderType = SynqOrderPayload.SynqOrderType.AUTOSTORE
+    )
+}
+
+fun Order.toSynqPayload() =
     SynqOrderPayload(
-        orderId = hostName.toString().uppercase() + "---" + hostOrderId,
-        orderType = orderType,
+        orderId = hostName.toString().uppercase() + DELIMITER + hostOrderId,
+        orderType = SynqOrderPayload.SynqOrderType.STANDARD,
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
