@@ -164,7 +164,7 @@ class WLSService(
                 outboxRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
-        outboxMessageProcessor.handleEvent(outBoxMessage)
+        processMessageAsync(outBoxMessage)
     }
 
     override suspend fun updateOrder(
