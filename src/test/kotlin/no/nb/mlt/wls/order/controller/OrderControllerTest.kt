@@ -2,7 +2,9 @@ package no.nb.mlt.wls.order.controller
 
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
+import io.mockk.clearMocks
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,6 +31,7 @@ import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
+import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -75,6 +78,9 @@ class OrderControllerTest(
     @Autowired val mongoOutboxRepository: MongoOutboxRepository,
     @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
 ) {
+    @SpykBean
+    private lateinit var outboxMessageProcessor: OutboxMessageProcessor
+
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
 
@@ -93,6 +99,7 @@ class OrderControllerTest(
                 .build()
 
         populateDb()
+        coEvery { outboxMessageProcessor.handleEvent(any()) } answers {}
     }
 
     @Test
@@ -128,10 +135,11 @@ class OrderControllerTest(
     @Test
     fun `createOrder with valid payload also creates email`() {
         runTest {
-            coEvery {
-                synqAdapterMock.createOrder(any())
-            } answers {}
+            // Handle the outbox message process normally for this test
+            clearMocks(outboxMessageProcessor)
+
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqAdapterMock.createOrder(any()) }
             emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
 
             webTestClient
@@ -480,9 +488,8 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
-            coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
-            } answers {}
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
                 .mutateWith(csrf())
