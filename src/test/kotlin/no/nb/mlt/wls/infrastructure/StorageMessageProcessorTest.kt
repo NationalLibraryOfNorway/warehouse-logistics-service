@@ -38,7 +38,7 @@ class StorageMessageProcessorTest {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<OrderCreated>()
+            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<StorageMessage>()
 
             override suspend fun markAsProcessed(storageMessage: StorageMessage): StorageMessage {
                 processed.add(storageMessage)
@@ -50,8 +50,8 @@ class StorageMessageProcessorTest {
     private val happyStorageSystemMock =
         mockk<StorageSystemFacade> {
             coEvery { canHandleItem(any()) } returns true
-            coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
-            coEvery { canHandleLocation("SOMEWHERE") } returns false
+            coEvery { canHandleLocation("valid-location") } returns true
+            coEvery { canHandleLocation("invalid-location") } returns false
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
         }
@@ -73,12 +73,12 @@ class StorageMessageProcessorTest {
     fun `OrderCreated should mark as processed when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
-                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(testItemList[0])
-                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(testItemList[1])
+                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(testItemList[0])
+                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(testItemList[1])
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
@@ -88,7 +88,7 @@ class StorageMessageProcessorTest {
 
         runTest {
             val event = OrderCreated(testOrder)
-            outboxProcessor.handleEvent(event)
+            messageProcessor.handleEvent(event)
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { happyStorageSystemMock.createOrder(any()) }
         }
@@ -98,10 +98,10 @@ class StorageMessageProcessorTest {
     fun `OrderCreated should send mail when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = emptyList(),
@@ -110,7 +110,7 @@ class StorageMessageProcessorTest {
             )
 
         runTest {
-            outboxProcessor.handleEvent(OrderCreated(testOrder))
+            messageProcessor.handleEvent(OrderCreated(testOrder))
             assertThat(emailNotifierMock.orderCreatedCount).isEqualTo(1)
         }
     }
@@ -119,7 +119,7 @@ class StorageMessageProcessorTest {
     fun `OrderCreated Should not mark as processed if anything fails`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
             }
         val errorMessage = "Some exception when sending to storage system"
         val invalidStorageMock =
@@ -130,7 +130,7 @@ class StorageMessageProcessorTest {
                 } throws NotImplementedError(errorMessage)
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(invalidStorageMock),
@@ -140,7 +140,7 @@ class StorageMessageProcessorTest {
 
         assertThatThrownBy {
             runTest {
-                outboxProcessor.handleEvent(OrderCreated(testOrder))
+                messageProcessor.handleEvent(OrderCreated(testOrder))
             }
         }
         assertThat(storageMessageRepoMock.processed).hasSize(0)
@@ -153,7 +153,7 @@ class StorageMessageProcessorTest {
                 coEvery { getItem(HostName.AXIELL, "test-item-1") } returns null
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
@@ -163,7 +163,7 @@ class StorageMessageProcessorTest {
 
         runTest {
             val event = ItemCreated(testItem)
-            outboxProcessor.handleEvent(event)
+            messageProcessor.handleEvent(event)
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
         }
     }
@@ -179,12 +179,12 @@ class StorageMessageProcessorTest {
         val storageSystemMock =
             mockk<StorageSystemFacade> {
                 coEvery { canHandleItem(any()) } returns true
-                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
-                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { canHandleLocation("valid-location") } returns true
+                coEvery { canHandleLocation("invalid-location") } returns false
                 coEvery { createItem(any()) } throws DuplicateResourceException("Duplicate product")
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
@@ -195,7 +195,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = ItemCreated(testItem)
             assertThrows<DuplicateResourceException> {
-                outboxProcessor.handleEvent(event)
+                messageProcessor.handleEvent(event)
             }
             assertThat(storageMessageRepoMock.processed).hasSize(0)
         }
@@ -205,12 +205,12 @@ class StorageMessageProcessorTest {
     fun `ItemCreated should succeed despite no valid locations existing`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItem(HostName.AXIELL, "test-item-1") } returns null
+                coEvery { getItem(HostName.AXIELL, "mlt-123456") } returns null
             }
 
         val testItem = testItem.copy(location = "SOMEWHERE")
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
@@ -220,37 +220,37 @@ class StorageMessageProcessorTest {
 
         runTest {
             val event = ItemCreated(testItem)
-            outboxProcessor.handleEvent(event)
+            messageProcessor.handleEvent(event)
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
         }
     }
 
     @Test
     fun `UpdateOrder should mark as processed if successful`() {
-        val extendedTestItemList = testItemList.plus(testItem.copy(hostId = "item-id-3"))
+        val extendedTestItemList = testItemList.plus(testItem.copy(hostId = "mlt-15243"))
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2", "item-id-3"), HostName.AXIELL) } returns extendedTestItemList
-                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(extendedTestItemList[0])
-                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(extendedTestItemList[1])
-                coEvery { getItems(listOf("item-id-3"), HostName.AXIELL) } returns listOf(extendedTestItemList[2])
+                coEvery { getItems(listOf("mlt-12345", "mlt-54321", "mlt-15243"), HostName.AXIELL) } returns extendedTestItemList
+                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(extendedTestItemList[0])
+                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(extendedTestItemList[1])
+                coEvery { getItems(listOf("mlt-15243"), HostName.AXIELL) } returns listOf(extendedTestItemList[2])
             }
 
         val expectedOrder =
             testOrder.copy(
                 note = "I want this soon",
-                orderLine = testOrder.orderLine.plus(Order.OrderItem("item-id-3", status = Order.OrderItem.Status.NOT_STARTED))
+                orderLine = testOrder.orderLine.plus(Order.OrderItem("mlt-15243", status = Order.OrderItem.Status.NOT_STARTED))
             )
 
         val storageSystemMock =
             mockk<StorageSystemFacade> {
                 coEvery { canHandleItem(any()) } returns true
-                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
-                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { canHandleLocation("valid-location") } returns true
+                coEvery { canHandleLocation("invalid-location") } returns false
                 coEvery { updateOrder(expectedOrder) } returns expectedOrder
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
@@ -260,7 +260,7 @@ class StorageMessageProcessorTest {
 
         runTest {
             val event = OrderUpdated(expectedOrder)
-            outboxProcessor.handleEvent(event)
+            messageProcessor.handleEvent(event)
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { storageSystemMock.updateOrder(any()) }
         }
@@ -270,20 +270,20 @@ class StorageMessageProcessorTest {
     fun `DeleteOrder should mark as processed if successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("item-id-1", "item-id-2"), HostName.AXIELL) } returns testItemList
-                coEvery { getItems(listOf("item-id-1"), HostName.AXIELL) } returns listOf(testItemList[0])
-                coEvery { getItems(listOf("item-id-2"), HostName.AXIELL) } returns listOf(testItemList[1])
+                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(testItemList[0])
+                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(testItemList[1])
             }
 
         val storageSystemMock =
             mockk<StorageSystemFacade> {
                 coEvery { canHandleItem(any()) } returns true
-                coEvery { canHandleLocation("SOMEWHERE-KNOWN") } returns true
-                coEvery { canHandleLocation("SOMEWHERE") } returns false
+                coEvery { canHandleLocation("valid-location") } returns true
+                coEvery { canHandleLocation("invalid-location") } returns false
                 coEvery { deleteOrder(testOrder.hostOrderId, testOrder.hostName) } returns Unit
             }
 
-        val outboxProcessor =
+        val messageProcessor =
             StorageMessageProcessorAdapter(
                 storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
@@ -293,24 +293,25 @@ class StorageMessageProcessorTest {
 
         runTest {
             val event = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
-            outboxProcessor.handleEvent(event)
+            messageProcessor.handleEvent(event)
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { storageSystemMock.deleteOrder(testOrder.hostOrderId, testOrder.hostName) }
         }
     }
 
-    //
-    // TEST OBJECTS
-    //
+// /////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////// Test Help //////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
+
     private val testOrder =
         Order(
             hostName = HostName.AXIELL,
-            hostOrderId = "some-order-id",
+            hostOrderId = "mlt-12345-order",
             status = Order.Status.NOT_STARTED,
             orderLine =
                 listOf(
-                    Order.OrderItem("item-id-1", Order.OrderItem.Status.NOT_STARTED),
-                    Order.OrderItem("item-id-2", Order.OrderItem.Status.NOT_STARTED)
+                    Order.OrderItem("mlt-12345", Order.OrderItem.Status.NOT_STARTED),
+                    Order.OrderItem("mlt-54321", Order.OrderItem.Status.NOT_STARTED)
                 ),
             orderType = Order.Type.LOAN,
             address = null,
@@ -323,39 +324,15 @@ class StorageMessageProcessorTest {
     private val testItem =
         Item(
             hostName = HostName.AXIELL,
-            hostId = "item-id-1",
-            description = "Tyven, tyven skal du hete",
+            hostId = "mlt-12345",
+            description = "description",
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
             packaging = Packaging.NONE,
             callbackUrl = "https://callback-wls.no/item",
-            location = "SOMEWHERE",
+            location = "valid-location",
             quantity = 1
         )
 
-    private val testItemList =
-        listOf(
-            Item(
-                hostName = HostName.AXIELL,
-                hostId = "item-id-1",
-                description = "Tyven, tyven skal du hete",
-                itemCategory = ItemCategory.PAPER,
-                preferredEnvironment = Environment.NONE,
-                packaging = Packaging.NONE,
-                callbackUrl = "https://callback-wls.no/item",
-                location = "SOMEWHERE",
-                quantity = 1
-            ),
-            Item(
-                hostName = HostName.AXIELL,
-                hostId = "item-id-2",
-                description = "Tyven, tyven skal du hete 2",
-                itemCategory = ItemCategory.PAPER,
-                preferredEnvironment = Environment.NONE,
-                packaging = Packaging.NONE,
-                callbackUrl = "https://callback-wls.no/item",
-                location = "SOMEWHERE-KNOWN",
-                quantity = 1
-            )
-        )
+    private val testItemList = listOf(testItem, testItem.copy(hostId = "mlt-54321"))
 }

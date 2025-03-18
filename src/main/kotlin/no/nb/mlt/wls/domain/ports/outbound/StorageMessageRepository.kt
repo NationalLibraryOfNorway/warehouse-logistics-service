@@ -10,9 +10,4 @@ interface StorageMessageRepository {
     suspend fun getUnprocessedSortedByCreatedTime(): List<StorageMessage>
 
     suspend fun markAsProcessed(storageMessage: StorageMessage): StorageMessage
-
-    class RepositoryException(
-        message: String,
-        cause: Throwable? = null
-    ) : RuntimeException(message, cause)
 }
