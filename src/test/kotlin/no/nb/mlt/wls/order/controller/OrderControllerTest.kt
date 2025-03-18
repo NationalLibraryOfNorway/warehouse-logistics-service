@@ -35,8 +35,8 @@ import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoStorageMessageRepository
-import no.nb.mlt.wls.infrastructure.repositories.outbox.MongoStorageMessageRepositoryAdapter
+import no.nb.mlt.wls.infrastructure.repositories.storageMessage.MongoStorageMessageRepository
+import no.nb.mlt.wls.infrastructure.repositories.storageMessage.MongoStorageMessageRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

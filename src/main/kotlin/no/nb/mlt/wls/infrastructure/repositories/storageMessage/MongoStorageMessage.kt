@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure.repositories.outbox
+package no.nb.mlt.wls.infrastructure.repositories.storageMessage
 
 import no.nb.mlt.wls.domain.model.storageMessages.StorageMessage
 import org.springframework.data.annotation.CreatedDate

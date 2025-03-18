@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.infrastructure.repositories.outbox
+package no.nb.mlt.wls.infrastructure.repositories.storageMessage
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
