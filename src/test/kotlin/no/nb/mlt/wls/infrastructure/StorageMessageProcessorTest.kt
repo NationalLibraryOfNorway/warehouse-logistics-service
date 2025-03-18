@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class StorageMessageProcessorTest {
-    private val outboxRepoMock =
+    private val storageMessageRepoMock =
         object : StorageMessageRepository {
             val processed: MutableList<StorageMessage> = mutableListOf()
 
@@ -46,6 +46,7 @@ class StorageMessageProcessorTest {
             }
         }
 
+    // Just a happy little storage system mock, he lives right here...
     private val happyStorageSystemMock =
         mockk<StorageSystemFacade> {
             coEvery { canHandleItem(any()) } returns true
@@ -55,6 +56,7 @@ class StorageMessageProcessorTest {
             coEvery { createItem(any()) } returns Unit
         }
 
+    // ... and he's got a friend, a big old email notifier mock
     private val emailNotifierMock =
         object : EmailNotifier {
             var orderCreatedCount = 0
@@ -78,7 +80,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -87,7 +89,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = OrderCreated(testOrder)
             outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { happyStorageSystemMock.createOrder(any()) }
         }
     }
@@ -101,7 +103,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = emptyList(),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -130,7 +132,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(invalidStorageMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -141,7 +143,7 @@ class StorageMessageProcessorTest {
                 outboxProcessor.handleEvent(OrderCreated(testOrder))
             }
         }
-        assertThat(outboxRepoMock.processed).hasSize(0)
+        assertThat(storageMessageRepoMock.processed).hasSize(0)
     }
 
     @Test
@@ -153,7 +155,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -162,7 +164,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = ItemCreated(testItem)
             outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
         }
     }
 
@@ -184,7 +186,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -195,7 +197,7 @@ class StorageMessageProcessorTest {
             assertThrows<DuplicateResourceException> {
                 outboxProcessor.handleEvent(event)
             }
-            assertThat(outboxRepoMock.processed).hasSize(0)
+            assertThat(storageMessageRepoMock.processed).hasSize(0)
         }
     }
 
@@ -210,7 +212,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -219,7 +221,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = ItemCreated(testItem)
             outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
         }
     }
 
@@ -250,7 +252,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -259,7 +261,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = OrderUpdated(expectedOrder)
             outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { storageSystemMock.updateOrder(any()) }
         }
     }
@@ -283,7 +285,7 @@ class StorageMessageProcessorTest {
 
         val outboxProcessor =
             StorageMessageProcessorAdapter(
-                storageMessageRepository = outboxRepoMock,
+                storageMessageRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -292,7 +294,7 @@ class StorageMessageProcessorTest {
         runTest {
             val event = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
             outboxProcessor.handleEvent(event)
-            assertThat(outboxRepoMock.processed).hasSize(1).contains(event)
+            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
             coVerify(exactly = 1) { storageSystemMock.deleteOrder(testOrder.hostOrderId, testOrder.hostName) }
         }
     }
