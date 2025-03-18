@@ -101,7 +101,7 @@ class SynqAutostoreAdapter(
     override suspend fun canHandleLocation(location: String): Boolean {
         return when (location.uppercase()) {
             "SYNQ_AUTOSTORE" -> true
-            "WAREHOUSE_AUTOSTORE" -> true
+            "AUTOSTORE_WAREHOUSE" -> true
             else -> false
         }
     }
