@@ -97,6 +97,8 @@ class OrderControllerTest(
                 .build()
 
         populateDb()
+        // We bypass the outbox processor, since the side effects caused by
+        // messages being processed in the background can cause tests to randomly fail
         coEvery { outboxMessageProcessor.handleEvent(any()) } answers {}
     }
 
@@ -130,6 +132,8 @@ class OrderControllerTest(
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
 
+    // TODO - This should probably be moved into OutboxProcessorTest
+    // Since the call for creating an email happens within the OutboxProcessor
     @Test
     fun `createOrder with valid payload also creates email`() {
         runTest {
