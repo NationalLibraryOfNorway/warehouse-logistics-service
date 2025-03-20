@@ -1,11 +1,11 @@
 package no.nb.mlt.wls.infrastructure
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nb.mlt.wls.domain.model.catalogMessages.CatalogMessage
-import no.nb.mlt.wls.domain.model.catalogMessages.ItemUpdate
-import no.nb.mlt.wls.domain.model.catalogMessages.OrderUpdate
-import no.nb.mlt.wls.domain.ports.outbound.CatalogMessageProcessor
-import no.nb.mlt.wls.domain.ports.outbound.CatalogMessageRepository
+import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
+import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -14,15 +14,15 @@ import java.util.concurrent.TimeUnit
 private val logger = KotlinLogging.logger {}
 
 @Service
-class CatalogMessageProcessorAdapter(
-    private val catalogMessageRepository: CatalogMessageRepository,
+class CatalogEventProcessorAdapter(
+    private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val inventoryNotifier: InventoryNotifier
-) : CatalogMessageProcessor {
+) : EventProcessor<CatalogEvent> {
     // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =
-            catalogMessageRepository
+            catalogEventRepository
                 .getUnprocessedSortedByCreatedTime()
 
         if (outboxMessages.isNotEmpty()) {
@@ -31,23 +31,23 @@ class CatalogMessageProcessorAdapter(
         }
     }
 
-    override suspend fun handleEvent(event: CatalogMessage) {
+    override suspend fun handleEvent(event: CatalogEvent) {
         when (event) {
-            is ItemUpdate -> handleItemUpdate(event)
-            is OrderUpdate -> handleOrderUpdate(event)
+            is ItemEvent -> handleItemUpdate(event)
+            is OrderEvent -> handleOrderUpdate(event)
         }
 
-        val processedEvent = catalogMessageRepository.markAsProcessed(event)
+        val processedEvent = catalogEventRepository.markAsProcessed(event)
         logger.info { "Marked event as processed: $processedEvent" }
     }
 
-    private suspend fun handleItemUpdate(event: ItemUpdate) {
+    private suspend fun handleItemUpdate(event: ItemEvent) {
         logger.info { "Processing ItemUpdate: $event" }
 
         inventoryNotifier.itemChanged(event.item)
     }
 
-    private suspend fun handleOrderUpdate(event: OrderUpdate) {
+    private suspend fun handleOrderUpdate(event: OrderEvent) {
         logger.info { "Processing OrderUpdate: $event" }
 
         inventoryNotifier.orderChanged(event.order)

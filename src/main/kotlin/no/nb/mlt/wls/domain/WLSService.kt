@@ -8,11 +8,11 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.storageMessages.ItemCreated
-import no.nb.mlt.wls.domain.model.storageMessages.OrderCreated
-import no.nb.mlt.wls.domain.model.storageMessages.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageMessages.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageMessages.StorageMessage
+import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
+import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
+import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -33,12 +33,12 @@ import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toItem
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageMessageProcessor
-import no.nb.mlt.wls.domain.ports.outbound.StorageMessageRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 
@@ -48,9 +48,9 @@ class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
     private val inventoryNotifier: InventoryNotifier,
-    private val storageMessageRepository: StorageMessageRepository,
+    private val storageEventRepository: EventRepository<StorageEvent>,
     private val transactionPort: TransactionPort,
-    private val storageMessageProcessor: StorageMessageProcessor
+    private val storageEventProcessor: EventProcessor<StorageEvent>
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems, SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -63,7 +63,7 @@ class WLSService(
         val (createdItem, outboxMessage) =
             transactionPort.executeInTransaction {
                 val createdItem = itemRepository.createItem(itemMetadata.toItem())
-                val message = storageMessageRepository.save(ItemCreated(createdItem))
+                val message = storageEventRepository.save(ItemCreated(createdItem))
 
                 (createdItem to message)
             } ?: throw RuntimeException("Could not create item")
@@ -143,7 +143,7 @@ class WLSService(
         val (order, orderCreatedMessage) =
             transactionPort.executeInTransaction {
                 val order = orderRepository.createOrder(orderDTO.toOrder())
-                val orderCreatedMessage = storageMessageRepository.save(OrderCreated(createdOrder = order))
+                val orderCreatedMessage = storageEventRepository.save(OrderCreated(createdOrder = order))
 
                 (order to orderCreatedMessage)
             } ?: throw RuntimeException("Could not create order")
@@ -161,10 +161,10 @@ class WLSService(
         val outBoxMessage =
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(order)
-                storageMessageRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
+                storageEventRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
-        storageMessageProcessor.handleEvent(outBoxMessage)
+        storageEventProcessor.handleEvent(outBoxMessage)
     }
 
     override suspend fun updateOrder(
@@ -198,7 +198,7 @@ class WLSService(
                             contactPerson = contactPerson
                         )
                     )
-                val message = storageMessageRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+                val message = storageEventRepository.save(OrderUpdated(updatedOrder = updatedOrder))
                 (updatedOrder to message)
             } ?: throw RuntimeException("Could not update order")
 
@@ -255,10 +255,10 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    private fun processMessageAsync(storageMessage: StorageMessage) =
+    private fun processMessageAsync(storageMessage: StorageEvent) =
         coroutineContext.launch {
             try {
-                storageMessageProcessor.handleEvent(storageMessage)
+                storageEventProcessor.handleEvent(storageMessage)
             } catch (e: StorageSystemException) {
                 logger.error(e) {
                     "Storage system reported error while processing outbox message: $storageMessage. Try again later"

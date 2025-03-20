@@ -33,23 +33,7 @@ class InventoryNotifierAdapter(
             val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload())
             val timestamp = System.currentTimeMillis().toString()
 
-            getAppropriateWebClient(item.hostName)
-                .post()
-                .uri(item.callbackUrl)
-                .bodyValue(payload)
-                .headers {
-                    it.contentType = MediaType.APPLICATION_JSON
-                    it["X-Signature"] = generateSignature(payload, timestamp)
-                    it["X-Timestamp"] = timestamp
-                }
-                .retrieve()
-                .bodyToMono(Void::class.java)
-                .retry(5)
-                .timeout(Duration.ofSeconds(10))
-                .doOnError {
-                    logger.error(it) { "Error while sending item update to callback URL: ${item.callbackUrl}" }
-                }
-                .subscribe()
+            sendCallback(item.hostName, item.callbackUrl, payload, timestamp)
         }
     }
 
@@ -57,10 +41,13 @@ class InventoryNotifierAdapter(
         val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload())
         val timestamp = System.currentTimeMillis().toString()
 
-        // TODO: Should probably have a more robust retry mechanism, what if receiver is down for a while?
-        getAppropriateWebClient(order.hostName)
+        sendCallback(order.hostName, order.callbackUrl, payload, timestamp)
+    }
+
+    private fun sendCallback(hostName: HostName, callbackUrl: String, payload: String, timestamp: String) {
+        getAppropriateWebClient(hostName)
             .post()
-            .uri(order.callbackUrl)
+            .uri(callbackUrl)
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
@@ -69,10 +56,11 @@ class InventoryNotifierAdapter(
             }
             .retrieve()
             .bodyToMono(Void::class.java)
-            .retry(5)
+            .retry(1)  // TODO Should we just give up on retrying since we have outbox?
             .timeout(Duration.ofSeconds(10))
             .doOnError {
-                logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+                logger.error(it) { "Error while sending update to callback URL: ${callbackUrl}" }
+                throw it
             }
             .subscribe()
     }

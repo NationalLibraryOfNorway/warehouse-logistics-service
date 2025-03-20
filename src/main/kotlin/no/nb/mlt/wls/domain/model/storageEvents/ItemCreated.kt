@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain.model.storageMessages
+package no.nb.mlt.wls.domain.model.storageEvents
 
 import no.nb.mlt.wls.domain.model.Item
 import java.util.UUID
@@ -6,7 +6,7 @@ import java.util.UUID
 data class ItemCreated(
     val createdItem: Item,
     override val id: String = UUID.randomUUID().toString()
-) : StorageMessage {
+) : StorageEvent {
     override val body: Any
         get() = createdItem
 }

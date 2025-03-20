@@ -10,39 +10,39 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.storageMessages.ItemCreated
-import no.nb.mlt.wls.domain.model.storageMessages.OrderCreated
-import no.nb.mlt.wls.domain.model.storageMessages.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageMessages.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageMessages.StorageMessage
+import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
+import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
+import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageMessageRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
-class StorageMessageProcessorTest {
+class StorageEventProcessorTest {
     private val storageMessageRepoMock =
-        object : StorageMessageRepository {
-            val processed: MutableList<StorageMessage> = mutableListOf()
+        object : EventRepository<StorageEvent> {
+            val processed: MutableList<StorageEvent> = mutableListOf()
 
-            override suspend fun save(storageMessage: StorageMessage): StorageMessage {
+            override suspend fun save(storageEvent: StorageEvent): StorageEvent {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun getAll(): List<StorageMessage> {
+            override suspend fun getAll(): List<StorageEvent> {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<StorageMessage>()
+            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<StorageEvent>()
 
-            override suspend fun markAsProcessed(storageMessage: StorageMessage): StorageMessage {
-                processed.add(storageMessage)
-                return storageMessage
+            override suspend fun markAsProcessed(storageEvent: StorageEvent): StorageEvent {
+                processed.add(storageEvent)
+                return storageEvent
             }
         }
 
@@ -79,8 +79,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -102,8 +102,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = emptyList(),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -131,8 +131,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(invalidStorageMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -154,8 +154,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -185,8 +185,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -211,8 +211,8 @@ class StorageMessageProcessorTest {
         val testItem = testItem.copy(location = "SOMEWHERE")
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -251,8 +251,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
@@ -284,8 +284,8 @@ class StorageMessageProcessorTest {
             }
 
         val messageProcessor =
-            StorageMessageProcessorAdapter(
-                storageMessageRepository = storageMessageRepoMock,
+            StorageEventProcessorAdapter(
+                storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(storageSystemMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock

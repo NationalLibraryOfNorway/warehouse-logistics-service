@@ -1,26 +1,27 @@
-package no.nb.mlt.wls.infrastructure.repositories.storageMessage
+package no.nb.mlt.wls.infrastructure.repositories.event
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.model.storageMessages.StorageMessage
+import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.RepositoryException
-import no.nb.mlt.wls.domain.ports.outbound.StorageMessageRepository
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
 
 @Component
-class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dollars, Alex
-    private val mongoStorageMessageRepository: MongoStorageMessageRepository
-) : StorageMessageRepository {
-    override suspend fun save(storageMessage: StorageMessage): StorageMessage {
-        val mongoMessage = MongoStorageMessage(body = storageMessage)
-        return mongoStorageMessageRepository
+class MongoCatalogEventRepositoryAdapter(
+    private val mongoCatalogMessageRepository: MongoCatalogMessageRepository
+) : EventRepository<CatalogEvent> {
+    override suspend fun save(event: CatalogEvent): CatalogEvent {
+        val mongoMessage = MongoCatalogEvent(body = event)
+        return mongoCatalogMessageRepository
             .save(mongoMessage)
             .map { it.body }
             .doOnEach { logger.info { "Saved outbox message: $it" } }
@@ -28,7 +29,7 @@ class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dol
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
-                        "Timed out while saving to outbox. Message: $storageMessage"
+                        "Timed out while saving to outbox. Message: $event"
                     } else {
                         "Error while saving to outbox"
                     }
@@ -38,8 +39,8 @@ class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dol
             .awaitSingle()
     }
 
-    override suspend fun getAll(): List<StorageMessage> {
-        return mongoStorageMessageRepository.findAll()
+    override suspend fun getAll(): List<CatalogEvent> {
+        return mongoCatalogMessageRepository.findAll()
             .map { it.body }
             .collectList()
             .timeout(Duration.ofSeconds(8))
@@ -56,8 +57,8 @@ class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dol
             .awaitSingle()
     }
 
-    override suspend fun getUnprocessedSortedByCreatedTime(): List<StorageMessage> {
-        return mongoStorageMessageRepository
+    override suspend fun getUnprocessedSortedByCreatedTime(): List<CatalogEvent> {
+        return mongoCatalogMessageRepository
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
@@ -75,15 +76,15 @@ class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dol
             .awaitSingle()
     }
 
-    override suspend fun markAsProcessed(storageMessage: StorageMessage): StorageMessage {
-        return mongoStorageMessageRepository
-            .save(MongoStorageMessage(body = storageMessage, processedTimestamp = java.time.Instant.now()))
+    override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
+        return mongoCatalogMessageRepository
+            .save(MongoCatalogEvent(body = event, processedTimestamp = Instant.now()))
             .map { it.body }
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
-                        "Timed out while marking as processed in outbox. Message: $storageMessage"
+                        "Timed out while marking as processed in outbox. Message: $event"
                     } else {
                         "Error while marking as processed in outbox"
                     }
@@ -95,6 +96,6 @@ class MongoStorageMessageRepositoryAdapter(// TODO What are Generics for 400 dol
 }
 
 @Repository
-interface MongoStorageMessageRepository : ReactiveMongoRepository<MongoStorageMessage, String> {
-    fun findAllByProcessedTimestampIsNull(): Flux<MongoStorageMessage>
+interface MongoCatalogMessageRepository : ReactiveMongoRepository<MongoCatalogEvent, String> {
+    fun findAllByProcessedTimestampIsNull(): Flux<MongoCatalogEvent>
 }
