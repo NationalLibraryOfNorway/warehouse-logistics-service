@@ -63,8 +63,8 @@ class StorageEventProcessorAdapter(
         val updatedOrder = event.updatedOrder
         val items =
             itemRepository.getItems(
-                updatedOrder.orderLine.map { it.hostId },
-                updatedOrder.hostName
+                updatedOrder.hostName,
+                updatedOrder.orderLine.map { it.hostId }
             )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
@@ -94,8 +94,8 @@ class StorageEventProcessorAdapter(
 
         val items =
             itemRepository.getItems(
-                createdOrder.orderLine.map { it.hostId },
-                createdOrder.hostName
+                createdOrder.hostName,
+                createdOrder.orderLine.map { it.hostId }
             )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
@@ -127,7 +127,7 @@ class StorageEventProcessorAdapter(
 
     private suspend fun createAndSendEmails(order: Order) {
         val items = order.orderLine.map { it.hostId }
-        val orderItems = itemRepository.getItems(items, order.hostName)
+        val orderItems = itemRepository.getItems(order.hostName, items)
         if (orderItems.isNotEmpty()) {
             emailNotifier.orderCreated(order, orderItems)
         }

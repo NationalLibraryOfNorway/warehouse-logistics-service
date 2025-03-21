@@ -8,6 +8,9 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
 import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
 import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
 import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
@@ -35,21 +38,22 @@ import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
-import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import org.springframework.web.reactive.function.client.WebClientResponseException
 
 private val logger = KotlinLogging.logger {}
 
 class WLSService(
     private val itemRepository: ItemRepository,
     private val orderRepository: OrderRepository,
-    private val inventoryNotifier: InventoryNotifier,
+    private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val storageEventRepository: EventRepository<StorageEvent>,
     private val transactionPort: TransactionPort,
+    private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
 ) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems, SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -60,15 +64,15 @@ class WLSService(
             return it
         }
 
-        val (createdItem, outboxMessage) =
+        val (createdItem, storageEvent) =
             transactionPort.executeInTransaction {
                 val createdItem = itemRepository.createItem(itemMetadata.toItem())
-                val message = storageEventRepository.save(ItemCreated(createdItem))
+                val event = storageEventRepository.save(ItemCreated(createdItem))
 
-                (createdItem to message)
+                (createdItem to event)
             } ?: throw RuntimeException("Could not create item")
 
-        processMessageAsync(outboxMessage)
+        processStorageEventAsync(storageEvent)
         return createdItem
     }
 
@@ -79,8 +83,15 @@ class WLSService(
             getItem(moveItemPayload.hostName, moveItemPayload.hostId)
                 ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
 
-        val movedItem = itemRepository.moveItem(item.hostId, item.hostName, moveItemPayload.quantity, moveItemPayload.location)
-        inventoryNotifier.itemChanged(movedItem)
+        val (movedItem, catalogEvent) =
+            transactionPort.executeInTransaction {
+                val movedItem = itemRepository.moveItem(item.hostName, item.hostId, moveItemPayload.quantity, moveItemPayload.location)
+                val event = catalogEventRepository.save(ItemEvent(movedItem))
+
+                (movedItem to event)
+            } ?: throw RuntimeException("Could not move item")
+
+        processCatalogEventAsync(catalogEvent)
         return movedItem
     }
 
@@ -104,16 +115,21 @@ class WLSService(
 
             // Picking an item is guaranteed to set quantity or location.
             // An exception is thrown otherwise
-            val movedItem =
-                itemRepository.moveItem(
-                    item.hostId,
-                    item.hostName,
-                    pickedItem.quantity,
-                    pickedItem.location
-                )
+            val catalogEvent =
+                transactionPort.executeInTransaction {
+                    val movedItem = itemRepository.moveItem(
+                        item.hostName,
+                        item.hostId,
+                        pickedItem.quantity,
+                        pickedItem.location
+                    )
 
-            inventoryNotifier.itemChanged(movedItem)
+                    catalogEventRepository.save(ItemEvent(movedItem))
+                } ?: throw RuntimeException("Could not move item")
+
+            processCatalogEventAsync(catalogEvent)
         }
+
         logger.debug {
             "Items picked for $hostName"
         }
@@ -125,8 +141,15 @@ class WLSService(
         orderId: String
     ) {
         val order = getOrderOrThrow(hostName, orderId)
-        val pickedOrder = orderRepository.updateOrder(order.pickOrder(pickedHostIds))
-        inventoryNotifier.orderChanged(pickedOrder)
+
+        val catalogEvent =
+            transactionPort.executeInTransaction {
+                val pickedOrder = orderRepository.updateOrder(order.pickOrder(pickedHostIds))
+
+                catalogEventRepository.save(OrderEvent(pickedOrder))
+            } ?: throw RuntimeException("Could not pick order items")
+
+        processCatalogEventAsync(catalogEvent)
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
@@ -140,17 +163,17 @@ class WLSService(
             throw ValidationException("All order items in order must exist")
         }
 
-        val (order, orderCreatedMessage) =
+        val (createdOrder, storageEvent) =
             transactionPort.executeInTransaction {
-                val order = orderRepository.createOrder(orderDTO.toOrder())
-                val orderCreatedMessage = storageEventRepository.save(OrderCreated(createdOrder = order))
+                val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
+                val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
-                (order to orderCreatedMessage)
+                (createdOrder to storageEvent)
             } ?: throw RuntimeException("Could not create order")
 
-        processMessageAsync(orderCreatedMessage)
+        processStorageEventAsync(storageEvent)
 
-        return order
+        return createdOrder
     }
 
     override suspend fun deleteOrder(
@@ -158,13 +181,13 @@ class WLSService(
         hostOrderId: String
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
-        val outBoxMessage =
+        val storageEvent =
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(order)
                 storageEventRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
-        storageEventProcessor.handleEvent(outBoxMessage)
+        storageEventProcessor.handleEvent(storageEvent)
     }
 
     override suspend fun updateOrder(
@@ -185,7 +208,7 @@ class WLSService(
 
         val order = getOrderOrThrow(hostName, hostOrderId)
 
-        val (updatedOrder, outboxMessage) =
+        val (updatedOrder, storageEvent) =
             transactionPort.executeInTransaction {
                 val updatedOrder =
                     orderRepository.updateOrder(
@@ -198,34 +221,13 @@ class WLSService(
                             contactPerson = contactPerson
                         )
                     )
-                val message = storageEventRepository.save(OrderUpdated(updatedOrder = updatedOrder))
-                (updatedOrder to message)
+                val storageEvent = storageEventRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+                (updatedOrder to storageEvent)
             } ?: throw RuntimeException("Could not update order")
 
-        processMessageAsync(outboxMessage)
+        processStorageEventAsync(storageEvent)
 
         return updatedOrder
-    }
-
-    override suspend fun getOrder(
-        hostName: HostName,
-        hostOrderId: String
-    ): Order? {
-        return orderRepository.getOrder(hostName, hostOrderId)
-    }
-
-    override suspend fun getItem(
-        hostName: HostName,
-        hostId: String
-    ): Item? {
-        return itemRepository.getItem(hostName, hostId)
-    }
-
-    private suspend fun getItems(
-        hostIds: List<String>,
-        hostName: HostName
-    ): List<Item> {
-        return itemRepository.getItems(hostIds, hostName)
     }
 
     override suspend fun updateOrderStatus(
@@ -237,15 +239,42 @@ class WLSService(
             orderRepository.getOrder(hostName, hostOrderId)
                 ?: throw OrderNotFoundException("No order with hostName: $hostName and hostOrderId: $hostOrderId exists")
 
-        val updatedOrder = orderRepository.updateOrder(order.copy(status = status))
+        val (updatedOrder, catalogEvent) =
+            transactionPort.executeInTransaction {
+                val updatedOrder = orderRepository.updateOrder(order.copy(status = status))
+                val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
 
-        inventoryNotifier.orderChanged(updatedOrder)
+                (updatedOrder to catalogEvent)
+            } ?: throw RuntimeException("Could not update order status")
+
+        processCatalogEventAsync(catalogEvent)
 
         return updatedOrder
     }
 
+    override suspend fun getItem(
+        hostName: HostName,
+        hostId: String
+    ): Item? {
+        return itemRepository.getItem(hostName, hostId)
+    }
+
+    override suspend fun getOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order? {
+        return orderRepository.getOrder(hostName, hostOrderId)
+    }
+
+    private suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item> {
+        return itemRepository.getItems(hostName, hostIds)
+    }
+
     @Throws(OrderNotFoundException::class)
-    suspend fun getOrderOrThrow(
+    private suspend fun getOrderOrThrow(
         hostName: HostName,
         hostOrderId: String
     ): Order {
@@ -255,22 +284,36 @@ class WLSService(
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
     }
 
-    private fun processMessageAsync(storageMessage: StorageEvent) =
+    private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {
             try {
-                storageEventProcessor.handleEvent(storageMessage)
+                storageEventProcessor.handleEvent(storageEvent)
             } catch (e: StorageSystemException) {
                 logger.error(e) {
-                    "Storage system reported error while processing outbox message: $storageMessage. Try again later"
+                    "Storage system reported error while processing outbox event: $storageEvent. Try again later"
                 }
             } catch (e: DuplicateResourceException) {
-                // TODO - What to do in this case? Should we try to recover?
                 logger.warn(e) {
-                    "Outbox message produced a duplicate resource. Message: $storageMessage"
+                    "Outbox event produced a duplicate resource. Event: $storageEvent"
                 }
             } catch (e: Exception) {
                 logger.error(e) {
-                    "Unexpected error while processing outbox message: $storageMessage. Try again later"
+                    "Unexpected error while processing outbox event: $storageEvent. Try again later"
+                }
+            }
+        }
+
+    private fun processCatalogEventAsync(catalogEvent: CatalogEvent) =
+        coroutineContext.launch {
+            try {
+                catalogEventProcessor.handleEvent(catalogEvent)
+            } catch(e: WebClientResponseException){
+                logger.error(e) {
+                    "Web client threw an error while sending out: $catalogEvent. Try again later"
+                }
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Unexpected error while processing outbox message: $catalogEvent. Try again later"
                 }
             }
         }

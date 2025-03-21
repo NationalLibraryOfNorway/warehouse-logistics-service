@@ -73,9 +73,9 @@ class StorageEventProcessorTest {
     fun `OrderCreated should mark as processed when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
-                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(testItemList[0])
-                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(testItemList[1])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321")) } returns testItemList
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345")) } returns listOf(testItemList[0])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-54321")) } returns listOf(testItemList[1])
             }
 
         val messageProcessor =
@@ -98,7 +98,7 @@ class StorageEventProcessorTest {
     fun `OrderCreated should send mail when successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321")) } returns testItemList
             }
 
         val messageProcessor =
@@ -119,7 +119,7 @@ class StorageEventProcessorTest {
     fun `OrderCreated Should not mark as processed if anything fails`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321")) } returns testItemList
             }
         val errorMessage = "Some exception when sending to storage system"
         val invalidStorageMock =
@@ -230,10 +230,10 @@ class StorageEventProcessorTest {
         val extendedTestItemList = testItemList.plus(testItem.copy(hostId = "mlt-15243"))
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("mlt-12345", "mlt-54321", "mlt-15243"), HostName.AXIELL) } returns extendedTestItemList
-                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(extendedTestItemList[0])
-                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(extendedTestItemList[1])
-                coEvery { getItems(listOf("mlt-15243"), HostName.AXIELL) } returns listOf(extendedTestItemList[2])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321", "mlt-15243")) } returns extendedTestItemList
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345")) } returns listOf(extendedTestItemList[0])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-54321")) } returns listOf(extendedTestItemList[1])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-15243")) } returns listOf(extendedTestItemList[2])
             }
 
         val expectedOrder =
@@ -270,9 +270,9 @@ class StorageEventProcessorTest {
     fun `DeleteOrder should mark as processed if successful`() {
         val itemRepoMock =
             mockk<ItemRepository> {
-                coEvery { getItems(listOf("mlt-12345", "mlt-54321"), HostName.AXIELL) } returns testItemList
-                coEvery { getItems(listOf("mlt-12345"), HostName.AXIELL) } returns listOf(testItemList[0])
-                coEvery { getItems(listOf("mlt-54321"), HostName.AXIELL) } returns listOf(testItemList[1])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321")) } returns testItemList
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-12345")) } returns listOf(testItemList[0])
+                coEvery { getItems(HostName.AXIELL, listOf("mlt-54321")) } returns listOf(testItemList[1])
             }
 
         val storageSystemMock =
