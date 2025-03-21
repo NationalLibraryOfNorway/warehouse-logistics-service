@@ -221,7 +221,8 @@ class WLSService(
                             contactPerson = contactPerson
                         )
                     )
-                val storageEvent = storageEventRepository.save(OrderUpdated(updatedOrder = updatedOrder))
+                val storageEvent = storageEventRepository.save(OrderUpdated(updatedOrder))
+
                 (updatedOrder to storageEvent)
             } ?: throw RuntimeException("Could not update order")
 

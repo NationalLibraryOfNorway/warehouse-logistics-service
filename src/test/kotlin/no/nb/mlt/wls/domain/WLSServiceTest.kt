@@ -36,7 +36,6 @@ import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
@@ -48,9 +47,7 @@ class WLSServiceTest {
     private val transactionPort = mockk<TransactionPort>()
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
-
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
-    private val emailAdapterMock = mockk<EmailNotifier>()
 
     private lateinit var cut: WLSService
 
@@ -61,6 +58,9 @@ class WLSServiceTest {
         cut = WLSService(itemRepoMock, orderRepoMock, catalogEventRepository, storageEventRepository, transactionPort, catalogEventProcessor, storageEventProcessor)
     }
 
+    // TODO: Need to find an elegant way to test stuff going on inside the transaction port
+    //       Unless we can accept it as it is and hope everything inside goes well
+
     @Test
     fun `addItem should save and return new item when it does not exists`() {
         val itemCreatedEvent = ItemCreated(testItem)
@@ -70,9 +70,9 @@ class WLSServiceTest {
         coEvery { storageEventProcessor.handleEvent(itemCreatedEvent) } answers {}
 
         runTest {
-            val itemResult = cut.addItem(testItem.toItemMetadata())
+            val addItemResult = cut.addItem(testItem.toItemMetadata())
 
-            assertThat(itemResult).isEqualTo(testItem)
+            assertThat(addItemResult).isEqualTo(testItem)
             coVerify(exactly = 1) { storageEventProcessor.handleEvent(itemCreatedEvent) }
         }
     }
@@ -84,9 +84,9 @@ class WLSServiceTest {
         coJustRun { storageSystemRepoMock.createItem(any()) }
 
         runTest {
-            val itemResult = cut.addItem(testItem.toItemMetadata())
+            val addItemResult = cut.addItem(testItem.toItemMetadata())
 
-            assertThat(itemResult).isEqualTo(testItem)
+            assertThat(addItemResult).isEqualTo(testItem)
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
             coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
@@ -101,8 +101,8 @@ class WLSServiceTest {
         coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
 
         runTest {
-            val movedItem = cut.moveItem(testMoveItemPayload)
-            assertThat(movedItem).isEqualTo(expectedItem)
+            val moveItemResult = cut.moveItem(testMoveItemPayload)
+            assertThat(moveItemResult).isEqualTo(expectedItem)
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemMovedEvent) }
@@ -207,8 +207,8 @@ class WLSServiceTest {
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
 
         runTest {
-            val order = cut.createOrder(createOrderDTO)
-            assertThat(order).isEqualTo(testOrder)
+            val createOrderResult = cut.createOrder(createOrderDTO)
+            assertThat(createOrderResult).isEqualTo(testOrder)
             coVerify(exactly = 1) { storageEventProcessor.handleEvent(orderCreatedEvent) }
         }
     }
@@ -219,10 +219,10 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
 
         runTest {
-            val order = cut.createOrder(duplicateOrder)
+            val createOrderResult = cut.createOrder(duplicateOrder)
 
-            assertThat(order).isEqualTo(testOrder)
-            assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
+            assertThat(createOrderResult).isEqualTo(testOrder)
+            assertThat(createOrderResult.callbackUrl).isEqualTo(testOrder.callbackUrl)
             coVerify(exactly = 0) { itemRepoMock.doesEveryItemExist(any()) }
         }
     }
@@ -283,29 +283,34 @@ class WLSServiceTest {
 
     @Test
     fun `updateOrder with valid items should complete`() {
+        val updateOrderEvent = OrderUpdated(updatedOrder)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(any(), any()) } answers { testOrder.copy() }
-        coEvery { storageSystemRepoMock.updateOrder(any()) } answers { updatedOrder }
-        coEvery { orderRepoMock.updateOrder(any()) } answers { updatedOrder }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (updatedOrder to OrderUpdated(updatedOrder))
-        coEvery { storageEventRepository.save(OrderUpdated(updatedOrder)) } answers { OrderUpdated(updatedOrder = updatedOrder) }
+        coEvery { orderRepoMock.getOrder(updatedOrder.hostName, updatedOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { updatedOrder to updateOrderEvent }
+        coEvery { storageEventProcessor.handleEvent(updateOrderEvent) } answers { }
 
         runTest {
-            val order =
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    Order.Type.LOAN,
-                    "unreal person",
-                    createOrderAddress(),
-                    "note",
-                    "https://example.com"
-                )
+            val updateOrderResult = callUpdateOrder()
 
-            assertThat(order).isEqualTo(updatedOrder)
+            assertThat(updateOrderResult).isEqualTo(updatedOrder)
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { storageEventProcessor.handleEvent(updateOrderEvent) }
+        }
+    }
+
+    @Test
+    fun `updateOrder should fail if items don't exist`() {
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+
+        runTest {
+            assertThrows<ValidationException>(message = "All order items in order must exist") {
+                callUpdateOrder()
+            }
+
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
+            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
 
@@ -315,48 +320,56 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
         runTest {
-            assertThrows<OrderNotFoundException> {
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    testOrder.orderType,
-                    testOrder.contactPerson,
-                    testOrder.address ?: createOrderAddress(),
-                    testOrder.note,
-                    testOrder.callbackUrl
-                )
+            assertThrows<OrderNotFoundException>(message = "Order not found") {
+                callUpdateOrder()
             }
+
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-
-            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
 
     @Test
-    fun `updateOrder should fail when items do not exist`() {
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+    fun `updateOrderStatus should update status and send callback`() {
+        val completedOrder = testOrder.copy(status = Order.Status.COMPLETED)
+        val orderStatusUpdatedEvent = OrderEvent(completedOrder)
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { completedOrder to orderStatusUpdatedEvent }
+        coEvery { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) } answers { }
 
         runTest {
-            assertThrows<ValidationException> {
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    testOrder.orderType,
-                    testOrder.contactPerson,
-                    testOrder.address,
-                    testOrder.note,
-                    testOrder.callbackUrl
-                )
-            }
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
+            val updateOrderStatusResult = cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
 
-            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+            assertThat(updateOrderStatusResult).isEqualTo(completedOrder)
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) }
         }
     }
+
+    @Test
+    fun `updateOrderStatus should fail if order does not exist`() {
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
+
+        runTest {
+           assertThrows<OrderNotFoundException>(message = "No order with hostName: ${testOrder.hostName} and hostOrderId: ${testOrder.hostOrderId} exists") {
+               cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
+           }
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { catalogEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    private suspend fun callUpdateOrder() = cut.updateOrder(
+        updatedOrder.hostName,
+        updatedOrder.hostOrderId,
+        updatedOrder.orderLine.map { it.hostId },
+        updatedOrder.orderType,
+        updatedOrder.contactPerson,
+        updatedOrder.address,
+        updatedOrder.note,
+        updatedOrder.callbackUrl
+    )
 
     //TODO test UpdateOrderStatus
 
@@ -439,7 +452,7 @@ class WLSServiceTest {
         testOrder.copy(
             orderLine =
                 listOf(
-                    Order.OrderItem("testItem.hostId", Order.OrderItem.Status.NOT_STARTED),
+                    Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
                     Order.OrderItem("mlt-54321", Order.OrderItem.Status.NOT_STARTED)
                 )
         )

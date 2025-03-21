@@ -56,7 +56,6 @@ class InventoryNotifierAdapter(
             }
             .retrieve()
             .bodyToMono(Void::class.java)
-            .retry(1)  // TODO Should we just give up on retrying since we have outbox?
             .timeout(Duration.ofSeconds(10))
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: ${callbackUrl}" }
