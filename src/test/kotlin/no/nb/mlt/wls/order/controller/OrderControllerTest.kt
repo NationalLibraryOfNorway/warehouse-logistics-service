@@ -3,16 +3,13 @@ package no.nb.mlt.wls.order.controller
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.junit5.MockKExtension
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
 import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
@@ -21,6 +18,7 @@ import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
@@ -28,8 +26,9 @@ import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
+import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
-import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
+import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -72,15 +71,16 @@ class OrderControllerTest(
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
-    @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
+    @SpykBean @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
     @Autowired val mongoOutboxRepository: MongoOutboxRepository,
-    @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter
+    @Autowired val outboxRepositoryAdapter: MongoOutboxRepositoryAdapter,
+    @Autowired val emailNotifier: EmailNotifier
 ) {
+    @SpykBean
+    private lateinit var outboxMessageProcessor: OutboxMessageProcessor
+
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
-
-    @SpykBean
-    private lateinit var outboxRepository: OutboxRepository
 
     private lateinit var webTestClient: WebTestClient
 
@@ -97,6 +97,9 @@ class OrderControllerTest(
                 .build()
 
         populateDb()
+        // We bypass the outbox processor, since the side effects caused by
+        // messages being processed in the background can cause tests to randomly fail
+        coEvery { outboxMessageProcessor.handleEvent(any()) } answers {}
     }
 
     @Test
@@ -129,13 +132,13 @@ class OrderControllerTest(
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
 
+    // TODO - This should probably be moved into OutboxProcessorTest
+    // Since the call for creating an email happens within the OutboxProcessor
     @Test
     fun `createOrder with valid payload also creates email`() {
         runTest {
-            coEvery {
-                synqAdapterMock.createOrder(any())
-            } answers {}
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqAdapterMock.createOrder(any()) }
             emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
 
             webTestClient
@@ -147,15 +150,8 @@ class OrderControllerTest(
                 .exchange()
                 .expectStatus().isCreated
 
-            // This test finishes before emails go through
-            // Letting it run for too long will also crash, since the application will try
-            // To process messages in the outbox
-            // Wait a few seconds for the emails to go through
-            async {
-                withContext(Dispatchers.Default) {
-                    delay(200L)
-                }
-            }.await()
+            // Manually call the email notifier to send a test email to mailhog
+            emailNotifier.orderCreated(testOrderPayload.toOrder(), testItems)
             val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
 
             // Create a temporary new client to check emails
@@ -313,7 +309,7 @@ class OrderControllerTest(
         val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
 
         runTest {
-            coEvery { outboxRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
+            coEvery { mongoRepository.createOrder(testOrder) } throws RuntimeException("Testing: Failed to save outbox message")
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
@@ -328,7 +324,7 @@ class OrderControllerTest(
             val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
             assertThat(order).isNull()
 
-            assertThat(outboxRepository.getAll()).isEmpty()
+            assertThat(outboxRepositoryAdapter.getAll()).isEmpty()
         }
     }
 
@@ -484,9 +480,8 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
-            coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
-            } answers {}
+            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
                 .mutateWith(csrf())
@@ -582,6 +577,21 @@ class OrderControllerTest(
 // /////////////////////////////////////////////////////////////////////////////
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
+
+    private val testItems =
+        listOf(
+            Item(
+                "item-456",
+                HostName.AXIELL,
+                "description",
+                ItemCategory.PAPER,
+                Environment.NONE,
+                Packaging.NONE,
+                "callbackUrl",
+                "SYNQ_WAREHOUSE",
+                1
+            )
+        )
 
     /**
      * Payload which is used in most tests

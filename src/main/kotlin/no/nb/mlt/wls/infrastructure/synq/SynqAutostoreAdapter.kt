@@ -17,7 +17,7 @@ import reactor.core.publisher.Mono
 import java.net.URI
 
 @Component
-class SynqAdapter(
+class SynqAutostoreAdapter(
     @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
     @Value("\${synq.path.base}")
@@ -90,7 +90,7 @@ class SynqAdapter(
         return webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .bodyValue(SynqOrder(listOf(order.toSynqPayload())))
+            .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
             .retrieve()
             .toBodilessEntity()
             .map { order }
@@ -100,7 +100,8 @@ class SynqAdapter(
 
     override suspend fun canHandleLocation(location: String): Boolean {
         return when (location.uppercase()) {
-            "SYNQ_WAREHOUSE" -> true
+            "SYNQ_AUTOSTORE" -> true
+            "AUTOSTORE_WAREHOUSE" -> true
             else -> false
         }
     }
@@ -109,8 +110,8 @@ class SynqAdapter(
         // SynQ can handle both NONE and FREEZE environments, so this is not checked
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
-            ItemCategory.FILM -> true
-            ItemCategory.BULK_ITEMS -> false
+            ItemCategory.FILM -> false
+            ItemCategory.BULK_ITEMS -> true
             ItemCategory.FRAGILE -> false
             else -> false
         }
