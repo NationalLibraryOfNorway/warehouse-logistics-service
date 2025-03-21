@@ -16,8 +16,8 @@ fun interface MoveItem {
 }
 
 data class MoveItemPayload(
-    val hostId: String,
     val hostName: HostName,
+    val hostId: String,
     val quantity: Int,
     val location: String
 ) {

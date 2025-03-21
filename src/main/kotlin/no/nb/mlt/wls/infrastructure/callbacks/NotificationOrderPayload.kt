@@ -1,8 +1,12 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import java.time.Instant
 
 @Schema(
     description = """Payload for updates about orders sent from Hermes WLS to the appropriate catalogues.""",
@@ -90,7 +94,14 @@ data class NotificationOrderPayload(
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
-    val callbackUrl: String
+    val callbackUrl: String,
+    @Schema(
+        description = """Time at which Hermes WLS received order update from storage system""",
+        example = "2025-03-21T20:30:00.000Z"
+    )
+    @JsonSerialize(using = ToStringSerializer::class)
+    @JsonDeserialize(using = CustomInstantDeserializer::class)
+    val eventTimestamp: Instant
 ) {
     data class OrderLine(
         @Schema(
@@ -106,7 +117,7 @@ data class NotificationOrderPayload(
     )
 }
 
-fun Order.toNotificationOrderPayload() =
+fun Order.toNotificationOrderPayload(eventTimestamp: Instant) =
     NotificationOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
@@ -117,5 +128,6 @@ fun Order.toNotificationOrderPayload() =
         contactEmail = contactEmail,
         address = address,
         note = note,
-        callbackUrl = callbackUrl
+        callbackUrl = callbackUrl,
+        eventTimestamp = eventTimestamp
     )

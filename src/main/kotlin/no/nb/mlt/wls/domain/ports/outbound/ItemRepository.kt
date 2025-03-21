@@ -10,8 +10,8 @@ interface ItemRepository {
     ): Item?
 
     suspend fun getItems(
-        hostIds: List<String>,
-        hostName: HostName
+        hostName: HostName,
+        hostIds: List<String>
     ): List<Item>
 
     suspend fun createItem(item: Item): Item
@@ -19,8 +19,8 @@ interface ItemRepository {
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
 
     suspend fun moveItem(
-        hostId: String,
         hostName: HostName,
+        hostId: String,
         quantity: Int,
         location: String
     ): Item

@@ -3,15 +3,15 @@ package no.nb.mlt.wls.infrastructure
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
-import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
+import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
+import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
+import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
+import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
-import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
-import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -20,17 +20,17 @@ import java.util.concurrent.TimeUnit
 private val logger = KotlinLogging.logger {}
 
 @Service
-class OutboxProcessor(
-    private val outboxRepository: OutboxRepository,
+class StorageEventProcessorAdapter(
+    private val storageEventRepository: EventRepository<StorageEvent>,
     private val storageSystems: List<StorageSystemFacade>,
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
-) : OutboxMessageProcessor {
+) : EventProcessor<StorageEvent> {
     // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =
-            outboxRepository
+            storageEventRepository
                 .getUnprocessedSortedByCreatedTime()
 
         if (outboxMessages.isNotEmpty()) {
@@ -39,7 +39,7 @@ class OutboxProcessor(
         }
     }
 
-    override suspend fun handleEvent(event: OutboxMessage) {
+    override suspend fun handleEvent(event: StorageEvent) {
         when (event) {
             is ItemCreated -> handleItemCreated(event)
             is OrderCreated -> handleOrderCreated(event)
@@ -47,7 +47,7 @@ class OutboxProcessor(
             is OrderUpdated -> handleOrderUpdated(event)
         }
 
-        val processedEvent = outboxRepository.markAsProcessed(event)
+        val processedEvent = storageEventRepository.markAsProcessed(event)
         logger.info { "Marked event as processed: $processedEvent" }
     }
 
@@ -63,8 +63,8 @@ class OutboxProcessor(
         val updatedOrder = event.updatedOrder
         val items =
             itemRepository.getItems(
-                updatedOrder.orderLine.map { it.hostId },
-                updatedOrder.hostName
+                updatedOrder.hostName,
+                updatedOrder.orderLine.map { it.hostId }
             )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
@@ -94,8 +94,8 @@ class OutboxProcessor(
 
         val items =
             itemRepository.getItems(
-                createdOrder.orderLine.map { it.hostId },
-                createdOrder.hostName
+                createdOrder.hostName,
+                createdOrder.orderLine.map { it.hostId }
             )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
@@ -127,7 +127,7 @@ class OutboxProcessor(
 
     private suspend fun createAndSendEmails(order: Order) {
         val items = order.orderLine.map { it.hostId }
-        val orderItems = itemRepository.getItems(items, order.hostName)
+        val orderItems = itemRepository.getItems(order.hostName, items)
         if (orderItems.isNotEmpty()) {
             emailNotifier.orderCreated(order, orderItems)
         }

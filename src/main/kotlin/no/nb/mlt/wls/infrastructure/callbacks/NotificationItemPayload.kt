@@ -1,11 +1,15 @@
 package no.nb.mlt.wls.infrastructure.callbacks
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import java.time.Instant
 
 @Schema(
     description = """Payload for updates about items sent from Hermes WLS to the appropriate catalogues.""",
@@ -81,7 +85,14 @@ data class NotificationItemPayload(
             Quantity of 1 means the item is in storage, quantity of 0 means the item is not in storage.""",
         examples = [ "0", "1"]
     )
-    val quantity: Int
+    val quantity: Int,
+    @Schema(
+        description = """Time at which Hermes WLS received item update from storage system""",
+        example = "2025-03-21T20:30:00.000Z"
+    )
+    @JsonSerialize(using = ToStringSerializer::class)
+    @JsonDeserialize(using = CustomInstantDeserializer::class)
+    val eventTimestamp: Instant
 )
 
 fun NotificationItemPayload.toItem(): Item {
@@ -98,7 +109,7 @@ fun NotificationItemPayload.toItem(): Item {
     )
 }
 
-fun Item.toNotificationItemPayload(): NotificationItemPayload {
+fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPayload {
     return NotificationItemPayload(
         hostId = hostId,
         hostName = hostName,
@@ -108,6 +119,7 @@ fun Item.toNotificationItemPayload(): NotificationItemPayload {
         packaging = packaging,
         callbackUrl = callbackUrl,
         location = location,
-        quantity = quantity
+        quantity = quantity,
+        eventTimestamp = eventTimestamp
     )
 }

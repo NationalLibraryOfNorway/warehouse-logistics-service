@@ -15,6 +15,7 @@ import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.LocalDateTime
 
 class OrderModelConversionTest {
@@ -104,7 +105,8 @@ class OrderModelConversionTest {
             contactPerson = "contactPerson",
             contactEmail = "contact@ema.il",
             note = "note",
-            callbackUrl = "callbackUrl"
+            callbackUrl = "callbackUrl",
+            eventTimestamp = Instant.now()
         )
 
     @Test
@@ -149,7 +151,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to notification payload`() {
-        val testNotificationOrderPayload = testOrder.toNotificationOrderPayload()
+        val testNotificationOrderPayload = testOrder.toNotificationOrderPayload(Instant.now())
 
         assertThat(testNotificationOrderPayload.hostName).isEqualTo(testOrderNotification.hostName)
         assertThat(testNotificationOrderPayload.hostOrderId).isEqualTo(testOrderNotification.hostOrderId)
