@@ -13,5 +13,5 @@ data class MongoStorageEvent(
     val processedTimestamp: Instant? = null,
     val body: StorageEvent,
     @Id
-    val id: String = body.id,
+    val id: String = body.id
 )

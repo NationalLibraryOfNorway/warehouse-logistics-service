@@ -7,9 +7,9 @@ import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoCatalogEventRepositoryAdapter
+import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItemRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

@@ -117,12 +117,13 @@ class WLSService(
             // An exception is thrown otherwise
             val catalogEvent =
                 transactionPort.executeInTransaction {
-                    val movedItem = itemRepository.moveItem(
-                        item.hostName,
-                        item.hostId,
-                        pickedItem.quantity,
-                        pickedItem.location
-                    )
+                    val movedItem =
+                        itemRepository.moveItem(
+                            item.hostName,
+                            item.hostId,
+                            pickedItem.quantity,
+                            pickedItem.location
+                        )
 
                     catalogEventRepository.save(ItemEvent(movedItem))
                 } ?: throw RuntimeException("Could not move item")
@@ -308,7 +309,7 @@ class WLSService(
         coroutineContext.launch {
             try {
                 catalogEventProcessor.handleEvent(catalogEvent)
-            } catch(e: WebClientResponseException){
+            } catch (e: WebClientResponseException) {
                 logger.error(e) {
                     "Web client threw an error while sending out: $catalogEvent. Try again later"
                 }

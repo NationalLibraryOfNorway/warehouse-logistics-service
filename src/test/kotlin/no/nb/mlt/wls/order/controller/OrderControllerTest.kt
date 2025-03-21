@@ -31,13 +31,13 @@ import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
+import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
+import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageMessageRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageMessageRepository
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach

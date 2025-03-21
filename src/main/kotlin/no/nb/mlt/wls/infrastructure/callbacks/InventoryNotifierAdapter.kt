@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -28,23 +29,34 @@ class InventoryNotifierAdapter(
     private val signatureSecretKey: String,
     private val objectMapper: ObjectMapper
 ) : InventoryNotifier {
-    override fun itemChanged(item: Item) {
+    override fun itemChanged(
+        item: Item,
+        eventTimestamp: Instant
+    ) {
         if (item.callbackUrl != null) {
-            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload())
+            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload(eventTimestamp))
             val timestamp = System.currentTimeMillis().toString()
 
             sendCallback(item.hostName, item.callbackUrl, payload, timestamp)
         }
     }
 
-    override fun orderChanged(order: Order) {
-        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload())
+    override fun orderChanged(
+        order: Order,
+        eventTimestamp: Instant
+    ) {
+        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload(eventTimestamp))
         val timestamp = System.currentTimeMillis().toString()
 
         sendCallback(order.hostName, order.callbackUrl, payload, timestamp)
     }
 
-    private fun sendCallback(hostName: HostName, callbackUrl: String, payload: String, timestamp: String) {
+    private fun sendCallback(
+        hostName: HostName,
+        callbackUrl: String,
+        payload: String,
+        timestamp: String
+    ) {
         getAppropriateWebClient(hostName)
             .post()
             .uri(callbackUrl)
@@ -58,7 +70,7 @@ class InventoryNotifierAdapter(
             .bodyToMono(Void::class.java)
             .timeout(Duration.ofSeconds(10))
             .doOnError {
-                logger.error(it) { "Error while sending update to callback URL: ${callbackUrl}" }
+                logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
                 throw it
             }
             .subscribe()

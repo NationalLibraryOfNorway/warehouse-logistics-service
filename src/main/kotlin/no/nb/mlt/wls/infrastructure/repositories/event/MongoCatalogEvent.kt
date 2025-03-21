@@ -13,5 +13,5 @@ data class MongoCatalogEvent(
     val processedTimestamp: Instant? = null,
     val body: CatalogEvent,
     @Id
-    val id: String = body.id,
+    val id: String = body.id
 )

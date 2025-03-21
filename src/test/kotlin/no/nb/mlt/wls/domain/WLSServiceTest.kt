@@ -26,7 +26,6 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -55,7 +54,16 @@ class WLSServiceTest {
     fun beforeEach() {
         clearAllMocks()
 
-        cut = WLSService(itemRepoMock, orderRepoMock, catalogEventRepository, storageEventRepository, transactionPort, catalogEventProcessor, storageEventProcessor)
+        cut =
+            WLSService(
+                itemRepoMock,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPort,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
     }
 
     // TODO: Need to find an elegant way to test stuff going on inside the transaction port
@@ -259,7 +267,9 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
 
         runTest {
-            assertThrows<OrderNotFoundException>(message = "No order with hostOrderId: $testOrder.hostOrderId and hostName: $testOrder.hostName exists") {
+            assertThrows<OrderNotFoundException>(
+                message = "No order with hostOrderId: $testOrder.hostOrderId and hostName: $testOrder.hostName exists"
+            ) {
                 cut.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
@@ -352,26 +362,29 @@ class WLSServiceTest {
         coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
 
         runTest {
-           assertThrows<OrderNotFoundException>(message = "No order with hostName: ${testOrder.hostName} and hostOrderId: ${testOrder.hostOrderId} exists") {
-               cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
-           }
+            assertThrows<OrderNotFoundException>(
+                message = "No order with hostName: ${testOrder.hostName} and hostOrderId: ${testOrder.hostOrderId} exists"
+            ) {
+                cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
+            }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
             coVerify(exactly = 0) { catalogEventProcessor.handleEvent(any()) }
         }
     }
 
-    private suspend fun callUpdateOrder() = cut.updateOrder(
-        updatedOrder.hostName,
-        updatedOrder.hostOrderId,
-        updatedOrder.orderLine.map { it.hostId },
-        updatedOrder.orderType,
-        updatedOrder.contactPerson,
-        updatedOrder.address,
-        updatedOrder.note,
-        updatedOrder.callbackUrl
-    )
+    private suspend fun callUpdateOrder() =
+        cut.updateOrder(
+            updatedOrder.hostName,
+            updatedOrder.hostOrderId,
+            updatedOrder.orderLine.map { it.hostId },
+            updatedOrder.orderType,
+            updatedOrder.contactPerson,
+            updatedOrder.address,
+            updatedOrder.note,
+            updatedOrder.callbackUrl
+        )
 
-    //TODO test UpdateOrderStatus
+    // TODO test UpdateOrderStatus
 
     @Test
     fun `getItem should return requested item when it exists in DB`() {
@@ -429,7 +442,7 @@ class WLSServiceTest {
     private val testMoveItemPayload =
         MoveItemPayload(
             hostName = testItem.hostName,
-            hostId =  testItem.hostId,
+            hostId = testItem.hostId,
             quantity = 1,
             location = "KNOWN_LOCATION"
         )
@@ -474,13 +487,14 @@ class WLSServiceTest {
         return Order.Address(null, null, null, null, null, null, null)
     }
 
-    private fun Item.toItemMetadata() = ItemMetadata(
-        hostId = hostId,
-        hostName = hostName,
-        description = description,
-        itemCategory = itemCategory,
-        preferredEnvironment = preferredEnvironment,
-        packaging = packaging,
-        callbackUrl = callbackUrl
-    )
+    private fun Item.toItemMetadata() =
+        ItemMetadata(
+            hostId = hostId,
+            hostName = hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = callbackUrl
+        )
 }

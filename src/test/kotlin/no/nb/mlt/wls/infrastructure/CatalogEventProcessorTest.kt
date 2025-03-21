@@ -44,71 +44,75 @@ class CatalogEventProcessorTest {
 
     private val happyInventoryNotifierMock =
         mockk<InventoryNotifier> {
-            coEvery { itemChanged(any()) } returns Unit
-            coEvery { orderChanged(any()) } returns Unit
+            coEvery { itemChanged(any(), any()) } returns Unit
+            coEvery { orderChanged(any(), any()) } returns Unit
         }
 
     @Test
     fun `order update should call inventory notifier and mark message as processed`() {
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock,
-            inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
-            val event = OrderEvent(testOrder, eventTimestamp =  Instant.now())
+            val event = OrderEvent(testOrder, eventTimestamp = Instant.now())
             messageProcessor.handleEvent(event)
             assertThat(catalogMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyInventoryNotifierMock.orderChanged(any()) }
+            coVerify(exactly = 1) { happyInventoryNotifierMock.orderChanged(any(), event.eventTimestamp) }
         }
     }
 
     @Test
     fun `order update should handle error from inventory notifier`() {
-        coEvery { happyInventoryNotifierMock.orderChanged(any()) } throws TimeoutException("Timed out")
+        coEvery { happyInventoryNotifierMock.orderChanged(any(), any()) } throws TimeoutException("Timed out")
 
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock,
-            inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
-            val event = OrderEvent(testOrder, eventTimestamp =  Instant.now())
+            val event = OrderEvent(testOrder, eventTimestamp = Instant.now())
             assertThrows<TimeoutException> { messageProcessor.handleEvent(event) }
             assertThat(catalogMessageRepoMock.processed).hasSize(0).doesNotContain(event)
-            coVerify(exactly = 1) { happyInventoryNotifierMock.orderChanged(any()) }
+            coVerify(exactly = 1) { happyInventoryNotifierMock.orderChanged(any(), event.eventTimestamp) }
         }
     }
 
     @Test
     fun `item update should call inventory notifier and mark message as processed`() {
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock,
-            inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
-            val event = ItemEvent(testItem, eventTimestamp =  Instant.now())
+            val event = ItemEvent(testItem, eventTimestamp = Instant.now())
             messageProcessor.handleEvent(event)
             assertThat(catalogMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyInventoryNotifierMock.itemChanged(any()) }
+            coVerify(exactly = 1) { happyInventoryNotifierMock.itemChanged(any(), event.eventTimestamp) }
         }
     }
 
     @Test
     fun `item update should handle error from inventory notifier`() {
-        coEvery { happyInventoryNotifierMock.itemChanged(any()) } throws TimeoutException("Timed out")
+        coEvery { happyInventoryNotifierMock.itemChanged(any(), any()) } throws TimeoutException("Timed out")
 
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock,
-            inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
-            val event = ItemEvent(testItem, eventTimestamp =  Instant.now())
+            val event = ItemEvent(testItem, eventTimestamp = Instant.now())
             assertThrows<TimeoutException> { messageProcessor.handleEvent(event) }
             assertThat(catalogMessageRepoMock.processed).hasSize(0).doesNotContain(event)
-            coVerify(exactly = 1) { happyInventoryNotifierMock.itemChanged(any()) }
+            coVerify(exactly = 1) { happyInventoryNotifierMock.itemChanged(any(), event.eventTimestamp) }
         }
     }
 
