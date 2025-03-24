@@ -5,10 +5,13 @@ import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.RepositoryException
+import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
+import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeoutException
@@ -17,47 +20,47 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class MongoStorageEventRepositoryAdapter(
-    private val mongoStorageMessageRepository: MongoStorageMessageRepository
+    private val mongoStorageEventRepository: MongoStorageEventRepository
 ) : EventRepository<StorageEvent> {
     override suspend fun save(event: StorageEvent): StorageEvent {
-        return mongoStorageMessageRepository
+        return mongoStorageEventRepository
             .save(MongoStorageEvent(body = event))
             .map { it.body }
-            .doOnEach { logger.info { "Saved outbox message: $it" } }
+            .doOnEach { logger.info { "Saved storage event to outbox: $it" } }
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
-                        "Timed out while saving to outbox. Message: $event"
+                        "Timed out while saving event to storage outbox. Event: $event"
                     } else {
-                        "Error while saving to outbox"
+                        "Error while saving event to storage outbox. Event: $event"
                     }
                 }
             }
-            .onErrorMap { RepositoryException("Could not save to outbox", it) }
+            .onErrorMap { RepositoryException("Could not save event to storage outbox", it) }
             .awaitSingle()
     }
 
     override suspend fun getAll(): List<StorageEvent> {
-        return mongoStorageMessageRepository.findAll()
+        return mongoStorageEventRepository.findAll()
             .map { it.body }
             .collectList()
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
-                        "Timed out while fetching from outbox"
+                        "Timed out while fetching events from storage outbox"
                     } else {
-                        "Error while fetching from outbox"
+                        "Error while fetching events from storage outbox"
                     }
                 }
             }
-            .onErrorMap { RepositoryException("Could not fetch from outbox", it) }
+            .onErrorMap { RepositoryException("Could not fetch event from storage outbox", it) }
             .awaitSingle()
     }
 
     override suspend fun getUnprocessedSortedByCreatedTime(): List<StorageEvent> {
-        return mongoStorageMessageRepository
+        return mongoStorageEventRepository
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
@@ -65,36 +68,49 @@ class MongoStorageEventRepositoryAdapter(
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
-                        "Timed out while fetching unprocessed from outbox"
+                        "Timed out while fetching unprocessed events from storage outbox"
                     } else {
-                        "Error while fetching unprocessed from outbox"
+                        "Error while fetching unprocessed events from storage outbox"
                     }
                 }
             }
-            .onErrorMap { RepositoryException("Could not fetch unprocessed from outbox", it) }
+            .onErrorMap { RepositoryException("Could not fetch unprocessed events from storage outbox", it) }
             .awaitSingle()
     }
 
     override suspend fun markAsProcessed(event: StorageEvent): StorageEvent {
-        return mongoStorageMessageRepository
-            .save(MongoStorageEvent(body = event, processedTimestamp = Instant.now()))
-            .map { it.body }
-            .timeout(Duration.ofSeconds(8))
-            .doOnError {
-                logger.error(it) {
-                    if (it is TimeoutException) {
-                        "Timed out while marking as processed in outbox. Message: $event"
-                    } else {
-                        "Error while marking as processed in outbox"
+        val updatedCunt =
+            mongoStorageEventRepository
+                .findAndUpdateProcessedTimestampById(event.id, Instant.now())
+                .timeout(Duration.ofSeconds(8))
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while marking event as processed in storage outbox. Event: $event"
+                        } else {
+                            "Error while marking event as processed in storage outbox. Event: $event"
+                        }
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not mark as processed in outbox", it) }
-            .awaitSingle()
+                .onErrorMap { RepositoryException("Could not mark event as processed in storage outbox", it) }
+                .awaitSingle()
+
+        if (updatedCunt != 0L) {
+            return event
+        } else {
+            throw RepositoryException("No event found to update it as processed in storage outbox. Event: $event")
+        }
     }
 }
 
 @Repository
-interface MongoStorageMessageRepository : ReactiveMongoRepository<MongoStorageEvent, String> {
+interface MongoStorageEventRepository : ReactiveMongoRepository<MongoStorageEvent, String> {
     fun findAllByProcessedTimestampIsNull(): Flux<MongoStorageEvent>
+
+    @Query("{_id: ?0}")
+    @Update("{'\$set':{processedTimestamp: ?1}}")
+    fun findAndUpdateProcessedTimestampById(
+        id: String,
+        processedTimestamp: Instant
+    ): Mono<Long>
 }

@@ -31,8 +31,8 @@ import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
+import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageMessageRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -75,7 +75,7 @@ class OrderControllerTest(
     @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
     @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
-    @Autowired val mongoStorageMessageRepository: MongoStorageMessageRepository,
+    @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
     @MockkBean
@@ -695,7 +695,7 @@ class OrderControllerTest(
 
     fun populateDb() {
         runBlocking {
-            mongoStorageMessageRepository.deleteAll().awaitSingleOrNull()
+            mongoStorageEventRepository.deleteAll().awaitSingleOrNull()
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
