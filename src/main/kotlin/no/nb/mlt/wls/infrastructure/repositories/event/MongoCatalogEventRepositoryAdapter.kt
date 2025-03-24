@@ -20,9 +20,8 @@ class MongoCatalogEventRepositoryAdapter(
     private val mongoCatalogMessageRepository: MongoCatalogMessageRepository
 ) : EventRepository<CatalogEvent> {
     override suspend fun save(event: CatalogEvent): CatalogEvent {
-        val mongoMessage = MongoCatalogEvent(body = event)
         return mongoCatalogMessageRepository
-            .save(mongoMessage)
+            .save(MongoCatalogEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved outbox message: $it" } }
             .timeout(Duration.ofSeconds(8))

@@ -20,9 +20,8 @@ class MongoStorageEventRepositoryAdapter(
     private val mongoStorageMessageRepository: MongoStorageMessageRepository
 ) : EventRepository<StorageEvent> {
     override suspend fun save(event: StorageEvent): StorageEvent {
-        val mongoMessage = MongoStorageEvent(body = event)
         return mongoStorageMessageRepository
-            .save(mongoMessage)
+            .save(MongoStorageEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved outbox message: $it" } }
             .timeout(Duration.ofSeconds(8))
