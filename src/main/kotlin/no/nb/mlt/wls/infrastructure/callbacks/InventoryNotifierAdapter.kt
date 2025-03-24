@@ -73,7 +73,7 @@ class InventoryNotifierAdapter(
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
                 throw it
             }
-            .subscribe()
+            .block()
     }
 
     private fun generateSignature(
