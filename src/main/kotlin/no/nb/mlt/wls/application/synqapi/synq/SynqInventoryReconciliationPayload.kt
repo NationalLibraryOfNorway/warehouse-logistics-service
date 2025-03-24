@@ -19,11 +19,6 @@ import io.swagger.v3.oas.annotations.media.Schema
     }"""
 )
 data class SynqInventoryReconciliationPayload(
-    @Schema(
-        description = """Name of the warehouse where the inventory is located""",
-        example = "Sikringsmagasin_2"
-    )
-    val warehouse: String,
     @Schema(description = """List of load units in the warehouse""")
     val loadUnit: List<LoadUnit>
 )
@@ -50,8 +45,8 @@ data class LoadUnit(
     )
     val hostName: String?,
     @Schema(
-        description = """Whether the product is confidential""",
-        example = "false"
+        description = """Location of the product""",
+        example = "SYNQ_WAREHOUSE"
     )
-    val confidentialProduct: Boolean
+    val location: String
 )

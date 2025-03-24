@@ -339,7 +339,7 @@ class SynqControllerTest(
                 productOwner = "NB",
                 quantityOnHand = 1.0,
                 hostName = "AXIELL",
-                confidentialProduct = false
+                location = "SYNQ_WAREHOUSE"
             )
 
         webTestClient
@@ -349,7 +349,6 @@ class SynqControllerTest(
             .uri("/inventory-reconciliation")
             .bodyValue(
                 SynqInventoryReconciliationPayload(
-                    warehouse = "Sikringsmagasin_2",
                     loadUnit =
                         listOf(
                             loadUnitTest,
