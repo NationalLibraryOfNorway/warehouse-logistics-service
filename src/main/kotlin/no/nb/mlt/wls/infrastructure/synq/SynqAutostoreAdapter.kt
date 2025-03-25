@@ -47,7 +47,7 @@ class SynqAutostoreAdapter(
 
     override suspend fun createOrder(order: Order) {
         // Wrap the order in the way SynQ likes it
-        val orders = SynqOrder(listOf(order.toSynqPayload()))
+        val orders = SynqOrder(listOf(order.toAutostorePayload()))
 
         webClient
             .post()
