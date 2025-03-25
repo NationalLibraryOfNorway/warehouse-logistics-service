@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono
 import java.net.URI
 
+// TODO - There is room to deduplicate the calls in this adapter
 @Component
 class SynqAutostoreAdapter(
     @Qualifier("nonProxyWebClient")

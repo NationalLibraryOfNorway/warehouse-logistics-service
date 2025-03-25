@@ -67,7 +67,7 @@ class OrderModelConversionTest {
 
     private val testSynqOrderPayload =
         SynqOrderPayload(
-            orderId = "AXIELL---hostOrderId",
+            orderId = "AXIELL-SD---hostOrderId",
             orderType = SynqOrderPayload.SynqOrderType.STANDARD,
             dispatchDate = LocalDateTime.now(),
             orderDate = LocalDateTime.now(),
@@ -158,7 +158,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to SynQ payload`() {
-        val synqPayload = testOrder.toSynqPayload()
+        val synqPayload = testOrder.toSynqPayload(SynqOrderPayload.SynqOrderType.STANDARD)
 
         // Dates are not compared as they are generated in the function
         assertThat(synqPayload.orderId).isEqualTo(testSynqOrderPayload.orderId)

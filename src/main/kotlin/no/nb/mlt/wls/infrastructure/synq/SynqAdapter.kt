@@ -47,7 +47,7 @@ class SynqAdapter(
 
     override suspend fun createOrder(order: Order) {
         // Wrap the order in the way SynQ likes it
-        val orders = SynqOrder(listOf(order.toSynqPayload()))
+        val orders = SynqOrder(listOf(order.toSynqPayload(SynqOrderPayload.SynqOrderType.STANDARD)))
 
         webClient
             .post()
@@ -90,7 +90,7 @@ class SynqAdapter(
         return webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .bodyValue(SynqOrder(listOf(order.toSynqPayload())))
+            .bodyValue(SynqOrder(listOf(order.toSynqPayload(SynqOrderPayload.SynqOrderType.STANDARD))))
             .retrieve()
             .toBodilessEntity()
             .map { order }

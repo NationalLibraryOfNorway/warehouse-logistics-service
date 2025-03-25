@@ -74,17 +74,13 @@ data class ShippingAddress(
 }
 
 fun Order.toAutostorePayload(): SynqOrderPayload {
-    val payload = this.toSynqPayload()
-    return payload.copy(
-        orderId = hostName.toString().uppercase() + "-AS" + DELIMITER + hostOrderId,
-        orderType = SynqOrderPayload.SynqOrderType.AUTOSTORE
-    )
+    return toSynqPayload(SynqOrderPayload.SynqOrderType.AUTOSTORE)
 }
 
-fun Order.toSynqPayload() =
+fun Order.toSynqPayload(type: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
-        orderId = hostName.toString().uppercase() + DELIMITER + hostOrderId,
-        orderType = SynqOrderPayload.SynqOrderType.STANDARD,
+        orderId = hostName.toString().uppercase() + generatePostfix(type) + DELIMITER + hostOrderId,
+        orderType = type,
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
@@ -120,6 +116,15 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.BOX -> ESK
         Packaging.ABOX -> ABOX
     }
+
+// this needs a better name
+fun generatePostfix(type: SynqOrderPayload.SynqOrderType): String {
+    return "-" +
+        when (type) {
+            SynqOrderPayload.SynqOrderType.AUTOSTORE -> "AS"
+            else -> "SD"
+        }
+}
 
 /**
  * Utility classed used to wrap the payload.
