@@ -72,7 +72,6 @@ import reactor.core.publisher.Flux
 class OrderControllerTest(
     @Autowired val itemMongoRepository: ItemMongoRepository,
     @Autowired val applicationContext: ApplicationContext,
-    @Autowired val emailRepository: EmailRepository,
     @Autowired val repository: OrderMongoRepository,
     @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
     @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
@@ -130,51 +129,6 @@ class OrderControllerTest(
                 .extracting("callbackUrl", "status")
                 .containsExactly(testOrderPayload.callbackUrl, Order.Status.NOT_STARTED)
         }
-
-    @Test
-    @Disabled // TODO: Fix or remove this randomly failing test
-    fun `createOrder with valid payload also creates email`() {
-        runTest {
-            coEvery {
-                synqAdapterMock.createOrder(any())
-            } answers {}
-            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
-            emailRepository.createHostEmail(testOrderPayload.hostName, "test@example.com")
-
-            webTestClient
-                .mutateWith(csrf())
-                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-                .post()
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(testOrderPayload)
-                .exchange()
-                .expectStatus().isCreated
-
-            // This test finishes before emails go through
-            // Letting it run for too long will also crash, since the application will try
-            // To process messages in the outbox
-            // Wait a few seconds for the emails to go through
-            async {
-                withContext(Dispatchers.Default) {
-                    delay(200L)
-                }
-            }.await()
-            val mailhogUrl = "http://" + MailhogContainer.host + ":" + MailhogContainer.getMappedPort(MAILHOG_HTTP_PORT) + "/api/v2/messages"
-
-            // Create a temporary new client to check emails
-            WebTestClient
-                .bindToServer()
-                .build()
-                .get()
-                .uri(mailhogUrl)
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectBody()
-                .jsonPath("$.total").value<Int> {
-                    if (it == 0) throw RuntimeException("No emails found", null)
-                }
-        }
-    }
 
     @Test
     fun `createOrder with duplicate payload returns OK but does not create outbox message`() {
