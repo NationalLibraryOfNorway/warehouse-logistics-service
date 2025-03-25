@@ -119,11 +119,10 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
 
 // this needs a better name
 fun generatePostfix(type: SynqOrderPayload.SynqOrderType): String {
-    return
-        when (type) {
-            SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
-            else -> "-SD"
-        }
+    return when (type) {
+        SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
+        else -> "-SD"
+    }
 }
 
 /**
