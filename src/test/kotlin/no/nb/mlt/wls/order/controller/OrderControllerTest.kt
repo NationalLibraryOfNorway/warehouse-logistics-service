@@ -4,18 +4,12 @@ import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.TestcontainerInitializer.Companion.MAILHOG_HTTP_PORT
-import no.nb.mlt.wls.TestcontainerInitializer.Companion.MailhogContainer
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
@@ -29,7 +23,6 @@ import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
 import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
 import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
-import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
@@ -41,7 +34,6 @@ import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
