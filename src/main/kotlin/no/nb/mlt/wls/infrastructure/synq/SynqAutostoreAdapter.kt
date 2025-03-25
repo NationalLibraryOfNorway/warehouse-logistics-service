@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -107,7 +108,9 @@ class SynqAutostoreAdapter(
     }
 
     override fun canHandleItem(item: Item): Boolean {
-        // SynQ can handle both NONE and FREEZE environments, so this is not checked
+        // There is no freezer in AutoStore
+        if (item.preferredEnvironment == Environment.FREEZE) return false
+
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
             ItemCategory.FILM -> false
