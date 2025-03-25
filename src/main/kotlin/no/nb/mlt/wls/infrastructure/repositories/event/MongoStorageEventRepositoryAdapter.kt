@@ -79,7 +79,7 @@ class MongoStorageEventRepositoryAdapter(
     }
 
     override suspend fun markAsProcessed(event: StorageEvent): StorageEvent {
-        val updatedCunt =
+        val updatedRecordCount =
             mongoStorageEventRepository
                 .findAndUpdateProcessedTimestampById(event.id, Instant.now())
                 .timeout(Duration.ofSeconds(8))
@@ -95,7 +95,7 @@ class MongoStorageEventRepositoryAdapter(
                 .onErrorMap { RepositoryException("Could not mark event as processed in storage outbox", it) }
                 .awaitSingle()
 
-        if (updatedCunt != 0L) {
+        if (updatedRecordCount != 0L) {
             return event
         } else {
             throw RepositoryException("No event found to update it as processed in storage outbox. Event: $event")

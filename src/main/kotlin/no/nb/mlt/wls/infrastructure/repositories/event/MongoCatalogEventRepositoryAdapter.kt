@@ -79,7 +79,7 @@ class MongoCatalogEventRepositoryAdapter(
     }
 
     override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
-        val updatedCunt =
+        val updatedRecordCount =
             mongoCatalogMessageRepository
                 .findAndUpdateProcessedTimestampById(event.id, Instant.now())
                 .timeout(Duration.ofSeconds(8))
@@ -95,7 +95,7 @@ class MongoCatalogEventRepositoryAdapter(
                 .onErrorMap { RepositoryException("Could not mark event as processed in catalog outbox", it) }
                 .awaitSingle()
 
-        if (updatedCunt != 0L) {
+        if (updatedRecordCount != 0L) {
             return event
         } else {
             throw RepositoryException("No event found to update it as processed in catalog outbox. Event: $event")
