@@ -14,7 +14,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
-import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
+import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -47,7 +47,7 @@ class ItemControllerTest(
     @Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
-    private lateinit var synqAdapterMock: SynqAdapter
+    private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
     private lateinit var webTestClient: WebTestClient
 
@@ -70,7 +70,7 @@ class ItemControllerTest(
     fun `createItem with valid payload creates item`() =
         runTest {
             coEvery {
-                synqAdapterMock.createItem(any())
+                synqStandardAdapterMock.createItem(any())
             }.answers { }
 
             webTestClient
@@ -93,7 +93,7 @@ class ItemControllerTest(
     @Test
     fun `createItem with duplicate payload returns OK`() {
         coEvery {
-            synqAdapterMock.createItem(any())
+            synqStandardAdapterMock.createItem(any())
         }.answers { }
 
         webTestClient

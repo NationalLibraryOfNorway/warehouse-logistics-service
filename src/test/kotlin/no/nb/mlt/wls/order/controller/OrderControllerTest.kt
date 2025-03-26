@@ -31,7 +31,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
+import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -70,7 +70,7 @@ class OrderControllerTest(
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
     @MockkBean
-    private lateinit var synqAdapterMock: SynqAdapter
+    private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
     @SpykBean
     private lateinit var storageEventRepository: EventRepository<StorageEvent>
@@ -259,7 +259,7 @@ class OrderControllerTest(
     fun `Should not save order if outbox message fails to persist`() {
         runTest {
             coEvery { storageEventRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
-            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
                 .mutateWith(csrf())
@@ -429,8 +429,8 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
-            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
-            coJustRun { synqAdapterMock.deleteOrder(any(), any()) }
+            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
                 .mutateWith(csrf())
@@ -485,7 +485,7 @@ class OrderControllerTest(
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqStandardAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -506,7 +506,7 @@ class OrderControllerTest(
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqStandardAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
