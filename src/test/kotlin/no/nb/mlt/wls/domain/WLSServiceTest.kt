@@ -51,11 +51,12 @@ class WLSServiceTest {
     private val outboxRepository = mockk<OutboxRepository>()
     private val transactionPort = mockk<TransactionPort>()
     private val outboxProcessor = mockk<OutboxMessageProcessor>()
-    private val transactionPortSkipMock = object : TransactionPort {
-        override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
-            return action()
+    private val transactionPortSkipMock =
+        object : TransactionPort {
+            override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
+                return action()
+            }
         }
-    }
 
     @BeforeEach
     fun beforeEach() {
@@ -441,28 +442,29 @@ class WLSServiceTest {
             val newQuantity = testItem.quantity + 1
             val newLocation = "SYNQ_WAREHOUSE"
 
-            val itemsToSync = listOf(
-                SynchronizeItems.ItemToSynchronize(
-                    hostName = testItem.hostName,
-                    hostId = testItem.hostId,
-                    quantity = newQuantity,
-                    location = newLocation,
-                    description = testItem.description,
-                    itemCategory = ItemCategory.PAPER,
-                    packaging = Packaging.NONE,
-                    currentPreferredEnvironment = Environment.NONE
-                ),
-                SynchronizeItems.ItemToSynchronize(
-                    hostName = testItem.hostName,
-                    hostId = "missing-id-12345",
-                    quantity = 1,
-                    location = "SYNQ_WAREHOUSE",
-                    description = "Some description",
-                    itemCategory = ItemCategory.PAPER,
-                    packaging = Packaging.BOX,
-                    currentPreferredEnvironment = Environment.NONE
+            val itemsToSync =
+                listOf(
+                    SynchronizeItems.ItemToSynchronize(
+                        hostName = testItem.hostName,
+                        hostId = testItem.hostId,
+                        quantity = newQuantity,
+                        location = newLocation,
+                        description = testItem.description,
+                        itemCategory = ItemCategory.PAPER,
+                        packaging = Packaging.NONE,
+                        currentPreferredEnvironment = Environment.NONE
+                    ),
+                    SynchronizeItems.ItemToSynchronize(
+                        hostName = testItem.hostName,
+                        hostId = "missing-id-12345",
+                        quantity = 1,
+                        location = "SYNQ_WAREHOUSE",
+                        description = "Some description",
+                        itemCategory = ItemCategory.PAPER,
+                        packaging = Packaging.BOX,
+                        currentPreferredEnvironment = Environment.NONE
+                    )
                 )
-            )
 
             cut.synchronizeItems(itemsToSync)
 
@@ -545,16 +547,23 @@ class WLSServiceTest {
 
     private fun createInMemItemRepo(): ItemRepository {
         return object : ItemRepository {
-            val items = mutableListOf(
-                testItem.copy(),
-                testItem.copy(hostId = "memory-12345")
-            )
+            val items =
+                mutableListOf(
+                    testItem.copy(),
+                    testItem.copy(hostId = "memory-12345")
+                )
 
-            override suspend fun getItem(hostName: HostName, hostId: String): Item? {
+            override suspend fun getItem(
+                hostName: HostName,
+                hostId: String
+            ): Item? {
                 return items.first { it.hostName == hostName && it.hostId == hostId }
             }
 
-            override suspend fun getItems(hostIds: List<String>, hostName: HostName): List<Item> {
+            override suspend fun getItems(
+                hostIds: List<String>,
+                hostName: HostName
+            ): List<Item> {
                 return hostIds.mapNotNull { id ->
                     items.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
@@ -577,11 +586,21 @@ class WLSServiceTest {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun moveItem(hostId: String, hostName: HostName, quantity: Int, location: String): Item {
+            override suspend fun moveItem(
+                hostId: String,
+                hostName: HostName,
+                quantity: Int,
+                location: String
+            ): Item {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun updateLocationAndQuantity(hostId: String, hostName: HostName, location: String, quantity: Int): Item {
+            override suspend fun updateLocationAndQuantity(
+                hostId: String,
+                hostName: HostName,
+                location: String,
+                quantity: Int
+            ): Item {
                 val item = items.first { it.hostName == hostName && it.hostId == hostId }
                 val index = items.indexOf(item)
                 val updatedItem = item.copy(location = location, quantity = quantity)
