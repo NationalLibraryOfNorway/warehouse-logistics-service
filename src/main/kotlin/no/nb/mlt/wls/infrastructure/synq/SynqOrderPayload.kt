@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload.Companion.DELIMITER
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade.Companion.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
@@ -40,10 +40,6 @@ data class SynqOrderPayload(
         override fun toString(): String {
             return type
         }
-    }
-
-    companion object {
-        const val DELIMITER = "---"
     }
 }
 
