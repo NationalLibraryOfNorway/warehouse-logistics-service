@@ -287,49 +287,8 @@ class WLSService(
                     val existingIds = existingItems.map { it.hostId }
                     val missingIds = ids.toSet() - existingIds.toSet()
 
-                    missingIds.forEach {
-                        val syncItem = syncItemsById[(it to hostName)]!!
-                        val createdItem =
-                            itemRepository.createItem(
-                                Item(
-                                    hostId = syncItem.hostId,
-                                    hostName = syncItem.hostName,
-                                    description = syncItem.description,
-                                    itemCategory = syncItem.itemCategory,
-                                    preferredEnvironment = syncItem.currentPreferredEnvironment,
-                                    packaging = syncItem.packaging,
-                                    callbackUrl = null,
-                                    location = syncItem.location ?: UNKNOWN_LOCATION,
-                                    quantity = syncItem.quantity
-                                )
-                            )
-                        logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
-                    }
-
-                    existingItems.forEach { itemToUpdate ->
-                        val syncItem = syncItemsById[(itemToUpdate.hostId to hostName)]!!
-                        val oldQuantity = itemToUpdate.quantity
-                        itemToUpdate.setQuantity(syncItem.quantity)
-
-                        val oldLocation = itemToUpdate.location
-                        itemToUpdate.setLocation(syncItem.location ?: UNKNOWN_LOCATION)
-
-                        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-                            itemRepository.updateLocationAndQuantity(
-                                itemToUpdate.hostId,
-                                itemToUpdate.hostName,
-                                itemToUpdate.location,
-                                itemToUpdate.quantity
-                            )
-                            logger.info {
-                                """
-                                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
-                                """.trimIndent()
-                            }
-                        }
-                    }
+                    missingIds.forEach { createMissingItems(it, hostName, syncItemsById) }
+                    existingItems.forEach { updateItemsForSynchronization(it, syncItemsById) }
                 }
             }
     }
@@ -378,4 +337,48 @@ class WLSService(
                 }
             }
         }
+
+    private suspend fun createMissingItems(missingId: String, hostName: HostName, syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>) {
+        val syncItem = syncItemsById[(missingId to hostName)]!!
+        val createdItem =
+            itemRepository.createItem(
+                Item(
+                    hostId = syncItem.hostId,
+                    hostName = syncItem.hostName,
+                    description = syncItem.description,
+                    itemCategory = syncItem.itemCategory,
+                    preferredEnvironment = syncItem.currentPreferredEnvironment,
+                    packaging = syncItem.packaging,
+                    callbackUrl = null,
+                    location = syncItem.location ?: UNKNOWN_LOCATION,
+                    quantity = syncItem.quantity
+                )
+            )
+        logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
+    }
+
+    private suspend fun updateItemsForSynchronization(itemToUpdate: Item, syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>) {
+        val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
+        val oldQuantity = itemToUpdate.quantity
+        itemToUpdate.setQuantity(syncItem.quantity)
+
+        val oldLocation = itemToUpdate.location
+        itemToUpdate.setLocation(syncItem.location ?: UNKNOWN_LOCATION)
+
+        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
+            itemRepository.updateLocationAndQuantity(
+                itemToUpdate.hostId,
+                itemToUpdate.hostName,
+                itemToUpdate.location,
+                itemToUpdate.quantity
+            )
+            logger.info {
+                """
+                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                """.trimIndent()
+            }
+        }
+    }
 }
