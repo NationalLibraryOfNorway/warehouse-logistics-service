@@ -23,6 +23,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
@@ -50,6 +51,11 @@ class WLSServiceTest {
     private val outboxRepository = mockk<OutboxRepository>()
     private val transactionPort = mockk<TransactionPort>()
     private val outboxProcessor = mockk<OutboxMessageProcessor>()
+    private val transactionPortSkipMock = object : TransactionPort {
+        override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
+            return action()
+        }
+    }
 
     @BeforeEach
     fun beforeEach() {
@@ -426,6 +432,56 @@ class WLSServiceTest {
         }
     }
 
+    @Test
+    fun `should update quantity and location, and add missing when synchronizing items`() {
+        val itemRepo = createInMemItemRepo()
+        val cut = WLSService(itemRepo, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPortSkipMock, outboxProcessor)
+
+        runTest {
+            val newQuantity = testItem.quantity + 1
+            val newLocation = "SYNQ_WAREHOUSE"
+
+            val itemsToSync = listOf(
+                SynchronizeItems.ItemToSynchronize(
+                    hostName = testItem.hostName,
+                    hostId = testItem.hostId,
+                    quantity = newQuantity,
+                    location = newLocation,
+                    description = testItem.description,
+                    itemCategory = ItemCategory.PAPER,
+                    packaging = Packaging.NONE,
+                    currentPreferredEnvironment = Environment.NONE
+                ),
+                SynchronizeItems.ItemToSynchronize(
+                    hostName = testItem.hostName,
+                    hostId = "missing-id-12345",
+                    quantity = 1,
+                    location = "SYNQ_WAREHOUSE",
+                    description = "Some description",
+                    itemCategory = ItemCategory.PAPER,
+                    packaging = Packaging.BOX,
+                    currentPreferredEnvironment = Environment.NONE
+                )
+            )
+
+            cut.synchronizeItems(itemsToSync)
+
+            // Assert that quantity and location changed
+            val updatedItem = itemRepo.getItem(testItem.hostName, testItem.hostId)
+            assertThat(updatedItem).isEqualTo(
+                testItem.copy(quantity = newQuantity, location = newLocation)
+            )
+
+            // Assert that other items are not changed
+            val otherItem = itemRepo.getItem(testItem.hostName, "memory-12345")
+            assertThat(otherItem).isEqualTo(testItem.copy(hostId = "memory-12345"))
+
+            // Assert that missing items are created
+            val createdItem = itemRepo.getItem(testItem.hostName, "missing-id-12345")
+            assertThat(createdItem).isNotNull
+        }
+    }
+
     private val testItem =
         Item(
             hostName = HostName.AXIELL,
@@ -485,5 +541,54 @@ class WLSServiceTest {
 
     private fun createOrderAddress(): Order.Address {
         return Order.Address(null, null, null, null, null, null, null)
+    }
+
+    private fun createInMemItemRepo(): ItemRepository {
+        return object : ItemRepository {
+            val items = mutableListOf(
+                testItem.copy(),
+                testItem.copy(hostId = "memory-12345")
+            )
+
+            override suspend fun getItem(hostName: HostName, hostId: String): Item? {
+                return items.first { it.hostName == hostName && it.hostId == hostId }
+            }
+
+            override suspend fun getItems(hostIds: List<String>, hostName: HostName): List<Item> {
+                return hostIds.mapNotNull { id ->
+                    items.firstOrNull { it.hostName == hostName && it.hostId == id }
+                }
+            }
+
+            override suspend fun createItem(item: Item): Item {
+                val itemCopy = item.copy()
+                val existingIndex = items.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
+
+                if (existingIndex == -1) {
+                    items.add(itemCopy)
+                } else {
+                    items[existingIndex] = itemCopy
+                }
+
+                return itemCopy
+            }
+
+            override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun moveItem(hostId: String, hostName: HostName, quantity: Int, location: String): Item {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun updateLocationAndQuantity(hostId: String, hostName: HostName, location: String, quantity: Int): Item {
+                val item = items.first { it.hostName == hostName && it.hostId == hostId }
+                val index = items.indexOf(item)
+                val updatedItem = item.copy(location = location, quantity = quantity)
+                items[index] = updatedItem
+
+                return items[index]
+            }
+        }
     }
 }

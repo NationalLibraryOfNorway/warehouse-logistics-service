@@ -16,6 +16,6 @@ interface SynchronizeItems {
         val quantity: Int,
         val itemCategory: ItemCategory,
         val packaging: Packaging,
-        val currentEnvironment: Environment
+        val currentPreferredEnvironment: Environment
     )
 }

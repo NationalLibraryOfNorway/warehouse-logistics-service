@@ -265,7 +265,7 @@ class WLSService(
                                     hostName = syncItem.hostName,
                                     description = syncItem.description,
                                     itemCategory = syncItem.itemCategory,
-                                    preferredEnvironment = syncItem.currentEnvironment,
+                                    preferredEnvironment = syncItem.currentPreferredEnvironment,
                                     packaging = syncItem.packaging,
                                     callbackUrl = null,
                                     location = syncItem.location ?: UNKNOWN_LOCATION,

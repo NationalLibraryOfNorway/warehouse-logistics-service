@@ -229,7 +229,7 @@ class SynqController(
                             quantity = it.quantityOnHand.toInt(),
                             itemCategory = it.getMappedCategory(),
                             packaging = it.getMappedUOM(),
-                            currentEnvironment = it.mapCurrentEnvironmentFromLocation(),
+                            currentPreferredEnvironment = it.mapCurrentPreferredEnvironment(),
                             description = if (it.description.isNullOrBlank()) "-" else it.description
                         )
                     } catch (e: InvalidParameterException) {

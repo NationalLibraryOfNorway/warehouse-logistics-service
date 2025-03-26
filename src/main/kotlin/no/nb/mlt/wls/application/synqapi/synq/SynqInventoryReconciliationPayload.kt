@@ -107,16 +107,10 @@ fun LoadUnit.getMappedHostName(): HostName? {
     }
 }
 
-fun LoadUnit.mapCurrentEnvironmentFromLocation(): Environment {
-    if (location == null) {
-        return if (productCategory.contains("frys", ignoreCase = true)) {
-            Environment.FREEZE
-        } else {
-            Environment.NONE
-        }
-    }
-
-    return if (location.startsWith("WS_FRYS", ignoreCase = true)) {
+fun LoadUnit.mapCurrentPreferredEnvironment(): Environment {
+    return if (location?.startsWith("WS_FRYS", ignoreCase = true) == true ||
+        productCategory.contains("frys", ignoreCase = true)
+    ) {
         Environment.FREEZE
     } else {
         Environment.NONE
