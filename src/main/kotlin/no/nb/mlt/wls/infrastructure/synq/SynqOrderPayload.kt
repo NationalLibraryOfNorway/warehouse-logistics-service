@@ -3,7 +3,6 @@ package no.nb.mlt.wls.infrastructure.synq
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
-import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
@@ -13,8 +12,6 @@ import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.OBJ
 import java.time.LocalDateTime
-
-private val logger = KotlinLogging.logger {}
 
 data class SynqOrderPayload(
     val orderId: String,
@@ -127,15 +124,6 @@ private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String 
             else -> "-SD"
         }
     return hostName.toString().uppercase() + postfix + DELIMITER + hostOrderId
-}
-
-fun normalizeOrderId(orderId: String): String {
-    val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
-    // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
-    if (orderIdWithoutPrefix == orderId) {
-        logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
-    }
-    return orderIdWithoutPrefix
 }
 
 /**
