@@ -13,7 +13,7 @@ import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toAutostorePayload
-import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
+import no.nb.mlt.wls.infrastructure.synq.toSynqStandardPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -160,7 +160,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to SynQ payload`() {
-        val synqPayload = testOrder.toSynqPayload(SynqOrderPayload.SynqOrderType.STANDARD)
+        val synqPayload = testOrder.toSynqStandardPayload()
 
         // Dates are not compared as they are generated in the function
         assertThat(synqPayload.orderId).isEqualTo(testSynqOrderPayload.orderId)

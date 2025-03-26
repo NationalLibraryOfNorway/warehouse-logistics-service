@@ -70,10 +70,14 @@ data class ShippingAddress(
 }
 
 fun Order.toAutostorePayload(): SynqOrderPayload {
-    return toSynqPayload(SynqOrderPayload.SynqOrderType.AUTOSTORE)
+    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.AUTOSTORE)
 }
 
-fun Order.toSynqPayload(type: SynqOrderPayload.SynqOrderType) =
+fun Order.toSynqStandardPayload(): SynqOrderPayload {
+    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.STANDARD)
+}
+
+private fun Order.toSynqPayloadByType(type: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
         orderId = hostName.toString().uppercase() + generatePostfix(type) + DELIMITER + hostOrderId,
         orderType = type,
