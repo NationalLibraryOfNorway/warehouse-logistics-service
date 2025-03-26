@@ -436,15 +436,16 @@ class WLSServiceTest {
     @Test
     fun `should update quantity and location, and add missing when synchronizing items`() {
         val itemRepo = createInMemItemRepo()
-        val service = WLSService(
-            itemRepo,
-            orderRepoMock,
-            catalogEventRepository,
-            storageEventRepository,
-            transactionPortSkipMock,
-            catalogEventProcessor,
-            storageEventProcessor
-        )
+        val service =
+            WLSService(
+                itemRepo,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
 
         runTest {
             val newQuantity = testItem.quantity + 1
@@ -579,7 +580,10 @@ class WLSServiceTest {
                 return items.first { it.hostName == hostName && it.hostId == hostId }
             }
 
-            override suspend fun getItems(hostName: HostName, hostIds: List<String>): List<Item> {
+            override suspend fun getItems(
+                hostName: HostName,
+                hostIds: List<String>
+            ): List<Item> {
                 return hostIds.mapNotNull { id ->
                     items.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
@@ -602,7 +606,12 @@ class WLSServiceTest {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun moveItem(hostName: HostName, hostId: String, quantity: Int, location: String): Item {
+            override suspend fun moveItem(
+                hostName: HostName,
+                hostId: String,
+                quantity: Int,
+                location: String
+            ): Item {
                 TODO("Not yet implemented")
             }
 
