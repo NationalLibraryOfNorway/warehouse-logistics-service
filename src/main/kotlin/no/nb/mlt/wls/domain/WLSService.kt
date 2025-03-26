@@ -338,7 +338,11 @@ class WLSService(
             }
         }
 
-    private suspend fun createMissingItems(missingId: String, hostName: HostName, syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>) {
+    private suspend fun createMissingItems(
+        missingId: String,
+        hostName: HostName,
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
+    ) {
         val syncItem = syncItemsById[(missingId to hostName)]!!
         val createdItem =
             itemRepository.createItem(
@@ -357,7 +361,10 @@ class WLSService(
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
     }
 
-    private suspend fun updateItemsForSynchronization(itemToUpdate: Item, syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>) {
+    private suspend fun updateItemsForSynchronization(
+        itemToUpdate: Item,
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
+    ) {
         val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
         val oldQuantity = itemToUpdate.quantity
         itemToUpdate.setQuantity(syncItem.quantity)
