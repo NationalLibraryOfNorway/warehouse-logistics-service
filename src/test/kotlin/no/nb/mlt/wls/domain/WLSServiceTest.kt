@@ -4,7 +4,6 @@ import io.mockk.clearAllMocks
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.domain.model.Environment
@@ -13,11 +12,14 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
-import no.nb.mlt.wls.domain.model.outboxMessages.OrderUpdated
-import no.nb.mlt.wls.domain.model.outboxMessages.OutboxMessage
+import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
+import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
+import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
+import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
+import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
+import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
@@ -25,32 +27,27 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import no.nb.mlt.wls.domain.ports.inbound.toOrder
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
-import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.OutboxMessageProcessor
-import no.nb.mlt.wls.domain.ports.outbound.OutboxRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.UUID
 
 class WLSServiceTest {
-    private val orderRepoMock = mockk<OrderRepository>()
     private val itemRepoMock = mockk<ItemRepository>()
-    private val storageSystemRepoMock = mockk<StorageSystemFacade>()
-    private val inventoryNotifierMock = mockk<InventoryNotifier>()
-    private val emailAdapterMock = mockk<EmailNotifier>()
-    private val outboxRepository = mockk<OutboxRepository>()
+    private val orderRepoMock = mockk<OrderRepository>()
+    private val catalogEventRepository = mockk<EventRepository<CatalogEvent>>()
+    private val storageEventRepository = mockk<EventRepository<StorageEvent>>()
     private val transactionPort = mockk<TransactionPort>()
-    private val outboxProcessor = mockk<OutboxMessageProcessor>()
+    private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
+    private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
+    private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val transactionPortSkipMock =
         object : TransactionPort {
             override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
@@ -58,121 +55,81 @@ class WLSServiceTest {
             }
         }
 
+    private lateinit var cut: WLSService
+
     @BeforeEach
     fun beforeEach() {
         clearAllMocks()
+
+        cut =
+            WLSService(
+                itemRepoMock,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPort,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
     }
+
+    // TODO: Need to find an elegant way to test stuff going on inside the transaction port
+    //       Unless we can accept it as it is and hope everything inside goes well
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
-        val expectedItem = testItem.copy()
-        val itemCreatedMessage = ItemCreated(expectedItem)
-        coEvery { itemRepoMock.getItem(any(), any()) } answers { null }
-        coEvery { itemRepoMock.createItem(any()) } answers { expectedItem }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedItem to itemCreatedMessage)
-        coEvery { outboxProcessor.handleEvent(itemCreatedMessage) } answers {}
-        coEvery { outboxRepository.save(itemCreatedMessage) } answers { itemCreatedMessage }
+        val itemCreatedEvent = ItemCreated(testItem)
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { null }
+        coEvery { itemRepoMock.createItem(testItem) } answers { testItem }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (testItem to itemCreatedEvent)
+        coEvery { storageEventProcessor.handleEvent(itemCreatedEvent) } answers {}
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            val itemResult =
-                cut.addItem(
-                    ItemMetadata(
-                        hostId = testItem.hostId,
-                        hostName = testItem.hostName,
-                        description = testItem.description,
-                        itemCategory = testItem.itemCategory,
-                        preferredEnvironment = testItem.preferredEnvironment,
-                        packaging = testItem.packaging,
-                        callbackUrl = testItem.callbackUrl
-                    )
-                )
+            val addItemResult = cut.addItem(testItem.toItemMetadata())
 
-            assertThat(itemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { outboxProcessor.handleEvent(itemCreatedMessage) }
+            assertThat(addItemResult).isEqualTo(testItem)
+            coVerify(exactly = 1) { storageEventProcessor.handleEvent(itemCreatedEvent) }
         }
     }
 
     @Test
     fun `addItem should not save new item but return existing item if it already exists`() {
-        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem.copy() }
-        coEvery { itemRepoMock.createItem(any()) } answers { testItem.copy() }
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
+        coEvery { itemRepoMock.createItem(testItem) } answers { testItem }
         coJustRun { storageSystemRepoMock.createItem(any()) }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-
         runTest {
-            val newItem =
-                cut.addItem(
-                    ItemMetadata(
-                        hostId = testItem.hostId,
-                        hostName = testItem.hostName,
-                        description = testItem.description,
-                        itemCategory = testItem.itemCategory,
-                        preferredEnvironment = testItem.preferredEnvironment,
-                        packaging = testItem.packaging,
-                        callbackUrl = testItem.callbackUrl
-                    )
-                )
+            val addItemResult = cut.addItem(testItem.toItemMetadata())
 
-            assertThat(newItem).isEqualTo(testItem)
-
+            assertThat(addItemResult).isEqualTo(testItem)
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
-        }
-    }
-
-    @Test
-    fun `getItem should return requested item when it exists in DB`() {
-        val expectedItem = testItem.copy()
-
-        coEvery { itemRepoMock.getItem(HostName.AXIELL, "12345") } answers { expectedItem }
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-        runTest {
-            val itemResult = cut.getItem(HostName.AXIELL, "12345")
-            assertThat(itemResult).isEqualTo(expectedItem)
-        }
-    }
-
-    @Test
-    fun `getItem should return null if item does not exist`() {
-        coEvery { itemRepoMock.getItem(HostName.AXIELL, "12345") } answers { null }
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-        runTest {
-            val itemResult = cut.getItem(HostName.AXIELL, "12345")
-            assertThat(itemResult).isEqualTo(null)
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
 
     @Test
     fun `moveItem should return when item successfully moves`() {
-        val expectedItem =
-            testItem.copy(
-                location = "Somewhere nice",
-                quantity = 1
-            )
-        coEvery { itemRepoMock.getItem(any(), any()) } returns testItem
-        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } returns expectedItem
-        every { inventoryNotifierMock.itemChanged(any()) } answers {}
+        val expectedItem = testItem.copy(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
+        val itemMovedEvent = ItemEvent(expectedItem)
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedItem to itemMovedEvent)
+        coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            val movedItem = cut.moveItem(testMoveItemPayload)
-            assertThat(movedItem).isEqualTo(expectedItem)
+            val moveItemResult = cut.moveItem(testMoveItemPayload)
+            assertThat(moveItemResult).isEqualTo(expectedItem)
 
             coVerify(exactly = 1) { itemRepoMock.getItem(any(), any()) }
-            coVerify(exactly = 1) { itemRepoMock.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemMovedEvent) }
         }
     }
 
     @Test
     fun `moveItem should fail when item does not exist`() {
-        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ItemNotFoundException("Item not found")
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { null }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            assertThrows<RuntimeException> {
+            assertThrows<ItemNotFoundException> {
                 cut.moveItem(testMoveItemPayload)
             }
 
@@ -183,11 +140,8 @@ class WLSServiceTest {
 
     @Test
     fun `moveItem throws when count is invalid`() {
-        coEvery { itemRepoMock.moveItem(any(), any(), -1, any()) } throws ValidationException("Location cannot be blank")
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            assertThrows<RuntimeException> {
+            assertThrows<ValidationException>(message = "Quantity can not be negative") {
                 cut.moveItem(testMoveItemPayload.copy(quantity = -1))
             }
 
@@ -198,11 +152,8 @@ class WLSServiceTest {
 
     @Test
     fun `moveItem throws when location is blank`() {
-        coEvery { itemRepoMock.moveItem(any(), any(), any(), any()) } throws ValidationException("Item not found")
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            assertThrows<RuntimeException> {
+            assertThrows<ValidationException>(message = "Location can not be blank") {
                 cut.moveItem(testMoveItemPayload.copy(location = "  "))
             }
 
@@ -212,61 +163,92 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `createOrder should save order in db and outbox`() {
-        val expectedOrder = createOrderDTO.toOrder().copy()
-        val orderCreatedMessage = OrderCreated(expectedOrder, UUID.randomUUID().toString())
-        val transactionPortMock =
-            object : TransactionPort {
-                override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
-                    @Suppress("UNCHECKED_CAST")
-                    return (expectedOrder to orderCreatedMessage) as T
-                }
+    fun `pickItems should update items and send callbacks`() {
+        val expectedItem = testItem.copy(quantity = 0, location = "WITH_LENDER")
+        val pickedItemsMap = mapOf(testItem.hostId to 1)
+        val itemPickedEvent = ItemEvent(expectedItem)
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
+        coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf(testItem) }
+        coEvery { transactionPort.executeInTransaction<Any>(any()) } answers { itemPickedEvent }
+        coEvery { catalogEventProcessor.handleEvent(itemPickedEvent) } answers {}
+
+        runTest {
+            cut.pickItems(testItem.hostName, pickedItemsMap)
+
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
+            coVerify(exactly = 1) { itemRepoMock.getItems(any(), any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemPickedEvent) }
+        }
+    }
+
+    @Test
+    fun `pickItems throw if item does not exist`() {
+        val pickedItemsMap = mapOf(testItem.hostId to 1)
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+
+        runTest {
+            assertThrows<ItemNotFoundException>(message = "Some items do not exist in the database, and were unable to be picked") {
+                cut.pickItems(testItem.hostName, pickedItemsMap)
             }
 
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
+            coVerify(exactly = 0) { itemRepoMock.getItems(any(), any()) }
+        }
+    }
+
+    @Test
+    fun `pickOrderItems should update order and send callback`() {
+        val expectedOrder = testOrder.copy(orderLine = listOf(Order.OrderItem(testItem.hostId, Order.OrderItem.Status.PICKED)))
+        val pickedItems = listOf(testItem.hostId)
+        val orderItemsPickedEvent = OrderEvent(expectedOrder)
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Any>(any()) } answers { orderItemsPickedEvent }
+        coEvery { catalogEventProcessor.handleEvent(orderItemsPickedEvent) } answers {}
+
+        runTest {
+            cut.pickOrderItems(testOrder.hostName, pickedItems, testOrder.hostOrderId)
+
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(orderItemsPickedEvent) }
+        }
+    }
+
+    @Test
+    fun `createOrder should save order in db and outbox`() {
+        val orderCreatedEvent = OrderCreated(testOrder)
         coEvery { orderRepoMock.getOrder(createOrderDTO.hostName, createOrderDTO.hostOrderId) } answers { null }
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf() }
-        coEvery { orderRepoMock.createOrder(createOrderDTO.toOrder()) } answers { expectedOrder }
-        coEvery { outboxRepository.save(any() as OutboxMessage) } answers { orderCreatedMessage }
-        coEvery { emailAdapterMock.orderCreated(any(), any()) } answers { }
-        coEvery { outboxProcessor.handleEvent(orderCreatedMessage) } answers {}
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { testOrder to orderCreatedEvent }
+        coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPortMock, outboxProcessor)
         runTest {
-            val order = cut.createOrder(createOrderDTO)
-            assertThat(order).isEqualTo(expectedOrder)
-            coVerify(exactly = 1) { outboxProcessor.handleEvent(orderCreatedMessage) }
+            val createOrderResult = cut.createOrder(createOrderDTO)
+            assertThat(createOrderResult).isEqualTo(testOrder)
+            coVerify(exactly = 1) { storageEventProcessor.handleEvent(orderCreatedEvent) }
         }
     }
 
     @Test
     fun `createOrder should return existing order when trying to create one with same id and host`() {
-        coEvery {
-            orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId)
-        } answers { testOrder.copy() }
+        val duplicateOrder = createOrderDTO.copy(callbackUrl = "https://new-callback-wls.no/order")
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            val order =
-                cut.createOrder(
-                    createOrderDTO.copy(callbackUrl = "https://new-callback-wls.no/order")
-                )
+            val createOrderResult = cut.createOrder(duplicateOrder)
 
-            assertThat(order).isEqualTo(testOrder)
-            assertThat(order.callbackUrl).isEqualTo(testOrder.callbackUrl)
-            coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
+            assertThat(createOrderResult).isEqualTo(testOrder)
+            assertThat(createOrderResult.callbackUrl).isEqualTo(testOrder.callbackUrl)
+            coVerify(exactly = 0) { itemRepoMock.doesEveryItemExist(any()) }
         }
     }
 
-    // Test create order when order items do not exist
     @Test
     fun `createOrder should fail if some of the items does not exist`() {
-        coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            assertThrows<ValidationException> {
+            assertThrows<ValidationException>(message = "All order items in order must exist") {
                 cut.createOrder(createOrderDTO)
             }
             coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
@@ -275,168 +257,194 @@ class WLSServiceTest {
 
     @Test
     fun `deleteOrder should complete when order exists`() {
-        val deletedOrderMessage = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
-        coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
-        coJustRun { orderRepoMock.deleteOrder(any()) }
-        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
-        coEvery { transactionPort.executeInTransaction<Any>(any()) } returns deletedOrderMessage
-        coEvery { outboxProcessor.handleEvent(deletedOrderMessage) } answers {}
-        coEvery {
-            outboxRepository.save(deletedOrderMessage)
-        } answers { deletedOrderMessage }
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
+        val deletedOrderEvent = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Any>(any()) } answers { deletedOrderEvent }
+        coEvery { storageEventProcessor.handleEvent(deletedOrderEvent) } answers {}
 
         runTest {
-            cut.deleteOrder(HostName.AXIELL, "12345")
+            cut.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify { storageEventProcessor.handleEvent(deletedOrderEvent) }
         }
     }
 
     @Test
-    @Disabled
-    fun `deleteOrder should fail when order does not exist in storage system`() {
-        coEvery { orderRepoMock.getOrder(any(), any()) } returns testOrder
+    fun `deleteOrder should fail when order does not exist in WLS DB`() {
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
+
+        runTest {
+            assertThrows<OrderNotFoundException>(
+                message = "No order with hostOrderId: $testOrder.hostOrderId and hostName: $testOrder.hostName exists"
+            ) {
+                cut.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
+            }
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { transactionPort.executeInTransaction<Any>(any()) }
+        }
+    }
+
+    @Test
+    fun `deleteOrder should fail when order deletion fails`() {
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
         coEvery { storageSystemRepoMock.deleteOrder(any(), any()) } throws StorageSystemException("Order not found", null)
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-
         runTest {
-            assertThrows<StorageSystemException> {
-                cut.deleteOrder(HostName.AXIELL, "12345")
+            assertThrows<RuntimeException>(message = "Could not delete order") {
+                cut.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
             }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any()) }
-        }
-    }
-
-    @Test
-    fun `deleteOrder should fail when order does not exist in WLS database`() {
-        coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
-        coJustRun { storageSystemRepoMock.deleteOrder(any(), any()) }
-        coEvery { orderRepoMock.deleteOrder(any()) } throws OrderNotFoundException("Order not found")
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-
-        runTest {
-            assertThrows<OrderNotFoundException> {
-                cut.deleteOrder(HostName.AXIELL, "12345")
-            }
-            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-
-            coVerify(exactly = 0) { orderRepoMock.deleteOrder(any()) }
+            coVerify(exactly = 1) { transactionPort.executeInTransaction<Any>(any()) }
         }
     }
 
     @Test
     fun `updateOrder with valid items should complete`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
+        val updateOrderEvent = OrderUpdated(updatedOrder)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(any(), any()) } answers { testOrder.copy() }
-        coEvery { storageSystemRepoMock.updateOrder(any()) } answers { updatedOrder }
-        coEvery { orderRepoMock.updateOrder(any()) } answers { updatedOrder }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (updatedOrder to OrderUpdated(updatedOrder))
-        coEvery { outboxRepository.save(OrderUpdated(updatedOrder)) } answers { OrderUpdated(updatedOrder = updatedOrder) }
+        coEvery { orderRepoMock.getOrder(updatedOrder.hostName, updatedOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { updatedOrder to updateOrderEvent }
+        coEvery { storageEventProcessor.handleEvent(updateOrderEvent) } answers { }
 
         runTest {
-            val order =
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    Order.Type.LOAN,
-                    "unreal person",
-                    createOrderAddress(),
-                    "note",
-                    "https://example.com"
-                )
+            val updateOrderResult = callUpdateOrder()
 
-            assertThat(order).isEqualTo(updatedOrder)
+            assertThat(updateOrderResult).isEqualTo(updatedOrder)
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { storageEventProcessor.handleEvent(updateOrderEvent) }
+        }
+    }
+
+    @Test
+    fun `updateOrder should fail if items don't exist`() {
+        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+
+        runTest {
+            assertThrows<ValidationException>(message = "All order items in order must exist") {
+                callUpdateOrder()
+            }
+
+            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
+            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
 
     @Test
     fun `updateOrder should fail when order does not exist`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
 
         runTest {
-            assertThrows<OrderNotFoundException> {
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    testOrder.orderType,
-                    testOrder.contactPerson,
-                    testOrder.address ?: createOrderAddress(),
-                    testOrder.note,
-                    testOrder.callbackUrl
-                )
+            assertThrows<OrderNotFoundException>(message = "Order not found") {
+                callUpdateOrder()
             }
+
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-
-            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
 
     @Test
-    fun `updateOrder should fail when items do not exist`() {
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+    fun `updateOrderStatus should update status and send callback`() {
+        val completedOrder = testOrder.copy(status = Order.Status.COMPLETED)
+        val orderStatusUpdatedEvent = OrderEvent(completedOrder)
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { completedOrder to orderStatusUpdatedEvent }
+        coEvery { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) } answers { }
 
         runTest {
-            assertThrows<ValidationException> {
-                cut.updateOrder(
-                    HostName.AXIELL,
-                    "12345",
-                    listOf("mlt-420", "mlt-421"),
-                    testOrder.orderType,
-                    testOrder.contactPerson,
-                    testOrder.address,
-                    testOrder.note,
-                    testOrder.callbackUrl
-                )
-            }
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
+            val updateOrderStatusResult = cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
 
-            coVerify(exactly = 0) { orderRepoMock.updateOrder(any()) }
+            assertThat(updateOrderStatusResult).isEqualTo(completedOrder)
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) }
+        }
+    }
+
+    @Test
+    fun `updateOrderStatus should fail if order does not exist`() {
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
+
+        runTest {
+            assertThrows<OrderNotFoundException>(
+                message = "No order with hostName: ${testOrder.hostName} and hostOrderId: ${testOrder.hostOrderId} exists"
+            ) {
+                cut.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
+            }
+            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
+            coVerify(exactly = 0) { catalogEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    private suspend fun callUpdateOrder() =
+        cut.updateOrder(
+            updatedOrder.hostName,
+            updatedOrder.hostOrderId,
+            updatedOrder.orderLine.map { it.hostId },
+            updatedOrder.orderType,
+            updatedOrder.contactPerson,
+            updatedOrder.address,
+            updatedOrder.note,
+            updatedOrder.callbackUrl
+        )
+
+    // TODO test UpdateOrderStatus
+
+    @Test
+    fun `getItem should return requested item when it exists in DB`() {
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
+
+        runTest {
+            val itemResult = cut.getItem(testItem.hostName, testItem.hostId)
+            assertThat(itemResult).isEqualTo(testItem)
+        }
+    }
+
+    @Test
+    fun `getItem should return null if item does not exist`() {
+        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { null }
+
+        runTest {
+            val itemResult = cut.getItem(testItem.hostName, testItem.hostId)
+            assertThat(itemResult).isNull()
         }
     }
 
     @Test
     fun `getOrder should return requested order when it exists in DB`() {
-        val expectedItem = testOrder.copy()
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
 
-        coEvery { orderRepoMock.getOrder(HostName.AXIELL, "12345") } answers { expectedItem }
-
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            val order = cut.getOrder(HostName.AXIELL, "12345")
-            assertThat(order).isEqualTo(expectedItem)
+            val orderResult = cut.getOrder(testOrder.hostName, testOrder.hostOrderId)
+            assertThat(orderResult).isEqualTo(testOrder)
         }
     }
 
     @Test
     fun `getOrder should return null when order does not exists in DB`() {
-        coEvery { orderRepoMock.getOrder(any(), any()) } answers { null }
+        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
 
-        val cut = WLSService(itemRepoMock, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPort, outboxProcessor)
         runTest {
-            val order = cut.getOrder(HostName.AXIELL, "12345")
-            assertThat(order).isNull()
+            val orderResult = cut.getOrder(testOrder.hostName, testOrder.hostOrderId)
+            assertThat(orderResult).isNull()
         }
     }
 
     @Test
     fun `should update quantity and location, and add missing when synchronizing items`() {
         val itemRepo = createInMemItemRepo()
-        val cut = WLSService(itemRepo, orderRepoMock, inventoryNotifierMock, outboxRepository, transactionPortSkipMock, outboxProcessor)
+        val service = WLSService(
+            itemRepo,
+            orderRepoMock,
+            catalogEventRepository,
+            storageEventRepository,
+            transactionPortSkipMock,
+            catalogEventProcessor,
+            storageEventProcessor
+        )
 
         runTest {
             val newQuantity = testItem.quantity + 1
@@ -466,7 +474,7 @@ class WLSServiceTest {
                     )
                 )
 
-            cut.synchronizeItems(itemsToSync)
+            service.synchronizeItems(itemsToSync)
 
             // Assert that quantity and location changed
             val updatedItem = itemRepo.getItem(testItem.hostName, testItem.hostId)
@@ -487,7 +495,7 @@ class WLSServiceTest {
     private val testItem =
         Item(
             hostName = HostName.AXIELL,
-            hostId = "12345",
+            hostId = "mlt-12345",
             description = "Tyven, tyven skal du hete",
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
@@ -497,12 +505,20 @@ class WLSServiceTest {
             quantity = 0
         )
 
+    private val testMoveItemPayload =
+        MoveItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION"
+        )
+
     private val testOrder =
         Order(
             hostName = HostName.AXIELL,
-            hostOrderId = "12345",
+            hostOrderId = "mlt-12345-order",
             status = Order.Status.NOT_STARTED,
-            orderLine = listOf(),
+            orderLine = listOf(Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)),
             orderType = Order.Type.LOAN,
             contactPerson = "contactPerson",
             contactEmail = "contact@ema.il",
@@ -515,17 +531,9 @@ class WLSServiceTest {
         testOrder.copy(
             orderLine =
                 listOf(
-                    Order.OrderItem("mlt-420", Order.OrderItem.Status.NOT_STARTED),
-                    Order.OrderItem("mlt-421", Order.OrderItem.Status.NOT_STARTED)
+                    Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                    Order.OrderItem("mlt-54321", Order.OrderItem.Status.NOT_STARTED)
                 )
-        )
-
-    private val testMoveItemPayload =
-        MoveItemPayload(
-            "12345",
-            HostName.AXIELL,
-            1,
-            "Somewhere nice"
         )
 
     private val createOrderDTO =
@@ -545,6 +553,17 @@ class WLSServiceTest {
         return Order.Address(null, null, null, null, null, null, null)
     }
 
+    private fun Item.toItemMetadata() =
+        ItemMetadata(
+            hostId = hostId,
+            hostName = hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = callbackUrl
+        )
+
     private fun createInMemItemRepo(): ItemRepository {
         return object : ItemRepository {
             val items =
@@ -560,10 +579,7 @@ class WLSServiceTest {
                 return items.first { it.hostName == hostName && it.hostId == hostId }
             }
 
-            override suspend fun getItems(
-                hostIds: List<String>,
-                hostName: HostName
-            ): List<Item> {
+            override suspend fun getItems(hostName: HostName, hostIds: List<String>): List<Item> {
                 return hostIds.mapNotNull { id ->
                     items.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
@@ -586,12 +602,7 @@ class WLSServiceTest {
                 TODO("Not yet implemented")
             }
 
-            override suspend fun moveItem(
-                hostId: String,
-                hostName: HostName,
-                quantity: Int,
-                location: String
-            ): Item {
+            override suspend fun moveItem(hostName: HostName, hostId: String, quantity: Int, location: String): Item {
                 TODO("Not yet implemented")
             }
 

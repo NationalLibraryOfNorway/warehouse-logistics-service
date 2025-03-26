@@ -22,7 +22,7 @@ import java.util.concurrent.TimeoutException
 private val logger = KotlinLogging.logger {}
 
 @Component
-class ItemRepositoryMongoAdapter(
+class MongoItemRepositoryAdapter(
     private val mongoRepo: ItemMongoRepository
 ) : ItemRepository {
     override suspend fun getItem(
@@ -42,8 +42,8 @@ class ItemRepositoryMongoAdapter(
     }
 
     override suspend fun getItems(
-        hostIds: List<String>,
-        hostName: HostName
+        hostName: HostName,
+        hostIds: List<String>
     ): List<Item> {
         return mongoRepo.findAllByHostNameAndHostIdIn(hostName, hostIds)
             .collectList()
@@ -85,8 +85,8 @@ class ItemRepositoryMongoAdapter(
     }
 
     override suspend fun moveItem(
-        hostId: String,
         hostName: HostName,
+        hostId: String,
         quantity: Int,
         location: String
     ): Item {

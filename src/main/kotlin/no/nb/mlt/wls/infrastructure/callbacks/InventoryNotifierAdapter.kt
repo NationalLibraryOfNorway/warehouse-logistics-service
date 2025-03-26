@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -28,39 +29,37 @@ class InventoryNotifierAdapter(
     private val signatureSecretKey: String,
     private val objectMapper: ObjectMapper
 ) : InventoryNotifier {
-    override fun itemChanged(item: Item) {
+    override fun itemChanged(
+        item: Item,
+        eventTimestamp: Instant
+    ) {
         if (item.callbackUrl != null) {
-            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload())
+            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload(eventTimestamp))
             val timestamp = System.currentTimeMillis().toString()
 
-            getAppropriateWebClient(item.hostName)
-                .post()
-                .uri(item.callbackUrl)
-                .bodyValue(payload)
-                .headers {
-                    it.contentType = MediaType.APPLICATION_JSON
-                    it["X-Signature"] = generateSignature(payload, timestamp)
-                    it["X-Timestamp"] = timestamp
-                }
-                .retrieve()
-                .bodyToMono(Void::class.java)
-                .retry(5)
-                .timeout(Duration.ofSeconds(10))
-                .doOnError {
-                    logger.error(it) { "Error while sending item update to callback URL: ${item.callbackUrl}" }
-                }
-                .subscribe()
+            sendCallback(item.hostName, item.callbackUrl, payload, timestamp)
         }
     }
 
-    override fun orderChanged(order: Order) {
-        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload())
+    override fun orderChanged(
+        order: Order,
+        eventTimestamp: Instant
+    ) {
+        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload(eventTimestamp))
         val timestamp = System.currentTimeMillis().toString()
 
-        // TODO: Should probably have a more robust retry mechanism, what if receiver is down for a while?
-        getAppropriateWebClient(order.hostName)
+        sendCallback(order.hostName, order.callbackUrl, payload, timestamp)
+    }
+
+    private fun sendCallback(
+        hostName: HostName,
+        callbackUrl: String,
+        payload: String,
+        timestamp: String
+    ) {
+        getAppropriateWebClient(hostName)
             .post()
-            .uri(order.callbackUrl)
+            .uri(callbackUrl)
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
@@ -69,12 +68,12 @@ class InventoryNotifierAdapter(
             }
             .retrieve()
             .bodyToMono(Void::class.java)
-            .retry(5)
             .timeout(Duration.ofSeconds(10))
             .doOnError {
-                logger.error(it) { "Error while sending order update to callback URL: ${order.callbackUrl}" }
+                logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
+                throw it
             }
-            .subscribe()
+            .block()
     }
 
     private fun generateSignature(
