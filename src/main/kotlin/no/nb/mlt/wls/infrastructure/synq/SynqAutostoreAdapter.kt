@@ -1,24 +1,25 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.server.ServerErrorException
 import reactor.core.publisher.Mono
 import java.net.URI
 
+// TODO - There is room to deduplicate the calls in this adapter
 @Component
-class SynqAdapter(
+class SynqAutostoreAdapter(
     @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
     @Value("\${synq.path.base}")
@@ -48,7 +49,7 @@ class SynqAdapter(
 
     override suspend fun createOrder(order: Order) {
         // Wrap the order in the way SynQ likes it
-        val orders = SynqOrder(listOf(order.toSynqPayload()))
+        val orders = SynqOrder(listOf(order.toAutostorePayload()))
 
         webClient
             .post()
@@ -91,43 +92,32 @@ class SynqAdapter(
         return webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
-            .bodyValue(SynqOrder(listOf(order.toSynqPayload())))
+            .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
             .retrieve()
             .toBodilessEntity()
             .map { order }
-            .onErrorMap(WebClientResponseException::class.java, ::createServerError)
+            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
         return when (location.uppercase()) {
-            "SYNQ_WAREHOUSE", "AUTOSTORE" -> true
+            "SYNQ_AUTOSTORE" -> true
+            "AUTOSTORE_WAREHOUSE" -> true
             else -> false
         }
     }
 
     override fun canHandleItem(item: Item): Boolean {
-        // TODO - Handle item categories based on ruleset
-        return true
+        // There is no freezer in AutoStore
+        if (item.preferredEnvironment == Environment.FREEZE) return false
+
+        return when (item.itemCategory) {
+            ItemCategory.PAPER -> true
+            ItemCategory.FILM -> false
+            ItemCategory.BULK_ITEMS -> true
+            ItemCategory.FRAGILE -> false
+            else -> false
+        }
     }
-}
-
-/**
- * Converts a WebClient error into a ServerErrorException.
- * This is used for propagating error data to the client.
- * @see ServerErrorException
- */
-fun createServerError(error: WebClientResponseException): StorageSystemException {
-    val errorBody = error.getResponseBodyAs(SynqError::class.java)
-
-    return StorageSystemException(
-        """
-        While communicating with SynQ API, an error occurred with code:
-        '${errorBody?.errorCode ?: "NO ERROR CODE FOUND"}'
-        and error text:
-        '${errorBody?.errorText ?: "NO ERROR TEXT FOUND"}'.
-        A copy of the original exception is attached to this error.
-        """.trimIndent(),
-        error
-    )
 }

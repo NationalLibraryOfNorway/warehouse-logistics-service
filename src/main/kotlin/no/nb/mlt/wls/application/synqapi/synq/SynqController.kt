@@ -13,6 +13,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -257,7 +258,7 @@ class SynqController(
 }
 
 private fun normalizeOrderId(orderId: String): String {
-    val orderIdWithoutPrefix = orderId.substringAfter("---", orderId)
+    val orderIdWithoutPrefix = orderId.substringAfter(StorageSystemFacade.DELIMITER, orderId)
     // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
     if (orderIdWithoutPrefix == orderId) {
         logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }

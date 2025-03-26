@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade.Companion.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
@@ -32,7 +33,8 @@ data class SynqOrderPayload(
     )
 
     enum class SynqOrderType(private val type: String) {
-        STANDARD("Standard");
+        STANDARD("Standard"),
+        AUTOSTORE("Autostore");
 
         @JsonValue
         override fun toString(): String {
@@ -67,10 +69,18 @@ data class ShippingAddress(
     )
 }
 
-fun Order.toSynqPayload() =
+fun Order.toAutostorePayload(): SynqOrderPayload {
+    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.AUTOSTORE)
+}
+
+fun Order.toSynqStandardPayload(): SynqOrderPayload {
+    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.STANDARD)
+}
+
+private fun Order.toSynqPayloadByType(type: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
-        orderId = hostName.toString().uppercase() + "---" + hostOrderId,
-        orderType = orderType.toSynqOrderType(),
+        orderId = generateOrderId(type),
+        orderType = type,
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
         // When order was made in SynQ, if we want to we can omit it and SynQ will set it to current date itself
@@ -107,12 +117,14 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.ABOX -> ABOX
     }
 
-fun Order.Type.toSynqOrderType(): SynqOrderPayload.SynqOrderType =
-    when (this) {
-        // Since mock api defined more types than Synq has we map both to standard
-        Order.Type.LOAN -> SynqOrderPayload.SynqOrderType.STANDARD
-        Order.Type.DIGITIZATION -> SynqOrderPayload.SynqOrderType.STANDARD
-    }
+private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String {
+    val postfix =
+        when (type) {
+            SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
+            else -> "-SD"
+        }
+    return hostName.toString().uppercase() + postfix + DELIMITER + hostOrderId
+}
 
 /**
  * Utility classed used to wrap the payload.

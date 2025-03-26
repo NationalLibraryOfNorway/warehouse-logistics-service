@@ -12,7 +12,8 @@ import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.ShippingAddress
 import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
-import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
+import no.nb.mlt.wls.infrastructure.synq.toAutostorePayload
+import no.nb.mlt.wls.infrastructure.synq.toSynqStandardPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
@@ -67,8 +68,28 @@ class OrderModelConversionTest {
 
     private val testSynqOrderPayload =
         SynqOrderPayload(
-            orderId = "AXIELL---hostOrderId",
+            orderId = "AXIELL-SD---hostOrderId",
             orderType = SynqOrderPayload.SynqOrderType.STANDARD,
+            dispatchDate = LocalDateTime.now(),
+            orderDate = LocalDateTime.now(),
+            priority = 5,
+            owner = SynqOwner.NB,
+            orderLine =
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
+                ),
+            shippingAddress =
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
+                )
+        )
+
+    private val testSynqAutostoreOrderPayload =
+        SynqOrderPayload(
+            orderId = "AXIELL-AS---hostOrderId",
+            orderType = SynqOrderPayload.SynqOrderType.AUTOSTORE,
             dispatchDate = LocalDateTime.now(),
             orderDate = LocalDateTime.now(),
             priority = 5,
@@ -139,7 +160,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to SynQ payload`() {
-        val synqPayload = testOrder.toSynqPayload()
+        val synqPayload = testOrder.toSynqStandardPayload()
 
         // Dates are not compared as they are generated in the function
         assertThat(synqPayload.orderId).isEqualTo(testSynqOrderPayload.orderId)
@@ -147,6 +168,18 @@ class OrderModelConversionTest {
         assertThat(synqPayload.priority).isEqualTo(testSynqOrderPayload.priority)
         assertThat(synqPayload.owner).isEqualTo(testSynqOrderPayload.owner)
         assertThat(synqPayload.orderLine).isEqualTo(testSynqOrderPayload.orderLine)
+    }
+
+    @Test
+    fun `order converts to SynQ autostore payload`() {
+        val synqPayload = testOrder.toAutostorePayload()
+
+        // Dates are not compared as they are generated in the function
+        assertThat(synqPayload.orderId).isEqualTo(testSynqAutostoreOrderPayload.orderId)
+        assertThat(synqPayload.orderType).isEqualTo(testSynqAutostoreOrderPayload.orderType)
+        assertThat(synqPayload.priority).isEqualTo(testSynqAutostoreOrderPayload.priority)
+        assertThat(synqPayload.owner).isEqualTo(testSynqAutostoreOrderPayload.owner)
+        assertThat(synqPayload.orderLine).isEqualTo(testSynqAutostoreOrderPayload.orderLine)
     }
 
     @Test

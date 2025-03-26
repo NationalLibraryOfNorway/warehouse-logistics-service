@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
-import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
+import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -41,7 +41,7 @@ class TraillingSlashRedirectTest(
     @Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
-    private lateinit var synqAdapterMock: SynqAdapter
+    private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
     private lateinit var webTestClient: WebTestClient
 

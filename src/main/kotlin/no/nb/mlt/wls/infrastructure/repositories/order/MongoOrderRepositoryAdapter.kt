@@ -46,8 +46,8 @@ class MongoOrderRepositoryAdapter(
     override suspend fun deleteOrder(order: Order) {
         val modified =
             orderMongoRepository.findAndUpdateByHostNameAndHostOrderId(
-                order.hostName,
-                order.hostOrderId,
+                hostName = order.hostName,
+                hostOrderId = order.hostOrderId,
                 status = Order.Status.DELETED,
                 orderLine = order.orderLine,
                 orderType = order.orderType,
