@@ -188,7 +188,7 @@ class WLSService(
                 storageEventRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
-        storageEventProcessor.handleEvent(storageEvent)
+        processStorageEventAsync(storageEvent)
     }
 
     override suspend fun updateOrder(
