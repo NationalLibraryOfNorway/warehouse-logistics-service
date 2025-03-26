@@ -210,7 +210,7 @@ class SynqController(
     suspend fun inventoryReconciliation(
         @RequestBody payload: SynqInventoryReconciliationPayload
     ): ResponseEntity<Unit> {
-        logger.info { "Reconciliation. warehouse=${payload.warehouse}, loadUnits=${payload.loadUnit.size}" }
+        logger.info { "Reconciliation. loadUnits=${payload.loadUnit.size}" }
 
         val units =
             payload.loadUnit.map {
@@ -224,7 +224,7 @@ class SynqController(
                 SynchronizeItems.ItemToSynchronize(
                     hostId = it.productId,
                     hostName = mappedHostName,
-                    location = payload.warehouse,
+                    location = it.location,
                     quantity = it.quantityOnHand.toInt()
                 )
             }.filterNotNull()

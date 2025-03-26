@@ -83,7 +83,7 @@ class SynqControllerTest(
     fun `updateOrder correct payload updates order and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.orderChanged(any())
+                inventoryNotifierAdapterMock.orderChanged(any(), any())
             }.answers { }
 
             webTestClient
@@ -101,14 +101,14 @@ class SynqControllerTest(
             assertThat(res).isNotNull
             assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
 
-            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS)) }
+            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any()) }
         }
 
     @Test
     fun `updateOrder short order ID updates order and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.orderChanged(any())
+                inventoryNotifierAdapterMock.orderChanged(any(), any())
             }.answers { }
 
             webTestClient
@@ -126,7 +126,7 @@ class SynqControllerTest(
             assertThat(res).isNotNull
             assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
 
-            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS)) }
+            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any()) }
         }
 
     @Test
@@ -207,7 +207,7 @@ class SynqControllerTest(
     fun `updateItem correct payload updates item and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.itemChanged(any())
+                inventoryNotifierAdapterMock.itemChanged(any(), any())
             }.answers { }
 
             webTestClient
@@ -231,8 +231,8 @@ class SynqControllerTest(
             assertThat(item2.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item2.quantity).isEqualTo(batchMoveItemPayload.loadUnit[1].quantityOnHand)
 
-            verify { inventoryNotifierAdapterMock.itemChanged(item1.toItem()) }
-            verify { inventoryNotifierAdapterMock.itemChanged(item2.toItem()) }
+            verify { inventoryNotifierAdapterMock.itemChanged(item1.toItem(), any()) }
+            verify { inventoryNotifierAdapterMock.itemChanged(item2.toItem(), any()) }
         }
 
     @Test
@@ -309,7 +309,7 @@ class SynqControllerTest(
     fun `updateItem with no callbackUrl still updates the item`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.itemChanged(any())
+                inventoryNotifierAdapterMock.itemChanged(any(), any())
             }.answers { }
 
             itemRepository.save(item1.copy(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
@@ -339,7 +339,7 @@ class SynqControllerTest(
                 productOwner = "NB",
                 quantityOnHand = 1.0,
                 hostName = "AXIELL",
-                confidentialProduct = false
+                location = "SYNQ_WAREHOUSE"
             )
 
         webTestClient
@@ -349,7 +349,6 @@ class SynqControllerTest(
             .uri("/inventory-reconciliation")
             .bodyValue(
                 SynqInventoryReconciliationPayload(
-                    warehouse = "Sikringsmagasin_2",
                     loadUnit =
                         listOf(
                             loadUnitTest,
