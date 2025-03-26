@@ -12,6 +12,8 @@ spring:
   # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
+  codec:
+    max-in-memory-size: 1000KB
 
 # Server port for the main application
 server:

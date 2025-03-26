@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.outboxMessages.ItemCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderCreated
 import no.nb.mlt.wls.domain.model.outboxMessages.OrderDeleted
@@ -244,6 +245,64 @@ class WLSService(
         return updatedOrder
     }
 
+    override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
+        val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
+        items
+            .groupBy { it.hostName }
+            .forEach { (hostName, syncItems) ->
+                transactionPort.executeInTransaction {
+                    val ids = syncItems.map { it.hostId }
+                    val existingItems = getItems(ids, hostName)
+                    val existingIds = existingItems.map { it.hostId }
+                    val missingIds = ids.toSet() - existingIds.toSet()
+
+                    missingIds.forEach {
+                        val syncItem = syncItemsById[(it to hostName)]!!
+                        val createdItem =
+                            itemRepository.createItem(
+                                Item(
+                                    hostId = syncItem.hostId,
+                                    hostName = syncItem.hostName,
+                                    description = syncItem.description,
+                                    itemCategory = syncItem.itemCategory,
+                                    preferredEnvironment = syncItem.currentEnvironment,
+                                    packaging = syncItem.packaging,
+                                    callbackUrl = null,
+                                    location = syncItem.location ?: UNKNOWN_LOCATION,
+                                    quantity = syncItem.quantity
+                                )
+                            )
+                        logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
+                    }
+
+                    existingItems.forEach { itemToUpdate ->
+                        val syncItem = syncItemsById[(itemToUpdate.hostId to hostName)]!!
+                        val oldQuantity = itemToUpdate.quantity
+                        itemToUpdate.setQuantity(syncItem.quantity)
+
+                        val oldLocation = itemToUpdate.location
+                        itemToUpdate.setLocation(syncItem.location ?: UNKNOWN_LOCATION)
+
+                        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
+                            itemRepository.updateLocationAndQuantity(
+                                itemToUpdate.hostId,
+                                itemToUpdate.hostName,
+                                itemToUpdate.location,
+                                itemToUpdate.quantity
+                            )
+                            logger.info {
+                                """
+                                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                                """.trimIndent()
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
     @Throws(OrderNotFoundException::class)
     suspend fun getOrderOrThrow(
         hostName: HostName,
@@ -274,9 +333,4 @@ class WLSService(
                 }
             }
         }
-
-    override fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
-        // TODO: Implement synchronization (reconciliation) of items from storage systems.
-        logger.warn { "Synchronizing items not implemented" }
-    }
 }

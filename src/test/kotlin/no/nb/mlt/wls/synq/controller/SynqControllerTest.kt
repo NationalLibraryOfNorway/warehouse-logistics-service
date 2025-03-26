@@ -339,7 +339,10 @@ class SynqControllerTest(
                 productOwner = "NB",
                 quantityOnHand = 1.0,
                 hostName = "AXIELL",
-                location = "SYNQ_WAREHOUSE"
+                location = "SYNQ_WAREHOUSE",
+                description = "Test description",
+                productCategory = "PAPER",
+                uom = "ESK"
             )
 
         webTestClient

@@ -112,6 +112,37 @@ class ItemRepositoryMongoAdapter(
 
         return getItem(hostName, hostId)!!
     }
+
+    override suspend fun updateLocationAndQuantity(
+        hostId: String,
+        hostName: HostName,
+        location: String,
+        quantity: Int
+    ): Item {
+        val itemsModified =
+            mongoRepo
+                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
+                .timeout(Duration.ofSeconds(8))
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
+                        } else {
+                            "Error while updating item"
+                        }
+                    }
+                }
+                .onErrorMap { ItemMovingException(it.message ?: "Item could not be updated", it) }
+                .awaitSingle()
+
+        if (itemsModified == 0L) {
+            logger.warn { "Item was not updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
+        } else {
+            logger.debug { "Item was updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
+        }
+
+        return getItem(hostName, hostId)!!
+    }
 }
 
 @Repository

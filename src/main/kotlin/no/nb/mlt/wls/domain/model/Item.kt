@@ -4,6 +4,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
+const val WITH_LENDER_LOCATION = "WITH_LENDER"
+const val UNKNOWN_LOCATION = "UNKNOWN"
+
 data class Item(
     val hostId: String,
     val hostName: HostName,
@@ -12,8 +15,8 @@ data class Item(
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
-    val location: String,
-    val quantity: Int
+    var location: String,
+    var quantity: Int
 ) {
     fun pickItem(amountPicked: Int): Item {
         val itemsInStockQuantity = quantity
@@ -28,12 +31,24 @@ data class Item(
         }
         val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
 
-        val location: String =
-            if (quantity == 0) {
-                "WITH_LENDER"
-            } else {
-                location
-            }
-        return this.copy(quantity = quantity, location = location)
+        this.setQuantity(quantity)
+        if (quantity == 0) {
+            this.setLocation(WITH_LENDER_LOCATION)
+        }
+        return this
+    }
+
+    fun setLocation(location: String): Item {
+        this.location = location
+        return this
+    }
+
+    fun setQuantity(quantity: Int): Item {
+        this.quantity = quantity
+        if (quantity == 0) {
+            this.location = UNKNOWN_LOCATION
+        }
+
+        return this
     }
 }

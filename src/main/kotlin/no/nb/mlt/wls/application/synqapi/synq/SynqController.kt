@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.security.InvalidParameterException
 
 private val logger = KotlinLogging.logger {}
 
@@ -213,40 +213,46 @@ class SynqController(
 
         val units =
             payload.loadUnit.map {
-                val mappedHostName = mapHostNameString(it.hostName)
+                val item =
+                    try {
+                        val mappedHostName = it.getMappedHostName()
 
-                if (mappedHostName == null) {
-                    logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
-                    return@map null
+                        if (mappedHostName == null) {
+                            logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
+                            return@map null
+                        }
+
+                        SynchronizeItems.ItemToSynchronize(
+                            hostId = it.productId,
+                            hostName = mappedHostName,
+                            location = it.location,
+                            quantity = it.quantityOnHand.toInt(),
+                            itemCategory = it.getMappedCategory(),
+                            packaging = it.getMappedUOM(),
+                            currentEnvironment = it.mapCurrentEnvironmentFromLocation(),
+                            description = if (it.description.isNullOrBlank()) "-" else it.description
+                        )
+                    } catch (e: InvalidParameterException) {
+                        logger.error { "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}" }
+                        null
+                    }
+
+                if (item != null) {
+                    logger.debug { "Synchronizing item: $item" }
                 }
 
-                SynchronizeItems.ItemToSynchronize(
-                    hostId = it.productId,
-                    hostName = mappedHostName,
-                    location = it.location,
-                    quantity = it.quantityOnHand.toInt()
-                )
+                item
             }.filterNotNull()
 
         logger.info { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
 
-        synchronizeItems.synchronizeItems(units)
+        try {
+            synchronizeItems.synchronizeItems(units)
+        } catch (e: Exception) {
+            logger.error(e) { "Error while synchronizing items" }
+        }
 
         return ResponseEntity.ok().build()
-    }
-}
-
-private fun mapHostNameString(hostNameString: String?): HostName? {
-    if (hostNameString.isNullOrBlank()) {
-        return HostName.NONE
-    }
-
-    return when (hostNameString.lowercase()) {
-        "alma" -> HostName.ALMA
-        "asta" -> HostName.ASTA
-        "mavis" -> HostName.MAVIS
-        "axiell" -> HostName.AXIELL
-        else -> null
     }
 }
 
