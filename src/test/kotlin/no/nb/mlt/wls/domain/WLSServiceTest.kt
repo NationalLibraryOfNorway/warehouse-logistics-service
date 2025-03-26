@@ -577,7 +577,7 @@ class WLSServiceTest {
                 hostName: HostName,
                 hostId: String
             ): Item? {
-                return items.first { it.hostName == hostName && it.hostId == hostId }
+                return items.firstOrNull { it.hostName == hostName && it.hostId == hostId }
             }
 
             override suspend fun getItems(
