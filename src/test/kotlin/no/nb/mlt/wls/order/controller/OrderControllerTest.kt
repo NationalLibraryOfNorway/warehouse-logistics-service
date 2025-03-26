@@ -16,7 +16,6 @@ import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
@@ -24,7 +23,6 @@ import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
 import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
 import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
 import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
-import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
@@ -71,9 +69,6 @@ class OrderControllerTest(
     @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
-    @SpykBean
-    private lateinit var outboxMessageProcessor: OutboxMessageProcessor
-
     @MockkBean
     private lateinit var synqAdapterMock: SynqAdapter
 
@@ -95,9 +90,6 @@ class OrderControllerTest(
                 .build()
 
         populateDb()
-        // We bypass the outbox processor, since the side effects caused by
-        // messages being processed in the background can cause tests to randomly fail
-        coEvery { outboxMessageProcessor.handleEvent(any()) } answers {}
     }
 
     @Test
@@ -265,10 +257,6 @@ class OrderControllerTest(
 
     @Test
     fun `Should not save order if outbox message fails to persist`() {
-        // Just calling "toOrder" on a payload fails, as it does not
-        // do the same mapping as the OrderDTO
-        val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
-
         runTest {
             coEvery { storageEventRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
             coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
@@ -539,25 +527,9 @@ class OrderControllerTest(
 // //////////////////////////////// Test Help //////////////////////////////////
 // /////////////////////////////////////////////////////////////////////////////
 
-    private val testItems =
-        listOf(
-            Item(
-                "item-456",
-                HostName.AXIELL,
-                "description",
-                ItemCategory.PAPER,
-                Environment.NONE,
-                Packaging.NONE,
-                "callbackUrl",
-                "SYNQ_WAREHOUSE",
-                1
-            )
-        )
-
     /**
      * Payload which is used in most tests
      */
-
     private val testOrderPayload =
         ApiOrderPayload(
             hostName = HostName.AXIELL,
