@@ -79,7 +79,7 @@ fun Order.toSynqStandardPayload(): SynqOrderPayload {
 
 private fun Order.toSynqPayloadByType(type: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
-        orderId = hostName.toString().uppercase() + generatePostfix(type) + DELIMITER + hostOrderId,
+        orderId = generateOrderId(type),
         orderType = type,
         // When order should be dispatched, AFAIK it's not used by us as we don't receive orders in future
         dispatchDate = LocalDateTime.now(),
@@ -117,12 +117,13 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.ABOX -> ABOX
     }
 
-// this needs a better name
-fun generatePostfix(type: SynqOrderPayload.SynqOrderType): String {
-    return when (type) {
-        SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
-        else -> "-SD"
-    }
+private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String {
+    val postfix =
+        when (type) {
+            SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
+            else -> "-SD"
+        }
+    return hostName.toString().uppercase() + postfix + DELIMITER + hostOrderId
 }
 
 /**
