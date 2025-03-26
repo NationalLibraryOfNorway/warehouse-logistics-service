@@ -3,6 +3,7 @@ package no.nb.mlt.wls.order.controller
 import com.ninjasquad.springmockk.MockkBean
 import com.ninjasquad.springmockk.SpykBean
 import io.mockk.coEvery
+import io.mockk.coJustRun
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
@@ -22,7 +23,6 @@ import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
 import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
 import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
 import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
-import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
@@ -31,7 +31,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
-import no.nb.mlt.wls.infrastructure.synq.SynqAdapter
+import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -70,7 +70,7 @@ class OrderControllerTest(
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
     @MockkBean
-    private lateinit var synqAdapterMock: SynqAdapter
+    private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
     @SpykBean
     private lateinit var storageEventRepository: EventRepository<StorageEvent>
@@ -257,13 +257,9 @@ class OrderControllerTest(
 
     @Test
     fun `Should not save order if outbox message fails to persist`() {
-        // Just calling "toOrder" on a payload fails, as it does not
-        // do the same mapping as the OrderDTO
-        val testOrder = testOrderPayload.toCreateOrderDTO().toOrder()
-
         runTest {
             coEvery { storageEventRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
-            coEvery { synqAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
 
             webTestClient
                 .mutateWith(csrf())
@@ -433,9 +429,8 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
-            coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
-            } answers {}
+            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
                 .mutateWith(csrf())
@@ -490,7 +485,7 @@ class OrderControllerTest(
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqStandardAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -511,7 +506,7 @@ class OrderControllerTest(
     fun `deleteOrder with order that does not exist returns 404`() =
         runTest {
             coEvery {
-                synqAdapterMock.deleteOrder(any(), any())
+                synqStandardAdapterMock.deleteOrder(any(), any())
             } answers {}
 
             webTestClient
@@ -535,7 +530,6 @@ class OrderControllerTest(
     /**
      * Payload which is used in most tests
      */
-
     private val testOrderPayload =
         ApiOrderPayload(
             hostName = HostName.AXIELL,

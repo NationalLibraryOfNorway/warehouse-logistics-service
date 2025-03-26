@@ -22,6 +22,14 @@ interface StorageSystemFacade {
     suspend fun canHandleLocation(location: String): Boolean
 
     fun canHandleItem(item: Item): Boolean
+
+    companion object {
+        /**
+         * Used to split hostname and the host order ID when being sent to storage systems.
+         * This is due to hosts potentially sharing the same IDs between each other (E.G. numeric ids)
+         */
+        const val DELIMITER = "---"
+    }
 }
 
 class StorageSystemException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
