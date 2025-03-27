@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.ninjasquad.springmockk.SpykBean
 import com.ninjasquad.springmockk.SpykDefinition
 import io.mockk.verify
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -41,6 +42,8 @@ class InventoryNotifierAdapterTest {
 
     private lateinit var testItem: Item
     private lateinit var testOrder: Order
+    private lateinit var mockServerItemCallbackPath: String
+    private lateinit var mockServerOrderCallbackPath: String
 
     @BeforeEach
     fun setUp() {
@@ -57,6 +60,8 @@ class InventoryNotifierAdapterTest {
                 ResolvableType.forClass(WebClient::class.java)
             ).createSpy(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
         inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper())
+
+        mockServerItemCallbackPath = mockWebServer.url("/item-callback").toString()
         testItem =
             Item(
                 hostId = "item-id",
@@ -65,10 +70,12 @@ class InventoryNotifierAdapterTest {
                 itemCategory = ItemCategory.PAPER,
                 preferredEnvironment = Environment.NONE,
                 packaging = Packaging.NONE,
-                callbackUrl = mockWebServer.url("/item-callback").toString(),
+                callbackUrl = mockServerItemCallbackPath,
                 location = "location",
                 quantity = 1
             )
+
+        mockServerOrderCallbackPath = mockWebServer.url("/order-callback").toString()
         testOrder =
             Order(
                 hostName = HostName.AXIELL,
@@ -80,7 +87,7 @@ class InventoryNotifierAdapterTest {
                 contactPerson = "contactPerson",
                 contactEmail = "contact@ema.il",
                 note = null,
-                callbackUrl = mockWebServer.url("/order-callback").toString()
+                callbackUrl = mockServerOrderCallbackPath
             )
     }
 
@@ -148,7 +155,7 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should use proxied web client when notifying of item belonging to proxied host`() {
-        val item = testItem.copy(hostName = HostName.ASTA)
+        val item = createTestItem(hostName = HostName.ASTA, callbackUrl = mockServerItemCallbackPath)
         val timestamp = Instant.now()
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
         inventoryNotifierAdapter.itemChanged(item, timestamp)

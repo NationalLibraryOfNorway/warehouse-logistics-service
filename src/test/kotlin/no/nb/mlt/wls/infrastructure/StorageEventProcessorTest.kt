@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -208,7 +209,7 @@ class StorageEventProcessorTest {
                 coEvery { getItem(HostName.AXIELL, "mlt-123456") } returns null
             }
 
-        val testItem = testItem.copy(location = "SOMEWHERE")
+        val testItem = createTestItem(location = "SOMEWHERE")
 
         val messageProcessor =
             StorageEventProcessorAdapter(
@@ -227,7 +228,7 @@ class StorageEventProcessorTest {
 
     @Test
     fun `UpdateOrder should mark as processed if successful`() {
-        val extendedTestItemList = testItemList.plus(testItem.copy(hostId = "mlt-15243"))
+        val extendedTestItemList = testItemList.plus(createTestItem(hostId = "mlt-15243", location = "valid-location"))
         val itemRepoMock =
             mockk<ItemRepository> {
                 coEvery { getItems(HostName.AXIELL, listOf("mlt-12345", "mlt-54321", "mlt-15243")) } returns extendedTestItemList
@@ -322,7 +323,7 @@ class StorageEventProcessorTest {
         )
 
     private val testItem =
-        Item(
+        createTestItem(
             hostName = HostName.AXIELL,
             hostId = "mlt-12345",
             description = "description",
@@ -334,5 +335,19 @@ class StorageEventProcessorTest {
             quantity = 1
         )
 
-    private val testItemList = listOf(testItem, testItem.copy(hostId = "mlt-54321"))
+    private val testItemList =
+        listOf(
+            testItem,
+            createTestItem(
+                hostName = HostName.AXIELL,
+                hostId = "mlt-54321",
+                description = "description",
+                itemCategory = ItemCategory.PAPER,
+                preferredEnvironment = Environment.NONE,
+                packaging = Packaging.NONE,
+                callbackUrl = "https://callback-wls.no/item",
+                location = "valid-location",
+                quantity = 1
+            )
+        )
 }

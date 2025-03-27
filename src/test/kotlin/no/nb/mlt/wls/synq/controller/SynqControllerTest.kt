@@ -17,6 +17,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqBatchMoveItemPayload
 import no.nb.mlt.wls.application.synqapi.synq.SynqInventoryReconciliationPayload
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -312,7 +313,7 @@ class SynqControllerTest(
                 inventoryNotifierAdapterMock.itemChanged(any(), any())
             }.answers { }
 
-            itemRepository.save(item1.copy(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
+            itemRepository.save(createTestItem(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
 
             webTestClient
                 .mutateWith(csrf())

@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
 import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
 import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
@@ -354,7 +353,7 @@ class WLSService(
                     preferredEnvironment = syncItem.currentPreferredEnvironment,
                     packaging = syncItem.packaging,
                     callbackUrl = null,
-                    location = syncItem.location ?: UNKNOWN_LOCATION,
+                    location = syncItem.location,
                     quantity = syncItem.quantity
                 )
             )
@@ -366,11 +365,11 @@ class WLSService(
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
         val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
-        val oldQuantity = itemToUpdate.quantity
-        itemToUpdate.setQuantity(syncItem.quantity)
 
+        val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
-        itemToUpdate.setLocation(syncItem.location ?: UNKNOWN_LOCATION)
+
+        itemToUpdate.synchronizeQuantityAndLocation(syncItem.quantity, syncItem.location)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
             itemRepository.updateLocationAndQuantity(
