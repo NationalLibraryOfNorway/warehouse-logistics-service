@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
@@ -13,7 +14,7 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -28,10 +29,14 @@ import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventReposito
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
+import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
+import no.nb.mlt.wls.testItem
+import no.nb.mlt.wls.testOrder
+import no.nb.mlt.wls.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -69,6 +74,13 @@ class OrderControllerTest(
     @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  Test Setup  /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
     @MockkBean
     private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
@@ -91,6 +103,12 @@ class OrderControllerTest(
 
         populateDb()
     }
+
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  Test Functions  ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 
     @Test
     fun `createOrder with valid payload creates order and outbox message`() =
@@ -283,7 +301,7 @@ class OrderControllerTest(
             duplicateOrderPayload.copy(
                 contactPerson = "new person",
                 callbackUrl = "https://new-callback.com/order",
-                orderLine = listOf(OrderLine("item-123", null))
+                orderLine = listOf(OrderLine("testItem-01", null))
             )
 
         runTest {
@@ -298,7 +316,7 @@ class OrderControllerTest(
                 .expectBody<ApiOrderPayload>()
                 .consumeWith { response ->
                     val orderLines = response.responseBody?.orderLine
-                    orderLines?.map { it ->
+                    orderLines?.map {
                         assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
                     }
                     assertThat(response.responseBody?.contactPerson).isEqualTo(testPayload.contactPerson)
@@ -323,7 +341,7 @@ class OrderControllerTest(
                 status = Order.Status.IN_PROGRESS,
                 orderLine = listOf(OrderLine("this-does-not-exist", null))
             )
-        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testUpdatePayload = testPayload.toOrder().toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
 
@@ -363,7 +381,7 @@ class OrderControllerTest(
     @Test
     fun `updateOrder when order is being processed errors`() {
         val testPayload = testOrderPayload.copy(hostOrderId = "mlt-test-order-processing", status = Order.Status.IN_PROGRESS)
-        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testUpdatePayload = testPayload.toOrder().toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
 
@@ -407,7 +425,7 @@ class OrderControllerTest(
 
     @Test
     fun `updateOrder when order is complete returns 409`() {
-        val testPayload = completeOrder.toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testPayload = completeOrder.toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(completeOrder.toMongoOrder()).awaitSingle()
 
@@ -523,115 +541,16 @@ class OrderControllerTest(
                 .hasSize(0)
         }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Payload which is used in most tests
-     */
-    private val testOrderPayload =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-123",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  Test Helpers  ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Payload which will exist in the database
-     */
 
-    private val duplicateOrderPayload =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-456",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
-
-    private val orderInProgress =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-in-progress",
-            status = Order.Status.IN_PROGRESS,
-            orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
-
-    private val completeOrder =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-completed",
-            status = Order.Status.COMPLETED,
-            orderLine =
-                listOf(
-                    Order.OrderItem("item-123", Order.OrderItem.Status.PICKED)
-                ),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
-
-    /**
-     * Populate the database with items and orders for testing
-     */
+    private val testOrderPayload = testOrder.toApiPayload()
+    private val duplicateOrderPayload = testOrderPayload.copy(hostOrderId = "duplicate-order-id")
+    private val orderInProgress = testOrder.copy(hostOrderId = "order-in-progress", status = Order.Status.IN_PROGRESS)
+    private val completeOrder = testOrder.copy(hostOrderId = "order-completed", status = Order.Status.COMPLETED)
 
     fun populateDb() {
         runBlocking {
@@ -639,42 +558,12 @@ class OrderControllerTest(
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
-            val allItems = testOrderPayload.orderLine + duplicateOrderPayload.orderLine
+            val allItems = (testOrderPayload.orderLine + duplicateOrderPayload.orderLine).toSet()
+            val mongoItems = allItems.map { testItem.copy(hostId = it.hostId).toMongoItem() }
             itemMongoRepository
                 .deleteAll()
-                .thenMany(
-                    Flux.fromIterable(
-                        allItems.map {
-                            MongoItem(
-                                hostId = it.hostId,
-                                hostName = testOrderPayload.hostName,
-                                description = "description",
-                                itemCategory = ItemCategory.PAPER,
-                                preferredEnvironment = Environment.NONE,
-                                packaging = Packaging.NONE,
-                                location = "location",
-                                quantity = 1,
-                                callbackUrl = "https://callback-wls.no/item"
-                            )
-                        }
-                    )
-                )
-                .flatMap { itemMongoRepository.save(it) }
+                .thenMany(itemMongoRepository.saveAll(mongoItems))
                 .awaitLast()
         }
     }
-
-    private fun ApiOrderPayload.toOrder() =
-        Order(
-            hostName = hostName,
-            hostOrderId = hostOrderId,
-            status = status ?: Order.Status.NOT_STARTED,
-            orderLine = orderLine.map { it.toOrderItem() },
-            orderType = orderType,
-            address = address,
-            contactPerson = contactPerson,
-            contactEmail = contactEmail,
-            note = note,
-            callbackUrl = callbackUrl
-        )
 }

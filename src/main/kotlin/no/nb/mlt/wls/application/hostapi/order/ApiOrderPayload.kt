@@ -151,7 +151,7 @@ data class ApiOrderPayload(
     }
 }
 
-fun Order.toApiOrderPayload() =
+fun Order.toApiPayload() =
     ApiOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,

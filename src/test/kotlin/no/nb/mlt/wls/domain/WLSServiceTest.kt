@@ -12,7 +12,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -23,7 +22,6 @@ import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
-import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -36,12 +34,22 @@ import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import no.nb.mlt.wls.testItem
+import no.nb.mlt.wls.testOrder
+import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class WLSServiceTest {
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////  Test Setup  /////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
     private val itemRepoMock = mockk<ItemRepository>()
     private val orderRepoMock = mockk<OrderRepository>()
     private val catalogEventRepository = mockk<EventRepository<CatalogEvent>>()
@@ -75,8 +83,11 @@ class WLSServiceTest {
             )
     }
 
-    // TODO: Need to find an elegant way to test stuff going on inside the transaction port
-    //       Unless we can accept it as it is and hope everything inside goes well
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  Test Functions  ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
@@ -381,20 +392,6 @@ class WLSServiceTest {
         }
     }
 
-    private suspend fun callUpdateOrder() =
-        cut.updateOrder(
-            updatedOrder.hostName,
-            updatedOrder.hostOrderId,
-            updatedOrder.orderLine.map { it.hostId },
-            updatedOrder.orderType,
-            updatedOrder.contactPerson,
-            updatedOrder.address,
-            updatedOrder.note,
-            updatedOrder.callbackUrl
-        )
-
-    // TODO test UpdateOrderStatus
-
     @Test
     fun `getItem should return requested item when it exists in DB`() {
         coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
@@ -434,6 +431,11 @@ class WLSServiceTest {
             assertThat(orderResult).isNull()
         }
     }
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  Test Helpers  ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `should update quantity and location, and add missing when synchronizing items`() {
@@ -502,19 +504,6 @@ class WLSServiceTest {
         }
     }
 
-    private val testItem =
-        Item(
-            hostName = HostName.AXIELL,
-            hostId = "mlt-12345",
-            description = "Tyven, tyven skal du hete",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "UNKNOWN",
-            quantity = 0
-        )
-
     private val testMoveItemPayload =
         MoveItemPayload(
             hostName = testItem.hostName,
@@ -523,26 +512,12 @@ class WLSServiceTest {
             location = "KNOWN_LOCATION"
         )
 
-    private val testOrder =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "mlt-12345-order",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            address = createOrderAddress(),
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
-
     private val updatedOrder =
         testOrder.copy(
             orderLine =
                 listOf(
                     Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
-                    Order.OrderItem("mlt-54321", Order.OrderItem.Status.NOT_STARTED)
+                    Order.OrderItem("testItem-02", Order.OrderItem.Status.NOT_STARTED)
                 )
         )
 
@@ -559,19 +534,16 @@ class WLSServiceTest {
             callbackUrl = testOrder.callbackUrl
         )
 
-    private fun createOrderAddress(): Order.Address {
-        return Order.Address(null, null, null, null, null, null, null)
-    }
-
-    private fun Item.toItemMetadata() =
-        ItemMetadata(
-            hostId = hostId,
-            hostName = hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl
+    private suspend fun callUpdateOrder() =
+        cut.updateOrder(
+            updatedOrder.hostName,
+            updatedOrder.hostOrderId,
+            updatedOrder.orderLine.map { it.hostId },
+            updatedOrder.orderType,
+            updatedOrder.contactPerson,
+            updatedOrder.address,
+            updatedOrder.note,
+            updatedOrder.callbackUrl
         )
 
     private fun createInMemItemRepo(items: MutableList<Item>): ItemRepository {
