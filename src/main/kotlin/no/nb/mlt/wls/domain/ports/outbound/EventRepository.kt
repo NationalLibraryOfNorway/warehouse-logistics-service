@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
-import no.nb.mlt.wls.domain.model.Event
+import no.nb.mlt.wls.domain.model.events.Event
 
 interface EventRepository<T : Event> {
     suspend fun save(event: T): T

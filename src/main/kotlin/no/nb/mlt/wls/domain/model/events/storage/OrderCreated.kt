@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain.model.storageEvents
+package no.nb.mlt.wls.domain.model.events.storage
 
 import no.nb.mlt.wls.domain.model.Order
 import java.util.UUID

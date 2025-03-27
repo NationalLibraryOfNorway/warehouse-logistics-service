@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain.model.catalogEvents
+package no.nb.mlt.wls.domain.model.events.catalog
 
 import no.nb.mlt.wls.domain.model.Item
 import java.time.Instant
