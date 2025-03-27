@@ -4,7 +4,6 @@ import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
@@ -13,62 +12,18 @@ import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqCategory
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
+import no.nb.mlt.wls.testItem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class ItemModelConversionTest {
-    private val testItemPayload =
-        ApiItemPayload(
-            hostId = "mlt-test-1234",
-            hostName = HostName.AXIELL,
-            description = "Tyven skal du hete",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "",
-            quantity = 1
-        )
 
-    private val testItem =
-        Item(
-            hostId = "mlt-test-1234",
-            hostName = HostName.AXIELL,
-            description = "Tyven skal du hete",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "",
-            quantity = 1
-        )
 
-    private val testSynqPayload =
-        SynqProductPayload(
-            productId = "mlt-test-1234",
-            owner = SynqOwner.NB,
-            barcode = SynqProductPayload.Barcode("mlt-test-1234"),
-            description = "Tyven skal du hete",
-            productCategory = toSynqCategory(ItemCategory.PAPER),
-            productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
-            false,
-            hostName = HostName.AXIELL.toString()
-        )
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////  Test Functions  ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-    private val testItemNotificationPayload =
-        NotificationItemPayload(
-            hostId = "mlt-test-1234",
-            hostName = HostName.AXIELL,
-            description = "Tyven skal du hete",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "",
-            quantity = 1,
-            eventTimestamp = Instant.now()
-        )
 
     @Test
     fun `item converts to API payload`() {
@@ -123,4 +78,49 @@ class ItemModelConversionTest {
         assertThat(item.location).isEqualTo(testItem.location)
         assertThat(item.quantity).isEqualTo(testItem.quantity)
     }
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  Test Helpers  ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+    private val testItemPayload =
+        ApiItemPayload(
+            hostId = "testItem-01",
+            hostName = HostName.AXIELL,
+            description = "description",
+            itemCategory = ItemCategory.PAPER,
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            callbackUrl = "https://callback-wls.no/item",
+            location = "SYNQ_WAREHOUSE",
+            quantity = 1
+        )
+
+    private val testSynqPayload =
+        SynqProductPayload(
+            productId = "testItem-01",
+            owner = SynqOwner.NB,
+            barcode = SynqProductPayload.Barcode("testItem-01"),
+            description = "description",
+            productCategory = toSynqCategory(ItemCategory.PAPER),
+            productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
+            false,
+            hostName = HostName.AXIELL.toString()
+        )
+
+    private val testItemNotificationPayload =
+        NotificationItemPayload(
+            hostId = "testItem-01",
+            hostName = HostName.AXIELL,
+            description = "description",
+            itemCategory = ItemCategory.PAPER,
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            callbackUrl = "https://callback-wls.no/item",
+            location = "SYNQ_WAREHOUSE",
+            quantity = 1,
+            eventTimestamp = Instant.now()
+        )
 }

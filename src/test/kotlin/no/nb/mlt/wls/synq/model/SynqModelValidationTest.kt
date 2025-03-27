@@ -20,13 +20,10 @@ class SynqModelValidationTest {
 
     @Test
     fun `SynqOrderStatusUpdatePayload with blank warehouse should fail validation`() {
-        // Given
         val payload = validSynqOrderStatusUpdatePayload.copy(warehouse = "")
 
-        // When
         val thrown = catchThrowable(payload::validate)
 
-        // Then
         then(thrown)
             .isNotNull()
             .isInstanceOf(ValidationException::class.java)
