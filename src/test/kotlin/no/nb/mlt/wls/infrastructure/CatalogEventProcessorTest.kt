@@ -10,9 +10,9 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
+import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import org.assertj.core.api.Assertions.assertThat

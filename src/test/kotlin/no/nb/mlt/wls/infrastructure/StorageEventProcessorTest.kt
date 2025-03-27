@@ -11,11 +11,11 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
+import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
+import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
