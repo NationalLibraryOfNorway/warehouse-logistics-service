@@ -80,7 +80,8 @@ class ItemControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testItemPayload)
                 .exchange()
-                .expectStatus().isCreated
+                .expectStatus()
+                .isCreated
 
             val item = repository.findByHostNameAndHostId(testItemPayload.hostName, testItemPayload.hostId).awaitSingle()
 
@@ -103,7 +104,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateItemPayload)
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 assertThat(response.responseBody?.hostId).isEqualTo(duplicateItemPayload.hostId)
@@ -121,9 +123,9 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateItemPayload.copy(description = "Test")
-            )
-            .exchange()
-            .expectStatus().isOk
+            ).exchange()
+            .expectStatus()
+            .isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 // This value is different in payload, response value should be the same as in DB
@@ -140,7 +142,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload.copy(hostId = ""))
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus()
+            .isBadRequest
     }
 
     @Test
@@ -151,7 +154,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isUnauthorized
+            .expectStatus()
+            .isUnauthorized
     }
 
     @Test
@@ -168,7 +172,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
 
         webTestClient
             .mutateWith(csrf())
@@ -177,7 +182,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
     }
 
     private val testItem = createTestItem()
