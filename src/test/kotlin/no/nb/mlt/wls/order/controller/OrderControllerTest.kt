@@ -15,6 +15,7 @@ import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiPayload
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -559,7 +560,7 @@ class OrderControllerTest(
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
             val allItems = (testOrderPayload.orderLine + duplicateOrderPayload.orderLine).toSet()
-            val mongoItems = allItems.map { testItem.copy(hostId = it.hostId).toMongoItem() }
+            val mongoItems = allItems.map { createTestItem(hostId = it.hostId).toMongoItem() }
             itemMongoRepository
                 .deleteAll()
                 .thenMany(itemMongoRepository.saveAll(mongoItems))
