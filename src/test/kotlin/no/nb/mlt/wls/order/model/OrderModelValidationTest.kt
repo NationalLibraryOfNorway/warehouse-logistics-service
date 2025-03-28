@@ -1,21 +1,18 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
-import no.nb.mlt.wls.application.hostapi.order.ApiUpdateOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.application.hostapi.order.toApiPayload
+import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.toApiUpdatePayload
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
 import org.assertj.core.api.BDDAssertions.thenCode
 import org.junit.jupiter.api.Test
 
 class OrderModelValidationTest {
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// OrderLine //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
-
     @Test
     fun `valid orderLine should pass validation`() {
         thenCode(validOrderLine::validate).doesNotThrowAnyException()
@@ -27,15 +24,8 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(orderLine::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("hostId")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostId")
     }
-
-// /////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////// Address ///////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `valid address should pass validation`() {
@@ -48,21 +38,11 @@ class OrderModelValidationTest {
         val invalidCityAddress = validAddress.copy(city = "")
 
         val error = catchThrowable(invalidAddress::validate)
-        then(error)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("recipient must not")
+        then(error).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("recipient must not")
 
         val anotherError = catchThrowable(invalidCityAddress::validate)
-        then(anotherError)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("city must not")
+        then(anotherError).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("city must not")
     }
-
-// /////////////////////////////////////////////////////////////////////////////
-// ////////////////////////////////// Order ////////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `valid order should pass validation`() {
@@ -75,10 +55,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("hostOrderId")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostOrderId")
     }
 
     @Test
@@ -87,10 +64,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("order line")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line")
     }
 
     @Test
@@ -99,10 +73,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("callback URL")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("callback URL")
     }
 
     @Test
@@ -111,10 +82,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("order line's")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line's")
     }
 
     @Test
@@ -123,15 +91,8 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("Invalid address")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("Invalid address")
     }
-
-// /////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////// OrderUpdate // //////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `valid update order should pass validation`() {
@@ -144,10 +105,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("hostOrderId")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostOrderId")
     }
 
     @Test
@@ -156,10 +114,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("order line")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line")
     }
 
     @Test
@@ -168,10 +123,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("callback URL")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("callback URL")
     }
 
     @Test
@@ -180,10 +132,7 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("order line's")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line's")
     }
 
     @Test
@@ -192,52 +141,19 @@ class OrderModelValidationTest {
 
         val thrown = catchThrowable(order::validate)
 
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("address")
+        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("address")
     }
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
 
-    val validOrderLine = OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)
+    private val testItem = createTestItem()
 
-    val validAddress =
-        Order.Address(
-            recipient = "real name",
-            addressLine1 = "real street",
-            addressLine2 = null,
-            postcode = "12345-WA",
-            city = "england",
-            region = "cornwall",
-            country = "london"
-        )
+    private val testOrder = createTestOrder()
 
-    val validOrder =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-123",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(validOrderLine),
-            orderType = Order.Type.LOAN,
-            address = validAddress,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            callbackUrl = "https://callback-wls.no/order",
-            note = "note"
-        )
+    private val validOrderLine = OrderLine(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)
 
-    val validUpdateOrderPayload =
-        ApiUpdateOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-123",
-            orderLine = listOf(validOrderLine),
-            orderType = Order.Type.LOAN,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            address = validAddress,
-            callbackUrl = "https://callback-wls.no/order",
-            note = "note"
-        )
+    // Can safely use address since testOrder object (should) have it set
+    private val validAddress = testOrder.address!!
+
+    private val validOrder = testOrder.toApiPayload()
+
+    private val validUpdateOrderPayload = testOrder.toApiUpdatePayload()
 }

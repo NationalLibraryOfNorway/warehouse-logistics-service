@@ -5,7 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 
-interface SynchronizeItems {
+fun interface SynchronizeItems {
     suspend fun synchronizeItems(items: List<ItemToSynchronize>)
 
     data class ItemToSynchronize(

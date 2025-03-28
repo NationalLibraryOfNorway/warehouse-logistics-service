@@ -130,6 +130,8 @@ data class Order(
 
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
 
+    private fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
+
     /**
      * Delete the order as long as it is possible.
      *
@@ -249,5 +251,3 @@ data class Order(
         DIGITIZATION
     }
 }
-
-fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)

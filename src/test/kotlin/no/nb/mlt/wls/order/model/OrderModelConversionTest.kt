@@ -3,7 +3,8 @@ package no.nb.mlt.wls.order.model
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
-import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiPayload
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
@@ -14,125 +15,16 @@ import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toAutostorePayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqStandardPayload
+import no.nb.mlt.wls.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDateTime
 
 class OrderModelConversionTest {
-    private val testApiOrderPayload =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "hostOrderId",
-            status = null,
-            orderLine = listOf(),
-            orderType = Order.Type.LOAN,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "address",
-                    addressLine2 = "street",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            callbackUrl = "callbackUrl",
-            note = "note"
-        )
-
-    private val testOrder =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "hostOrderId",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "address",
-                    addressLine2 = "street",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            callbackUrl = "callbackUrl",
-            note = "note"
-        )
-
-    private val testSynqOrderPayload =
-        SynqOrderPayload(
-            orderId = "AXIELL-SD---hostOrderId",
-            orderType = SynqOrderPayload.SynqOrderType.STANDARD,
-            dispatchDate = LocalDateTime.now(),
-            orderDate = LocalDateTime.now(),
-            priority = 5,
-            owner = SynqOwner.NB,
-            orderLine =
-                listOf(
-                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
-                ),
-            shippingAddress =
-                ShippingAddress(
-                    ShippingAddress.Address(
-                        "contactPerson"
-                    )
-                )
-        )
-
-    private val testSynqAutostoreOrderPayload =
-        SynqOrderPayload(
-            orderId = "AXIELL-AS---hostOrderId",
-            orderType = SynqOrderPayload.SynqOrderType.AUTOSTORE,
-            dispatchDate = LocalDateTime.now(),
-            orderDate = LocalDateTime.now(),
-            priority = 5,
-            owner = SynqOwner.NB,
-            orderLine =
-                listOf(
-                    SynqOrderPayload.OrderLine(1, "hostItemId", 1.0)
-                ),
-            shippingAddress =
-                ShippingAddress(
-                    ShippingAddress.Address(
-                        "contactPerson"
-                    )
-                )
-        )
-
-    private val testOrderNotification =
-        NotificationOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "hostOrderId",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(NotificationOrderPayload.OrderLine("hostItemId", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "address",
-                    addressLine2 = "street",
-                    city = "city",
-                    region = "region",
-                    postcode = "postcode",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "callbackUrl",
-            eventTimestamp = Instant.now()
-        )
-
     @Test
     fun `order converts to API payload`() {
-        val payload = testOrder.toApiOrderPayload()
+        val payload = testOrder.toApiPayload()
 
         assertThat(payload.hostName).isEqualTo(testOrder.hostName)
         assertThat(payload.hostOrderId).isEqualTo(testOrder.hostOrderId)
@@ -209,18 +101,6 @@ class OrderModelConversionTest {
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
 
-    private val testOrderLine =
-        OrderLine(
-            hostId = "hostItemId",
-            status = null
-        )
-
-    private val testOrderItem =
-        Order.OrderItem(
-            hostId = "hostItemId",
-            status = Order.OrderItem.Status.NOT_STARTED
-        )
-
     @Test
     fun `OrderLine converts to OrderItem`() {
         val orderItem = testOrderLine.toOrderItem()
@@ -248,17 +128,106 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
-    private fun ApiOrderPayload.toOrder() =
-        Order(
-            hostName = hostName,
-            hostOrderId = hostOrderId,
-            status = status ?: Order.Status.NOT_STARTED,
-            orderLine = orderLine.map { it.toOrderItem() },
-            orderType = orderType,
-            contactPerson = contactPerson,
-            contactEmail = contactEmail,
-            address = address,
-            callbackUrl = callbackUrl,
-            note = note
+    private val testOrder = createTestOrder()
+
+    private val testApiOrderPayload =
+        ApiOrderPayload(
+            hostName = HostName.AXIELL,
+            hostOrderId = "testOrder-01",
+            status = null,
+            orderLine = listOf(),
+            orderType = Order.Type.LOAN,
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    postcode = "postcode",
+                    city = "city",
+                    region = "region",
+                    country = "country"
+                ),
+            callbackUrl = "https://callback-wls.no/order",
+            note = "note"
+        )
+
+    private val testSynqOrderPayload =
+        SynqOrderPayload(
+            orderId = "AXIELL-SD---testOrder-01",
+            orderType = SynqOrderPayload.SynqOrderType.STANDARD,
+            dispatchDate = LocalDateTime.now(),
+            orderDate = LocalDateTime.now(),
+            priority = 5,
+            owner = SynqOwner.NB,
+            orderLine =
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "testItem-01", 1.0),
+                    SynqOrderPayload.OrderLine(2, "testItem-02", 1.0)
+                ),
+            shippingAddress =
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
+                )
+        )
+
+    private val testSynqAutostoreOrderPayload =
+        SynqOrderPayload(
+            orderId = "AXIELL-AS---testOrder-01",
+            orderType = SynqOrderPayload.SynqOrderType.AUTOSTORE,
+            dispatchDate = LocalDateTime.now(),
+            orderDate = LocalDateTime.now(),
+            priority = 5,
+            owner = SynqOwner.NB,
+            orderLine =
+                listOf(
+                    SynqOrderPayload.OrderLine(1, "testItem-01", 1.0),
+                    SynqOrderPayload.OrderLine(2, "testItem-02", 1.0)
+                ),
+            shippingAddress =
+                ShippingAddress(
+                    ShippingAddress.Address(
+                        "contactPerson"
+                    )
+                )
+        )
+
+    private val testOrderNotification =
+        NotificationOrderPayload(
+            hostName = HostName.AXIELL,
+            hostOrderId = "testOrder-01",
+            status = Order.Status.NOT_STARTED,
+            orderLine = listOf(NotificationOrderPayload.OrderLine("testItem-01", Order.OrderItem.Status.NOT_STARTED)),
+            orderType = Order.Type.LOAN,
+            address =
+                Order.Address(
+                    recipient = "recipient",
+                    addressLine1 = "addressLine1",
+                    addressLine2 = "addressLine2",
+                    city = "city",
+                    region = "region",
+                    postcode = "postcode",
+                    country = "country"
+                ),
+            contactPerson = "contactPerson",
+            contactEmail = "contact@ema.il",
+            note = "note",
+            callbackUrl = "https://callback-wls.no/order",
+            eventTimestamp = Instant.now()
+        )
+
+    private val testOrderLine =
+        OrderLine(
+            hostId = "testItem-01",
+            status = null
+        )
+
+    private val testOrderItem =
+        Order.OrderItem(
+            hostId = "testItem-01",
+            status = Order.OrderItem.Status.NOT_STARTED
         )
 }

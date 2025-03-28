@@ -4,15 +4,11 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import no.nb.mlt.wls.domain.model.Environment
-import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
+import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
+import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import org.assertj.core.api.Assertions.assertThat
@@ -22,32 +18,6 @@ import org.springframework.cloud.gateway.support.TimeoutException
 import java.time.Instant
 
 class CatalogEventProcessorTest {
-    private val catalogMessageRepoMock =
-        object : EventRepository<CatalogEvent> {
-            val processed: MutableList<CatalogEvent> = mutableListOf()
-
-            override suspend fun save(event: CatalogEvent): CatalogEvent {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun getAll(): List<CatalogEvent> {
-                TODO("Not yet implemented")
-            }
-
-            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<CatalogEvent>()
-
-            override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
-                processed.add(event)
-                return event
-            }
-        }
-
-    private val happyInventoryNotifierMock =
-        mockk<InventoryNotifier> {
-            coEvery { itemChanged(any(), any()) } returns Unit
-            coEvery { orderChanged(any(), any()) } returns Unit
-        }
-
     @Test
     fun `order update should call inventory notifier and mark message as processed`() {
         val messageProcessor =
@@ -116,38 +86,33 @@ class CatalogEventProcessorTest {
         }
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
+    private val testItem = createTestItem()
 
-    private val testOrder =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "mlt-12345-order",
-            status = Order.Status.NOT_STARTED,
-            orderLine =
-                listOf(
-                    Order.OrderItem("mlt-12345", Order.OrderItem.Status.NOT_STARTED),
-                    Order.OrderItem("mlt-54321", Order.OrderItem.Status.NOT_STARTED)
-                ),
-            orderType = Order.Type.LOAN,
-            address = null,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = null,
-            callbackUrl = "https://callback-wls.no/order"
-        )
+    private val testOrder = createTestOrder()
 
-    private val testItem =
-        Item(
-            hostName = HostName.AXIELL,
-            hostId = "mlt-12345",
-            description = "description",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "location",
-            quantity = 1
-        )
+    private val catalogMessageRepoMock =
+        object : EventRepository<CatalogEvent> {
+            val processed: MutableList<CatalogEvent> = mutableListOf()
+
+            override suspend fun save(event: CatalogEvent): CatalogEvent {
+                TODO("Not relevant for testing")
+            }
+
+            override suspend fun getAll(): List<CatalogEvent> {
+                TODO("Not relevant for testing")
+            }
+
+            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<CatalogEvent>()
+
+            override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
+                processed.add(event)
+                return event
+            }
+        }
+
+    private val happyInventoryNotifierMock =
+        mockk<InventoryNotifier> {
+            coEvery { itemChanged(any(), any()) } returns Unit
+            coEvery { orderChanged(any(), any()) } returns Unit
+        }
 }
