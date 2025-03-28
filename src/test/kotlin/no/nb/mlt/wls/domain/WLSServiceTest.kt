@@ -53,9 +53,7 @@ class WLSServiceTest {
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val transactionPortSkipMock =
         object : TransactionPort {
-            override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
-                return action()
-            }
+            override suspend fun <T> executeInTransaction(action: suspend () -> T): T = action()
         }
 
     private lateinit var cut: WLSService
@@ -532,18 +530,15 @@ class WLSServiceTest {
             override suspend fun getItem(
                 hostName: HostName,
                 hostId: String
-            ): Item? {
-                return items.firstOrNull { it.hostName == hostName && it.hostId == hostId }
-            }
+            ): Item? = items.firstOrNull { it.hostName == hostName && it.hostId == hostId }
 
             override suspend fun getItems(
                 hostName: HostName,
                 hostIds: List<String>
-            ): List<Item> {
-                return hostIds.mapNotNull { id ->
+            ): List<Item> =
+                hostIds.mapNotNull { id ->
                     itemList.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
-            }
 
             override suspend fun createItem(item: Item): Item {
                 val existingIndex = itemList.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
