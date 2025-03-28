@@ -313,7 +313,8 @@ class SynqControllerTest(
                 inventoryNotifierAdapterMock.itemChanged(any(), any())
             }.answers { }
 
-            itemRepository.save(createTestItem(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
+            val testItem = createTestItem(callbackUrl = null, hostId = "test-item", quantity = 69)
+            itemRepository.save(testItem.toMongoItem()).awaitSingle()
 
             webTestClient
                 .mutateWith(csrf())
@@ -325,7 +326,7 @@ class SynqControllerTest(
                 .exchange()
                 .expectStatus().isOk
 
-            val item = itemRepository.findByHostNameAndHostId(item1.hostName, "test-item").awaitSingle()
+            val item = itemRepository.findByHostNameAndHostId(testItem.hostName, testItem.hostId).awaitSingle()
 
             assertThat(item).isNotNull
             assertThat(item.location).isEqualTo(batchMoveItemPayload.location)

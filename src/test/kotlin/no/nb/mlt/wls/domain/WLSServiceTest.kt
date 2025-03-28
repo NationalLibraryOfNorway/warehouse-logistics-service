@@ -14,6 +14,7 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -22,7 +23,6 @@ import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
-import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
@@ -36,8 +36,6 @@ import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
-import no.nb.mlt.wls.testItem
-import no.nb.mlt.wls.testOrder
 import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -45,12 +43,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 
 class WLSServiceTest {
-
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////  Test Setup  /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    // //////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////  Test Setup  /////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     private val itemRepoMock = mockk<ItemRepository>()
     private val orderRepoMock = mockk<OrderRepository>()
@@ -85,11 +80,9 @@ class WLSServiceTest {
             )
     }
 
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  Test Functions  ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+// //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////  Test Functions  ///////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
@@ -501,11 +494,12 @@ class WLSServiceTest {
         }
     }
 
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    private val testItem = createTestItem()
+    private val testOrder = createTestOrder()
 
     private val testMoveItemPayload =
         MoveItemPayload(

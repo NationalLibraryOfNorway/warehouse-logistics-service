@@ -11,22 +11,22 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
 // If you want to make me happy:
 // Split test classes with these headers, leave two blank lines above and below
 
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////  Test Setup  /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////  Test Setup  /////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  Test Functions  ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////  Test Functions  ///////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
 // "Test Setup" includes:
 // - Mocks
@@ -43,12 +43,9 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // - re-used test objects
 // - etc.
 
-////////////////////////////////////////////////////////////////////////////////
-
+// //////////////////////////////////////////////////////////////////////////////
 
 // Import helper objects and functions with:
-// import no.nb.mlt.wls.testItem
-// import no.nb.mlt.wls.testOrder
 // import no.nb.mlt.wls.toOrder
 // import no.nb.mlt.wls.toItemMetadata
 // import no.nb.mlt.wls.toApiUpdatePayload
@@ -56,38 +53,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // import no.nb.mlt.wls.createTestItem
 // import no.nb.mlt.wls.createTestOrder
 
-
-////////////////////////////////////////////////////////////////////////////////
-
-val testItem =
-    Item(
-        hostName = HostName.AXIELL,
-        hostId = "testItem-01",
-        description = "description",
-        itemCategory = ItemCategory.PAPER,
-        preferredEnvironment = Environment.NONE,
-        packaging = Packaging.NONE,
-        callbackUrl = "https://callback-wls.no/item",
-        location = "SYNQ_WAREHOUSE",
-        quantity = 1
-    )
-
-val testOrder =
-    Order(
-        hostName = HostName.AXIELL,
-        hostOrderId = "testOrder-01",
-        status = Order.Status.NOT_STARTED,
-        orderLine = listOf(
-            Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
-            Order.OrderItem("testItem-02", Order.OrderItem.Status.NOT_STARTED)
-        ),
-        orderType = Order.Type.LOAN,
-        address = createOrderAddress(),
-        contactPerson = "contactPerson",
-        contactEmail = "contact@ema.il",
-        note = "note",
-        callbackUrl = "https://callback-wls.no/order"
-    )
+// //////////////////////////////////////////////////////////////////////////////
 
 fun ApiOrderPayload.toOrder() =
     Order(
@@ -105,16 +71,16 @@ fun ApiOrderPayload.toOrder() =
 
 fun Order.toApiUpdatePayload() =
     ApiUpdateOrderPayload(
-    hostName = hostName,
-    hostOrderId = hostOrderId,
-    orderLine = orderLine.map { it.toApiOrderLine() },
-    orderType = orderType,
-    contactPerson = contactPerson,
-    contactEmail = contactEmail,
-    address = address,
-    callbackUrl = callbackUrl,
-    note = note
-)
+        hostName = hostName,
+        hostOrderId = hostOrderId,
+        orderLine = orderLine.map { it.toApiOrderLine() },
+        orderType = orderType,
+        contactPerson = contactPerson,
+        contactEmail = contactEmail,
+        address = address,
+        callbackUrl = callbackUrl,
+        note = note
+    )
 
 fun Item.toItemMetadata() =
     ItemMetadata(
@@ -132,26 +98,32 @@ fun createOrderAddress(): Order.Address {
 }
 
 fun createTestItem(
-    hostName: HostName = testItem.hostName,
-    hostId: String = testItem.hostId,
-    description: String = testItem.description,
-    itemCategory: ItemCategory = testItem.itemCategory,
-    preferredEnvironment: Environment = testItem.preferredEnvironment,
-    packaging: Packaging = testItem.packaging,
-    callbackUrl: String? = testItem.callbackUrl,
-    location: String = testItem.location,
-    quantity: Int = testItem.quantity,
+    hostName: HostName = HostName.AXIELL,
+    hostId: String = "testItem-01",
+    description: String = "description",
+    itemCategory: ItemCategory = ItemCategory.PAPER,
+    preferredEnvironment: Environment = Environment.NONE,
+    packaging: Packaging = Packaging.NONE,
+    callbackUrl: String? = "https://callback-wls.no/item",
+    location: String = "SYNQ_WAREHOUSE",
+    quantity: Int = 1
 ) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity)
 
 fun createTestOrder(
-    hostName: HostName = testOrder.hostName,
-    hostOrderId: String = testOrder.hostOrderId,
-    status: Order.Status = testOrder.status,
-    orderLine: List<Order.OrderItem> = testOrder.orderLine,
-    orderType: Order.Type = testOrder.orderType,
-    address: Order.Address? = testOrder.address,
-    contactPerson: String = testOrder.contactPerson,
-    contactEmail: String? = testOrder.contactEmail,
-    note: String? = testOrder.note,
-    callbackUrl: String = testOrder.callbackUrl
+    hostName: HostName = HostName.AXIELL,
+    hostOrderId: String = "testOrder-01",
+    status: Order.Status = Order.Status.NOT_STARTED,
+    orderLine: List<Order.OrderItem> = orderLines,
+    orderType: Order.Type = Order.Type.LOAN,
+    address: Order.Address? = createOrderAddress(),
+    contactPerson: String = "contactPerson",
+    contactEmail: String? = "contact@ema.il",
+    note: String? = "note",
+    callbackUrl: String = "https://callback-wls.no/order"
 ) = Order(hostName, hostOrderId, status, orderLine, orderType, address, contactPerson, contactEmail, note, callbackUrl)
+
+private val orderLines =
+    listOf(
+        Order.OrderItem("testItem-01", Order.OrderItem.Status.NOT_STARTED),
+        Order.OrderItem("testItem-02", Order.OrderItem.Status.NOT_STARTED)
+    )

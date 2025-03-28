@@ -4,8 +4,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import no.nb.mlt.wls.testItem
-import no.nb.mlt.wls.testOrder
+import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -18,18 +18,17 @@ import org.springframework.cloud.gateway.support.TimeoutException
 import java.time.Instant
 
 class CatalogEventProcessorTest {
-
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  Test Functions  ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    // //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////  Test Functions  ///////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `order update should call inventory notifier and mark message as processed`() {
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock, inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
             val event = OrderEvent(testOrder, eventTimestamp = Instant.now())
@@ -43,9 +42,11 @@ class CatalogEventProcessorTest {
     fun `order update should handle error from inventory notifier`() {
         coEvery { happyInventoryNotifierMock.orderChanged(any(), any()) } throws TimeoutException("Timed out")
 
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock, inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
             val event = OrderEvent(testOrder, eventTimestamp = Instant.now())
@@ -57,9 +58,11 @@ class CatalogEventProcessorTest {
 
     @Test
     fun `item update should call inventory notifier and mark message as processed`() {
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock, inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
             val event = ItemEvent(testItem, eventTimestamp = Instant.now())
@@ -73,9 +76,11 @@ class CatalogEventProcessorTest {
     fun `item update should handle error from inventory notifier`() {
         coEvery { happyInventoryNotifierMock.itemChanged(any(), any()) } throws TimeoutException("Timed out")
 
-        val messageProcessor = CatalogEventProcessorAdapter(
-            catalogEventRepository = catalogMessageRepoMock, inventoryNotifier = happyInventoryNotifierMock
-        )
+        val messageProcessor =
+            CatalogEventProcessorAdapter(
+                catalogEventRepository = catalogMessageRepoMock,
+                inventoryNotifier = happyInventoryNotifierMock
+            )
 
         runTest {
             val event = ItemEvent(testItem, eventTimestamp = Instant.now())
@@ -85,33 +90,36 @@ class CatalogEventProcessorTest {
         }
     }
 
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+    private val testItem = createTestItem()
+    private val testOrder = createTestOrder()
 
+    private val catalogMessageRepoMock =
+        object : EventRepository<CatalogEvent> {
+            val processed: MutableList<CatalogEvent> = mutableListOf()
 
-    private val catalogMessageRepoMock = object : EventRepository<CatalogEvent> {
-        val processed: MutableList<CatalogEvent> = mutableListOf()
+            override suspend fun save(event: CatalogEvent): CatalogEvent {
+                TODO("Not relevant for testing")
+            }
 
-        override suspend fun save(event: CatalogEvent): CatalogEvent {
-            TODO("Not relevant for testing")
+            override suspend fun getAll(): List<CatalogEvent> {
+                TODO("Not relevant for testing")
+            }
+
+            override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<CatalogEvent>()
+
+            override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
+                processed.add(event)
+                return event
+            }
         }
 
-        override suspend fun getAll(): List<CatalogEvent> {
-            TODO("Not relevant for testing")
+    private val happyInventoryNotifierMock =
+        mockk<InventoryNotifier> {
+            coEvery { itemChanged(any(), any()) } returns Unit
+            coEvery { orderChanged(any(), any()) } returns Unit
         }
-
-        override suspend fun getUnprocessedSortedByCreatedTime() = emptyList<CatalogEvent>()
-
-        override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
-            processed.add(event)
-            return event
-        }
-    }
-
-    private val happyInventoryNotifierMock = mockk<InventoryNotifier> {
-        coEvery { itemChanged(any(), any()) } returns Unit
-        coEvery { orderChanged(any(), any()) } returns Unit
-    }
 }
