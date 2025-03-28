@@ -65,16 +65,6 @@ class ItemModelConversionTest {
     @Test
     fun `API payload converts to item`() {
         val item = testItemPayload.toItem()
-
-        println("TEST ITEM PAYLOAD:")
-        println(testItemPayload)
-        println()
-        println("TEST ITEM:")
-        println(testItem)
-        println()
-        println("CONVERTED ITEM:")
-        println(item)
-
         assertThat(item.hostId).isEqualTo(testItem.hostId)
         assertThat(item.hostName).isEqualTo(testItem.hostName)
         assertThat(item.description).isEqualTo(testItem.description)
