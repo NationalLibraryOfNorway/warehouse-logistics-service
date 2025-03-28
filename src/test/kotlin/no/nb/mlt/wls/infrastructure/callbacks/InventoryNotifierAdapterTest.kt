@@ -6,6 +6,7 @@ import com.ninjasquad.springmockk.SpykBean
 import com.ninjasquad.springmockk.SpykDefinition
 import io.mockk.verify
 import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -72,8 +73,8 @@ class InventoryNotifierAdapterTest {
         mockServerItemCallbackPath = mockWebServer.url("/item-callback").toString()
         mockServerOrderCallbackPath = mockWebServer.url("/order-callback").toString()
 
-        testItemWithCallback = testItem.copy(callbackUrl = mockServerItemCallbackPath)
-        testOrderWithCallback = testOrder.copy(callbackUrl = mockServerOrderCallbackPath)
+        testItemWithCallback = createTestItem(callbackUrl = mockServerItemCallbackPath)
+        testOrderWithCallback = createTestOrder(callbackUrl = mockServerOrderCallbackPath)
         itemNotificationPayload = testItemWithCallback.toNotificationItemPayload(timestamp)
         orderNotificationPayload = testOrderWithCallback.toNotificationOrderPayload(timestamp)
 
@@ -125,7 +126,6 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should use proxied web client when notifying of item belonging to proxied host`() {
-        val item = testItemWithCallback.copy(hostName = HostName.ASTA)
         val item = createTestItem(hostName = HostName.ASTA, callbackUrl = mockServerItemCallbackPath)
         val timestamp = Instant.now()
         mockWebServer.enqueue(MockResponse().setResponseCode(200))

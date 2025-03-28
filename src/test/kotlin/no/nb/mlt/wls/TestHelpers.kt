@@ -53,6 +53,8 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // import no.nb.mlt.wls.toItemMetadata
 // import no.nb.mlt.wls.toApiUpdatePayload
 // import no.nb.mlt.wls.createOrderAddress
+// import no.nb.mlt.wls.createTestItem
+// import no.nb.mlt.wls.createTestOrder
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -80,9 +82,9 @@ val testOrder =
             Order.OrderItem("testItem-02", Order.OrderItem.Status.NOT_STARTED)
         ),
         orderType = Order.Type.LOAN,
+        address = createOrderAddress(),
         contactPerson = "contactPerson",
         contactEmail = "contact@ema.il",
-        address = createOrderAddress(),
         note = "note",
         callbackUrl = "https://callback-wls.no/order"
     )
@@ -128,14 +130,28 @@ fun Item.toItemMetadata() =
 fun createOrderAddress(): Order.Address {
     return Order.Address("recipient", "addressLine1", "addressLine2", "postcode", "city", "region", "country")
 }
+
 fun createTestItem(
-    hostName: HostName = HostName.AXIELL,
-    hostId: String = "mlt-12345",
-    description: String = "Tyven, tyven skal du hete",
-    itemCategory: ItemCategory = ItemCategory.PAPER,
-    preferredEnvironment: Environment = Environment.NONE,
-    packaging: Packaging = Packaging.NONE,
-    callbackUrl: String? = "https://callback-wls.no/item",
-    location: String = "UNKNOWN",
-    quantity: Int = 0
+    hostName: HostName = testItem.hostName,
+    hostId: String = testItem.hostId,
+    description: String = testItem.description,
+    itemCategory: ItemCategory = testItem.itemCategory,
+    preferredEnvironment: Environment = testItem.preferredEnvironment,
+    packaging: Packaging = testItem.packaging,
+    callbackUrl: String? = testItem.callbackUrl,
+    location: String = testItem.location,
+    quantity: Int = testItem.quantity,
 ) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity)
+
+fun createTestOrder(
+    hostName: HostName = testOrder.hostName,
+    hostOrderId: String = testOrder.hostOrderId,
+    status: Order.Status = testOrder.status,
+    orderLine: List<Order.OrderItem> = testOrder.orderLine,
+    orderType: Order.Type = testOrder.orderType,
+    address: Order.Address? = testOrder.address,
+    contactPerson: String = testOrder.contactPerson,
+    contactEmail: String? = testOrder.contactEmail,
+    note: String? = testOrder.note,
+    callbackUrl: String = testOrder.callbackUrl
+) = Order(hostName, hostOrderId, status, orderLine, orderType, address, contactPerson, contactEmail, note, callbackUrl)

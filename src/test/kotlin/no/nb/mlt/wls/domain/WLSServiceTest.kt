@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
