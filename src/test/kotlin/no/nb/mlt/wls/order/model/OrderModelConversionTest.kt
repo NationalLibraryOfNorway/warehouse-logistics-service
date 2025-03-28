@@ -4,6 +4,7 @@ import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiPayload
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
@@ -14,7 +15,6 @@ import no.nb.mlt.wls.infrastructure.synq.SynqOrderPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.toAutostorePayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqStandardPayload
-import no.nb.mlt.wls.testOrder
 import no.nb.mlt.wls.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -22,7 +22,6 @@ import java.time.Instant
 import java.time.LocalDateTime
 
 class OrderModelConversionTest {
-
     @Test
     fun `order converts to API payload`() {
         val payload = testOrder.toApiPayload()
@@ -129,11 +128,11 @@ class OrderModelConversionTest {
         assertThat(orderLine.status).isEqualTo(testOrderItem.status)
     }
 
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    private val testOrder = createTestOrder()
 
     private val testApiOrderPayload =
         ApiOrderPayload(

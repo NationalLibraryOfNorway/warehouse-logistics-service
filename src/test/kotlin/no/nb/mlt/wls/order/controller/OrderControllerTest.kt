@@ -16,11 +16,9 @@ import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.createTestItem
-import no.nb.mlt.wls.domain.model.Environment
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
@@ -29,14 +27,11 @@ import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
-import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
-import no.nb.mlt.wls.testItem
-import no.nb.mlt.wls.testOrder
 import no.nb.mlt.wls.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -59,7 +54,6 @@ import org.springframework.security.test.web.reactive.server.SecurityMockServerC
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import reactor.core.publisher.Flux
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -75,12 +69,9 @@ class OrderControllerTest(
     @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
     @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
-
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////  Test Setup  /////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    // //////////////////////////////////////////////////////////////////////////////
+// ///////////////////////////////  Test Setup  /////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     @MockkBean
     private lateinit var synqStandardAdapterMock: SynqStandardAdapter
@@ -105,11 +96,9 @@ class OrderControllerTest(
         populateDb()
     }
 
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  Test Functions  ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+// //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////  Test Functions  ///////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `createOrder with valid payload creates order and outbox message`() =
@@ -542,12 +531,11 @@ class OrderControllerTest(
                 .hasSize(0)
         }
 
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-
+    private val testOrder = createTestOrder()
     private val testOrderPayload = testOrder.toApiPayload()
     private val duplicateOrderPayload = testOrderPayload.copy(hostOrderId = "duplicate-order-id")
     private val orderInProgress = testOrder.copy(hostOrderId = "order-in-progress", status = Order.Status.IN_PROGRESS)

@@ -2,6 +2,7 @@ package no.nb.mlt.wls.item.model
 
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -12,18 +13,14 @@ import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqCategory
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
-import no.nb.mlt.wls.testItem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
 
 class ItemModelConversionTest {
-
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////  Test Functions  ///////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    // //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////  Test Functions  ///////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `item converts to API payload`() {
@@ -68,6 +65,16 @@ class ItemModelConversionTest {
     @Test
     fun `API payload converts to item`() {
         val item = testItemPayload.toItem()
+
+        println("TEST ITEM PAYLOAD:")
+        println(testItemPayload)
+        println()
+        println("TEST ITEM:")
+        println(testItem)
+        println()
+        println("CONVERTED ITEM:")
+        println(item)
+
         assertThat(item.hostId).isEqualTo(testItem.hostId)
         assertThat(item.hostName).isEqualTo(testItem.hostName)
         assertThat(item.description).isEqualTo(testItem.description)
@@ -79,11 +86,11 @@ class ItemModelConversionTest {
         assertThat(item.quantity).isEqualTo(testItem.quantity)
     }
 
+// //////////////////////////////////////////////////////////////////////////////
+// //////////////////////////////  Test Helpers  ////////////////////////////////
+// //////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
+    private val testItem = createTestItem()
 
     private val testItemPayload =
         ApiItemPayload(

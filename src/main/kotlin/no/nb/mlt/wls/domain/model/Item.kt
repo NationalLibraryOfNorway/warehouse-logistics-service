@@ -75,4 +75,9 @@ class Item(
         result = 31 * result + hostName.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "Item(hostId='$hostId', hostName=$hostName, description='$description', itemCategory=$itemCategory, preferredEnvironment=" +
+            "$preferredEnvironment, packaging=$packaging, callbackUrl=$callbackUrl, location='$location', quantity=$quantity)"
+    }
 }
