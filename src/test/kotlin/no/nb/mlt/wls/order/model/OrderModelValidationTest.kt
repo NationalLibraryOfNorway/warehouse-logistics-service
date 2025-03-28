@@ -13,10 +13,6 @@ import org.assertj.core.api.BDDAssertions.thenCode
 import org.junit.jupiter.api.Test
 
 class OrderModelValidationTest {
-    // //////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////  Test Functions  ///////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
     @Test
     fun `valid orderLine should pass validation`() {
         thenCode(validOrderLine::validate).doesNotThrowAnyException()
@@ -148,19 +144,16 @@ class OrderModelValidationTest {
         then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("address")
     }
 
-// //////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////  Test Helpers  ////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
     private val testItem = createTestItem()
+
     private val testOrder = createTestOrder()
 
-    val validOrderLine = OrderLine(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)
+    private val validOrderLine = OrderLine(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)
 
     // Can safely use address since testOrder object (should) have it set
-    val validAddress = testOrder.address!!
+    private val validAddress = testOrder.address!!
 
-    val validOrder = testOrder.toApiPayload()
+    private val validOrder = testOrder.toApiPayload()
 
-    val validUpdateOrderPayload = testOrder.toApiUpdatePayload()
+    private val validUpdateOrderPayload = testOrder.toApiUpdatePayload()
 }

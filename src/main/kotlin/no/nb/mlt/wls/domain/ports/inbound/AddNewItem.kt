@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 
 fun interface AddNewItem {
     suspend fun addItem(itemMetadata: ItemMetadata): Item
@@ -27,7 +28,7 @@ data class ItemMetadata(
  */
 fun ItemMetadata.toItem(
     quantity: Int = 0,
-    location: String = "UNKNOWN"
+    location: String = UNKNOWN_LOCATION
 ) = Item(
     this.hostId,
     this.hostName,

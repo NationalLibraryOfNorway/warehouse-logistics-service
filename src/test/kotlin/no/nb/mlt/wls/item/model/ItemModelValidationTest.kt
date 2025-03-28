@@ -2,6 +2,7 @@ package no.nb.mlt.wls.item.model
 
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
@@ -23,7 +24,7 @@ class ItemModelValidationTest {
         val item =
             validItem.copy(
                 quantity = 0,
-                location = "UNKNOWN",
+                location = UNKNOWN_LOCATION,
                 callbackUrl = null
             )
 
@@ -95,5 +96,6 @@ class ItemModelValidationTest {
 // //////////////////////////////////////////////////////////////////////////////
 
     private val testItem = createTestItem()
-    val validItem = testItem.toApiPayload()
+
+    private val validItem = testItem.toApiPayload()
 }
