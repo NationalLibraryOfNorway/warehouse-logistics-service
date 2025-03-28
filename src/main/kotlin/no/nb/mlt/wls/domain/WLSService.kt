@@ -275,6 +275,23 @@ class WLSService(
         return itemRepository.getItems(hostName, hostIds)
     }
 
+    override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
+        val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
+        items
+            .groupBy { it.hostName }
+            .forEach { (hostName, syncItems) ->
+                transactionPort.executeInTransaction {
+                    val ids = syncItems.map { it.hostId }
+                    val existingItems = getItems(ids, hostName)
+                    val existingIds = existingItems.map { it.hostId }
+                    val missingIds = ids.toSet() - existingIds.toSet()
+
+                    missingIds.forEach { createMissingItems(it, hostName, syncItemsById) }
+                    existingItems.forEach { updateItemsForSynchronization(it, syncItemsById) }
+                }
+            }
+    }
+
     @Throws(OrderNotFoundException::class)
     private suspend fun getOrderOrThrow(
         hostName: HostName,
@@ -320,8 +337,54 @@ class WLSService(
             }
         }
 
-    override fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
-        // TODO: Implement synchronization (reconciliation) of items from storage systems.
-        logger.warn { "Synchronizing items not implemented" }
+    private suspend fun createMissingItems(
+        missingId: String,
+        hostName: HostName,
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
+    ) {
+        val syncItem = syncItemsById[(missingId to hostName)]!!
+        val createdItem =
+            itemRepository.createItem(
+                Item(
+                    hostId = syncItem.hostId,
+                    hostName = syncItem.hostName,
+                    description = syncItem.description,
+                    itemCategory = syncItem.itemCategory,
+                    preferredEnvironment = syncItem.currentPreferredEnvironment,
+                    packaging = syncItem.packaging,
+                    callbackUrl = null,
+                    location = syncItem.location,
+                    quantity = syncItem.quantity
+                )
+            )
+        logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
+    }
+
+    private suspend fun updateItemsForSynchronization(
+        itemToUpdate: Item,
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
+    ) {
+        val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
+
+        val oldQuantity = itemToUpdate.quantity
+        val oldLocation = itemToUpdate.location
+
+        itemToUpdate.synchronizeQuantityAndLocation(syncItem.quantity, syncItem.location)
+
+        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
+            itemRepository.updateLocationAndQuantity(
+                itemToUpdate.hostId,
+                itemToUpdate.hostName,
+                itemToUpdate.location,
+                itemToUpdate.quantity
+            )
+            logger.info {
+                """
+                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                """.trimIndent()
+            }
+        }
     }
 }

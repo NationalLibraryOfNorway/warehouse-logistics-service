@@ -45,6 +45,7 @@ fun toSynqCategory(category: ItemCategory): String {
         ItemCategory.EQUIPMENT -> "gjenstand"
         ItemCategory.BULK_ITEMS -> "sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
-        else -> throw StorageSystemException("$category items cannot go into SynQ")
+        ItemCategory.PHOTO -> "fotografi"
+        ItemCategory.FRAGILE -> throw StorageSystemException("$category items cannot go into SynQ")
     }
 }

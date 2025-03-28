@@ -6,12 +6,14 @@ import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
 import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
 import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
@@ -25,6 +27,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -47,6 +50,12 @@ class WLSServiceTest {
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
+    private val transactionPortSkipMock =
+        object : TransactionPort {
+            override suspend fun <T> executeInTransaction(action: suspend () -> T): T {
+                return action()
+            }
+        }
 
     private lateinit var cut: WLSService
 
@@ -102,7 +111,7 @@ class WLSServiceTest {
 
     @Test
     fun `moveItem should return when item successfully moves`() {
-        val expectedItem = testItem.copy(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
+        val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
         val itemMovedEvent = ItemEvent(expectedItem)
         coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
         coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedItem to itemMovedEvent)
@@ -157,7 +166,7 @@ class WLSServiceTest {
 
     @Test
     fun `pickItems should update items and send callbacks`() {
-        val expectedItem = testItem.copy(quantity = 0, location = "WITH_LENDER")
+        val expectedItem = createTestItem(quantity = 0, location = WITH_LENDER_LOCATION)
         val pickedItemsMap = mapOf(testItem.hostId to 1)
         val itemPickedEvent = ItemEvent(expectedItem)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
@@ -426,6 +435,73 @@ class WLSServiceTest {
         }
     }
 
+    @Test
+    fun `should update quantity and location, and add missing when synchronizing items`() {
+        val testItem1 = createTestItem()
+        val testItem2 = createTestItem(hostId = "missing-id-12345")
+        val itemRepo = createInMemItemRepo(mutableListOf(testItem1, testItem2))
+
+        val service =
+            WLSService(
+                itemRepo,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            val newQuantity = testItem.quantity + 1
+            val newLocation = "SYNQ_WAREHOUSE"
+
+            val itemsToSync =
+                listOf(
+                    SynchronizeItems.ItemToSynchronize(
+                        hostName = testItem1.hostName,
+                        hostId = testItem1.hostId,
+                        quantity = newQuantity,
+                        location = newLocation,
+                        description = testItem1.description,
+                        itemCategory = testItem1.itemCategory,
+                        packaging = testItem1.packaging,
+                        currentPreferredEnvironment = testItem1.preferredEnvironment
+                    ),
+                    // This item should be created
+                    SynchronizeItems.ItemToSynchronize(
+                        hostName = HostName.AXIELL,
+                        hostId = "some-unknown-id",
+                        quantity = 1,
+                        location = "SYNQ_WAREHOUSE",
+                        description = "Some description",
+                        itemCategory = ItemCategory.PAPER,
+                        packaging = Packaging.BOX,
+                        currentPreferredEnvironment = Environment.NONE
+                    )
+                )
+
+            service.synchronizeItems(itemsToSync)
+
+            // Assert that quantity and location changed
+            val updatedItem = itemRepo.getItem(testItem1.hostName, testItem1.hostId)
+            assertThat(updatedItem?.quantity).isEqualTo(newQuantity)
+            assertThat(updatedItem?.location).isEqualTo(newLocation)
+
+            // Assert that other items are not changed
+            val otherItem = itemRepo.getItem(testItem2.hostName, testItem2.hostId)
+            assertThat(otherItem?.quantity).isEqualTo(testItem2.quantity)
+            assertThat(otherItem?.location).isEqualTo(testItem2.location)
+
+            // Assert that missing items are created
+            val createdItem = itemRepo.getItem(HostName.AXIELL, "some-unknown-id")
+            assertThat(createdItem).isNotNull
+            assertThat(createdItem).matches {
+                it?.quantity == 1 && it.location == "SYNQ_WAREHOUSE"
+            }
+        }
+    }
+
     private val testItem =
         Item(
             hostName = HostName.AXIELL,
@@ -497,4 +573,76 @@ class WLSServiceTest {
             packaging = packaging,
             callbackUrl = callbackUrl
         )
+
+    private fun createInMemItemRepo(items: MutableList<Item>): ItemRepository {
+        return object : ItemRepository {
+            val items = items
+
+            override suspend fun getItem(
+                hostName: HostName,
+                hostId: String
+            ): Item? {
+                return items.firstOrNull { it.hostName == hostName && it.hostId == hostId }
+            }
+
+            override suspend fun getItems(
+                hostName: HostName,
+                hostIds: List<String>
+            ): List<Item> {
+                return hostIds.mapNotNull { id ->
+                    items.firstOrNull { it.hostName == hostName && it.hostId == id }
+                }
+            }
+
+            override suspend fun createItem(item: Item): Item {
+                val existingIndex = items.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
+
+                if (existingIndex == -1) {
+                    items.add(item)
+                } else {
+                    items[existingIndex] = item
+                }
+
+                return item
+            }
+
+            override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun moveItem(
+                hostName: HostName,
+                hostId: String,
+                quantity: Int,
+                location: String
+            ): Item {
+                TODO("Not yet implemented")
+            }
+
+            override suspend fun updateLocationAndQuantity(
+                hostId: String,
+                hostName: HostName,
+                location: String,
+                quantity: Int
+            ): Item {
+                val item = items.first { it.hostName == hostName && it.hostId == hostId }
+                val index = items.indexOf(item)
+                val updatedItem =
+                    createTestItem(
+                        item.hostName,
+                        item.hostId,
+                        item.description,
+                        item.itemCategory,
+                        item.preferredEnvironment,
+                        item.packaging,
+                        item.callbackUrl,
+                        location,
+                        quantity
+                    )
+                items[index] = updatedItem
+
+                return items[index]
+            }
+        }
+    }
 }
