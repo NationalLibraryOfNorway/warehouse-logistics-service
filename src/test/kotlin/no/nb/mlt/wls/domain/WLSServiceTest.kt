@@ -538,7 +538,7 @@ class WLSServiceTest {
 
     private fun createInMemItemRepo(items: MutableList<Item>): ItemRepository {
         return object : ItemRepository {
-            val items = items
+            val itemList = items
 
             override suspend fun getItem(
                 hostName: HostName,
@@ -552,17 +552,17 @@ class WLSServiceTest {
                 hostIds: List<String>
             ): List<Item> {
                 return hostIds.mapNotNull { id ->
-                    items.firstOrNull { it.hostName == hostName && it.hostId == id }
+                    itemList.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
             }
 
             override suspend fun createItem(item: Item): Item {
-                val existingIndex = items.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
+                val existingIndex = itemList.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
 
                 if (existingIndex == -1) {
-                    items.add(item)
+                    itemList.add(item)
                 } else {
-                    items[existingIndex] = item
+                    itemList[existingIndex] = item
                 }
 
                 return item
@@ -587,8 +587,8 @@ class WLSServiceTest {
                 location: String,
                 quantity: Int
             ): Item {
-                val item = items.first { it.hostName == hostName && it.hostId == hostId }
-                val index = items.indexOf(item)
+                val item = itemList.first { it.hostName == hostName && it.hostId == hostId }
+                val index = itemList.indexOf(item)
                 val updatedItem =
                     createTestItem(
                         item.hostName,
@@ -601,9 +601,9 @@ class WLSServiceTest {
                         location,
                         quantity
                     )
-                items[index] = updatedItem
+                itemList[index] = updatedItem
 
-                return items[index]
+                return itemList[index]
             }
         }
     }
