@@ -7,6 +7,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -433,11 +434,6 @@ class WLSServiceTest {
         }
     }
 
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////  Test Helpers  ////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
     @Test
     fun `should update quantity and location, and add missing when synchronizing items`() {
         val testItem1 = createTestItem()
@@ -505,6 +501,12 @@ class WLSServiceTest {
         }
     }
 
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  Test Helpers  ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
     private val testMoveItemPayload =
         MoveItemPayload(
             hostName = testItem.hostName,
@@ -513,14 +515,7 @@ class WLSServiceTest {
             location = "KNOWN_LOCATION"
         )
 
-    private val updatedOrder =
-        testOrder.copy(
-            orderLine =
-                listOf(
-                    Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
-                    Order.OrderItem("testItem-02", Order.OrderItem.Status.NOT_STARTED)
-                )
-        )
+    private val updatedOrder = createTestOrder()
 
     private val createOrderDTO =
         CreateOrderDTO(
@@ -580,7 +575,7 @@ class WLSServiceTest {
             }
 
             override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean {
-                TODO("Not yet implemented")
+                TODO("Not relevant for testing")
             }
 
             override suspend fun moveItem(
@@ -589,7 +584,7 @@ class WLSServiceTest {
                 quantity: Int,
                 location: String
             ): Item {
-                TODO("Not yet implemented")
+                TODO("Not relevant for testing")
             }
 
             override suspend fun updateLocationAndQuantity(
