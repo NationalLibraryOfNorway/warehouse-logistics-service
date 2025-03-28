@@ -3,6 +3,9 @@ package no.nb.mlt.wls
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.ApiUpdateOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
+import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
+import no.nb.mlt.wls.application.synqapi.synq.Position
+import no.nb.mlt.wls.application.synqapi.synq.Product
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -11,22 +14,7 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 
-// //////////////////////////////////////////////////////////////////////////////
-
-// If you want to make me happy:
-// Split test classes with these headers, leave two blank lines above and below
-
-// //////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////  Test Setup  /////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
-// //////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////  Test Functions  ///////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
-// //////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////  Test Helpers  ////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 // "Test Setup" includes:
 // - Mocks
@@ -35,10 +23,10 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // - lateinit variables
 // - etc.
 
-// "Test Functions" includes:
+// "Test Functions" include:
 // - Test functions themselves
 
-// "Test Helpers" includes:
+// "Test Helpers" include:
 // - Helper functions
 // - re-used test objects
 // - etc.
@@ -93,9 +81,31 @@ fun Item.toItemMetadata() =
         callbackUrl = callbackUrl
     )
 
-fun createOrderAddress(): Order.Address {
-    return Order.Address("recipient", "addressLine1", "addressLine2", "postcode", "city", "region", "country")
-}
+fun Item.toProduct() =
+    Product(
+        confidentialProduct = false,
+        hostName = this.hostName.name,
+        productId = this.hostId,
+        productOwner = "NB",
+        productVersionId = "Default",
+        quantityOnHand = this.quantity,
+        suspect = false,
+        attributeValue =
+            listOf(
+                AttributeValue(
+                    name = "materialStatus",
+                    value = "Available"
+                )
+            ),
+        position =
+            Position(
+                xPosition = 1,
+                yPosition = 1,
+                zPosition = 1
+            )
+    )
+
+fun createOrderAddress(): Order.Address = Order.Address("recipient", "addressLine1", "addressLine2", "postcode", "city", "region", "country")
 
 fun createTestItem(
     hostName: HostName = HostName.AXIELL,

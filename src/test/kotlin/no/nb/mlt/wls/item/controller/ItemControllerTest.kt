@@ -11,6 +11,7 @@ import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
@@ -45,10 +46,6 @@ class ItemControllerTest(
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val repository: ItemMongoRepository
 ) {
-    // //////////////////////////////////////////////////////////////////////////////
-// ///////////////////////////////  Test Setup  /////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
     @MockkBean
     private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
@@ -68,10 +65,6 @@ class ItemControllerTest(
 
         populateDb()
     }
-
-// //////////////////////////////////////////////////////////////////////////////
-// /////////////////////////////  Test Functions  ///////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
 
     @Test
     fun `createItem with valid payload creates item`() =
@@ -94,7 +87,7 @@ class ItemControllerTest(
             assertThat(item)
                 .isNotNull
                 .extracting("description", "location", "quantity")
-                .containsExactly(testItemPayload.description, "UNKNOWN", 0)
+                .containsExactly(testItemPayload.description, UNKNOWN_LOCATION, 0)
         }
 
     @Test
@@ -187,12 +180,10 @@ class ItemControllerTest(
             .expectStatus().isForbidden
     }
 
-// //////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////  Test Helpers  ////////////////////////////////
-// //////////////////////////////////////////////////////////////////////////////
-
     private val testItem = createTestItem()
+
     private val testItemPayload = testItem.toApiPayload()
+
     private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
 
     fun populateDb() {

@@ -137,10 +137,6 @@ class SynqModelValidationTest {
             .hasMessageContaining("TU ID")
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
-
     private val validSynqOrderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.PICKED,
@@ -154,9 +150,9 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = "AXIELL",
             orderLineNumber = 1,
-            orderTuId = "tu-123",
+            orderTuId = "6942066642",
             orderTuType = "UFO",
-            productId = "item-123",
+            productId = "testItem-01",
             productVersionId = "1.0",
             quantity = 1,
             attributeValue =
@@ -173,9 +169,9 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = "AXIELL",
             orderLineNumber = 2,
-            orderTuId = "tu-123",
+            orderTuId = "6942066642",
             orderTuType = "UFO",
-            productId = "item-456",
+            productId = "testItem-02",
             productVersionId = "1.0",
             quantity = 1,
             attributeValue =
@@ -190,7 +186,7 @@ class SynqModelValidationTest {
     private val validSynqOrderPickingConfirmationPayload =
         SynqOrderPickingConfirmationPayload(
             orderLine = listOf(validSynqOrderLine1, validSynqOrderLine2),
-            operator = "operator-123",
+            operator = "per.person@nb.no",
             warehouse = "Sikringmagasin_2"
         )
 }
