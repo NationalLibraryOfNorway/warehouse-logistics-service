@@ -1,6 +1,8 @@
 package no.nb.mlt.wls
 
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.ApiUpdateOrderPayload
+import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -49,6 +51,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // import no.nb.mlt.wls.testOrder
 // import no.nb.mlt.wls.toOrder
 // import no.nb.mlt.wls.toItemMetadata
+// import no.nb.mlt.wls.toApiUpdatePayload
 // import no.nb.mlt.wls.createOrderAddress
 
 
@@ -97,6 +100,19 @@ fun ApiOrderPayload.toOrder() =
         note = note,
         callbackUrl = callbackUrl
     )
+
+fun Order.toApiUpdatePayload() =
+    ApiUpdateOrderPayload(
+    hostName = hostName,
+    hostOrderId = hostOrderId,
+    orderLine = orderLine.map { it.toApiOrderLine() },
+    orderType = orderType,
+    contactPerson = contactPerson,
+    contactEmail = contactEmail,
+    address = address,
+    callbackUrl = callbackUrl,
+    note = note
+)
 
 fun Item.toItemMetadata() =
     ItemMetadata(

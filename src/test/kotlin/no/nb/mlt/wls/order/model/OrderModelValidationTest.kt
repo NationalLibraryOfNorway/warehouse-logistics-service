@@ -1,13 +1,13 @@
 package no.nb.mlt.wls.order.model
 
-import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.ApiUpdateOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiPayload
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.testItem
 import no.nb.mlt.wls.testOrder
+import no.nb.mlt.wls.toApiUpdatePayload
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
 import org.assertj.core.api.BDDAssertions.thenCode
@@ -17,7 +17,7 @@ class OrderModelValidationTest {
 
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////  Test Setup  /////////////////////////////////
+///////////////////////////////  Test Functions  ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -145,28 +145,25 @@ class OrderModelValidationTest {
 
     @Test
     fun `update order with invalid address should fail validation`() {
-        val order = validUpdateOrderPayload.copy(address = validAddress?.copy(recipient = ""))
+        val order = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
 
         val thrown = catchThrowable(order::validate)
 
         then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("address")
     }
 
-    val validOrderLine = testOrder.orderLine
 
-    val validAddress = testOrder.address
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////  Test Helpers  ////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+    val validOrderLine = OrderLine(testItem.hostId, Order.OrderItem.Status.NOT_STARTED)
+
+    // Can safely use address since testOrder object (should) have it set
+    val validAddress = testOrder.address!!
 
     val validOrder = testOrder.toApiPayload()
 
-    val validUpdateOrderPayload = ApiUpdateOrderPayload(
-        hostName = validOrder.hostName,
-        hostOrderId = validOrder.hostOrderId,
-        orderLine = validOrder.orderLine,
-        orderType = validOrder.orderType,
-        contactPerson = validOrder.contactPerson,
-        contactEmail = validOrder.contactEmail,
-        address = validOrder.address,
-        callbackUrl = validOrder.callbackUrl,
-        note = validOrder.note
-    )
+    val validUpdateOrderPayload = testOrder.toApiUpdatePayload()
 }
