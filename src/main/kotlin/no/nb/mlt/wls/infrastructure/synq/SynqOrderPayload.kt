@@ -34,7 +34,7 @@ data class SynqOrderPayload(
 
     enum class SynqOrderType(private val type: String) {
         STANDARD("Standard"),
-        AUTOSTORE("Autostore");
+        AUTOSTORE("AutoStore");
 
         @JsonValue
         override fun toString(): String {
