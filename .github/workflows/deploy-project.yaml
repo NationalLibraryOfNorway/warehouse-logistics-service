@@ -120,6 +120,8 @@ jobs:
 
       - name: Check for TODOs
         run: |
+          pwd
+          ls -la
           if grep -ie "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" -r .; then
             echo "TODOs found! Turn them into Jira tasks and remove them from the code"
             exit 69
