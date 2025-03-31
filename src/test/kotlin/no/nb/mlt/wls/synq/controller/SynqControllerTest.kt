@@ -30,6 +30,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.toItem
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -472,7 +473,7 @@ class SynqControllerTest(
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.ALLOCATED,
             status = SynqOrderStatus.RELEASED,
-            hostName = HostName.AXIELL,
+            hostName = toSynqHostname(HostName.AXIELL),
             warehouse = "Sikringmagasin_2"
         )
 

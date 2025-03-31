@@ -7,6 +7,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import org.assertj.core.api.BDDAssertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
 import org.assertj.core.api.BDDAssertions.thenCode
@@ -148,14 +149,14 @@ class SynqModelValidationTest {
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.PICKED,
             status = SynqOrderStatus.COMPLETED,
-            hostName = HostName.AXIELL,
+            hostName = toSynqHostname(HostName.AXIELL),
             warehouse = "Sikringmagasin_2"
         )
 
     private val validSynqOrderLine1 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "AXIELL",
+            hostName = toSynqHostname(HostName.AXIELL),
             orderLineNumber = 1,
             orderTuId = "tu-123",
             orderTuType = "UFO",
@@ -174,7 +175,7 @@ class SynqModelValidationTest {
     private val validSynqOrderLine2 =
         OrderLine(
             confidentialProduct = false,
-            hostName = "AXIELL",
+            hostName = toSynqHostname(HostName.AXIELL),
             orderLineNumber = 2,
             orderTuId = "tu-123",
             orderTuType = "UFO",

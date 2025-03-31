@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
@@ -30,7 +29,7 @@ data class SynqOrderStatusUpdatePayload(
         description = """Name of the host system which placed the order.""",
         example = "AXIELL"
     )
-    val hostName: HostName,
+    val hostName: String,
     @Schema(
         description = """Name of the warehouse where the order products/items are located.""",
         example = "Sikringmagasin_2"
