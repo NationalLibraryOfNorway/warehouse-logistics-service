@@ -22,8 +22,8 @@ private val logger = KotlinLogging.logger {}
 class MongoStorageEventRepositoryAdapter(
     private val mongoStorageEventRepository: MongoStorageEventRepository
 ) : EventRepository<StorageEvent> {
-    override suspend fun save(event: StorageEvent): StorageEvent {
-        return mongoStorageEventRepository
+    override suspend fun save(event: StorageEvent): StorageEvent =
+        mongoStorageEventRepository
             .save(MongoStorageEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved storage event to outbox: $it" } }
@@ -36,13 +36,12 @@ class MongoStorageEventRepositoryAdapter(
                         "Error while saving event to storage outbox. Event: $event"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not save event to storage outbox", it) }
+            }.onErrorMap { RepositoryException("Could not save event to storage outbox", it) }
             .awaitSingle()
-    }
 
-    override suspend fun getAll(): List<StorageEvent> {
-        return mongoStorageEventRepository.findAll()
+    override suspend fun getAll(): List<StorageEvent> =
+        mongoStorageEventRepository
+            .findAll()
             .map { it.body }
             .collectList()
             .timeout(Duration.ofSeconds(8))
@@ -54,13 +53,11 @@ class MongoStorageEventRepositoryAdapter(
                         "Error while fetching events from storage outbox"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not fetch event from storage outbox", it) }
+            }.onErrorMap { RepositoryException("Could not fetch event from storage outbox", it) }
             .awaitSingle()
-    }
 
-    override suspend fun getUnprocessedSortedByCreatedTime(): List<StorageEvent> {
-        return mongoStorageEventRepository
+    override suspend fun getUnprocessedSortedByCreatedTime(): List<StorageEvent> =
+        mongoStorageEventRepository
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
@@ -73,10 +70,8 @@ class MongoStorageEventRepositoryAdapter(
                         "Error while fetching unprocessed events from storage outbox"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not fetch unprocessed events from storage outbox", it) }
+            }.onErrorMap { RepositoryException("Could not fetch unprocessed events from storage outbox", it) }
             .awaitSingle()
-    }
 
     override suspend fun markAsProcessed(event: StorageEvent): StorageEvent {
         val updatedRecordCount =
@@ -91,8 +86,7 @@ class MongoStorageEventRepositoryAdapter(
                             "Error while marking event as processed in storage outbox. Event: $event"
                         }
                     }
-                }
-                .onErrorMap { RepositoryException("Could not mark event as processed in storage outbox", it) }
+                }.onErrorMap { RepositoryException("Could not mark event as processed in storage outbox", it) }
                 .awaitSingle()
 
         if (updatedRecordCount != 0L) {

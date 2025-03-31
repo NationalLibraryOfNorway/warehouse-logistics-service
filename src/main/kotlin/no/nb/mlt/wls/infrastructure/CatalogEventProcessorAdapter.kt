@@ -18,7 +18,6 @@ class CatalogEventProcessorAdapter(
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val inventoryNotifier: InventoryNotifier
 ) : EventProcessor<CatalogEvent> {
-    // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =

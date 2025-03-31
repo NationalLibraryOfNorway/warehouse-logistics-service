@@ -279,7 +279,7 @@ class StorageEventProcessorTest {
             }
         }
 
-    // Just a happy little storage system mock, he lives right here...
+    // A happy little storage system mock, he lives right here...
     private val happyStorageSystemMock =
         mockk<StorageSystemFacade> {
             coEvery { canHandleItem(any()) } returns true
@@ -290,7 +290,7 @@ class StorageEventProcessorTest {
             coEvery { createItem(any()) } returns Unit
         }
 
-    // ... and he's got a friend, a big old email notifier mock
+    // ... and he's got a friend, a big old email notifier mock...
     private val emailNotifierMock =
         object : EmailNotifier {
             var orderCreatedCount = 0
@@ -303,5 +303,6 @@ class StorageEventProcessorTest {
             }
         }
 
+    // ... and this list over here will be our little secret
     private val testItemList = listOf(testItem, createTestItem(hostId = "testItem-02"))
 }

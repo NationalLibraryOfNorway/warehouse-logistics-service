@@ -97,7 +97,6 @@
     <kotlin.logging.version>7.0.0</kotlin.logging.version>
   </properties>
 
-  <!-- TODO - Sort the dependencies by environment (dep/test?) -->
   <dependencies>
     <dependency>
       <groupId>org.springframework.boot</groupId>

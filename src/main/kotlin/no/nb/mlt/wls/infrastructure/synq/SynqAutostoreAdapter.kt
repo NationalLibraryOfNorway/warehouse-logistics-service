@@ -17,7 +17,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono
 import java.net.URI
 
-// TODO - There is room to deduplicate the calls in this adapter
 @Component
 class SynqAutostoreAdapter(
     @Qualifier("nonProxyWebClient")
@@ -41,8 +40,7 @@ class SynqAutostoreAdapter(
                 } else {
                     Mono.error(error)
                 }
-            }
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .onErrorComplete(SynqError.DuplicateItemException::class.java)
             .awaitSingle()
     }
@@ -67,8 +65,7 @@ class SynqAutostoreAdapter(
                 } else {
                     Mono.error(error)
                 }
-            }
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
 
@@ -88,8 +85,8 @@ class SynqAutostoreAdapter(
             .awaitSingle()
     }
 
-    override suspend fun updateOrder(order: Order): Order {
-        return webClient
+    override suspend fun updateOrder(order: Order): Order =
+        webClient
             .put()
             .uri(URI.create("$baseUrl/orders/batch"))
             .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
@@ -98,15 +95,13 @@ class SynqAutostoreAdapter(
             .map { order }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
-    }
 
-    override suspend fun canHandleLocation(location: String): Boolean {
-        return when (location.uppercase()) {
+    override suspend fun canHandleLocation(location: String): Boolean =
+        when (location.uppercase()) {
             "SYNQ_AUTOSTORE" -> true
             "AUTOSTORE_WAREHOUSE" -> true
             else -> false
         }
-    }
 
     override fun canHandleItem(item: Item): Boolean {
         // There is no freezer in AutoStore

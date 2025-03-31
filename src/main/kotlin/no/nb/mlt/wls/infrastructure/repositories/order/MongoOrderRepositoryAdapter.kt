@@ -26,9 +26,9 @@ class MongoOrderRepositoryAdapter(
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
-    ): Order? {
-        return orderMongoRepository.findByHostNameAndHostOrderId(hostName, hostOrderId)
-            // TODO - See if timeouts can be made configurable
+    ): Order? =
+        orderMongoRepository
+            .findByHostNameAndHostOrderId(hostName, hostOrderId)
             .timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
@@ -38,47 +38,44 @@ class MongoOrderRepositoryAdapter(
                         "Error while fetching order"
                     }
                 }
-            }
-            .onErrorMap { OrderNotFoundException(it.message ?: "Could not fetch order") }
-            .awaitSingleOrNull()?.toOrder()
-    }
+            }.onErrorMap { OrderNotFoundException(it.message ?: "Could not fetch order") }
+            .awaitSingleOrNull()
+            ?.toOrder()
 
     override suspend fun deleteOrder(order: Order) {
         val modified =
-            orderMongoRepository.findAndUpdateByHostNameAndHostOrderId(
-                hostName = order.hostName,
-                hostOrderId = order.hostOrderId,
-                status = Order.Status.DELETED,
-                orderLine = order.orderLine,
-                orderType = order.orderType,
-                contactPerson = order.contactPerson,
-                address = order.address,
-                callbackUrl = order.callbackUrl
-            )
-                // TODO - See if timeouts can be made configurable
-                .timeout(Duration.ofSeconds(8))
+            orderMongoRepository
+                .findAndUpdateByHostNameAndHostOrderId(
+                    hostName = order.hostName,
+                    hostOrderId = order.hostOrderId,
+                    status = Order.Status.DELETED,
+                    orderLine = order.orderLine,
+                    orderType = order.orderType,
+                    contactPerson = order.contactPerson,
+                    address = order.address,
+                    callbackUrl = order.callbackUrl
+                ).timeout(Duration.ofSeconds(8))
                 .doOnError(TimeoutException::class.java) {
                     logger.error(it) {
                         "Timed out while deleting order from WLS database. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
                     }
-                }
-                .awaitSingleOrNull()
+                }.awaitSingleOrNull()
 
         if (modified == 0L) throw OrderNotFoundException("Order ${order.hostOrderId} for ${order.hostName} was not found for deletion")
     }
 
     override suspend fun updateOrder(order: Order): Order {
-        orderMongoRepository.findAndUpdateByHostNameAndHostOrderId(
-            order.hostName,
-            order.hostOrderId,
-            order.status,
-            order.orderLine,
-            order.orderType,
-            order.contactPerson,
-            order.address,
-            order.callbackUrl
-        )
-            .timeout(Duration.ofSeconds(8))
+        orderMongoRepository
+            .findAndUpdateByHostNameAndHostOrderId(
+                order.hostName,
+                order.hostOrderId,
+                order.status,
+                order.orderLine,
+                order.orderType,
+                order.contactPerson,
+                order.address,
+                order.callbackUrl
+            ).timeout(Duration.ofSeconds(8))
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -87,25 +84,22 @@ class MongoOrderRepositoryAdapter(
                         "Error while updating order"
                     }
                 }
-            }
-            .onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
+            }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
             .awaitSingleOrNull()
 
         return getOrder(order.hostName, order.hostOrderId)!!
     }
 
-    override suspend fun createOrder(order: Order): Order {
-        return orderMongoRepository.save(order.toMongoOrder())
+    override suspend fun createOrder(order: Order): Order =
+        orderMongoRepository
+            .save(order.toMongoOrder())
             .map { it.toOrder() }
-            // TODO - See if timeouts can be made configurable
             .timeout(Duration.ofSeconds(8))
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while updating order in WLS database. Order: $order"
                 }
-            }
-            .awaitSingle()
-    }
+            }.awaitSingle()
 }
 
 @Repository

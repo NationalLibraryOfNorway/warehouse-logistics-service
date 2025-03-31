@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.domain.model
 
-import no.nb.mlt.wls.domain.model.Order.Address
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
@@ -57,13 +56,9 @@ data class Order(
             .updateOrderStatusFromOrderLines()
     }
 
-    private fun setContactPerson(contactPerson: String): Order {
-        return this.copy(contactPerson = contactPerson)
-    }
+    private fun setContactPerson(contactPerson: String): Order = this.copy(contactPerson = contactPerson)
 
-    private fun setOrderType(orderType: Type): Order {
-        return this.copy(orderType = orderType)
-    }
+    private fun setOrderType(orderType: Type): Order = this.copy(orderType = orderType)
 
     private fun setCallbackUrl(callbackUrl: String): Order {
         throwIfInvalidUrl(callbackUrl)
@@ -94,13 +89,9 @@ data class Order(
         }
     }
 
-    private fun isOrderClosed(): Boolean {
-        return listOf(Status.COMPLETED, Status.DELETED, Status.RETURNED).contains(status)
-    }
+    private fun isOrderClosed(): Boolean = listOf(Status.COMPLETED, Status.DELETED, Status.RETURNED).contains(status)
 
-    private fun isOrderProcessingStarted(): Boolean {
-        return status != Status.NOT_STARTED
-    }
+    private fun isOrderProcessingStarted(): Boolean = status != Status.NOT_STARTED
 
     /**
      * Makes a copy of the order with the updated fields
@@ -124,9 +115,7 @@ data class Order(
             .setContactPerson(contactPerson)
     }
 
-    private fun setNote(note: String?): Order {
-        return this.copy(note = note)
-    }
+    private fun setNote(note: String?): Order = this.copy(note = note)
 
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
 
@@ -155,9 +144,7 @@ data class Order(
         }
     }
 
-    fun pickOrder(itemIds: List<String>): Order {
-        return this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
-    }
+    fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
 
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
@@ -178,30 +165,26 @@ data class Order(
             RETURNED
         }
 
-        fun isPickedOrFailed(): Boolean {
-            return when (this.status) {
+        fun isPickedOrFailed(): Boolean =
+            when (this.status) {
                 Status.NOT_STARTED -> false
                 Status.PICKED -> true
                 Status.FAILED -> true
                 Status.RETURNED -> false
             }
-        }
 
         /**
          * Used to infer from the OrderItems in OrderLines that the Order is complete
          */
-        fun isComplete(): Boolean {
-            return when (this.status) {
+        fun isComplete(): Boolean =
+            when (this.status) {
                 Status.NOT_STARTED -> false
                 Status.PICKED -> true
                 Status.FAILED -> true
                 Status.RETURNED -> true
             }
-        }
 
-        fun isReturned(): Boolean {
-            return this.status == Status.RETURNED
-        }
+        fun isReturned(): Boolean = this.status == Status.RETURNED
     }
 
     data class Address(

@@ -27,8 +27,8 @@ import org.springframework.context.annotation.Configuration
 )
 class SwaggerConfig {
     @Bean("synqOpenApi")
-    fun openApi(): OpenAPI {
-        return OpenAPI()
+    fun openApi(): OpenAPI =
+        OpenAPI()
             .info(
                 Info()
                     .title("SynQ updates port for Hermes WLS")
@@ -47,18 +47,16 @@ class SwaggerConfig {
                             .email("mlt@nb.no")
                             .url("https://www.nb.no")
                     )
-            )
-            .addSecurityItem(
+            ).addSecurityItem(
                 SecurityRequirement().addList("clientCredentials")
             )
-    }
 
     @Bean("synqApi")
-    fun synqApi(): GroupedOpenApi {
-        return GroupedOpenApi.builder()
+    fun synqApi(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
             .group("SynQ API")
             .displayName("SynQ updates port for Hermes WLS")
             .pathsToMatch("/synq/v1/**")
             .build()
-    }
 }

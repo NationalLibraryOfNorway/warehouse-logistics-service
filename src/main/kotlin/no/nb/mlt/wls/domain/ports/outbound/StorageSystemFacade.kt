@@ -30,6 +30,12 @@ interface StorageSystemFacade {
     fun canHandleItem(item: Item): Boolean
 }
 
-class StorageSystemException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class StorageSystemException(
+    message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)
 
-class DuplicateResourceException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class DuplicateResourceException(
+    message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)

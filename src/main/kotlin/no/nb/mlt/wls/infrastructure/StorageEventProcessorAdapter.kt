@@ -26,7 +26,6 @@ class StorageEventProcessorAdapter(
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
 ) : EventProcessor<StorageEvent> {
-    // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =
@@ -115,15 +114,12 @@ class StorageEventProcessorAdapter(
         }
     }
 
-    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> {
-        return items.groupBy { item ->
+    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
+        items.groupBy { item ->
             storageSystems.firstOrNull { it.canHandleLocation(item.location) }
         }
-    }
 
-    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> {
-        return storageSystems.filter { it.canHandleItem(item) }
-    }
+    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
     private suspend fun createAndSendEmails(order: Order) {
         val items = order.orderLine.map { it.hostId }

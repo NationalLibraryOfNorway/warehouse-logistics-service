@@ -23,8 +23,8 @@ data class CreateOrderDTO(
     )
 }
 
-fun CreateOrderDTO.toOrder(): Order {
-    return Order(
+fun CreateOrderDTO.toOrder(): Order =
+    Order(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = Order.Status.NOT_STARTED,
@@ -39,4 +39,3 @@ fun CreateOrderDTO.toOrder(): Order {
         note = note,
         callbackUrl = callbackUrl
     )
-}

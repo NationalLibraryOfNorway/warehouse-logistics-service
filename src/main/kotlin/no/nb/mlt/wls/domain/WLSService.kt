@@ -55,7 +55,17 @@ class WLSService(
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems, SynchronizeItems {
+) : AddNewItem,
+    CreateOrder,
+    DeleteOrder,
+    UpdateOrder,
+    GetOrder,
+    GetItem,
+    OrderStatusUpdate,
+    MoveItem,
+    PickOrderItems,
+    PickItems,
+    SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -257,23 +267,17 @@ class WLSService(
     override suspend fun getItem(
         hostName: HostName,
         hostId: String
-    ): Item? {
-        return itemRepository.getItem(hostName, hostId)
-    }
+    ): Item? = itemRepository.getItem(hostName, hostId)
 
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
-    ): Order? {
-        return orderRepository.getOrder(hostName, hostOrderId)
-    }
+    ): Order? = orderRepository.getOrder(hostName, hostOrderId)
 
     private suspend fun getItems(
         hostIds: List<String>,
         hostName: HostName
-    ): List<Item> {
-        return itemRepository.getItems(hostName, hostIds)
-    }
+    ): List<Item> = itemRepository.getItems(hostName, hostIds)
 
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
@@ -296,12 +300,11 @@ class WLSService(
     private suspend fun getOrderOrThrow(
         hostName: HostName,
         hostOrderId: String
-    ): Order {
-        return getOrder(
+    ): Order =
+        getOrder(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
-    }
 
     private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {

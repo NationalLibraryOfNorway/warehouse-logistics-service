@@ -17,11 +17,15 @@ class TrailingSlashRedirectFilter : WebFilter {
 
         if (path.endsWith("/")) {
             return chain.filter(
-                exchange.mutate().request(
-                    request.mutate().path(
-                        path.removeSuffix("/")
+                exchange
+                    .mutate()
+                    .request(
+                        request
+                            .mutate()
+                            .path(
+                                path.removeSuffix("/")
+                            ).build()
                     ).build()
-                ).build()
             )
         }
 

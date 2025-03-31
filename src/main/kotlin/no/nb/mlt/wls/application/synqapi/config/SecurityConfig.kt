@@ -24,8 +24,8 @@ class SecurityConfig {
 
     @Bean("synqSecurityFilterChain")
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http {
+    fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+        http {
             securityMatcher(PathPatternParserServerWebExchangeMatcher("/synq/v1/**"))
             csrf { }
             authorizeExchange {
@@ -41,7 +41,6 @@ class SecurityConfig {
                 jwt { jwtAuthenticationConverter = RealmAccessToAuthoritiesConverter() }
             }
         }
-    }
 
     @Bean("synqJwtDecoder")
     @Order(Ordered.HIGHEST_PRECEDENCE)

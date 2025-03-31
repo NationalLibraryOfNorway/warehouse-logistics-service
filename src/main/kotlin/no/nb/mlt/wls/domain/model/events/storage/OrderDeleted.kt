@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.model.events.storage
 
 import no.nb.mlt.wls.domain.model.HostName
-import java.util.UUID
+import java.util.*
 
 data class OrderDeleted(
     val host: HostName,

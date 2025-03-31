@@ -120,10 +120,7 @@ data class ApiItemPayload(
     }
 
     private fun isValidUrl(url: String): Boolean {
-        // Yes I am aware that this function is duplicated in three places
-        // But I prefer readability to DRY in cases like this
-
-        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
+        val validator = UrlValidator(arrayOf("http", "https"))
         return validator.isValid(url)
     }
 }

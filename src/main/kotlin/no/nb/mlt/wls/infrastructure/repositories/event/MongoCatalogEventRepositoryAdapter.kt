@@ -22,8 +22,8 @@ private val logger = KotlinLogging.logger {}
 class MongoCatalogEventRepositoryAdapter(
     private val mongoCatalogMessageRepository: MongoCatalogMessageRepository
 ) : EventRepository<CatalogEvent> {
-    override suspend fun save(event: CatalogEvent): CatalogEvent {
-        return mongoCatalogMessageRepository
+    override suspend fun save(event: CatalogEvent): CatalogEvent =
+        mongoCatalogMessageRepository
             .save(MongoCatalogEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved catalog event to catalog outbox: $it" } }
@@ -36,13 +36,12 @@ class MongoCatalogEventRepositoryAdapter(
                         "Error while saving event to catalog outbox. Event: $event"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not save event to catalog outbox", it) }
+            }.onErrorMap { RepositoryException("Could not save event to catalog outbox", it) }
             .awaitSingle()
-    }
 
-    override suspend fun getAll(): List<CatalogEvent> {
-        return mongoCatalogMessageRepository.findAll()
+    override suspend fun getAll(): List<CatalogEvent> =
+        mongoCatalogMessageRepository
+            .findAll()
             .map { it.body }
             .collectList()
             .timeout(Duration.ofSeconds(8))
@@ -54,13 +53,11 @@ class MongoCatalogEventRepositoryAdapter(
                         "Error while fetching events from catalog outbox"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not fetch event from catalog outbox", it) }
+            }.onErrorMap { RepositoryException("Could not fetch event from catalog outbox", it) }
             .awaitSingle()
-    }
 
-    override suspend fun getUnprocessedSortedByCreatedTime(): List<CatalogEvent> {
-        return mongoCatalogMessageRepository
+    override suspend fun getUnprocessedSortedByCreatedTime(): List<CatalogEvent> =
+        mongoCatalogMessageRepository
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
@@ -73,10 +70,8 @@ class MongoCatalogEventRepositoryAdapter(
                         "Error while fetching unprocessed events from catalog outbox"
                     }
                 }
-            }
-            .onErrorMap { RepositoryException("Could not fetch unprocessed events from catalog outbox", it) }
+            }.onErrorMap { RepositoryException("Could not fetch unprocessed events from catalog outbox", it) }
             .awaitSingle()
-    }
 
     override suspend fun markAsProcessed(event: CatalogEvent): CatalogEvent {
         val updatedRecordCount =
@@ -91,8 +86,7 @@ class MongoCatalogEventRepositoryAdapter(
                             "Error while marking event as processed in catalog outbox. Event: $event"
                         }
                     }
-                }
-                .onErrorMap { RepositoryException("Could not mark event as processed in catalog outbox", it) }
+                }.onErrorMap { RepositoryException("Could not mark event as processed in catalog outbox", it) }
                 .awaitSingle()
 
         if (updatedRecordCount != 0L) {
