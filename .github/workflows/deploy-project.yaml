@@ -118,6 +118,15 @@ jobs:
           fail-on-error: true # Fail this step if there are test errors
           fail-on-empty: true # Fail this step if no test results were found
 
+      - name: Check for TODOs
+        run: |
+          if grep -ie "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" -r .; then
+            echo "TODOs found! Turn them into Jira tasks and remove them from the code"
+            exit 69
+          else
+            echo "No TODOs found."
+          fi
+
       # This step uploads the JAR file as an artifact which can then be used in other jobs
       - name: Upload the JAR File
         uses: actions/upload-artifact@v4

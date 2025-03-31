@@ -15,3 +15,5 @@ class HermesApplication
 fun main(args: Array<String>) {
     runApplication<HermesApplication>(*args)
 }
+
+// TODO test
