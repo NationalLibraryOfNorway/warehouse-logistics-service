@@ -28,9 +28,8 @@ class ExceptionHandler {
             .body(ErrorMessage(message))
     }
 
-    // TODO - Consider better formatting of the message
     @ExceptionHandler(DecodingException::class)
-    fun handleValidationException(e: DecodingException): ResponseEntity<ErrorMessage> {
+    fun handleDecodingException(e: DecodingException): ResponseEntity<ErrorMessage> {
         return ResponseEntity
             .badRequest()
             .body(ErrorMessage(e.message ?: "Error decoding request body. Likely missing a field."))
