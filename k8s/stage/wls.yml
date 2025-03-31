@@ -221,5 +221,3 @@ spec:
                 name: wls-service
                 port:
                   name: rest-port
-
-# todo test

@@ -52,5 +52,3 @@ class CatalogEventProcessorAdapter(
         inventoryNotifier.orderChanged(event.order, event.eventTimestamp)
     }
 }
-
-// tOdO test

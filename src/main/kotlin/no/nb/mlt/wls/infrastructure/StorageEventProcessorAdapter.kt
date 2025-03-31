@@ -129,5 +129,3 @@ class StorageEventProcessorAdapter(
         }
     }
 }
-
-// todo test

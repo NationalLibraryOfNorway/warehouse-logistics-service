@@ -26,5 +26,3 @@ HEALTHCHECK --start-period=40s --retries=5 \
 
 # Set the entrypoint for the container, this is the command that will be run when the container starts up
 ENTRYPOINT ["java", "-Duser.timezone=Europe/Oslo", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app.jar"]
-
-# TODO test
