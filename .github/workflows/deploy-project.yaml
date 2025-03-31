@@ -119,8 +119,8 @@ jobs:
           fail-on-empty: true # Fail this step if no test results were found
 
       - name: Check for TODOs
-        run:
-          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" .; then
+        run: |
+          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" . ; then
             echo "TODOs found! Turn them into Jira tasks and remove them from the code"
             exit 69
           else
