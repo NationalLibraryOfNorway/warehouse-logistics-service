@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.ServerException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import org.springframework.core.codec.DecodingException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -25,6 +26,13 @@ class ExceptionHandler {
         return ResponseEntity
             .badRequest()
             .body(ErrorMessage(message))
+    }
+
+    @ExceptionHandler(DecodingException::class)
+    fun handleDecodingException(e: DecodingException): ResponseEntity<ErrorMessage> {
+        return ResponseEntity
+            .badRequest()
+            .body(ErrorMessage(e.message ?: "Error decoding request body. Likely missing a field."))
     }
 
     @ExceptionHandler(ValidationException::class)
