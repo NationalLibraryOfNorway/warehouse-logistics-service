@@ -116,8 +116,7 @@ class OrderModelValidationTest {
     @Test
     fun `update order with invalid orderLine should fail validation`() {
         val invalidPayload = validUpdateOrderPayload.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
-        val x = validator.validate(invalidPayload)
-        assert(x.isNotEmpty())
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
