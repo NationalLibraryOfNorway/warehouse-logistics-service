@@ -21,21 +21,21 @@ data class CreateOrderDTO(
     data class OrderItem(
         val hostId: String
     )
-}
 
-fun CreateOrderDTO.toOrder(): Order =
-    Order(
-        hostName = hostName,
-        hostOrderId = hostOrderId,
-        status = Order.Status.NOT_STARTED,
-        orderLine =
-            orderLine.map {
-                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-            },
-        orderType = orderType,
-        contactPerson = contactPerson,
-        contactEmail = contactEmail,
-        address = address,
-        note = note,
-        callbackUrl = callbackUrl
-    )
+    fun toOrder(): Order =
+        Order(
+            hostName = hostName,
+            hostOrderId = hostOrderId,
+            status = Order.Status.NOT_STARTED,
+            orderLine =
+                orderLine.map {
+                    Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                },
+            orderType = orderType,
+            contactPerson = contactPerson,
+            contactEmail = contactEmail,
+            address = address,
+            note = note,
+            callbackUrl = callbackUrl
+        )
+}
