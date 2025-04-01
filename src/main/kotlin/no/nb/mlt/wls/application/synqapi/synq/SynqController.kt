@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
@@ -65,7 +66,7 @@ class SynqController(
     )
     @PutMapping("/move-item")
     suspend fun moveItem(
-        @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
+        @RequestBody @Valid synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Unit> {
         synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
         return ResponseEntity.ok().build()
@@ -159,7 +160,7 @@ class SynqController(
     )
     @PutMapping("/order-update/{owner}/{orderId}")
     suspend fun updateOrder(
-        @RequestBody orderUpdatePayload: SynqOrderStatusUpdatePayload,
+        @RequestBody @Valid orderUpdatePayload: SynqOrderStatusUpdatePayload,
         @Parameter(description = "Owner of the order items")
         @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
