@@ -76,9 +76,8 @@ data class SynqOrderPickingConfirmationPayload(
         }
     }
 
-    private fun getHostNameString(): String {
-        return this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get hostname from order lines")
-    }
+    private fun getHostNameString(): String =
+        this.orderLine.firstOrNull()?.hostName ?: throw ValidationException("Unable to get hostname from order lines")
 
     /**
      * Creates a map between the id and the quantity picked from each product in the order line

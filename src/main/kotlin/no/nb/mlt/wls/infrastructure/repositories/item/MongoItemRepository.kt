@@ -28,8 +28,8 @@ class MongoItemRepositoryAdapter(
     override suspend fun getItem(
         hostName: HostName,
         hostId: String
-    ): Item? {
-        return mongoRepo
+    ): Item? =
+        mongoRepo
             .findByHostNameAndHostId(hostName, hostId)
             .map(MongoItem::toItem)
             .timeout(Duration.ofSeconds(8))
@@ -37,27 +37,24 @@ class MongoItemRepositoryAdapter(
                 logger.error(it) {
                     "Timed out while fetching from WLS database. hostName: $hostName, hostId: $hostId"
                 }
-            }
-            .awaitSingleOrNull()
-    }
+            }.awaitSingleOrNull()
 
     override suspend fun getItems(
         hostName: HostName,
         hostIds: List<String>
-    ): List<Item> {
-        return mongoRepo.findAllByHostNameAndHostIdIn(hostName, hostIds)
+    ): List<Item> =
+        mongoRepo
+            .findAllByHostNameAndHostIdIn(hostName, hostIds)
             .collectList()
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching multiple items for $hostName"
                 }
-            }
-            .awaitSingle()
+            }.awaitSingle()
             .map { it.toItem() }
-    }
 
-    override suspend fun createItem(item: Item): Item {
-        return mongoRepo
+    override suspend fun createItem(item: Item): Item =
+        mongoRepo
             .save(item.toMongoItem())
             .map(MongoItem::toItem)
             .timeout(Duration.ofSeconds(6))
@@ -65,24 +62,20 @@ class MongoItemRepositoryAdapter(
                 logger.error(it) {
                     "Timed out while saving to WLS database. item: $item"
                 }
-            }
-            .awaitSingle()
-    }
+            }.awaitSingle()
 
-    override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean {
-        return mongoRepo.countItemsMatchingIds(ids)
+    override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean =
+        mongoRepo
+            .countItemsMatchingIds(ids)
             .map {
                 logger.debug { "Counted items matching ids: $ids, count: $it" }
                 it == ids.size.toLong()
-            }
-            .timeout(Duration.ofSeconds(8))
+            }.timeout(Duration.ofSeconds(8))
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while counting items matching ids: $ids"
                 }
-            }
-            .awaitSingle()
-    }
+            }.awaitSingle()
 
     override suspend fun moveItem(
         hostName: HostName,
@@ -102,8 +95,7 @@ class MongoItemRepositoryAdapter(
                             "Error while updating item"
                         }
                     }
-                }
-                .onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
+                }.onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
                 .awaitSingle()
 
         if (itemsModified == 0L) {
@@ -131,8 +123,7 @@ class MongoItemRepositoryAdapter(
                             "Error while updating item"
                         }
                     }
-                }
-                .onErrorMap { ItemMovingException(it.message ?: "Item could not be updated", it) }
+                }.onErrorMap { ItemMovingException(it.message ?: "Item could not be updated", it) }
                 .awaitSingle()
 
         if (itemsModified == 0L) {

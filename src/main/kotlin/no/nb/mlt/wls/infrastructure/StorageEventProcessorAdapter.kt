@@ -3,11 +3,11 @@ package no.nb.mlt.wls.infrastructure
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
+import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
+import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -26,7 +26,6 @@ class StorageEventProcessorAdapter(
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
 ) : EventProcessor<StorageEvent> {
-    // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =
@@ -115,15 +114,12 @@ class StorageEventProcessorAdapter(
         }
     }
 
-    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> {
-        return items.groupBy { item ->
+    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
+        items.groupBy { item ->
             storageSystems.firstOrNull { it.canHandleLocation(item.location) }
         }
-    }
 
-    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> {
-        return storageSystems.filter { it.canHandleItem(item) }
-    }
+    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
     private suspend fun createAndSendEmails(order: Order) {
         val items = order.orderLine.map { it.hostId }

@@ -29,8 +29,8 @@ import org.springframework.context.annotation.Primary
 class SwaggerConfig {
     @Bean
     @Primary
-    fun openApi(): OpenAPI {
-        return OpenAPI()
+    fun openApi(): OpenAPI =
+        OpenAPI()
             .info(
                 Info()
                     .title("Hermes WLS (Warehouse and Logistics Service) middleware")
@@ -53,18 +53,16 @@ class SwaggerConfig {
                             .email("mlt@nb.no")
                             .url("https://www.nb.no")
                     ).version("1.0.0")
-            )
-            .addSecurityItem(
+            ).addSecurityItem(
                 SecurityRequirement().addList("clientCredentials")
             )
-    }
 
     @Bean
-    fun hostApi(): GroupedOpenApi {
-        return GroupedOpenApi.builder()
+    fun hostApi(): GroupedOpenApi =
+        GroupedOpenApi
+            .builder()
             .group("Host API")
             .displayName("API for catalogues (hosts) to interact with Hermes WLS")
             .pathsToMatch("/v1/**")
             .build()
-    }
 }

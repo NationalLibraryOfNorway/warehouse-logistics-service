@@ -3,7 +3,6 @@ package no.nb.mlt.wls.domain.ports.inbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.OrderUpdateException
-import kotlin.jvm.Throws
 
 fun interface UpdateOrder {
     @Throws(OrderNotFoundException::class, ValidationException::class, OrderUpdateException::class, IllegalOrderStateException::class)
@@ -19,4 +18,7 @@ fun interface UpdateOrder {
     ): Order
 }
 
-class IllegalOrderStateException(override val message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class IllegalOrderStateException(
+    override val message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)

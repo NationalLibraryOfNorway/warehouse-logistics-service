@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.infrastructure.config
 
 import no.nb.mlt.wls.domain.WLSService
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
-import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort

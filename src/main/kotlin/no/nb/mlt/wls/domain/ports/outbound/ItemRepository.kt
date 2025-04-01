@@ -32,8 +32,13 @@ interface ItemRepository {
         quantity: Int
     ): Item
 
-    // TODO - This is MongoDB specific code, and should be moved into infrastructure instead
-    data class ItemId(val hostName: HostName, val hostId: String)
+    data class ItemId(
+        val hostName: HostName,
+        val hostId: String
+    )
 }
 
-class ItemMovingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+class ItemMovingException(
+    message: String,
+    cause: Throwable? = null
+) : RuntimeException(message, cause)

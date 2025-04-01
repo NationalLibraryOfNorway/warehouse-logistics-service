@@ -35,7 +35,7 @@ class Item(
         val itemsInStockQuantity = quantity
 
         // In the case of over-picking, log it and set quantity to zero.
-        // This is in hope that on return the database recovers
+        // This is done in hope that on return the database recovers
         if (amountPicked > itemsInStockQuantity) {
             logger.error {
                 "Tried to pick too many items for item with id '$hostId'. " +
@@ -75,4 +75,8 @@ class Item(
         result = 31 * result + hostName.hashCode()
         return result
     }
+
+    override fun toString(): String =
+        "Item(hostId='$hostId', hostName=$hostName, description='$description', itemCategory=$itemCategory, preferredEnvironment=" +
+            "$preferredEnvironment, packaging=$packaging, callbackUrl=$callbackUrl, location='$location', quantity=$quantity)"
 }

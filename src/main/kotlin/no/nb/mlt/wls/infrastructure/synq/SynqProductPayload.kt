@@ -20,9 +20,13 @@ data class SynqProductPayload(
         ABOX
     }
 
-    data class Barcode(val barcodeId: String)
+    data class Barcode(
+        val barcodeId: String
+    )
 
-    data class ProductUom(val uomId: SynqPackaging)
+    data class ProductUom(
+        val uomId: SynqPackaging
+    )
 }
 
 fun Item.toSynqPayload() =
@@ -37,8 +41,8 @@ fun Item.toSynqPayload() =
         hostName = hostName.toString()
     )
 
-fun toSynqCategory(category: ItemCategory): String {
-    return when (category) {
+fun toSynqCategory(category: ItemCategory): String =
+    when (category) {
         ItemCategory.PAPER -> "papir"
         ItemCategory.DISC -> "plate"
         ItemCategory.FILM -> "film"
@@ -48,4 +52,3 @@ fun toSynqCategory(category: ItemCategory): String {
         ItemCategory.PHOTO -> "fotografi"
         ItemCategory.FRAGILE -> throw StorageSystemException("$category items cannot go into SynQ")
     }
-}

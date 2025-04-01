@@ -111,19 +111,6 @@ data class ApiOrderPayload(
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
 ) {
-    fun toCreateOrderDTO() =
-        CreateOrderDTO(
-            hostName = hostName,
-            hostOrderId = hostOrderId,
-            orderLine = orderLine.map { it.toCreateOrderItem() },
-            orderType = orderType,
-            address = address,
-            contactPerson = contactPerson,
-            contactEmail = contactEmail,
-            note = note,
-            callbackUrl = callbackUrl
-        )
-
     @Throws(ValidationException::class)
     fun validate() {
         if (hostOrderId.isBlank()) {
@@ -143,15 +130,12 @@ data class ApiOrderPayload(
     }
 
     private fun isValidUrl(url: String): Boolean {
-        // Yes I am aware that this function is duplicated in three places
-        // But I prefer readability over DRY in cases like this
-
         val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
         return validator.isValid(url)
     }
 }
 
-fun Order.toApiOrderPayload() =
+fun Order.toApiPayload() =
     ApiOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,

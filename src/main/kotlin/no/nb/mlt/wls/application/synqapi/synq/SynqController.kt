@@ -13,7 +13,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PathVariable
@@ -213,37 +213,40 @@ class SynqController(
         logger.info { "Reconciliation. loadUnits=${payload.loadUnit.size}" }
 
         val units =
-            payload.loadUnit.map {
-                val item =
-                    try {
-                        val mappedHostName = it.getMappedHostName()
+            payload.loadUnit
+                .map {
+                    val item =
+                        try {
+                            val mappedHostName = it.getMappedHostName()
 
-                        if (mappedHostName == null) {
-                            logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
-                            return@map null
+                            if (mappedHostName == null) {
+                                logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
+                                return@map null
+                            }
+
+                            SynchronizeItems.ItemToSynchronize(
+                                hostId = it.productId,
+                                hostName = mappedHostName,
+                                location = it.location,
+                                quantity = it.quantityOnHand.toInt(),
+                                itemCategory = it.getMappedCategory(),
+                                packaging = it.getMappedUOM(),
+                                currentPreferredEnvironment = it.mapCurrentPreferredEnvironment(),
+                                description = if (it.description.isNullOrBlank()) "-" else it.description
+                            )
+                        } catch (e: InvalidParameterException) {
+                            logger.error {
+                                "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}"
+                            }
+                            null
                         }
 
-                        SynchronizeItems.ItemToSynchronize(
-                            hostId = it.productId,
-                            hostName = mappedHostName,
-                            location = it.location,
-                            quantity = it.quantityOnHand.toInt(),
-                            itemCategory = it.getMappedCategory(),
-                            packaging = it.getMappedUOM(),
-                            currentPreferredEnvironment = it.mapCurrentPreferredEnvironment(),
-                            description = if (it.description.isNullOrBlank()) "-" else it.description
-                        )
-                    } catch (e: InvalidParameterException) {
-                        logger.error { "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}" }
-                        null
+                    if (item != null) {
+                        logger.debug { "Synchronizing item: $item" }
                     }
 
-                if (item != null) {
-                    logger.debug { "Synchronizing item: $item" }
-                }
-
-                item
-            }.filterNotNull()
+                    item
+                }.filterNotNull()
 
         logger.info { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
 
@@ -258,7 +261,7 @@ class SynqController(
 }
 
 private fun normalizeOrderId(orderId: String): String {
-    val orderIdWithoutPrefix = orderId.substringAfter(StorageSystemFacade.DELIMITER, orderId)
+    val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
     // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
     if (orderIdWithoutPrefix == orderId) {
         logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }

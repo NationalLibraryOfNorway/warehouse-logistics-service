@@ -5,7 +5,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.apache.commons.validator.routines.UrlValidator
-import kotlin.jvm.Throws
 
 @Schema(
     description = """Payload for editing an order in Hermes WLS, and appropriate storage system(s).""",
@@ -39,7 +38,7 @@ import kotlin.jvm.Throws
 data class ApiUpdateOrderPayload(
     @Schema(
         description = """Name of the host system which made the order.""",
-        examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
     val hostName: HostName,
     @Schema(
@@ -57,7 +56,7 @@ data class ApiUpdateOrderPayload(
             usually meaning the items will be viewed, inspected, etc.
             "DIGITIZATION" means that the order is specifically for digitizing items,
             usually meaning that the order will be delivered to digitization workstation.""",
-        examples = [ "LOAN", "DIGITIZATION" ]
+        examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
     @Schema(
@@ -106,9 +105,6 @@ data class ApiUpdateOrderPayload(
     }
 
     private fun isValidUrl(url: String): Boolean {
-        // Yes I am aware that this function is duplicated in three places
-        // But I prefer readability over DRY in cases like this
-
         val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
         return validator.isValid(url)
     }

@@ -1,8 +1,8 @@
-package no.nb.mlt.wls.domain.model.catalogEvents
+package no.nb.mlt.wls.domain.model.events.catalog
 
 import no.nb.mlt.wls.domain.model.Order
 import java.time.Instant
-import java.util.UUID
+import java.util.*
 
 data class OrderEvent(
     val order: Order,

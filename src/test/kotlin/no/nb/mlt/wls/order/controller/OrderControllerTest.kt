@@ -13,25 +13,25 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
-import no.nb.mlt.wls.application.hostapi.order.toApiOrderPayload
-import no.nb.mlt.wls.domain.model.Environment
+import no.nb.mlt.wls.application.hostapi.order.toApiPayload
+import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
+import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
+import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
-import no.nb.mlt.wls.infrastructure.repositories.item.MongoItem
+import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
+import no.nb.mlt.wls.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -53,7 +53,6 @@ import org.springframework.security.test.web.reactive.server.SecurityMockServerC
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
-import reactor.core.publisher.Flux
 
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
@@ -76,8 +75,6 @@ class OrderControllerTest(
     private lateinit var storageEventRepository: EventRepository<StorageEvent>
 
     private lateinit var webTestClient: WebTestClient
-
-    val clientRole: String = "ROLE_${HostName.AXIELL.name.lowercase()}"
 
     @BeforeEach
     fun setUp() {
@@ -102,7 +99,8 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
                 .exchange()
-                .expectStatus().isCreated
+                .expectStatus()
+                .isCreated
 
             val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
             val outbox = storageEventRepositoryAdapter.getAll()
@@ -132,7 +130,8 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(duplicateOrderPayload)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
                 .expectBody<ApiOrderPayload>()
                 .consumeWith { response ->
                     assertThat(response.responseBody?.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
@@ -157,9 +156,9 @@ class OrderControllerTest(
                     duplicateOrderPayload.copy(
                         orderLine = listOf(OrderLine("AAAAAAAAA", Order.OrderItem.Status.PICKED))
                     )
-                )
-                .exchange()
-                .expectStatus().isOk
+                ).exchange()
+                .expectStatus()
+                .isOk
                 .expectBody<ApiOrderPayload>()
                 .consumeWith { response ->
                     assertThat(response.responseBody?.orderLine).isEqualTo(duplicateOrderPayload.orderLine)
@@ -179,7 +178,8 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload.copy(orderLine = emptyList()))
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus()
+            .isBadRequest
 
         webTestClient
             .mutateWith(csrf())
@@ -188,7 +188,8 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload.copy(hostOrderId = ""))
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus()
+            .isBadRequest
 
         webTestClient
             .mutateWith(csrf())
@@ -197,7 +198,8 @@ class OrderControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testOrderPayload.copy(callbackUrl = "testing.no"))
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus()
+            .isBadRequest
     }
 
     @Test
@@ -209,7 +211,8 @@ class OrderControllerTest(
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody(ApiOrderPayload::class.java)
             .consumeWith { response ->
                 assertThat(response?.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
@@ -226,7 +229,8 @@ class OrderControllerTest(
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "not-an-id")
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isNotFound
+            .expectStatus()
+            .isNotFound
     }
 
     @Test
@@ -243,7 +247,8 @@ class OrderControllerTest(
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
 
         webTestClient
             .mutateWith(csrf())
@@ -252,7 +257,8 @@ class OrderControllerTest(
             .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
             .accept(MediaType.APPLICATION_JSON)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
     }
 
     @Test
@@ -268,7 +274,8 @@ class OrderControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testOrderPayload)
                 .exchange()
-                .expectStatus().is5xxServerError
+                .expectStatus()
+                .is5xxServerError
 
             val order = mongoRepository.getOrder(testOrderPayload.hostName, testOrderPayload.hostOrderId)
             assertThat(order).isNull()
@@ -283,7 +290,7 @@ class OrderControllerTest(
             duplicateOrderPayload.copy(
                 contactPerson = "new person",
                 callbackUrl = "https://new-callback.com/order",
-                orderLine = listOf(OrderLine("item-123", null))
+                orderLine = listOf(OrderLine("testItem-01", null))
             )
 
         runTest {
@@ -294,11 +301,12 @@ class OrderControllerTest(
                 .bodyValue(testPayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
                 .expectBody<ApiOrderPayload>()
                 .consumeWith { response ->
                     val orderLines = response.responseBody?.orderLine
-                    orderLines?.map { it ->
+                    orderLines?.map {
                         assertThat(testPayload.orderLine.contains(OrderLine(it.hostId, Order.OrderItem.Status.NOT_STARTED)))
                     }
                     assertThat(response.responseBody?.contactPerson).isEqualTo(testPayload.contactPerson)
@@ -323,7 +331,7 @@ class OrderControllerTest(
                 status = Order.Status.IN_PROGRESS,
                 orderLine = listOf(OrderLine("this-does-not-exist", null))
             )
-        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testUpdatePayload = testPayload.toOrder().toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
 
@@ -334,7 +342,8 @@ class OrderControllerTest(
                 .bodyValue(testUpdatePayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+                .expectStatus()
+                .isEqualTo(HttpStatus.BAD_REQUEST)
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -352,7 +361,8 @@ class OrderControllerTest(
                 .bodyValue(testOrderPayload.copy(hostOrderId = ""))
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -363,7 +373,7 @@ class OrderControllerTest(
     @Test
     fun `updateOrder when order is being processed errors`() {
         val testPayload = testOrderPayload.copy(hostOrderId = "mlt-test-order-processing", status = Order.Status.IN_PROGRESS)
-        val testUpdatePayload = testPayload.toOrder().toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testUpdatePayload = testPayload.toOrder().toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(testPayload.toOrder().toMongoOrder()).awaitSingle()
 
@@ -374,7 +384,8 @@ class OrderControllerTest(
                 .bodyValue(testUpdatePayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -397,7 +408,8 @@ class OrderControllerTest(
                 .bodyValue(testPayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
+                .expectStatus()
+                .isEqualTo(HttpStatus.NOT_FOUND)
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -407,7 +419,7 @@ class OrderControllerTest(
 
     @Test
     fun `updateOrder when order is complete returns 409`() {
-        val testPayload = completeOrder.toApiOrderPayload().copy(orderType = Order.Type.DIGITIZATION)
+        val testPayload = completeOrder.toApiPayload().copy(orderType = Order.Type.DIGITIZATION)
         runTest {
             repository.save(completeOrder.toMongoOrder()).awaitSingle()
 
@@ -418,7 +430,8 @@ class OrderControllerTest(
                 .bodyValue(testPayload)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -439,13 +452,15 @@ class OrderControllerTest(
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, duplicateOrderPayload.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isNoContent
+                .expectStatus()
+                .isNoContent
 
             val order =
-                repository.findByHostNameAndHostOrderId(
-                    duplicateOrderPayload.hostName,
-                    duplicateOrderPayload.hostOrderId
-                ).awaitSingleOrNull()
+                repository
+                    .findByHostNameAndHostOrderId(
+                        duplicateOrderPayload.hostName,
+                        duplicateOrderPayload.hostOrderId
+                    ).awaitSingleOrNull()
 
             assertThat(order?.status).isEqualTo(Order.Status.DELETED)
 
@@ -473,7 +488,8 @@ class OrderControllerTest(
                 .uri("/{hostName}/{hostOrderId}", orderInProgress.hostName, orderInProgress.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+                .expectStatus()
+                .isEqualTo(HttpStatus.CONFLICT)
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -495,7 +511,8 @@ class OrderControllerTest(
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, " ")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
@@ -516,122 +533,25 @@ class OrderControllerTest(
                 .uri("/{hostName}/{hostOrderId}", duplicateOrderPayload.hostName, "does-not-exist")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
-                .expectStatus().isNotFound
+                .expectStatus()
+                .isNotFound
 
             val outBoxMessages = storageEventRepositoryAdapter.getAll()
             assertThat(outBoxMessages)
                 .hasSize(0)
         }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
+    private val testOrder = createTestOrder()
 
-    /**
-     * Payload which is used in most tests
-     */
-    private val testOrderPayload =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-123",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("item-123", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
+    private val testOrderPayload = testOrder.toApiPayload()
 
-    /**
-     * Payload which will exist in the database
-     */
+    private val duplicateOrderPayload = testOrderPayload.copy(hostOrderId = "duplicate-order-id")
 
-    private val duplicateOrderPayload =
-        ApiOrderPayload(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-456",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(OrderLine("item-456", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
+    private val orderInProgress = testOrder.copy(hostOrderId = "order-in-progress", status = Order.Status.IN_PROGRESS)
 
-    private val orderInProgress =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-in-progress",
-            status = Order.Status.IN_PROGRESS,
-            orderLine = listOf(Order.OrderItem("item-123", Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
+    private val completeOrder = testOrder.copy(hostOrderId = "order-completed", status = Order.Status.COMPLETED)
 
-    private val completeOrder =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-completed",
-            status = Order.Status.COMPLETED,
-            orderLine =
-                listOf(
-                    Order.OrderItem("item-123", Order.OrderItem.Status.PICKED)
-                ),
-            orderType = Order.Type.LOAN,
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    addressLine2 = "addressLine2",
-                    postcode = "postcode",
-                    city = "city",
-                    region = "region",
-                    country = "country"
-                ),
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            note = "note",
-            callbackUrl = "https://callback-wls.no/order"
-        )
-
-    /**
-     * Populate the database with items and orders for testing
-     */
+    private val clientRole: String = "ROLE_${HostName.AXIELL.name.lowercase()}"
 
     fun populateDb() {
         runBlocking {
@@ -639,42 +559,12 @@ class OrderControllerTest(
             repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
             // Create all items in testOrderPayload and duplicateOrderPayload in the database
-            val allItems = testOrderPayload.orderLine + duplicateOrderPayload.orderLine
+            val allItems = (testOrderPayload.orderLine + duplicateOrderPayload.orderLine).toSet()
+            val mongoItems = allItems.map { createTestItem(hostId = it.hostId).toMongoItem() }
             itemMongoRepository
                 .deleteAll()
-                .thenMany(
-                    Flux.fromIterable(
-                        allItems.map {
-                            MongoItem(
-                                hostId = it.hostId,
-                                hostName = testOrderPayload.hostName,
-                                description = "description",
-                                itemCategory = ItemCategory.PAPER,
-                                preferredEnvironment = Environment.NONE,
-                                packaging = Packaging.NONE,
-                                location = "location",
-                                quantity = 1,
-                                callbackUrl = "https://callback-wls.no/item"
-                            )
-                        }
-                    )
-                )
-                .flatMap { itemMongoRepository.save(it) }
+                .thenMany(itemMongoRepository.saveAll(mongoItems))
                 .awaitLast()
         }
     }
-
-    private fun ApiOrderPayload.toOrder() =
-        Order(
-            hostName = hostName,
-            hostOrderId = hostOrderId,
-            status = status ?: Order.Status.NOT_STARTED,
-            orderLine = orderLine.map { it.toOrderItem() },
-            orderType = orderType,
-            address = address,
-            contactPerson = contactPerson,
-            contactEmail = contactEmail,
-            note = note,
-            callbackUrl = callbackUrl
-        )
 }

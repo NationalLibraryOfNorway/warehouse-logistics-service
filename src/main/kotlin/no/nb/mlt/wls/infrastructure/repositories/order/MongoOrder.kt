@@ -24,8 +24,8 @@ data class MongoOrder(
     val callbackUrl: String
 )
 
-fun Order.toMongoOrder(): MongoOrder {
-    return MongoOrder(
+fun Order.toMongoOrder(): MongoOrder =
+    MongoOrder(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
@@ -37,10 +37,9 @@ fun Order.toMongoOrder(): MongoOrder {
         note = note,
         callbackUrl = callbackUrl
     )
-}
 
-fun MongoOrder.toOrder(): Order {
-    return Order(
+fun MongoOrder.toOrder(): Order =
+    Order(
         hostName = hostName,
         hostOrderId = hostOrderId,
         status = status,
@@ -52,4 +51,3 @@ fun MongoOrder.toOrder(): Order {
         note = note,
         callbackUrl = callbackUrl
     )
-}

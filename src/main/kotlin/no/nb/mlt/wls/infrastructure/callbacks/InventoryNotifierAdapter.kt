@@ -65,15 +65,13 @@ class InventoryNotifierAdapter(
                 it.contentType = MediaType.APPLICATION_JSON
                 it["X-Signature"] = generateSignature(payload, timestamp)
                 it["X-Timestamp"] = timestamp
-            }
-            .retrieve()
+            }.retrieve()
             .bodyToMono(Void::class.java)
             .timeout(Duration.ofSeconds(10))
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
                 throw it
-            }
-            .block()
+            }.block()
     }
 
     private fun generateSignature(
@@ -90,7 +88,5 @@ class InventoryNotifierAdapter(
         return Base64.getEncoder().encodeToString(hmacBytes)
     }
 
-    private fun getAppropriateWebClient(hostName: HostName): WebClient {
-        return if (hostName == HostName.ASTA) proxyWebClient else webClient
-    }
+    private fun getAppropriateWebClient(hostName: HostName): WebClient = if (hostName == HostName.ASTA) proxyWebClient else webClient
 }

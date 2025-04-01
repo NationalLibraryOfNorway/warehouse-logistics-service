@@ -97,13 +97,11 @@ class EmailAdapter(
         return helper.mimeMessage
     }
 
-    // TODO - Is this relevant for the domain, or should translations be handled explicitly somewhere else?
-    private fun translateOrderType(orderType: Order.Type): String {
-        return when (orderType) {
+    private fun translateOrderType(orderType: Order.Type): String =
+        when (orderType) {
             Order.Type.LOAN -> "Lån"
             Order.Type.DIGITIZATION -> "Digitalisering"
         }
-    }
 
     private fun createOrderHandlerEmail(
         order: Order,
@@ -167,5 +165,9 @@ class EmailAdapter(
             <img src="cid:qr-$cid" alt="qrcode of '$cid'"/></img>
         """
 
-    data class EmailOrderItem(val item: Item, val qr: String, val image: BufferedImage)
+    data class EmailOrderItem(
+        val item: Item,
+        val qr: String,
+        val image: BufferedImage
+    )
 }

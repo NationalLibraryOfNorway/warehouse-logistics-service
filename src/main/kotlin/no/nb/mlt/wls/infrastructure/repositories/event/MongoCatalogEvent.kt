@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.infrastructure.repositories.event
 
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document

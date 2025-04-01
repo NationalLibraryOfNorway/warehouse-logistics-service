@@ -7,9 +7,8 @@ enum class SynqOwner {
     AV
 }
 
-fun toSynqOwner(hostName: HostName): SynqOwner {
-    return when (hostName) {
+fun toSynqOwner(hostName: HostName): SynqOwner =
+    when (hostName) {
         HostName.ASTA -> SynqOwner.AV
         else -> SynqOwner.NB
     }
-}

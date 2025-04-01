@@ -23,7 +23,8 @@ class WebClientConfig {
     ): WebClient {
         val httpClient =
             HttpClient.create().proxy {
-                it.type(ProxyProvider.Proxy.HTTP)
+                it
+                    .type(ProxyProvider.Proxy.HTTP)
                     .host(proxyConfig.httpProxyHost)
                     .port(proxyConfig.httpProxyPort)
                     .nonProxyHosts(proxyConfig.nonProxyHosts)
