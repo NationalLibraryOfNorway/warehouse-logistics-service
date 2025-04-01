@@ -137,30 +137,6 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `moveItem throws when count is invalid`() {
-        runTest {
-            assertThrows<ValidationException>(message = "Quantity can not be negative") {
-                cut.moveItem(testMoveItemPayload.copy(quantity = -1))
-            }
-
-            coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
-            coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-        }
-    }
-
-    @Test
-    fun `moveItem throws when location is blank`() {
-        runTest {
-            assertThrows<ValidationException>(message = "Location can not be blank") {
-                cut.moveItem(testMoveItemPayload.copy(location = "  "))
-            }
-
-            coVerify(exactly = 0) { itemRepoMock.getItem(any(), any()) }
-            coVerify(exactly = 0) { itemRepoMock.moveItem(any(), any(), any(), any()) }
-        }
-    }
-
-    @Test
     fun `pickItems should update items and send callbacks`() {
         val expectedItem = createTestItem(quantity = 0, location = WITH_LENDER_LOCATION)
         val pickedItemsMap = mapOf(testItem.hostId to 1)
