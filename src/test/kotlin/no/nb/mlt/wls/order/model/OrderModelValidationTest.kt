@@ -1,5 +1,8 @@
 package no.nb.mlt.wls.order.model
 
+import jakarta.validation.Validation
+import jakarta.validation.Validator
+import jakarta.validation.ValidatorFactory
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.createTestItem
@@ -10,21 +13,27 @@ import no.nb.mlt.wls.toApiUpdatePayload
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
 import org.assertj.core.api.BDDAssertions.thenCode
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class OrderModelValidationTest {
+    private lateinit var validator: Validator
+
+    @BeforeEach
+    fun setUp() {
+        val factory: ValidatorFactory = Validation.buildDefaultValidatorFactory()
+        validator = factory.validator
+    }
+
     @Test
     fun `valid orderLine should pass validation`() {
-        thenCode(validOrderLine::validate).doesNotThrowAnyException()
+        assert(validator.validate(validOrderLine).isEmpty())
     }
 
     @Test
     fun `orderLine with blank hostId should fail validation`() {
         val orderLine = validOrderLine.copy(hostId = "")
-
-        val thrown = catchThrowable(orderLine::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostId")
+        assert(validator.validate(orderLine).isNotEmpty())
     }
 
     @Test
@@ -51,96 +60,70 @@ class OrderModelValidationTest {
 
     @Test
     fun `order with blank hostOrderId should fail validation`() {
-        val order = validOrder.copy(hostOrderId = "")
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostOrderId")
+        val invalidOrder = validOrder.copy(hostOrderId = "")
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     @Test
     fun `order with empty orderLine should fail validation`() {
-        val order = validOrder.copy(orderLine = emptyList())
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line")
+        val invalidOrder = validOrder.copy(orderLine = emptyList())
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     @Test
     fun `order with invalid callback URL should fail validation`() {
-        val order = validOrder.copy(callbackUrl = "")
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("callback URL")
+        val invalidOrder = validOrder.copy(callbackUrl = "")
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     @Test
     fun `order with invalid orderLine should fail validation`() {
-        val order = validOrder.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line's")
+        val invalidOrder = validOrder.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     @Test
     fun `order with invalid address should fail validation`() {
-        val order = validOrder.copy(address = validAddress.copy(recipient = ""))
-
-        val thrown = catchThrowable(order::validate)
-
+        val invalidOrder = validOrder.copy(address = validAddress.copy(recipient = ""))
+        val thrown = catchThrowable(invalidOrder::validate)
         then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("Invalid address")
     }
 
     @Test
     fun `valid update order should pass validation`() {
+        assert(validator.validate(validUpdateOrderPayload).isEmpty())
         thenCode(validUpdateOrderPayload::validate).doesNotThrowAnyException()
     }
 
     @Test
     fun `update order with blank hostOrderId should fail validation`() {
-        val order = validUpdateOrderPayload.copy(hostOrderId = "")
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("hostOrderId")
+        val invalidPayload = validUpdateOrderPayload.copy(hostOrderId = "")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `update order with empty orderLine should fail validation`() {
-        val order = validUpdateOrderPayload.copy(orderLine = emptyList())
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line")
+        val invalidPayload = validUpdateOrderPayload.copy(orderLine = emptyList())
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `update order with invalid callback URL should fail validation`() {
-        val order = validUpdateOrderPayload.copy(callbackUrl = "")
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("callback URL")
+        val invalidPayload = validUpdateOrderPayload.copy(callbackUrl = "")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `update order with invalid orderLine should fail validation`() {
-        val order = validUpdateOrderPayload.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
-
-        val thrown = catchThrowable(order::validate)
-
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("order line's")
+        val invalidPayload = validUpdateOrderPayload.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
+        val x = validator.validate(invalidPayload)
+        assert(x.isNotEmpty())
     }
 
     @Test
     fun `update order with invalid address should fail validation`() {
         val order = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
-
         val thrown = catchThrowable(order::validate)
-
         then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("address")
     }
 
