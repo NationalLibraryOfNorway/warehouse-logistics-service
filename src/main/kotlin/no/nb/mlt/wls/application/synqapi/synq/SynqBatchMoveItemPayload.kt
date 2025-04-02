@@ -155,7 +155,6 @@ data class Product(
         description = """Position of the product in the TU, not used by us so this is pretty irrelevant.""",
         example = "{...}"
     )
-    @field:Valid
     val position: Position
 )
 
@@ -196,19 +195,16 @@ data class Position(
         description = """X position of the product in the TU.""",
         example = "1"
     )
-    @field:NotBlank
     val xPosition: Int,
     @Schema(
         description = """Y position of the product in the TU.""",
         example = "1"
     )
-    @field:NotBlank
     val yPosition: Int,
     @Schema(
         description = """Z position of the product in the TU.""",
         example = "1"
     )
-    @field:NotBlank
     val zPosition: Int
 )
 

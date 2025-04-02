@@ -1,5 +1,8 @@
 package no.nb.mlt.wls.synq.model
 
+import jakarta.validation.Validation
+import jakarta.validation.Validator
+import jakarta.validation.ValidatorFactory
 import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
 import no.nb.mlt.wls.application.synqapi.synq.OrderLine
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderPickingConfirmationPayload
@@ -9,132 +12,96 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.assertj.core.api.BDDAssertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
-import org.assertj.core.api.BDDAssertions.thenCode
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class SynqModelValidationTest {
+
+    private lateinit var validator: Validator
+
+    @BeforeEach
+    fun beforeEach() {
+        val factory: ValidatorFactory = Validation.buildDefaultValidatorFactory()
+        validator = factory.validator
+    }
+
     @Test
     fun `valid SynqOrderStatusUpdatePayload should pass validation`() {
-        thenCode(validSynqOrderStatusUpdatePayload::validate).doesNotThrowAnyException()
+        assert(validator.validate(validSynqOrderStatusUpdatePayload).isEmpty())
     }
 
     @Test
     fun `SynqOrderStatusUpdatePayload with blank warehouse should fail validation`() {
-        val payload = validSynqOrderStatusUpdatePayload.copy(warehouse = "")
-
-        val thrown = catchThrowable(payload::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("warehouse")
+        val invalidPayload = validSynqOrderStatusUpdatePayload.copy(warehouse = "")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `valid SynqOrderPickingConfirmationPayload should pass validation`() {
-        thenCode(validSynqOrderStatusUpdatePayload::validate).doesNotThrowAnyException()
+        assert(validator.validate(validSynqOrderPickingConfirmationPayload).isEmpty())
     }
 
     @Test
     fun `SynqOrderPickingConfirmationPayload with no order line should fail validation`() {
-        val payload = validSynqOrderPickingConfirmationPayload.copy(orderLine = emptyList())
-
-        val thrown = catchThrowable(payload::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("order line")
+        val invalidPayload = validSynqOrderPickingConfirmationPayload.copy(orderLine = emptyList())
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `SynqOrderPickingConfirmationPayload with blank operator should fail validation`() {
-        val payload = validSynqOrderPickingConfirmationPayload.copy(operator = "")
-
-        val thrown = catchThrowable(payload::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("operator")
+        val invalidPayload = validSynqOrderPickingConfirmationPayload.copy(operator = "")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `SynqOrderPickingConfirmationPayload with blank warehouse should fail validation`() {
-        val payload = validSynqOrderPickingConfirmationPayload.copy(warehouse = "")
-
-        val thrown = catchThrowable(payload::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("warehouse")
+        val invalidPayload = validSynqOrderPickingConfirmationPayload.copy(warehouse = "")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `SynqOrderPickingConfirmationPayload with invalid order line should fail validation`() {
-        val payload =
+        val invalidPayload =
             validSynqOrderPickingConfirmationPayload.copy(
                 orderLine =
                     listOf(
                         validSynqOrderLine1.copy(productId = "")
                     )
             )
-
-        val thrown = catchThrowable(payload::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("product ID")
+        assert(validator.validate(invalidPayload).isNotEmpty())
     }
 
     @Test
     fun `OrderLine with blank hostName should fail validation`() {
         val orderLine = validSynqOrderLine1.copy(hostName = "")
+        assert(validator.validate(orderLine).isNotEmpty())
 
-        val thrown = catchThrowable(orderLine::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContainingAll("host name", "blank")
     }
 
     @Test
     fun `OrderLine with invalid hostName should fail validation`() {
+        // TODO - this check doesn't detect invalid hostnames
         val orderLine = validSynqOrderLine1.copy(hostName = "invalid")
-
+        assert(validator.validate(orderLine).isEmpty())
+        // manual validation does
         val thrown = catchThrowable(orderLine::validate)
 
         then(thrown)
             .isNotNull()
             .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("host name: 'invalid'")
+            .hasMessageContaining("host name")
     }
 
     @Test
     fun `OrderLine with negative orderLineNumber should fail validation`() {
         val orderLine = validSynqOrderLine1.copy(orderLineNumber = -1)
-
-        val thrown = catchThrowable(orderLine::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("line number")
+        assert(validator.validate(orderLine).isNotEmpty())
     }
 
     @Test
     fun `OrderLine with blank orderTuId should fail validation`() {
         val orderLine = validSynqOrderLine1.copy(orderTuId = "")
-
-        val thrown = catchThrowable(orderLine::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("TU ID")
+        assert(validator.validate(orderLine).isNotEmpty())
     }
 
     private val validSynqOrderStatusUpdatePayload =

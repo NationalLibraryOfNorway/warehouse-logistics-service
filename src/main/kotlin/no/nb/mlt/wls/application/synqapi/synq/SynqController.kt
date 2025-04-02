@@ -105,7 +105,7 @@ class SynqController(
         @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String,
-        @RequestBody payload: SynqOrderPickingConfirmationPayload
+        @RequestBody @Valid payload: SynqOrderPickingConfirmationPayload
     ): ResponseEntity<String> {
         if (orderId.isBlank()) {
             return ResponseEntity.badRequest().body("Order ID cannot be blank")

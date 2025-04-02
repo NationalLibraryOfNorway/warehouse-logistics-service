@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -39,37 +40,29 @@ data class SynqOrderPickingConfirmationPayload(
         description = """List of order lines representing the picked products/items.""",
         example = "[{...}]"
     )
+    @field:Valid
+    @field:NotEmpty(message = "Picking update does not contain any elements in the order line")
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Who picked the products/items.""",
         example = "per@person@nb.no"
     )
+    @field:NotBlank(message = "Picking update's operator can not be blank")
     val operator: String,
     @Schema(
         description = """Name of the warehouse where the order products/items were picked from.""",
         example = "Sikringsmagasin_2"
     )
+    @field:NotBlank(message = "Picking update's warehouse can not be blank")
     val warehouse: String
 ) {
     @Throws(ValidationException::class)
     fun validate() {
-        if (orderLine.isEmpty()) {
-            throw ValidationException("Picking update does not contain any elements in the order line")
-        }
-
-        if (operator.isBlank()) {
-            throw ValidationException("Picking update's operator can not be blank")
-        }
-
-        if (warehouse.isBlank()) {
-            throw ValidationException("Picking update's warehouse can not be blank")
-        }
         // Validates the hostname based on the value of hostname in order lines
         getValidHostName()
-
-        orderLine.forEach(OrderLine::validate)
     }
 
+    // TODO - migrate this to changes done in MLT-133 when merged in
     @Throws(ValidationException::class)
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
@@ -175,10 +168,7 @@ data class OrderLine(
 ) {
     @Throws(ValidationException::class)
     fun validate() {
-        if (hostName.isBlank()) {
-            throw ValidationException("Order Line's host name can not be blank")
-        }
-
+        // TODO - migrate this to changes done in MLT-133 when merged in
         if (HostName.entries.toTypedArray().none { it.name.uppercase() == hostName.uppercase() }) {
             throw ValidationException("Order Line's host name: '$hostName' is not valid")
         }
