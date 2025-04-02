@@ -8,11 +8,7 @@ import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.toApiUpdatePayload
-import org.assertj.core.api.Assertions.catchThrowable
-import org.assertj.core.api.BDDAssertions.then
-import org.assertj.core.api.BDDAssertions.thenCode
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -38,24 +34,20 @@ class OrderModelValidationTest {
 
     @Test
     fun `valid address should pass validation`() {
-        thenCode(validAddress::validate).doesNotThrowAnyException()
+        assert(validator.validate(validAddress).isEmpty())
     }
 
     @Test
     fun `address with blank fields should fail validation`() {
-        val invalidAddress = validAddress.copy(recipient = "")
-        val invalidCityAddress = validAddress.copy(city = "")
-
-        val error = catchThrowable(invalidAddress::validate)
-        then(error).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("recipient must not")
-
-        val anotherError = catchThrowable(invalidCityAddress::validate)
-        then(anotherError).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("city must not")
+        val invalidAddress = validAddress.copy(recipient = "", city = "")
+        val validationErrors = validator.validate(invalidAddress)
+        assert(validationErrors.isNotEmpty())
+        assert(validationErrors.size == 2)
     }
 
     @Test
     fun `valid order should pass validation`() {
-        thenCode(validOrder::validate).doesNotThrowAnyException()
+        assert(validator.validate(validOrder).isEmpty())
     }
 
     @Test
@@ -85,14 +77,12 @@ class OrderModelValidationTest {
     @Test
     fun `order with invalid address should fail validation`() {
         val invalidOrder = validOrder.copy(address = validAddress.copy(recipient = ""))
-        val thrown = catchThrowable(invalidOrder::validate)
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("Invalid address")
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     @Test
     fun `valid update order should pass validation`() {
         assert(validator.validate(validUpdateOrderPayload).isEmpty())
-        thenCode(validUpdateOrderPayload::validate).doesNotThrowAnyException()
     }
 
     @Test
@@ -121,9 +111,8 @@ class OrderModelValidationTest {
 
     @Test
     fun `update order with invalid address should fail validation`() {
-        val order = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
-        val thrown = catchThrowable(order::validate)
-        then(thrown).isNotNull().isInstanceOf(ValidationException::class.java).hasMessageContaining("address")
+        val invalidOrder = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
+        assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
     private val testItem = createTestItem()

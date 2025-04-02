@@ -277,7 +277,6 @@ class OrderController(
         @RequestBody @Valid payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
-        payload.validate()
 
         val updatedOrder =
             updateOrder.updateOrder(

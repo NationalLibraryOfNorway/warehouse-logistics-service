@@ -80,6 +80,7 @@ data class ApiUpdateOrderPayload(
         description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
+    @field:Valid
     val address: Order.Address?,
     @Schema(
         description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
@@ -95,9 +96,4 @@ data class ApiUpdateOrderPayload(
     @field:URL(message = "The callback URL must be a valid URL")
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        address?.validate()
-    }
-}
+)
