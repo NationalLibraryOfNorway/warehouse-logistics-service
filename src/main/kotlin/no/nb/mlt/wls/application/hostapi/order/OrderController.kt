@@ -147,14 +147,14 @@ class OrderController(
             logger.warn { "Order already exists: $it" }
             return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(it.toApiOrderPayload())
+                .body(it.toApiPayload())
         }
 
         val createdOrder = createOrder.createOrder(payload.toCreateOrderDTO())
 
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(createdOrder.toApiOrderPayload())
+            .body(createdOrder.toApiPayload())
     }
 
     @Operation(
@@ -222,7 +222,7 @@ class OrderController(
 
         return ResponseEntity
             .status(HttpStatus.OK)
-            .body(order.toApiOrderPayload())
+            .body(order.toApiPayload())
     }
 
     @Operation(
@@ -291,7 +291,7 @@ class OrderController(
                 callbackUrl = payload.callbackUrl
             )
 
-        return ResponseEntity.ok(updatedOrder.toApiOrderPayload())
+        return ResponseEntity.ok(updatedOrder.toApiPayload())
     }
 
     @Operation(

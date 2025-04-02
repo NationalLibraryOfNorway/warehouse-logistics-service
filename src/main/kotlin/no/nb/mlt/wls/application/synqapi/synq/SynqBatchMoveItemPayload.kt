@@ -210,17 +210,15 @@ data class Position(
     val zPosition: Int
 )
 
-fun Product.toPayload(location: String): MoveItemPayload {
-    return MoveItemPayload(
+fun Product.toPayload(location: String): MoveItemPayload =
+    MoveItemPayload(
         hostName = HostName.fromString(hostName),
         hostId = productId,
         quantity = quantityOnHand,
         location = location
     )
-}
 
-fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> {
-    return loadUnit.map {
+fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> =
+    loadUnit.map {
         it.toPayload(location)
     }
-}

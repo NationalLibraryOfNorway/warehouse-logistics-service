@@ -22,13 +22,14 @@ class MongoEmailRepositoryAdapter(
         repository.save(HostEmail(hostName, email)).awaitSingle()
     }
 
-    override suspend fun getHostEmail(hostName: HostName): HostEmail? {
-        return repository.findByHost(hostName).awaitFirstOrNull()
-    }
+    override suspend fun getHostEmail(hostName: HostName): HostEmail? = repository.findByHost(hostName).awaitFirstOrNull()
 
-    override suspend fun getHostEmails(hosts: List<HostName>): List<HostEmail> {
-        return repository.findAll().collectList().filter { (h) -> hosts.contains(h.host) }.awaitFirst()
-    }
+    override suspend fun getHostEmails(hosts: List<HostName>): List<HostEmail> =
+        repository
+            .findAll()
+            .collectList()
+            .filter { (h) -> hosts.contains(h.host) }
+            .awaitFirst()
 }
 
 @Repository

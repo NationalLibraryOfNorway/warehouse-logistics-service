@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade.Companion.DELIMITER
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ABOX
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload.SynqPackaging.ESK
@@ -32,14 +32,14 @@ data class SynqOrderPayload(
         val quantityOrdered: Double
     )
 
-    enum class SynqOrderType(private val type: String) {
+    enum class SynqOrderType(
+        private val type: String
+    ) {
         STANDARD("Standard"),
         AUTOSTORE("AutoStore");
 
         @JsonValue
-        override fun toString(): String {
-            return type
-        }
+        override fun toString(): String = type
     }
 }
 
@@ -69,13 +69,9 @@ data class ShippingAddress(
     )
 }
 
-fun Order.toAutostorePayload(): SynqOrderPayload {
-    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.AUTOSTORE)
-}
+fun Order.toAutostorePayload(): SynqOrderPayload = toSynqPayloadByType(SynqOrderPayload.SynqOrderType.AUTOSTORE)
 
-fun Order.toSynqStandardPayload(): SynqOrderPayload {
-    return toSynqPayloadByType(SynqOrderPayload.SynqOrderType.STANDARD)
-}
+fun Order.toSynqStandardPayload(): SynqOrderPayload = toSynqPayloadByType(SynqOrderPayload.SynqOrderType.STANDARD)
 
 private fun Order.toSynqPayloadByType(type: SynqOrderPayload.SynqOrderType) =
     SynqOrderPayload(
@@ -130,4 +126,6 @@ private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String 
  * Utility classed used to wrap the payload.
  * This is required for SynQ's specification of handling orders
  */
-data class SynqOrder(val order: List<SynqOrderPayload>)
+data class SynqOrder(
+    val order: List<SynqOrderPayload>
+)

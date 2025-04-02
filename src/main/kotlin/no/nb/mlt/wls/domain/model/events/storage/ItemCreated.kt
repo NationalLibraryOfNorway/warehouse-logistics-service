@@ -1,7 +1,7 @@
-package no.nb.mlt.wls.domain.model.storageEvents
+package no.nb.mlt.wls.domain.model.events.storage
 
 import no.nb.mlt.wls.domain.model.Item
-import java.util.UUID
+import java.util.*
 
 data class ItemCreated(
     val createdItem: Item,

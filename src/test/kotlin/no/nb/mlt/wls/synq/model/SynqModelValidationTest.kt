@@ -21,13 +21,10 @@ class SynqModelValidationTest {
 
     @Test
     fun `SynqOrderStatusUpdatePayload with blank warehouse should fail validation`() {
-        // Given
         val payload = validSynqOrderStatusUpdatePayload.copy(warehouse = "")
 
-        // When
         val thrown = catchThrowable(payload::validate)
 
-        // Then
         then(thrown)
             .isNotNull()
             .isInstanceOf(ValidationException::class.java)
@@ -141,10 +138,6 @@ class SynqModelValidationTest {
             .hasMessageContaining("TU ID")
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
-
     private val validSynqOrderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.PICKED,
@@ -158,9 +151,9 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = toSynqHostname(HostName.AXIELL),
             orderLineNumber = 1,
-            orderTuId = "tu-123",
+            orderTuId = "6942066642",
             orderTuType = "UFO",
-            productId = "item-123",
+            productId = "testItem-01",
             productVersionId = "1.0",
             quantity = 1,
             attributeValue =
@@ -177,9 +170,9 @@ class SynqModelValidationTest {
             confidentialProduct = false,
             hostName = toSynqHostname(HostName.AXIELL),
             orderLineNumber = 2,
-            orderTuId = "tu-123",
+            orderTuId = "6942066642",
             orderTuType = "UFO",
-            productId = "item-456",
+            productId = "testItem-02",
             productVersionId = "1.0",
             quantity = 1,
             attributeValue =
@@ -194,7 +187,7 @@ class SynqModelValidationTest {
     private val validSynqOrderPickingConfirmationPayload =
         SynqOrderPickingConfirmationPayload(
             orderLine = listOf(validSynqOrderLine1, validSynqOrderLine2),
-            operator = "operator-123",
+            operator = "per.person@nb.no",
             warehouse = "Sikringmagasin_2"
         )
 }

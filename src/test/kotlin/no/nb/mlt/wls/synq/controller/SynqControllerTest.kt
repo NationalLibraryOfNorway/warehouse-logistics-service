@@ -9,21 +9,16 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
 import no.nb.mlt.wls.application.synqapi.synq.LoadUnit
-import no.nb.mlt.wls.application.synqapi.synq.Position
-import no.nb.mlt.wls.application.synqapi.synq.Product
 import no.nb.mlt.wls.application.synqapi.synq.SynqBatchMoveItemPayload
 import no.nb.mlt.wls.application.synqapi.synq.SynqInventoryReconciliationPayload
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.createTestItem
-import no.nb.mlt.wls.domain.model.Environment
+import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.callbacks.InventoryNotifierAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toItem
@@ -32,6 +27,7 @@ import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
+import no.nb.mlt.wls.toProduct
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -92,11 +88,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
 
             val res = orderRepository.findByHostNameAndHostOrderId(order.hostName, order.hostOrderId).awaitSingle()
 
@@ -117,11 +114,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), order.hostOrderId)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, order.hostOrderId)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
 
             val res = orderRepository.findByHostNameAndHostOrderId(order.hostName, order.hostOrderId).awaitSingle()
 
@@ -137,11 +135,12 @@ class SynqControllerTest(
             webTestClient
                 .mutateWith(csrf())
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isUnauthorized
+                .expectStatus()
+                .isUnauthorized
         }
 
     @Test
@@ -156,11 +155,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isForbidden
+                .expectStatus()
+                .isForbidden
         }
 
     @Test
@@ -170,11 +170,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), " ")
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, " ")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
         }
 
     @Test
@@ -184,11 +185,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), orderIdInSynq)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, orderIdInSynq)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload.copy(warehouse = ""))
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
         }
 
     @Test
@@ -198,11 +200,12 @@ class SynqControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
                 .put()
-                .uri("/order-update/{owner}/{hostOrderId}", toSynqOwner(order.hostName), 404)
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, 404)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(orderStatusUpdatePayload)
                 .exchange()
-                .expectStatus().isNotFound
+                .expectStatus()
+                .isNotFound
         }
 
     @Test
@@ -220,16 +223,18 @@ class SynqControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(batchMoveItemPayload)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
 
-            val item1 = itemRepository.findByHostNameAndHostId(item1.hostName, item1.hostId).awaitSingle()
+            val item1 = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
 
             assertThat(item1).isNotNull
             assertThat(item1.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item1.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
 
-            val item2 = itemRepository.findByHostNameAndHostId(item2.hostName, item2.hostId).awaitSingle()
+            val item2 = itemRepository.findByHostNameAndHostId(testItem2.hostName, testItem2.hostId).awaitSingle()
 
+            assertThat(item2).isNotNull
             assertThat(item2.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item2.quantity).isEqualTo(batchMoveItemPayload.loadUnit[1].quantityOnHand)
 
@@ -247,7 +252,8 @@ class SynqControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(batchMoveItemPayload)
                 .exchange()
-                .expectStatus().isUnauthorized
+                .expectStatus()
+                .isUnauthorized
         }
 
     @Test
@@ -266,7 +272,8 @@ class SynqControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(batchMoveItemPayload)
                 .exchange()
-                .expectStatus().isForbidden
+                .expectStatus()
+                .isForbidden
         }
 
     @Test
@@ -278,9 +285,10 @@ class SynqControllerTest(
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(productId = "unknown"))))
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(testProduct1.copy(productId = "unknown"))))
                 .exchange()
-                .expectStatus().isNotFound
+                .expectStatus()
+                .isNotFound
         }
 
     @Test
@@ -294,7 +302,8 @@ class SynqControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(batchMoveItemPayload.copy(location = ""))
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
 
             webTestClient
                 .mutateWith(csrf())
@@ -302,9 +311,10 @@ class SynqControllerTest(
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(quantityOnHand = -1))))
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(testProduct1.copy(quantityOnHand = -1))))
                 .exchange()
-                .expectStatus().isBadRequest
+                .expectStatus()
+                .isBadRequest
         }
 
     @Test
@@ -314,7 +324,8 @@ class SynqControllerTest(
                 inventoryNotifierAdapterMock.itemChanged(any(), any())
             }.answers { }
 
-            itemRepository.save(createTestItem(callbackUrl = null, hostId = "test-item").toMongoItem()).awaitSingle()
+            val testItem = createTestItem(callbackUrl = null, hostId = "test-item")
+            itemRepository.save(testItem.toMongoItem()).awaitSingle()
 
             webTestClient
                 .mutateWith(csrf())
@@ -322,27 +333,30 @@ class SynqControllerTest(
                 .put()
                 .uri("/move-item")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(product1.copy(productId = "test-item"))))
+                .bodyValue(batchMoveItemPayload.copy(loadUnit = listOf(testProduct1.copy(productId = "test-item"))))
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
 
-            val item = itemRepository.findByHostNameAndHostId(item1.hostName, "test-item").awaitSingle()
+            val item = itemRepository.findByHostNameAndHostId(testItem.hostName, testItem.hostId).awaitSingle()
 
             assertThat(item).isNotNull
             assertThat(item.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
+
+            verify { inventoryNotifierAdapterMock.itemChanged(item.toItem(), any()) }
         }
 
     @Test
     fun `Reconciliation does respond with 200 ok`() {
-        val loadUnitTest =
+        val testLoadUnit =
             LoadUnit(
-                productId = "mlt-12345",
-                productOwner = "NB",
+                productId = testProduct1.productId,
+                productOwner = testProduct1.productOwner,
                 quantityOnHand = 1.0,
-                hostName = "AXIELL",
+                hostName = testProduct1.hostName,
                 location = "SYNQ_WAREHOUSE",
-                description = "Test description",
+                description = "description",
                 productCategory = "PAPER",
                 uom = "ESK"
             )
@@ -356,118 +370,29 @@ class SynqControllerTest(
                 SynqInventoryReconciliationPayload(
                     loadUnit =
                         listOf(
-                            loadUnitTest,
-                            loadUnitTest.copy(productId = "mlt-54321", hostName = null),
-                            loadUnitTest.copy(productId = "mlt-23456", hostName = "mellomlager")
+                            testLoadUnit,
+                            testLoadUnit.copy(productId = testProduct1.productId, hostName = null),
+                            testLoadUnit.copy(productId = testProduct2.productId, hostName = "mellomlager")
                         )
                 )
-            )
-            .exchange()
-            .expectStatus().isOk
+            ).exchange()
+            .expectStatus()
+            .isOk
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
+    private val testItem1 = createTestItem()
 
-    private val product1 =
-        Product(
-            confidentialProduct = false,
-            hostName = "AXIELL",
-            productId = "mlt-12345",
-            productOwner = "NB",
-            productVersionId = "Default",
-            quantityOnHand = 1,
-            suspect = false,
-            attributeValue =
-                listOf(
-                    AttributeValue(
-                        name = "materialStatus",
-                        value = "Available"
-                    )
-                ),
-            position =
-                Position(
-                    xPosition = 1,
-                    yPosition = 1,
-                    zPosition = 1
-                )
-        )
+    private val testItem2 = createTestItem(hostId = "testItem2", location = UNKNOWN_LOCATION, quantity = 0)
 
-    private val product2 =
-        Product(
-            confidentialProduct = false,
-            hostName = "AXIELL",
-            productId = "mlt-54321",
-            productOwner = "AV",
-            productVersionId = "Default",
-            quantityOnHand = 69,
-            suspect = false,
-            attributeValue =
-                listOf(
-                    AttributeValue(
-                        name = "materialStatus",
-                        value = "Available"
-                    )
-                ),
-            position =
-                Position(
-                    xPosition = 1,
-                    yPosition = 1,
-                    zPosition = 1
-                )
-        )
+    private val testProduct1 = testItem1.toProduct()
 
-    private val item1 =
-        Item(
-            hostId = "mlt-12345",
-            hostName = HostName.AXIELL,
-            description = "Test item",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.FREEZE,
-            packaging = Packaging.BOX,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "UNKNOWN",
-            quantity = 0
-        )
+    private val testProduct2 = testItem2.toProduct()
 
-    private val item2 =
-        Item(
-            hostId = "mlt-54321",
-            hostName = HostName.AXIELL,
-            description = "Item test",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.FREEZE,
-            packaging = Packaging.BOX,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "UNKNOWN",
-            quantity = 0
-        )
+    private val order = createTestOrder()
 
-    private val order =
-        Order(
-            hostName = HostName.AXIELL,
-            hostOrderId = "order-12345",
-            status = Order.Status.NOT_STARTED,
-            orderLine = listOf(Order.OrderItem(item1.hostId, Order.OrderItem.Status.NOT_STARTED)),
-            orderType = Order.Type.LOAN,
-            contactPerson = "contactPerson",
-            contactEmail = "contact@ema.il",
-            address =
-                Order.Address(
-                    recipient = "recipient",
-                    addressLine1 = "addressLine1",
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                ),
-            callbackUrl = "https://callback-wls.no/order",
-            note = "note"
-        )
+    private val synqOwner = toSynqOwner(order.hostName)
 
-    private val orderIdInSynq = "${order.hostName.toString().uppercase()}---${order.hostOrderId}"
+    private val orderIdInSynq = "${order.hostName.toString().uppercase()}-SD---${order.hostOrderId}"
 
     private val orderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
@@ -480,17 +405,16 @@ class SynqControllerTest(
     private val batchMoveItemPayload =
         SynqBatchMoveItemPayload(
             tuId = "6942066642",
-            location = "SYNQ_WAREHOUSE",
-            prevLocation = "WS_PLUKKSENTER_1",
-            loadUnit = listOf(product1, product2),
+            location = "WS_PLUKKSENTER_1",
+            prevLocation = "SYNQ_WAREHOUSE",
+            loadUnit = listOf(testProduct1, testProduct2),
             user = "per.person@nb.no",
             warehouse = "Sikringsmagasin_2"
         )
 
     fun populateDb() {
-        // Make sure we start with clean DB instance for each test
         runBlocking {
-            itemRepository.deleteAll().thenMany(itemRepository.saveAll(listOf(item1.toMongoItem(), item2.toMongoItem()))).awaitLast()
+            itemRepository.deleteAll().thenMany(itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem()))).awaitLast()
 
             orderRepository.deleteAll().then(orderRepository.save(order.toMongoOrder())).awaitSingle()
         }

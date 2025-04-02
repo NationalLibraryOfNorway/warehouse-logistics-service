@@ -10,12 +10,9 @@ import org.springframework.transaction.reactive.TransactionalOperator
 @Configuration
 class TransactionConfig {
     @Bean
-    fun transactionManager(dbFactory: ReactiveMongoDatabaseFactory): ReactiveMongoTransactionManager {
-        return ReactiveMongoTransactionManager(dbFactory)
-    }
+    fun transactionManager(dbFactory: ReactiveMongoDatabaseFactory): ReactiveMongoTransactionManager = ReactiveMongoTransactionManager(dbFactory)
 
     @Bean
-    fun transactionalOperator(reactiveTransactionManager: ReactiveTransactionManager): TransactionalOperator {
-        return TransactionalOperator.create(reactiveTransactionManager)
-    }
+    fun transactionalOperator(reactiveTransactionManager: ReactiveTransactionManager): TransactionalOperator =
+        TransactionalOperator.create(reactiveTransactionManager)
 }

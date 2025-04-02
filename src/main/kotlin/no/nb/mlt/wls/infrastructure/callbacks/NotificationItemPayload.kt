@@ -83,7 +83,7 @@ data class NotificationItemPayload(
     @Schema(
         description = """Quantity on hand of the item, this denotes if the item is in the storage or not.
             Quantity of 1 means the item is in storage, quantity of 0 means the item is not in storage.""",
-        examples = [ "0", "1"]
+        examples = ["0", "1"]
     )
     val quantity: Int,
     @Schema(
@@ -95,8 +95,8 @@ data class NotificationItemPayload(
     val eventTimestamp: Instant
 )
 
-fun NotificationItemPayload.toItem(): Item {
-    return Item(
+fun NotificationItemPayload.toItem(): Item =
+    Item(
         hostId = hostId,
         hostName = hostName,
         description = description,
@@ -107,10 +107,9 @@ fun NotificationItemPayload.toItem(): Item {
         location = location,
         quantity = quantity
     )
-}
 
-fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPayload {
-    return NotificationItemPayload(
+fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPayload =
+    NotificationItemPayload(
         hostId = hostId,
         hostName = hostName,
         description = description,
@@ -122,4 +121,3 @@ fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPay
         quantity = quantity,
         eventTimestamp = eventTimestamp
     )
-}

@@ -29,46 +29,42 @@ class ExceptionHandler {
     }
 
     @ExceptionHandler(DecodingException::class)
-    fun handleDecodingException(e: DecodingException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleDecodingException(e: DecodingException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .badRequest()
             .body(ErrorMessage(e.message ?: "Error decoding request body. Likely missing a field."))
-    }
 
     @ExceptionHandler(ValidationException::class)
-    fun handleValidationException(e: ValidationException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleValidationException(e: ValidationException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .badRequest()
             .body(ErrorMessage(e.message))
-    }
 
     @ExceptionHandler(IllegalOrderStateException::class)
-    fun handleIllegalOrderStateException(e: IllegalOrderStateException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleIllegalOrderStateException(e: IllegalOrderStateException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .status(HttpStatus.CONFLICT)
             .body(ErrorMessage(e.message))
-    }
 
     @ExceptionHandler(ServerException::class)
-    fun handleServerException(e: ServerException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleServerException(e: ServerException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(ErrorMessage(e.message))
-    }
 
     @ExceptionHandler(OrderNotFoundException::class)
-    fun handleOrderNotFoundException(e: OrderNotFoundException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleOrderNotFoundException(e: OrderNotFoundException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(ErrorMessage(e.message))
-    }
 
     @ExceptionHandler(ItemNotFoundException::class)
-    fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorMessage> {
-        return ResponseEntity
+    fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorMessage> =
+        ResponseEntity
             .status(HttpStatus.NOT_FOUND)
             .body(ErrorMessage(e.message))
-    }
 }
 
-data class ErrorMessage(val message: String)
+data class ErrorMessage(
+    val message: String
+)

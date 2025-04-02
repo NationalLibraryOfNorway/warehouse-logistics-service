@@ -1,17 +1,12 @@
 package no.nb.mlt.wls
 
-import com.ninjasquad.springmockk.MockkBean
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.test.runTest
-import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
-import no.nb.mlt.wls.domain.model.Environment.NONE
+import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
-import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -40,9 +35,6 @@ class TraillingSlashRedirectTest(
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val repository: ItemMongoRepository
 ) {
-    @MockkBean
-    private lateinit var synqStandardAdapterMock: SynqStandardAdapter
-
     private lateinit var webTestClient: WebTestClient
 
     val client: String = HostName.AXIELL.name
@@ -67,28 +59,13 @@ class TraillingSlashRedirectTest(
                 .mutateWith(csrf())
                 .mutateWith(
                     mockJwt().jwt { it.subject(client) }.authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_axiell"))
-                )
-                .post()
+                ).post()
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(itemPayload)
                 .exchange()
-                .expectStatus().isOk
+                .expectStatus()
+                .isOk
         }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
-
-    private val itemPayload =
-        ApiItemPayload(
-            hostId = "item-12346",
-            hostName = HostName.AXIELL,
-            description = "Tyv etter loven",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "SYNQ_WAREHOUSE",
-            quantity = 1
-        )
+    private val itemPayload = createTestItem(hostId = "traillingSlashTestItem").toApiPayload()
 }

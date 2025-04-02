@@ -8,6 +8,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.application.synqapi.synq.getConvertedStatus
 import no.nb.mlt.wls.application.synqapi.synq.mapToItemPayloads
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
@@ -15,14 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class SynqModelConversionTest {
-    private val synqOrderStatusUpdatePayload =
-        SynqOrderStatusUpdatePayload(
-            prevStatus = SynqOrderStatus.PICKED,
-            status = SynqOrderStatus.COMPLETED,
-            hostName = toSynqHostname(HostName.AXIELL),
-            warehouse = "Sikringmagasin_2"
-        )
-
     @Test
     fun `SynqOrderStatus maps correctly to an OrderStatus`() {
         val notStarted = synqOrderStatusUpdatePayload.copy(status = SynqOrderStatus.NEW)
@@ -38,11 +31,42 @@ class SynqModelConversionTest {
         assertThat(released.getConvertedStatus()).isEqualTo(Order.Status.IN_PROGRESS)
     }
 
+    @Test
+    fun `SynqBatchMoveItemPayload maps correctly to a list of MoveItemPayloads`() {
+        val moveItemPayload = synqBatchMoveItemPayload.mapToItemPayloads()
+
+        assertThat(moveItemPayload).hasSize(3)
+        assertThat(moveItemPayload[0].hostName).isEqualTo(HostName.AXIELL)
+        assertThat(moveItemPayload[0].hostId).isEqualTo(product.productId)
+        assertThat(moveItemPayload[0].quantity).isEqualTo(product.quantityOnHand)
+        assertThat(moveItemPayload[0].location).isEqualTo(synqBatchMoveItemPayload.location)
+
+        val oneProduct = synqBatchMoveItemPayload.copy(loadUnit = listOf(product)).mapToItemPayloads()
+
+        assertThat(oneProduct).hasSize(1)
+        assertThat(oneProduct[0].hostName).isEqualTo(HostName.AXIELL)
+        assertThat(oneProduct[0].hostId).isEqualTo(product.productId)
+        assertThat(oneProduct[0].quantity).isEqualTo(product.quantityOnHand)
+        assertThat(oneProduct[0].location).isEqualTo(synqBatchMoveItemPayload.location)
+
+        val noProducts = synqBatchMoveItemPayload.copy(loadUnit = emptyList()).mapToItemPayloads()
+
+        assertThat(noProducts).isEmpty()
+    }
+
+    private val synqOrderStatusUpdatePayload =
+        SynqOrderStatusUpdatePayload(
+            prevStatus = SynqOrderStatus.PICKED,
+            status = SynqOrderStatus.COMPLETED,
+            hostName = toSynqHostname(HostName.AXIELL),
+            warehouse = "Sikringmagasin_2"
+        )
+
     private val product =
         Product(
             confidentialProduct = false,
-            hostName = "AXIELL",
-            productId = "mlt-12345",
+            hostName = toSynqHostname(createTestItem().hostName),
+            productId = createTestItem().hostId,
             productOwner = "NB",
             productVersionId = "Default",
             quantityOnHand = 1,
@@ -68,30 +92,7 @@ class SynqModelConversionTest {
             location = "SYNQ_WAREHOUSE",
             prevLocation = "WS_PLUKKSENTER_1",
             loadUnit = listOf(product, product, product),
-            user = "Per Person",
+            user = "per.person@nb.no",
             warehouse = "Sikringmagasin_2"
         )
-
-    @Test
-    fun `SynqBatchMoveItemPayload maps correctly to a list of MoveItemPayloads`() {
-        val moveItemPayload = synqBatchMoveItemPayload.mapToItemPayloads()
-
-        assertThat(moveItemPayload).hasSize(3)
-        assertThat(moveItemPayload[0].hostName).isEqualTo(HostName.AXIELL)
-        assertThat(moveItemPayload[0].hostId).isEqualTo(product.productId)
-        assertThat(moveItemPayload[0].quantity).isEqualTo(product.quantityOnHand)
-        assertThat(moveItemPayload[0].location).isEqualTo(synqBatchMoveItemPayload.location)
-
-        val oneProduct = synqBatchMoveItemPayload.copy(loadUnit = listOf(product)).mapToItemPayloads()
-
-        assertThat(oneProduct).hasSize(1)
-        assertThat(oneProduct[0].hostName).isEqualTo(HostName.AXIELL)
-        assertThat(oneProduct[0].hostId).isEqualTo(product.productId)
-        assertThat(oneProduct[0].quantity).isEqualTo(product.quantityOnHand)
-        assertThat(oneProduct[0].location).isEqualTo(synqBatchMoveItemPayload.location)
-
-        val noProducts = synqBatchMoveItemPayload.copy(loadUnit = emptyList()).mapToItemPayloads()
-
-        assertThat(noProducts).isEmpty()
-    }
 }

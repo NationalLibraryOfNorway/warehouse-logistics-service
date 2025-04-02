@@ -8,10 +8,10 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
-import no.nb.mlt.wls.domain.model.Environment.NONE
+import no.nb.mlt.wls.application.hostapi.item.toApiPayload
+import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
@@ -80,14 +80,15 @@ class ItemControllerTest(
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(testItemPayload)
                 .exchange()
-                .expectStatus().isCreated
+                .expectStatus()
+                .isCreated
 
             val item = repository.findByHostNameAndHostId(testItemPayload.hostName, testItemPayload.hostId).awaitSingle()
 
             assertThat(item)
                 .isNotNull
                 .extracting("description", "location", "quantity")
-                .containsExactly(testItemPayload.description, "UNKNOWN", 0)
+                .containsExactly(testItemPayload.description, UNKNOWN_LOCATION, 0)
         }
 
     @Test
@@ -103,7 +104,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(duplicateItemPayload)
             .exchange()
-            .expectStatus().isOk
+            .expectStatus()
+            .isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 assertThat(response.responseBody?.hostId).isEqualTo(duplicateItemPayload.hostId)
@@ -121,9 +123,9 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(
                 duplicateItemPayload.copy(description = "Test")
-            )
-            .exchange()
-            .expectStatus().isOk
+            ).exchange()
+            .expectStatus()
+            .isOk
             .expectBody<ApiItemPayload>()
             .consumeWith { response ->
                 // This value is different in payload, response value should be the same as in DB
@@ -140,7 +142,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload.copy(hostId = ""))
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus()
+            .isBadRequest
     }
 
     @Test
@@ -151,7 +154,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isUnauthorized
+            .expectStatus()
+            .isUnauthorized
     }
 
     @Test
@@ -168,7 +172,8 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
 
         webTestClient
             .mutateWith(csrf())
@@ -177,47 +182,17 @@ class ItemControllerTest(
             .accept(MediaType.APPLICATION_JSON)
             .bodyValue(testItemPayload)
             .exchange()
-            .expectStatus().isForbidden
+            .expectStatus()
+            .isForbidden
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
+    private val testItem = createTestItem()
 
-    /**
-     * Payload which will be used in most tests
-     */
-    private val testItemPayload =
-        ApiItemPayload(
-            hostId = "mlt-420",
-            hostName = HostName.AXIELL,
-            description = "Ringenes Herre samling",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = NONE,
-            packaging = Packaging.BOX,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "SYNQ_WAREHOUSE",
-            quantity = 1
-        )
+    private val testItemPayload = testItem.toApiPayload()
 
-    /**
-     * Payload which will exist in the database
-     */
-    private val duplicateItemPayload =
-        ApiItemPayload(
-            hostId = "item-12346",
-            hostName = HostName.AXIELL,
-            description = "Tyv etter loven",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "SYNQ_WAREHOUSE",
-            quantity = 1
-        )
+    private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
 
     fun populateDb() {
-        // Make sure we start with clean DB instance for each test
         runBlocking {
             repository.deleteAll().then(repository.save(duplicateItemPayload.toItem().toMongoItem())).awaitSingle()
         }

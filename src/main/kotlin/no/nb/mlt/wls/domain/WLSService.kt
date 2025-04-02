@@ -8,14 +8,14 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
-import no.nb.mlt.wls.domain.model.storageEvents.ItemCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderCreated
-import no.nb.mlt.wls.domain.model.storageEvents.OrderDeleted
-import no.nb.mlt.wls.domain.model.storageEvents.OrderUpdated
-import no.nb.mlt.wls.domain.model.storageEvents.StorageEvent
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
+import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
+import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
+import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -33,8 +33,6 @@ import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import no.nb.mlt.wls.domain.ports.inbound.toItem
-import no.nb.mlt.wls.domain.ports.inbound.toOrder
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -55,7 +53,17 @@ class WLSService(
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
-) : AddNewItem, CreateOrder, DeleteOrder, UpdateOrder, GetOrder, GetItem, OrderStatusUpdate, MoveItem, PickOrderItems, PickItems, SynchronizeItems {
+) : AddNewItem,
+    CreateOrder,
+    DeleteOrder,
+    UpdateOrder,
+    GetOrder,
+    GetItem,
+    OrderStatusUpdate,
+    MoveItem,
+    PickOrderItems,
+    PickItems,
+    SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override suspend fun addItem(itemMetadata: ItemMetadata): Item {
@@ -257,23 +265,17 @@ class WLSService(
     override suspend fun getItem(
         hostName: HostName,
         hostId: String
-    ): Item? {
-        return itemRepository.getItem(hostName, hostId)
-    }
+    ): Item? = itemRepository.getItem(hostName, hostId)
 
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
-    ): Order? {
-        return orderRepository.getOrder(hostName, hostOrderId)
-    }
+    ): Order? = orderRepository.getOrder(hostName, hostOrderId)
 
     private suspend fun getItems(
         hostIds: List<String>,
         hostName: HostName
-    ): List<Item> {
-        return itemRepository.getItems(hostName, hostIds)
-    }
+    ): List<Item> = itemRepository.getItems(hostName, hostIds)
 
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
@@ -296,12 +298,11 @@ class WLSService(
     private suspend fun getOrderOrThrow(
         hostName: HostName,
         hostOrderId: String
-    ): Order {
-        return getOrder(
+    ): Order =
+        getOrder(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
-    }
 
     private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {

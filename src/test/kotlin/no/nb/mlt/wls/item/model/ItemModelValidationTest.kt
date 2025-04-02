@@ -1,10 +1,8 @@
 package no.nb.mlt.wls.item.model
 
-import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
-import no.nb.mlt.wls.domain.model.Environment
-import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.application.hostapi.item.toApiPayload
+import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.assertj.core.api.Assertions.catchThrowable
 import org.assertj.core.api.BDDAssertions.then
@@ -22,7 +20,7 @@ class ItemModelValidationTest {
         val item =
             validItem.copy(
                 quantity = 0,
-                location = "UNKNOWN",
+                location = UNKNOWN_LOCATION,
                 callbackUrl = null
             )
 
@@ -31,13 +29,10 @@ class ItemModelValidationTest {
 
     @Test
     fun `item with blank hostId should fail validation`() {
-        // Given
         val item = validItem.copy(hostId = "")
 
-        // When
         val thrown = catchThrowable(item::validate)
 
-        // Then
         then(thrown)
             .isNotNull()
             .isInstanceOf(ValidationException::class.java)
@@ -92,20 +87,7 @@ class ItemModelValidationTest {
             .hasMessageContaining("callback URL")
     }
 
-// /////////////////////////////////////////////////////////////////////////////
-// //////////////////////////////// Test Help //////////////////////////////////
-// /////////////////////////////////////////////////////////////////////////////
+    private val testItem = createTestItem()
 
-    private val validItem =
-        ApiItemPayload(
-            hostId = "mlt-test-1234",
-            hostName = HostName.AXIELL,
-            description = "Tyven skal du hete",
-            itemCategory = ItemCategory.PAPER,
-            preferredEnvironment = Environment.NONE,
-            packaging = Packaging.NONE,
-            callbackUrl = "https://callback-wls.no/item",
-            location = "location",
-            quantity = 1
-        )
+    private val validItem = testItem.toApiPayload()
 }

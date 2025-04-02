@@ -8,6 +8,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import org.hibernate.validator.constraints.URL
 
@@ -35,7 +36,7 @@ data class ApiCreateItemPayload(
     @Schema(
         description = """Name of the host system that owns the item, and where the request comes from.
             Host system is usually the catalogue that the item is registered in.""",
-        examples = [ "AXIELL", "ALMA", "ASTA", "BIBLIOFIL" ]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
     val hostName: HostName,
     @Schema(
@@ -89,7 +90,7 @@ data class ApiCreateItemPayload(
             preferredEnvironment = preferredEnvironment,
             packaging = packaging,
             callbackUrl = callbackUrl,
-            location = "UNKNOWN",
+            location = UNKNOWN_LOCATION,
             quantity = 0
         )
 

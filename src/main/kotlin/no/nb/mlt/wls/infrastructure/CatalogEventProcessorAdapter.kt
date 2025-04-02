@@ -1,9 +1,9 @@
 package no.nb.mlt.wls.infrastructure
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nb.mlt.wls.domain.model.catalogEvents.CatalogEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.ItemEvent
-import no.nb.mlt.wls.domain.model.catalogEvents.OrderEvent
+import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
+import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
@@ -18,7 +18,6 @@ class CatalogEventProcessorAdapter(
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val inventoryNotifier: InventoryNotifier
 ) : EventProcessor<CatalogEvent> {
-    // TODO: Should be configurable number of seconds
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
         val outboxMessages =

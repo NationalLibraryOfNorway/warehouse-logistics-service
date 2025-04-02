@@ -32,8 +32,8 @@ class SecurityConfig {
 
     @Bean
     @Order(Ordered.LOWEST_PRECEDENCE)
-    fun hostSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http {
+    fun hostSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+        http {
             csrf { }
             authorizeExchange {
                 authorize("/api-docs", permitAll)
@@ -53,7 +53,6 @@ class SecurityConfig {
                 jwt { jwtAuthenticationConverter = RealmAccessToAuthoritiesConverter() }
             }
         }
-    }
 
     @Bean
     @Order(Ordered.LOWEST_PRECEDENCE)
@@ -61,19 +60,19 @@ class SecurityConfig {
 
     internal class RealmAccessToAuthoritiesConverter : Converter<Jwt, Mono<AbstractAuthenticationToken>> {
         override fun convert(jwt: Jwt): Mono<AbstractAuthenticationToken> {
-            var realmAccess =
+            val realmAccess =
                 jwt.getClaimAsMap("realm_access") ?: throw ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "JWT does not contain a \"realm_access\" claim"
                 )
 
-            var rolesList =
+            val rolesList =
                 realmAccess["roles"] as? List<*> ?: throw ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "JWT does not contain a \"realm_access\" claim with a valid \"roles\" field"
                 )
 
-            var roles = rolesList.stream().map { SimpleGrantedAuthority(it.toString()) }.collect(Collectors.toList())
+            val roles = rolesList.stream().map { SimpleGrantedAuthority(it.toString()) }.collect(Collectors.toList())
 
             return Mono.just(JwtAuthenticationToken(jwt, roles))
         }
