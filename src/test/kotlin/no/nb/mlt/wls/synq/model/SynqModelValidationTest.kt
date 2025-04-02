@@ -16,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class SynqModelValidationTest {
-
     private lateinit var validator: Validator
 
     @BeforeEach
@@ -75,7 +74,6 @@ class SynqModelValidationTest {
     fun `OrderLine with blank hostName should fail validation`() {
         val orderLine = validSynqOrderLine1.copy(hostName = "")
         assert(validator.validate(orderLine).isNotEmpty())
-
     }
 
     @Test

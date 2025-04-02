@@ -16,6 +16,7 @@ import no.nb.mlt.wls.domain.model.Item
 fun interface MoveItem {
     suspend fun moveItem(moveItemPayload: MoveItemPayload): Item
 }
+
 data class MoveItemPayload(
     val hostName: HostName,
     @field:NotBlank(message = "Host ID is missing, and can not be blank")

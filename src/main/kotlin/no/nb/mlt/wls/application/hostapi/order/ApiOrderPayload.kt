@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import org.hibernate.validator.constraints.URL
 
 @Schema(
