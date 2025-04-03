@@ -12,6 +12,7 @@ import no.nb.mlt.wls.infrastructure.callbacks.toNotificationItemPayload
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqCategory
+import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -96,7 +97,7 @@ class ItemModelConversionTest {
             productCategory = toSynqCategory(ItemCategory.PAPER),
             productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
             false,
-            hostName = HostName.AXIELL.toString()
+            hostName = toSynqHostname(HostName.AXIELL)
         )
 
     private val testItemNotificationPayload =

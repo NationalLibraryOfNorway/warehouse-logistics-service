@@ -67,7 +67,7 @@ data class SynqOrderPickingConfirmationPayload(
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
         try {
-            return HostName.valueOf(hostName)
+            return HostName.fromString(hostName)
         } catch (e: IllegalArgumentException) {
             throw ValidationException("Hostname $hostName is not recognized by WLS", e)
         }

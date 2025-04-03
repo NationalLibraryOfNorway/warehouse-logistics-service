@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
@@ -38,7 +39,7 @@ fun Item.toSynqPayload() =
         productCategory = toSynqCategory(itemCategory),
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
-        hostName = hostName.toString()
+        hostName = toSynqHostname(hostName)
     )
 
 fun toSynqCategory(category: ItemCategory): String =
@@ -52,3 +53,13 @@ fun toSynqCategory(category: ItemCategory): String =
         ItemCategory.PHOTO -> "fotografi"
         ItemCategory.FRAGILE -> throw StorageSystemException("$category items cannot go into SynQ")
     }
+
+fun toSynqHostname(hostName: HostName): String {
+    return when (hostName) {
+        HostName.ALMA -> "Alma"
+        HostName.ASTA -> "Asta"
+        HostName.MAVIS -> "Mavis"
+        HostName.AXIELL -> "Axiell"
+        HostName.NONE -> throw NotImplementedError("Creating Products for HostName.NONE is not supported")
+    }
+}

@@ -210,7 +210,7 @@ data class Position(
 
 fun Product.toPayload(location: String): MoveItemPayload =
     MoveItemPayload(
-        hostName = HostName.valueOf(hostName.uppercase()),
+        hostName = HostName.fromString(hostName),
         hostId = productId,
         quantity = quantityOnHand,
         location = location

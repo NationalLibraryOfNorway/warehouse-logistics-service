@@ -11,6 +11,7 @@ import no.nb.mlt.wls.application.synqapi.synq.mapToItemPayloads
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -57,14 +58,14 @@ class SynqModelConversionTest {
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.PICKED,
             status = SynqOrderStatus.COMPLETED,
-            hostName = HostName.AXIELL,
+            hostName = toSynqHostname(HostName.AXIELL),
             warehouse = "Sikringmagasin_2"
         )
 
     private val product =
         Product(
             confidentialProduct = false,
-            hostName = createTestItem().hostName.name,
+            hostName = toSynqHostname(createTestItem().hostName),
             productId = createTestItem().hostId,
             productOwner = "NB",
             productVersionId = "Default",
