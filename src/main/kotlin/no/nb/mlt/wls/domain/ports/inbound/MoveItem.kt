@@ -1,5 +1,7 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
@@ -17,18 +19,10 @@ fun interface MoveItem {
 
 data class MoveItemPayload(
     val hostName: HostName,
+    @field:NotBlank(message = "Host ID is missing, and can not be blank")
     val hostId: String,
+    @field:Min(value = 0, message = "Quantity on hand must not be negative. It must be zero or higher")
     val quantity: Int,
+    @field:NotBlank(message = "Location can not be blank")
     val location: String
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (quantity < 0.0) {
-            throw ValidationException("Quantity can not be negative")
-        }
-
-        if (location.isBlank()) {
-            throw ValidationException("Location can not be blank")
-        }
-    }
-}
+)

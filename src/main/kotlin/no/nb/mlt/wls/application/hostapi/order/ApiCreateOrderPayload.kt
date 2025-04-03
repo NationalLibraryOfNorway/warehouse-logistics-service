@@ -58,8 +58,9 @@ data class ApiCreateOrderPayload(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
+    @field:Valid
     @field:NotEmpty(message = "The order must have at least one order line")
-    val orderLine: List<@Valid OrderLine>,
+    val orderLine: List<OrderLine>,
     @Schema(
         description = """Describes what type of order this is.
             "LOAN" means that the order is for borrowing items to external or internal users,
