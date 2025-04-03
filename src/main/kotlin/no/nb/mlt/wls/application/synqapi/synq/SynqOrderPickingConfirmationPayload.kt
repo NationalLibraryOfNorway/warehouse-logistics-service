@@ -62,7 +62,6 @@ data class SynqOrderPickingConfirmationPayload(
         getValidHostName()
     }
 
-    // TODO - migrate this to changes done in MLT-133 when merged in
     @Throws(ValidationException::class)
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
