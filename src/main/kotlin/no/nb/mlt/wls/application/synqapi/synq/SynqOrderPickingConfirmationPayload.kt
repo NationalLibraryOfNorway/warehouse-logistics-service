@@ -167,8 +167,9 @@ data class OrderLine(
 ) {
     @Throws(ValidationException::class)
     fun validate() {
-        // TODO - migrate this to changes done in MLT-133 when merged in
-        if (HostName.entries.toTypedArray().none { it.name.uppercase() == hostName.uppercase() }) {
+        try {
+            HostName.fromString(hostName)
+        } catch (e: IllegalArgumentException) {
             throw ValidationException("Order Line's host name: '$hostName' is not valid")
         }
     }
