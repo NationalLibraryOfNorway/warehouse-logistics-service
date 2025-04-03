@@ -5,5 +5,11 @@ enum class HostName {
     ASTA,
     MAVIS,
     AXIELL,
-    NONE
+    NONE;
+
+    companion object {
+        fun fromString(string: String): HostName {
+            return HostName.valueOf(string.uppercase())
+        }
+    }
 }

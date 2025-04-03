@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
@@ -175,7 +176,8 @@ class SynqController(
             return ResponseEntity.badRequest().body("Warehouse cannot be blank")
         }
 
-        orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
+        val hostName = HostName.fromString(orderUpdatePayload.hostName)
+        orderStatusUpdate.updateOrderStatus(hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
     }
