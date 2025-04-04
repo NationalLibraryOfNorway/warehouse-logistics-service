@@ -59,6 +59,11 @@ wls:
     handler:
       email: daniel@mlt.hermes.no
 
+timeout:
+  mongo: 8
+  inventory: 10
+  storage: 10
+
 # Set the proxy settings for the application
 proxy:
   http-proxy-host: localhost

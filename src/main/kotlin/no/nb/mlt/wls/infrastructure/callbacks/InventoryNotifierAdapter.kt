@@ -6,12 +6,12 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import no.nb.mlt.wls.infrastructure.config.TimeoutConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
-import java.time.Duration
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
@@ -27,7 +27,8 @@ class InventoryNotifierAdapter(
     private val proxyWebClient: WebClient,
     @Value("\${callback.secret}")
     private val signatureSecretKey: String,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val timeoutConfig: TimeoutConfig
 ) : InventoryNotifier {
     override fun itemChanged(
         item: Item,
@@ -67,7 +68,7 @@ class InventoryNotifierAdapter(
                 it["X-Timestamp"] = timestamp
             }.retrieve()
             .bodyToMono(Void::class.java)
-            .timeout(Duration.ofSeconds(10))
+            .timeout(timeoutConfig.inventory())
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
                 throw it

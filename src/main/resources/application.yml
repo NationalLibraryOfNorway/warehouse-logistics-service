@@ -57,6 +57,11 @@ wls:
     handler:
       email: daniel@mlt.hermes.no
 
+timeout:
+  mongo: 8
+  inventory: 10
+  storage: 10
+
 # Set the proxy settings for the application
 proxy:
   http-proxy-host: localhost
@@ -101,6 +106,11 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+
+timeout:
+  mongo: 8
+  inventory: 10
+  storage: 10
 
 # Set the proxy settings for the application
 proxy:
@@ -148,6 +158,11 @@ wls:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
 
+timeout:
+  mongo: ${TIMEOUT_MONGO}
+  inventory: ${TIMEOUT_INVENTORY}
+  storage: ${TIMEOUT_STORAGE}
+
 # Set the proxy settings for the application
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
@@ -193,6 +208,11 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+
+timeout:
+  mongo: ${TIMEOUT_MONGO}
+  inventory: ${TIMEOUT_INVENTORY}
+  storage: ${TIMEOUT_STORAGE}
 
 # Set the proxy settings for the application
 proxy:
