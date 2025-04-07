@@ -1,10 +1,10 @@
-package no.nb.mlt.wls.infrastructure.config
+package no.nb.mlt.wls.domain
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
 
 @ConfigurationProperties("timeout")
-class TimeoutConfig(
+class TimeoutProperties(
     private val mongo: Int,
     private val inventory: Int,
     private val storage: Int

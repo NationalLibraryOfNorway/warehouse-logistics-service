@@ -3,13 +3,13 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
-import no.nb.mlt.wls.infrastructure.config.TimeoutConfig
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
@@ -24,7 +24,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class MongoItemRepositoryAdapter(
     private val mongoRepo: ItemMongoRepository,
-    private val timeoutConfig: TimeoutConfig
+    private val timeoutConfig: TimeoutProperties
 ) : ItemRepository {
     override suspend fun getItem(
         hostName: HostName,

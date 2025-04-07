@@ -3,12 +3,12 @@ package no.nb.mlt.wls.infrastructure.repositories.order
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderUpdateException
-import no.nb.mlt.wls.infrastructure.config.TimeoutConfig
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
@@ -22,7 +22,7 @@ private val logger = KotlinLogging.logger {}
 @Component
 class MongoOrderRepositoryAdapter(
     private val orderMongoRepository: OrderMongoRepository,
-    private val timeoutConfig: TimeoutConfig
+    private val timeoutConfig: TimeoutProperties
 ) : OrderRepository {
     override suspend fun getOrder(
         hostName: HostName,
