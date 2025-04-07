@@ -2,6 +2,7 @@ package no.nb.mlt.wls.application.hostapi.order
 
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
@@ -10,8 +11,6 @@ import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import org.apache.commons.validator.routines.UrlValidator
 import org.hibernate.validator.constraints.URL
 
 @Schema(
@@ -68,6 +67,7 @@ data class ApiOrderPayload(
         description = """List of items in the order, also called order lines.""",
         accessMode = READ_ONLY
     )
+    @field:Valid
     @field:NotEmpty(message = "The order must have at least one order line")
     val orderLine: List<OrderLine>,
     @Schema(
@@ -95,6 +95,7 @@ data class ApiOrderPayload(
         description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
+    @field:Valid
     val address: Order.Address?,
     @Schema(
         description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
@@ -110,30 +111,7 @@ data class ApiOrderPayload(
     @field:URL(message = "The callback URL must be a valid URL")
     @field:Pattern(regexp = "^(http|https)://.*$", message = "The URL must start with http:// or https://")
     val callbackUrl: String
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (hostOrderId.isBlank()) {
-            throw ValidationException("The order's hostOrderId is required, and can not be blank")
-        }
-
-        if (orderLine.isEmpty()) {
-            throw ValidationException("The order must have at least one order line")
-        }
-
-        if (!isValidUrl(callbackUrl)) {
-            throw ValidationException("The order's callback URL is required, and must be a valid URL")
-        }
-
-        orderLine.forEach(OrderLine::validate)
-        address?.validate()
-    }
-
-    private fun isValidUrl(url: String): Boolean {
-        val validator = UrlValidator(arrayOf("http", "https")) // Allow only HTTP/HTTPS
-        return validator.isValid(url)
-    }
-}
+)
 
 fun Order.toApiPayload() =
     ApiOrderPayload(
@@ -163,7 +141,7 @@ data class OrderLine(
         description = """Item ID from the host system.""",
         example = "mlt-12345"
     )
-    @field:NotBlank(message = "The order items's hostId is required, and can not be blank")
+    @field:NotBlank(message = "The order line's hostId is required, and can not be blank")
     val hostId: String,
     @Schema(
         description = """Current status for the ordered item.""",
@@ -175,13 +153,6 @@ data class OrderLine(
     fun toOrderItem() = Order.OrderItem(hostId, status ?: Order.OrderItem.Status.NOT_STARTED)
 
     fun toCreateOrderItem() = CreateOrderDTO.OrderItem(hostId)
-
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (hostId.isBlank()) {
-            throw ValidationException("The order line's hostId is required, and can not be blank")
-        }
-    }
 }
 
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)

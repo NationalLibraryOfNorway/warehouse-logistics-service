@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
@@ -65,7 +67,7 @@ class SynqController(
     )
     @PutMapping("/move-item")
     suspend fun moveItem(
-        @RequestBody synqBatchMoveItemPayload: SynqBatchMoveItemPayload
+        @RequestBody @Valid synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Unit> {
         synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
         return ResponseEntity.ok().build()
@@ -104,13 +106,11 @@ class SynqController(
         @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
         @PathVariable orderId: String,
-        @RequestBody payload: SynqOrderPickingConfirmationPayload
+        @RequestBody @Valid payload: SynqOrderPickingConfirmationPayload
     ): ResponseEntity<String> {
         if (orderId.isBlank()) {
             return ResponseEntity.badRequest().body("Order ID cannot be blank")
         }
-
-        payload.validate()
 
         val orderIdWithoutPrefix = normalizeOrderId(orderId)
         val hostName = payload.getValidHostName()
@@ -159,7 +159,7 @@ class SynqController(
     )
     @PutMapping("/order-update/{owner}/{orderId}")
     suspend fun updateOrder(
-        @RequestBody orderUpdatePayload: SynqOrderStatusUpdatePayload,
+        @RequestBody @Valid orderUpdatePayload: SynqOrderStatusUpdatePayload,
         @Parameter(description = "Owner of the order items")
         @PathVariable owner: SynqOwner,
         @Parameter(description = "Order ID in the storage system")
@@ -175,7 +175,8 @@ class SynqController(
             return ResponseEntity.badRequest().body("Warehouse cannot be blank")
         }
 
-        orderStatusUpdate.updateOrderStatus(orderUpdatePayload.hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
+        val hostName = HostName.fromString(orderUpdatePayload.hostName)
+        orderStatusUpdate.updateOrderStatus(hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
     }
