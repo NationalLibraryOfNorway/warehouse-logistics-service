@@ -1,6 +1,12 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.PositiveOrZero
+import no.nb.mlt.wls.domain.ValidHostName
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
@@ -35,37 +41,22 @@ data class SynqOrderPickingConfirmationPayload(
         description = """List of order lines representing the picked products/items.""",
         example = "[{...}]"
     )
+    @field:Valid
+    @field:NotEmpty(message = "Picking update does not contain any elements in the order line")
     val orderLine: List<OrderLine>,
     @Schema(
         description = """Who picked the products/items.""",
         example = "per@person@nb.no"
     )
+    @field:NotBlank(message = "Picking update's operator can not be blank")
     val operator: String,
     @Schema(
         description = """Name of the warehouse where the order products/items were picked from.""",
         example = "Sikringsmagasin_2"
     )
+    @field:NotBlank(message = "Picking update's warehouse can not be blank")
     val warehouse: String
 ) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (orderLine.isEmpty()) {
-            throw ValidationException("Picking update does not contain any elements in the order line")
-        }
-
-        if (operator.isBlank()) {
-            throw ValidationException("Picking update's operator can not be blank")
-        }
-
-        if (warehouse.isBlank()) {
-            throw ValidationException("Picking update's warehouse can not be blank")
-        }
-        // Validates the hostname based on the value of hostname in order lines
-        getValidHostName()
-
-        orderLine.forEach(OrderLine::validate)
-    }
-
     @Throws(ValidationException::class)
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
@@ -124,79 +115,49 @@ data class OrderLine(
         description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
+    @field:ValidHostName
+    @field:NotBlank(message = "Order Line's host name can not be blank")
     val hostName: String,
     @Schema(
         description = """Order line number/index.""",
         example = "1"
     )
+    @field:Min(value = 1, message = "Order Line's line number must be positive")
     val orderLineNumber: Int,
     @Schema(
         description = """ID of the transport unit (TU) with the product/item in SynQ.""",
         example = "SYS_TU_00000001157"
     )
+    @field:NotBlank(message = "Order Line's TU ID can not be blank")
     val orderTuId: String,
     @Schema(
         description = """Type of the transport unit (TU) with the product/item.""",
         example = "UFO"
     )
+    @field:NotBlank(message = "Order Line's TU type can not be blank")
     val orderTuType: String,
     @Schema(
         description = """Product ID from the host system, usually a barcode value or an equivalent ID.""",
         example = "mlt-12345"
     )
+    @field:NotBlank(message = "Order Line's product ID can not be blank")
     val productId: String,
     @Schema(
         description = """Product version ID in the storage system, seems to always have value "Default".""",
         example = "Default"
     )
+    @field:NotBlank(message = "Order Line's product version ID can not be blank")
     val productVersionId: String,
     @Schema(
         description = """Number of picked products/items, in our case it should be 1 and nothing more.""",
         example = "1.0"
     )
+    @field:PositiveOrZero
     val quantity: Int,
     @Schema(
         description = """List of attributes for the product.""",
         example = "[{...}]"
     )
+    @field:Valid
     val attributeValue: List<AttributeValue>
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (hostName.isBlank()) {
-            throw ValidationException("Order Line's host name can not be blank")
-        }
-
-        if (HostName.entries.toTypedArray().none { it.name.uppercase() == hostName.uppercase() }) {
-            throw ValidationException("Order Line's host name: '$hostName' is not valid")
-        }
-
-        if (orderLineNumber < 0) {
-            throw ValidationException("Order Line's line number must be positive")
-        }
-
-        if (orderTuId.isBlank()) {
-            throw ValidationException("Order Line's TU ID can not be blank")
-        }
-
-        if (orderTuType.isBlank()) {
-            throw ValidationException("Order Line's TU type can not be blank")
-        }
-
-        if (productId.isBlank()) {
-            throw ValidationException("Order Line's product ID can not be blank")
-        }
-
-        if (productVersionId.isBlank()) {
-            throw ValidationException("Order Line's product version ID can not be blank")
-        }
-
-        if (quantity < 0) {
-            throw ValidationException("Order Line's quantity for the product '$productId' must be positive")
-        }
-
-        if (attributeValue.isNotEmpty()) {
-            attributeValue.forEach(AttributeValue::validate)
-        }
-    }
-}
+)

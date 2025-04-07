@@ -1,11 +1,11 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",
@@ -45,11 +45,13 @@ data class SynqBatchMoveItemPayload(
         description = """ID of the transport unit in the SynQ storage system.""",
         example = "6942066642"
     )
+    @field:NotBlank
     val tuId: String,
     @Schema(
         description = """Current location of the transport unit and its contents in the SynQ storage system.""",
         example = "SYNQ_WAREHOUSE"
     )
+    @field:NotBlank
     val location: String,
     @Schema(
         description = """Previous location of the transport unit and its contents in the SynQ storage system.""",
@@ -62,16 +64,19 @@ data class SynqBatchMoveItemPayload(
             In usual warehouses you have multiple copies of the same product, so an LU can be a stack of products.""",
         example = "[{...}]"
     )
+    @field:Valid
     val loadUnit: List<Product>,
     @Schema(
         description = """Who cause the load unit to move, can be system if that was an automatic action.""",
         example = "per.person@nb.no"
     )
+    @field:NotBlank
     val user: String,
     @Schema(
         description = """Warehouse in which the TU moved.""",
         example = "Sikringsmagasin_2"
     )
+    @field:NotBlank
     val warehouse: String
 )
 
@@ -109,30 +114,31 @@ data class Product(
         description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
-    @NotBlank
+    @field:NotBlank
     val hostName: String,
     @Schema(
         description = """Product ID from the host system, usually a barcode value or an equivalent ID.""",
         example = "mlt-12345"
     )
-    @NotBlank
+    @field:NotBlank
     val productId: String,
     @Schema(
         description = """Product's owner, usually the National Library of Norway (NB) or the National Archives of Norway (AV).""",
         example = "NB"
     )
-    @NotBlank
+    @field:NotBlank
     val productOwner: String,
     @Schema(
         description = """Product version ID in the storage system, seems to always have value "Default".""",
         example = "Default"
     )
+    @field:NotBlank
     val productVersionId: String,
     @Schema(
         description = """Product quantity in the TU, SynQ uses doubles for quantity, however we convert it to integers.""",
         example = "1.0"
     )
-    @PositiveOrZero
+    @field:PositiveOrZero(message = "Quantity on hand must not be negative. It must be zero or higher")
     val quantityOnHand: Int,
     @Schema(
         description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
@@ -143,6 +149,7 @@ data class Product(
         description = """List of attributes for the product.""",
         example = "[{...}]"
     )
+    @field:Valid
     val attributeValue: List<AttributeValue>,
     @Schema(
         description = """Position of the product in the TU, not used by us so this is pretty irrelevant.""",
@@ -164,24 +171,15 @@ data class AttributeValue(
         description = """Name of the attribute.""",
         example = "materialStatus"
     )
+    @field:NotBlank
     val name: String,
     @Schema(
         description = """Value of the attribute.""",
         example = "Available"
     )
+    @field:NotBlank
     val value: String
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        if (name.isBlank()) {
-            throw ValidationException("Attribute name cannot be blank")
-        }
-
-        if (value.isBlank()) {
-            throw ValidationException("Attribute value cannot be blank")
-        }
-    }
-}
+)
 
 @Schema(
     description = """Represents position of the product in the TU.""",

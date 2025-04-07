@@ -274,10 +274,9 @@ class OrderController(
     @PutMapping("/order")
     suspend fun updateOrder(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody payload: ApiUpdateOrderPayload
+        @RequestBody @Valid payload: ApiUpdateOrderPayload
     ): ResponseEntity<ApiOrderPayload> {
         jwt.checkIfAuthorized(payload.hostName)
-        payload.validate()
 
         val updatedOrder =
             updateOrder.updateOrder(

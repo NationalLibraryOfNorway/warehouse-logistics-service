@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
+import no.nb.mlt.wls.domain.NullableNotBlank
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
@@ -188,38 +189,21 @@ data class Order(
     }
 
     data class Address(
+        @field:NullableNotBlank(message = "Invalid address: recipient must not be blank if defined")
         val recipient: String?,
+        @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
         val addressLine1: String?,
+        @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
         val addressLine2: String?,
+        @field:NullableNotBlank(message = "Invalid address: postcode must not be blank if defined")
         val postcode: String?,
+        @field:NullableNotBlank(message = "Invalid address: city must not be blank if defined")
         val city: String?,
+        @field:NullableNotBlank(message = "Invalid address: region must not be blank if defined")
         val region: String?,
+        @field:NullableNotBlank(message = "Invalid address: country must not be blank if defined")
         val country: String?
-    ) {
-        fun validate() {
-            if (recipient?.isBlank() == true) {
-                throw ValidationException("Invalid address: recipient must not be blank")
-            }
-            if (addressLine1?.isBlank() == true) {
-                throw ValidationException("Invalid address: address line must not be blank")
-            }
-            if (addressLine2?.isBlank() == true) {
-                throw ValidationException("Invalid address: address line must not be blank")
-            }
-            if (postcode?.isBlank() == true) {
-                throw ValidationException("Invalid address: postcode must not be blank")
-            }
-            if (city?.isBlank() == true) {
-                throw ValidationException("Invalid address: city must not be blank")
-            }
-            if (region?.isBlank() == true) {
-                throw ValidationException("Invalid address: region must not be blank")
-            }
-            if (country?.isBlank() == true) {
-                throw ValidationException("Invalid address: country must not be blank")
-            }
-        }
-    }
+    )
 
     enum class Status {
         NOT_STARTED,

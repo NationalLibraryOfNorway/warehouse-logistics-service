@@ -85,8 +85,6 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
-        moveItemPayload.validate()
-
         val item =
             getItem(moveItemPayload.hostName, moveItemPayload.hostId)
                 ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
