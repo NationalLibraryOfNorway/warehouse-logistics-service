@@ -112,8 +112,6 @@ class SynqController(
             return ResponseEntity.badRequest().body("Order ID cannot be blank")
         }
 
-        payload.validate()
-
         val orderIdWithoutPrefix = normalizeOrderId(orderId)
         val hostName = payload.getValidHostName()
         val hostIds = payload.mapProductsToQuantity()

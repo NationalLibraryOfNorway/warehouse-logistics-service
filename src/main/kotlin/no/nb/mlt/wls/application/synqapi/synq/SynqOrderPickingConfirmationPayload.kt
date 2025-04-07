@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.PositiveOrZero
+import no.nb.mlt.wls.domain.ValidHostName
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 
@@ -56,12 +57,6 @@ data class SynqOrderPickingConfirmationPayload(
     @field:NotBlank(message = "Picking update's warehouse can not be blank")
     val warehouse: String
 ) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        // Validates the hostname based on the value of hostname in order lines
-        getValidHostName()
-    }
-
     @Throws(ValidationException::class)
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
@@ -120,6 +115,7 @@ data class OrderLine(
         description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
+    @field:ValidHostName
     @field:NotBlank(message = "Order Line's host name can not be blank")
     val hostName: String,
     @Schema(
@@ -164,13 +160,4 @@ data class OrderLine(
     )
     @field:Valid
     val attributeValue: List<AttributeValue>
-) {
-    @Throws(ValidationException::class)
-    fun validate() {
-        try {
-            HostName.fromString(hostName)
-        } catch (e: IllegalArgumentException) {
-            throw ValidationException("Order Line's host name: '$hostName' is not valid")
-        }
-    }
-}
+)

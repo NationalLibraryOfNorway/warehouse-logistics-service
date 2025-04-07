@@ -9,10 +9,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqOrderPickingConfirmationPayloa
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
-import org.assertj.core.api.BDDAssertions.catchThrowable
-import org.assertj.core.api.BDDAssertions.then
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -79,16 +76,8 @@ class SynqModelValidationTest {
 
     @Test
     fun `OrderLine with invalid hostName should fail validation`() {
-        // TODO - this check doesn't detect invalid hostnames
         val orderLine = validSynqOrderLine1.copy(hostName = "invalid")
-        assert(validator.validate(orderLine).isEmpty())
-        // manual validation does
-        val thrown = catchThrowable(orderLine::validate)
-
-        then(thrown)
-            .isNotNull()
-            .isInstanceOf(ValidationException::class.java)
-            .hasMessageContaining("host name")
+        assert(validator.validate(orderLine).isNotEmpty())
     }
 
     @Test
