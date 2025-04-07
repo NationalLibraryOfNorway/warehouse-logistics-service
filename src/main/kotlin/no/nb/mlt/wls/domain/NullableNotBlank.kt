@@ -24,9 +24,6 @@ class NullableNotBlankImpl : ConstraintValidator<NullableNotBlank, String> {
         value: String?,
         context: ConstraintValidatorContext?
     ): Boolean {
-        if (value == null) {
-            return true
-        }
-        return value.isNotBlank()
+        return value == null || value.isNotBlank()
     }
 }
