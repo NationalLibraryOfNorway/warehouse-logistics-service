@@ -7,6 +7,7 @@ import com.ninjasquad.springmockk.SpykDefinition
 import io.mockk.verify
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -44,6 +45,7 @@ class InventoryNotifierAdapterTest {
     private lateinit var testOrderWithCallback: Order
     private lateinit var itemNotificationPayload: NotificationItemPayload
     private lateinit var orderNotificationPayload: NotificationOrderPayload
+    private val timeoutConfig = TimeoutProperties(8, 8, 8)
 
     @BeforeEach
     fun setUp() {
@@ -70,7 +72,7 @@ class InventoryNotifierAdapterTest {
         itemNotificationPayload = testItemWithCallback.toNotificationItemPayload(timestamp)
         orderNotificationPayload = testOrderWithCallback.toNotificationOrderPayload(timestamp)
 
-        inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper())
+        inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper(), timeoutConfig)
     }
 
     @AfterEach

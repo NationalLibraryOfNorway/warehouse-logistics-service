@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.repositories.order
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -14,14 +15,14 @@ import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Mono
-import java.time.Duration
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
 
 @Component
 class MongoOrderRepositoryAdapter(
-    private val orderMongoRepository: OrderMongoRepository
+    private val orderMongoRepository: OrderMongoRepository,
+    private val timeoutConfig: TimeoutProperties
 ) : OrderRepository {
     override suspend fun getOrder(
         hostName: HostName,
@@ -29,7 +30,7 @@ class MongoOrderRepositoryAdapter(
     ): Order? =
         orderMongoRepository
             .findByHostNameAndHostOrderId(hostName, hostOrderId)
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -54,7 +55,7 @@ class MongoOrderRepositoryAdapter(
                     contactPerson = order.contactPerson,
                     address = order.address,
                     callbackUrl = order.callbackUrl
-                ).timeout(Duration.ofSeconds(8))
+                ).timeout(timeoutConfig.mongo)
                 .doOnError(TimeoutException::class.java) {
                     logger.error(it) {
                         "Timed out while deleting order from WLS database. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
@@ -75,7 +76,7 @@ class MongoOrderRepositoryAdapter(
                 order.contactPerson,
                 order.address,
                 order.callbackUrl
-            ).timeout(Duration.ofSeconds(8))
+            ).timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -94,7 +95,7 @@ class MongoOrderRepositoryAdapter(
         orderMongoRepository
             .save(order.toMongoOrder())
             .map { it.toOrder() }
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while updating order in WLS database. Order: $order"

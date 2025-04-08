@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.repositories.event
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.RepositoryException
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeoutException
 
@@ -20,14 +20,15 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class MongoCatalogEventRepositoryAdapter(
-    private val mongoCatalogMessageRepository: MongoCatalogMessageRepository
+    private val mongoCatalogMessageRepository: MongoCatalogMessageRepository,
+    private val timeoutConfig: TimeoutProperties
 ) : EventRepository<CatalogEvent> {
     override suspend fun save(event: CatalogEvent): CatalogEvent =
         mongoCatalogMessageRepository
             .save(MongoCatalogEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved catalog event to catalog outbox: $it" } }
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -44,7 +45,7 @@ class MongoCatalogEventRepositoryAdapter(
             .findAll()
             .map { it.body }
             .collectList()
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -61,7 +62,7 @@ class MongoCatalogEventRepositoryAdapter(
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -77,7 +78,7 @@ class MongoCatalogEventRepositoryAdapter(
         val updatedRecordCount =
             mongoCatalogMessageRepository
                 .findAndUpdateProcessedTimestampById(event.id, Instant.now())
-                .timeout(Duration.ofSeconds(8))
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {

@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
@@ -16,14 +17,14 @@ import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.time.Duration
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
 
 @Component
 class MongoItemRepositoryAdapter(
-    private val mongoRepo: ItemMongoRepository
+    private val mongoRepo: ItemMongoRepository,
+    private val timeoutConfig: TimeoutProperties
 ) : ItemRepository {
     override suspend fun getItem(
         hostName: HostName,
@@ -32,7 +33,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findByHostNameAndHostId(hostName, hostId)
             .map(MongoItem::toItem)
-            .timeout(Duration.ofSeconds(8))
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching from WLS database. hostName: $hostName, hostId: $hostId"
@@ -57,7 +58,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .save(item.toMongoItem())
             .map(MongoItem::toItem)
-            .timeout(Duration.ofSeconds(6))
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while saving to WLS database. item: $item"
@@ -70,7 +71,7 @@ class MongoItemRepositoryAdapter(
             .map {
                 logger.debug { "Counted items matching ids: $ids, count: $it" }
                 it == ids.size.toLong()
-            }.timeout(Duration.ofSeconds(8))
+            }.timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while counting items matching ids: $ids"
@@ -86,7 +87,7 @@ class MongoItemRepositoryAdapter(
         val itemsModified =
             mongoRepo
                 .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
-                .timeout(Duration.ofSeconds(8))
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {
@@ -114,7 +115,7 @@ class MongoItemRepositoryAdapter(
         val itemsModified =
             mongoRepo
                 .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
-                .timeout(Duration.ofSeconds(8))
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {

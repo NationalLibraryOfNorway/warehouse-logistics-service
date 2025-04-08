@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.infrastructure.synq
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -16,13 +18,17 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import java.net.URI
+import java.util.concurrent.TimeoutException
+
+private val logger = KotlinLogging.logger {}
 
 @Component
 class SynqAutostoreAdapter(
     @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
     @Value("\${synq.path.base}")
-    private val baseUrl: String
+    private val baseUrl: String,
+    private val timeoutProperties: TimeoutProperties
 ) : StorageSystemFacade {
     override suspend fun createItem(item: Item) {
         val uri = URI.create("$baseUrl/nbproducts")
@@ -33,6 +39,12 @@ class SynqAutostoreAdapter(
             .bodyValue(item.toSynqPayload())
             .retrieve()
             .toEntity(SynqError::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while creating item '${item.hostId}' for ${item.hostName} in SynQ"
+                }
+            }
             .onErrorResume(WebClientResponseException::class.java) { error ->
                 val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
                 if (errorText != null && errorText.contains("Duplicate product")) {
@@ -55,6 +67,12 @@ class SynqAutostoreAdapter(
             .bodyValue(orders)
             .retrieve()
             .toEntity(SynqError::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
+                }
+            }
             .onErrorResume(WebClientResponseException::class.java) { error ->
                 val synqError = error.getResponseBodyAs(SynqError::class.java) ?: throw createServerError(error)
                 if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
@@ -81,6 +99,12 @@ class SynqAutostoreAdapter(
             .uri(URI.create("$baseUrl/orders/$owner/$orderId"))
             .retrieve()
             .toEntity(SynqError::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while deleting order '$orderId' for $hostName in SynQ"
+                }
+            }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
@@ -92,6 +116,12 @@ class SynqAutostoreAdapter(
             .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
             .retrieve()
             .toBodilessEntity()
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while updating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
+                }
+            }
             .map { order }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
