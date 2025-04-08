@@ -2,22 +2,17 @@ package no.nb.mlt.wls.domain
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Duration
+import java.time.Duration.ofSeconds as fromSeconds
 
 @ConfigurationProperties("timeout")
 class TimeoutProperties(
-    private val mongo: Int,
-    private val inventory: Int,
-    private val storage: Int
+    private val mongoTimeout: Int,
+    private val inventoryTimeout: Int,
+    private val storageTimeout: Int
 ) {
-    fun mongoTimeout(): Duration {
-        return Duration.ofSeconds(mongo.toLong())
-    }
+    val mongo: Duration get() = fromSeconds(mongoTimeout.toLong())
 
-    fun inventory(): Duration {
-        return Duration.ofSeconds(inventory.toLong())
-    }
+    val inventory: Duration get() = fromSeconds(inventoryTimeout.toLong())
 
-    fun storage(): Duration {
-        return Duration.ofSeconds(storage.toLong())
-    }
+    val storage: Duration get() = fromSeconds(storageTimeout.toLong())
 }

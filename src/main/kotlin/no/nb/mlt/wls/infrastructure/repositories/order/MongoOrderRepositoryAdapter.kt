@@ -30,7 +30,7 @@ class MongoOrderRepositoryAdapter(
     ): Order? =
         orderMongoRepository
             .findByHostNameAndHostOrderId(hostName, hostOrderId)
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -55,7 +55,7 @@ class MongoOrderRepositoryAdapter(
                     contactPerson = order.contactPerson,
                     address = order.address,
                     callbackUrl = order.callbackUrl
-                ).timeout(timeoutConfig.mongoTimeout())
+                ).timeout(timeoutConfig.mongo)
                 .doOnError(TimeoutException::class.java) {
                     logger.error(it) {
                         "Timed out while deleting order from WLS database. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
@@ -76,7 +76,7 @@ class MongoOrderRepositoryAdapter(
                 order.contactPerson,
                 order.address,
                 order.callbackUrl
-            ).timeout(timeoutConfig.mongoTimeout())
+            ).timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -95,7 +95,7 @@ class MongoOrderRepositoryAdapter(
         orderMongoRepository
             .save(order.toMongoOrder())
             .map { it.toOrder() }
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while updating order in WLS database. Order: $order"

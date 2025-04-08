@@ -33,7 +33,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findByHostNameAndHostId(hostName, hostId)
             .map(MongoItem::toItem)
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching from WLS database. hostName: $hostName, hostId: $hostId"
@@ -58,7 +58,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .save(item.toMongoItem())
             .map(MongoItem::toItem)
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while saving to WLS database. item: $item"
@@ -71,7 +71,7 @@ class MongoItemRepositoryAdapter(
             .map {
                 logger.debug { "Counted items matching ids: $ids, count: $it" }
                 it == ids.size.toLong()
-            }.timeout(timeoutConfig.mongoTimeout())
+            }.timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while counting items matching ids: $ids"
@@ -87,7 +87,7 @@ class MongoItemRepositoryAdapter(
         val itemsModified =
             mongoRepo
                 .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
-                .timeout(timeoutConfig.mongoTimeout())
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {
@@ -115,7 +115,7 @@ class MongoItemRepositoryAdapter(
         val itemsModified =
             mongoRepo
                 .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
-                .timeout(timeoutConfig.mongoTimeout())
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {

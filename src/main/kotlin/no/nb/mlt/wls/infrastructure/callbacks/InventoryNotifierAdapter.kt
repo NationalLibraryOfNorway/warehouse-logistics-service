@@ -68,7 +68,7 @@ class InventoryNotifierAdapter(
                 it["X-Timestamp"] = timestamp
             }.retrieve()
             .bodyToMono(Void::class.java)
-            .timeout(timeoutConfig.inventory())
+            .timeout(timeoutConfig.inventory)
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
                 throw it

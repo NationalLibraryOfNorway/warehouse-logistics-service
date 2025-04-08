@@ -28,7 +28,7 @@ class MongoStorageEventRepositoryAdapter(
             .save(MongoStorageEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved storage event to outbox: $it" } }
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -45,7 +45,7 @@ class MongoStorageEventRepositoryAdapter(
             .findAll()
             .map { it.body }
             .collectList()
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -62,7 +62,7 @@ class MongoStorageEventRepositoryAdapter(
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -78,7 +78,7 @@ class MongoStorageEventRepositoryAdapter(
         val updatedRecordCount =
             mongoStorageEventRepository
                 .findAndUpdateProcessedTimestampById(event.id, Instant.now())
-                .timeout(timeoutConfig.mongoTimeout())
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {

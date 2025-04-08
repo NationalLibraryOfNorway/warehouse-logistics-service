@@ -76,30 +76,32 @@ class WLSServiceTest {
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
-        val itemCreatedEvent = ItemCreated(testItem)
-        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { null }
-        coEvery { itemRepoMock.createItem(testItem) } answers { testItem }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (testItem to itemCreatedEvent)
+        val expectedItem = createTestItem()
+        val itemCreatedEvent = ItemCreated(expectedItem)
+        coEvery { itemRepoMock.getItem(expectedItem.hostName, expectedItem.hostId) } answers { null }
+        coEvery { itemRepoMock.createItem(expectedItem) } answers { expectedItem }
+        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedItem to itemCreatedEvent)
         coEvery { storageEventProcessor.handleEvent(itemCreatedEvent) } answers {}
 
         runTest {
-            val addItemResult = cut.addItem(testItem.toItemMetadata())
+            val addItemResult = cut.addItem(expectedItem.toItemMetadata())
 
-            assertThat(addItemResult).isEqualTo(testItem)
+            assertThat(addItemResult).isEqualTo(expectedItem)
             coVerify(exactly = 1) { storageEventProcessor.handleEvent(itemCreatedEvent) }
         }
     }
 
     @Test
     fun `addItem should not save new item but return existing item if it already exists`() {
-        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
-        coEvery { itemRepoMock.createItem(testItem) } answers { testItem }
+        val expectedItem = createTestItem()
+        coEvery { itemRepoMock.getItem(expectedItem.hostName, expectedItem.hostId) } answers { expectedItem }
+        coEvery { itemRepoMock.createItem(expectedItem) } answers { expectedItem }
         coJustRun { storageSystemRepoMock.createItem(any()) }
 
         runTest {
-            val addItemResult = cut.addItem(testItem.toItemMetadata())
+            val addItemResult = cut.addItem(expectedItem.toItemMetadata())
 
-            assertThat(addItemResult).isEqualTo(testItem)
+            assertThat(addItemResult).isEqualTo(expectedItem)
             coVerify(exactly = 0) { itemRepoMock.createItem(any()) }
             coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
@@ -109,7 +111,7 @@ class WLSServiceTest {
     fun `moveItem should return when item successfully moves`() {
         val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
         val itemMovedEvent = ItemEvent(expectedItem)
-        coEvery { itemRepoMock.getItem(testItem.hostName, testItem.hostId) } answers { testItem }
+        coEvery { itemRepoMock.getItem(expectedItem.hostName, expectedItem.hostId) } answers { expectedItem }
         coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } returns (expectedItem to itemMovedEvent)
         coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
 
@@ -139,15 +141,15 @@ class WLSServiceTest {
     @Test
     fun `pickItems should update items and send callbacks`() {
         val expectedItem = createTestItem(quantity = 0, location = WITH_LENDER_LOCATION)
-        val pickedItemsMap = mapOf(testItem.hostId to 1)
+        val pickedItemsMap = mapOf(expectedItem.hostId to 1)
         val itemPickedEvent = ItemEvent(expectedItem)
         coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf(testItem) }
+        coEvery { itemRepoMock.getItems(any(), any()) } answers { listOf(expectedItem) }
         coEvery { transactionPort.executeInTransaction<Any>(any()) } answers { itemPickedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemPickedEvent) } answers {}
 
         runTest {
-            cut.pickItems(testItem.hostName, pickedItemsMap)
+            cut.pickItems(expectedItem.hostName, pickedItemsMap)
 
             coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { itemRepoMock.getItems(any(), any()) }
@@ -172,8 +174,9 @@ class WLSServiceTest {
 
     @Test
     fun `pickOrderItems should update order and send callback`() {
-        val expectedOrder = testOrder.copy(orderLine = listOf(Order.OrderItem(testItem.hostId, Order.OrderItem.Status.PICKED)))
-        val pickedItems = listOf(testItem.hostId)
+        val expectedItem = createTestItem()
+        val expectedOrder = testOrder.copy(orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.PICKED)))
+        val pickedItems = listOf(expectedItem.hostId)
         val orderItemsPickedEvent = OrderEvent(expectedOrder)
         coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
         coEvery { transactionPort.executeInTransaction<Any>(any()) } answers { orderItemsPickedEvent }

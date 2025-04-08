@@ -59,10 +59,11 @@ wls:
     handler:
       email: daniel@mlt.hermes.no
 
+# Define timeouts for calls to external services
 timeout:
-  mongo: 8
-  inventory: 10
-  storage: 10
+  mongoTimeout: 8
+  inventoryTimeout: 10
+  storageTimeout: 10
 
 # Set the proxy settings for the application
 proxy:
@@ -108,6 +109,12 @@ wls:
   order:
     handler:
       email: daniel@mlt.hermes.no
+
+# Define timeouts for calls to external services
+timeout:
+  mongoTimeout: 8
+  inventoryTimeout: 10
+  storageTimeout: 10
 
 # Set the proxy settings for the application
 proxy:

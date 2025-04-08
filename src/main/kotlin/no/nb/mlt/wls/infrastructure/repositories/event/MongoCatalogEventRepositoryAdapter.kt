@@ -28,7 +28,7 @@ class MongoCatalogEventRepositoryAdapter(
             .save(MongoCatalogEvent(body = event))
             .map { it.body }
             .doOnEach { logger.info { "Saved catalog event to catalog outbox: $it" } }
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -45,7 +45,7 @@ class MongoCatalogEventRepositoryAdapter(
             .findAll()
             .map { it.body }
             .collectList()
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -62,7 +62,7 @@ class MongoCatalogEventRepositoryAdapter(
             .findAllByProcessedTimestampIsNull()
             .map { it.body }
             .collectList()
-            .timeout(timeoutConfig.mongoTimeout())
+            .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
@@ -78,7 +78,7 @@ class MongoCatalogEventRepositoryAdapter(
         val updatedRecordCount =
             mongoCatalogMessageRepository
                 .findAndUpdateProcessedTimestampById(event.id, Instant.now())
-                .timeout(timeoutConfig.mongoTimeout())
+                .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {
