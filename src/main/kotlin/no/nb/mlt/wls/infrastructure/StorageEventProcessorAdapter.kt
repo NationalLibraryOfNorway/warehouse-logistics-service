@@ -90,7 +90,7 @@ class StorageEventProcessorAdapter(
         val storageCandidates = findValidStorageCandidates(item)
 
         if (storageCandidates.isEmpty()) {
-            logger.info { "SEPA: Could not find a storage system to handle item: $item" }
+            logger.warn { "SEPA: Could not find a storage system to handle item: $item" }
             return
         }
 
@@ -112,7 +112,7 @@ class StorageEventProcessorAdapter(
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
-                logger.info { "SEPA: Could not find a storage system to handle items: $itemList" }
+                logger.warn { "SEPA: Could not find a storage system to handle items: $itemList" }
             }
 
             val orderCopy =
