@@ -32,7 +32,7 @@ class StorageEventProcessorTest {
         cut =
             StorageEventProcessorAdapter(
                 storageEventRepository = storageMessageRepoMock,
-                storageSystems = listOf(happyStorageSystemMock),
+                storageSystems = listOf(happyStorageSystemFacadeMock),
                 itemRepository = itemRepoMock,
                 emailNotifier = emailNotifierMock
             )
@@ -46,7 +46,7 @@ class StorageEventProcessorTest {
             cut.handleEvent(event)
 
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemMock.createOrder(any()) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createOrder(any()) }
         }
 
     @Test
@@ -63,7 +63,7 @@ class StorageEventProcessorTest {
     fun `OrderCreated event should not be marked as processed or send email if anything fails`() =
         runTest {
             val errorMessage = "Some exception when sending to storage system"
-            coEvery { happyStorageSystemMock.createOrder(any()) } throws NotImplementedError(errorMessage)
+            coEvery { happyStorageSystemFacadeMock.createOrder(any()) } throws NotImplementedError(errorMessage)
 
             assertThrows<NotImplementedError>(message = errorMessage) {
                 cut.handleEvent(OrderCreated(testOrder))
@@ -81,13 +81,13 @@ class StorageEventProcessorTest {
             cut.handleEvent(event)
 
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemMock.createItem(any()) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createItem(any()) }
         }
 
     @Test
     fun `ItemCreated event should fail if item already exists`() =
         runTest {
-            coEvery { happyStorageSystemMock.createItem(any()) } throws DuplicateResourceException("Duplicate product")
+            coEvery { happyStorageSystemFacadeMock.createItem(any()) } throws DuplicateResourceException("Duplicate product")
 
             assertThrows<DuplicateResourceException>(message = "Duplicate product") {
                 cut.handleEvent(ItemCreated(testItem1))
@@ -104,7 +104,7 @@ class StorageEventProcessorTest {
             cut.handleEvent(event)
 
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemMock.createItem(any()) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createItem(any()) }
         }
 
     @Test
@@ -115,7 +115,7 @@ class StorageEventProcessorTest {
             cut.handleEvent(event)
 
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemMock.deleteOrder(testOrder.hostOrderId, testOrder.hostName) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.deleteOrder(testOrder.hostOrderId, testOrder.hostName) }
         }
 
     @Test
@@ -131,7 +131,7 @@ class StorageEventProcessorTest {
             cut.handleEvent(event)
 
             assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemMock.updateOrder(any()) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.updateOrder(any()) }
         }
 
     @Test
@@ -160,8 +160,8 @@ class StorageEventProcessorTest {
             val item3event = ItemCreated(testItem3)
 
             // Make happyStorageSystemMock fail in during order1 update, and during item 2 creation
-            coEvery { happyStorageSystemMock.updateOrder(updatedOrder1) } throws StorageSystemException("Could not update order")
-            coEvery { happyStorageSystemMock.createItem(testItem2) } throws DuplicateResourceException("Duplicate product")
+            coEvery { happyStorageSystemFacadeMock.updateOrder(updatedOrder1) } throws StorageSystemException("Could not update order")
+            coEvery { happyStorageSystemFacadeMock.createItem(testItem2) } throws DuplicateResourceException("Duplicate product")
 
             // Create list of unprocessed events, mixing them, making sure order2 events happen "after" order1 fails, mix in items all over the list
             unprocessedEventsList.addAll(
@@ -186,17 +186,17 @@ class StorageEventProcessorTest {
                 .contains(order1event1, order2event1, order2event2, item1event, item3event)
 
             // Make sure every event got called
-            coVerify(exactly = 1) { happyStorageSystemMock.createOrder(createdOrder1) }
-            coVerify(exactly = 1) { happyStorageSystemMock.updateOrder(updatedOrder1) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createOrder(createdOrder1) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.updateOrder(updatedOrder1) }
             // Delete should not be called as update order above should fail
-            coVerify(exactly = 0) { happyStorageSystemMock.deleteOrder(createdOrder1.hostOrderId, createdOrder1.hostName) }
+            coVerify(exactly = 0) { happyStorageSystemFacadeMock.deleteOrder(createdOrder1.hostOrderId, createdOrder1.hostName) }
 
-            coVerify(exactly = 1) { happyStorageSystemMock.createOrder(createdOrder2) }
-            coVerify(exactly = 1) { happyStorageSystemMock.deleteOrder(createdOrder2.hostOrderId, createdOrder2.hostName) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createOrder(createdOrder2) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.deleteOrder(createdOrder2.hostOrderId, createdOrder2.hostName) }
 
-            coVerify(exactly = 1) { happyStorageSystemMock.createItem(testItem1) }
-            coVerify(exactly = 1) { happyStorageSystemMock.createItem(testItem2) }
-            coVerify(exactly = 1) { happyStorageSystemMock.createItem(testItem3) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createItem(testItem1) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createItem(testItem2) }
+            coVerify(exactly = 1) { happyStorageSystemFacadeMock.createItem(testItem3) }
         }
 
     private val testItem1 = createTestItem()
@@ -231,7 +231,7 @@ class StorageEventProcessorTest {
         }
 
     // A happy little storage system mock, he lives right here...
-    private val happyStorageSystemMock =
+    private val happyStorageSystemFacadeMock =
         mockk<StorageSystemFacade> {
             coEvery { canHandleItem(any()) } returns true
             coEvery { canHandleLocation("invalid-location") } returns false
