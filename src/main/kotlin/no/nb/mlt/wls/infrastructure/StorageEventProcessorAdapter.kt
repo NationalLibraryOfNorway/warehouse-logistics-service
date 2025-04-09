@@ -55,6 +55,8 @@ class StorageEventProcessorAdapter(
         messageGroups.forEach {
             handleEventGroup(it)
         }
+
+        logger.info { "SEPA: Finished processing storage event outbox" }
     }
 
     private suspend fun handleEventGroup(eventGroup: Map.Entry<String, List<StorageEvent>>) {

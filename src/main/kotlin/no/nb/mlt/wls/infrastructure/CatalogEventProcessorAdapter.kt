@@ -20,7 +20,7 @@ class CatalogEventProcessorAdapter(
 ) : EventProcessor<CatalogEvent> {
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
-        logger.info { "CEPA: Processing storage event outbox" }
+        logger.info { "CEPA: Processing catalog event outbox" }
 
         val outboxMessages = catalogEventRepository.getUnprocessedSortedByCreatedTime()
 
@@ -45,6 +45,8 @@ class CatalogEventProcessorAdapter(
         messageGroups.forEach {
             handleEventGroup(it)
         }
+
+        logger.info { "CEPA: Finished processing catalog event outbox" }
     }
 
     private suspend fun handleEventGroup(eventGroup: Map.Entry<String, List<CatalogEvent>>) {
