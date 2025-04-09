@@ -28,17 +28,49 @@ class StorageEventProcessorAdapter(
 ) : EventProcessor<StorageEvent> {
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
+        logger.info { "SEO: Processing storage event outbox" }
+
         val outboxMessages =
             storageEventRepository
                 .getUnprocessedSortedByCreatedTime()
 
-        if (outboxMessages.isNotEmpty()) {
-            logger.info { "Processing ${outboxMessages.size} outbox messages" }
-            outboxMessages.forEach { handleEvent(it) }
+        if (outboxMessages.isEmpty()) {
+            logger.info { "SEO: No messages in outbox" }
+            return
+        }
+
+        logger.info { "SEO: Processing ${outboxMessages.size} outbox messages" }
+
+        val messageGroups =
+            outboxMessages.groupBy {
+                when (it) {
+                    is ItemCreated -> it.createdItem.hostId
+                    is OrderCreated -> it.createdOrder.hostOrderId
+                    is OrderDeleted -> it.hostOrderId
+                    is OrderUpdated -> it.updatedOrder.hostOrderId
+                }
+            }
+
+        logger.info { "SEO: There are ${messageGroups.keys.size} message groups" }
+
+        messageGroups.forEach {
+            handleEventGroup(it)
+        }
+    }
+
+    private suspend fun handleEventGroup(eventGroup: Map.Entry<String, List<StorageEvent>>) {
+        logger.info { "SEO: Processing message group with id: ${eventGroup.key}" }
+
+        try {
+            eventGroup.value.forEach { handleEvent(it) }
+        } catch (e: Exception) {
+            logger.error(e) { "SEO: Error occurred while processing event in message group: ${eventGroup.key}" }
         }
     }
 
     override suspend fun handleEvent(event: StorageEvent) {
+        logger.info { "SEO: Processing storage event: $event" }
+
         when (event) {
             is ItemCreated -> handleItemCreated(event)
             is OrderCreated -> handleOrderCreated(event)
@@ -47,48 +79,28 @@ class StorageEventProcessorAdapter(
         }
 
         val processedEvent = storageEventRepository.markAsProcessed(event)
-        logger.info { "Marked event as processed: $processedEvent" }
-    }
-
-    private suspend fun handleOrderDeleted(event: OrderDeleted) {
-        logger.info { "Processing OrderDeleted: $event" }
-        storageSystems.forEach {
-            it.deleteOrder(event.hostOrderId, event.host)
-        }
-    }
-
-    private suspend fun handleOrderUpdated(event: OrderUpdated) {
-        logger.info { "Processing OrderUpdated: $event" }
-        val updatedOrder = event.updatedOrder
-        val items =
-            itemRepository.getItems(
-                updatedOrder.hostName,
-                updatedOrder.orderLine.map { it.hostId }
-            )
-
-        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
-            if (storageSystemFacade == null) {
-                logger.info { "Could not find a storage system to handle items: $itemList" }
-            }
-            storageSystemFacade?.updateOrder(updatedOrder)
-        }
+        logger.info { "SEO: Marked event as processed: $processedEvent" }
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
-        logger.info { "Processing ItemCreated: $event" }
+        logger.info { "SEO: Processing ItemCreated: $event" }
+
         val item = event.createdItem
-        val storageCandidates = findValidStorages(item)
+        val storageCandidates = findValidStorageCandidates(item)
+
         if (storageCandidates.isEmpty()) {
-            logger.info { "Could not find a storage system to handle item: $item" }
+            logger.info { "SEO: Could not find a storage system to handle item: $item" }
             return
         }
+
         storageCandidates.forEach {
             it.createItem(item)
         }
     }
 
     private suspend fun handleOrderCreated(event: OrderCreated) {
-        logger.info { "Processing OrderCreated: $event" }
+        logger.info { "SEO: Processing OrderCreated: $event" }
+
         val createdOrder = event.createdOrder
 
         val items =
@@ -99,7 +111,7 @@ class StorageEventProcessorAdapter(
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
-                logger.info { "Could not find a storage system to handle items: $itemList" }
+                logger.info { "SEO: Could not find a storage system to handle items: $itemList" }
             }
 
             val orderCopy =
@@ -109,8 +121,35 @@ class StorageEventProcessorAdapter(
                             Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
                         }
                 )
+
             storageSystemFacade?.createOrder(orderCopy)
             createAndSendEmails(orderCopy)
+        }
+    }
+
+    private suspend fun handleOrderDeleted(event: OrderDeleted) {
+        logger.info { "SEO: Processing OrderDeleted: $event" }
+
+        storageSystems.forEach {
+            it.deleteOrder(event.hostOrderId, event.host)
+        }
+    }
+
+    private suspend fun handleOrderUpdated(event: OrderUpdated) {
+        logger.info { "SEO: Processing OrderUpdated: $event" }
+
+        val updatedOrder = event.updatedOrder
+        val items =
+            itemRepository.getItems(
+                updatedOrder.hostName,
+                updatedOrder.orderLine.map { it.hostId }
+            )
+
+        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
+            if (storageSystemFacade == null) {
+                logger.info { "SEO: Could not find a storage system to handle items: $itemList" }
+            }
+            storageSystemFacade?.updateOrder(updatedOrder)
         }
     }
 
@@ -119,7 +158,7 @@ class StorageEventProcessorAdapter(
             storageSystems.firstOrNull { it.canHandleLocation(item.location) }
         }
 
-    private suspend fun findValidStorages(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
+    private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
     private suspend fun createAndSendEmails(order: Order) {
         val items = order.orderLine.map { it.hostId }
