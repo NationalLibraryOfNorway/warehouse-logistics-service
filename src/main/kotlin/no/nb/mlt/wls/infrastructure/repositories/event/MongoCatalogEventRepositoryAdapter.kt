@@ -43,6 +43,7 @@ class MongoCatalogEventRepositoryAdapter(
     override suspend fun getAll(): List<CatalogEvent> =
         mongoCatalogMessageRepository
             .findAll()
+            .sort { e1, e2 -> e1.createdTimestamp.compareTo(e2.createdTimestamp) }
             .map { it.body }
             .collectList()
             .timeout(timeoutConfig.mongo)
@@ -60,6 +61,7 @@ class MongoCatalogEventRepositoryAdapter(
     override suspend fun getUnprocessedSortedByCreatedTime(): List<CatalogEvent> =
         mongoCatalogMessageRepository
             .findAllByProcessedTimestampIsNull()
+            .sort { e1, e2 -> e1.body.eventTimestamp.compareTo(e2.body.eventTimestamp) }
             .map { it.body }
             .collectList()
             .timeout(timeoutConfig.mongo)

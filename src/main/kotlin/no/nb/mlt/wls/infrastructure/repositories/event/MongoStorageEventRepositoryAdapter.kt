@@ -43,6 +43,7 @@ class MongoStorageEventRepositoryAdapter(
     override suspend fun getAll(): List<StorageEvent> =
         mongoStorageEventRepository
             .findAll()
+            .sort { e1, e2 -> e1.createdTimestamp.compareTo(e2.createdTimestamp) }
             .map { it.body }
             .collectList()
             .timeout(timeoutConfig.mongo)
@@ -60,6 +61,7 @@ class MongoStorageEventRepositoryAdapter(
     override suspend fun getUnprocessedSortedByCreatedTime(): List<StorageEvent> =
         mongoStorageEventRepository
             .findAllByProcessedTimestampIsNull()
+            .sort { e1, e2 -> e1.createdTimestamp.compareTo(e2.createdTimestamp) }
             .map { it.body }
             .collectList()
             .timeout(timeoutConfig.mongo)
