@@ -116,6 +116,21 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: HTTP_PROXY_PORT
+            - name: TIMEOUT_MONGO
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: TIMEOUT_MONGO
+            - name: TIMEOUT_INVENTORY
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: TIMEOUT_INVENTORY
+            - name: TIMEOUT_STORAGE
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: TIMEOUT_STORAGE
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
