@@ -134,14 +134,13 @@ class SynqAutostoreAdapter(
         }
 
     override fun canHandleItem(item: Item): Boolean {
+        if (item.preferredEnvironment == Environment.FRAGILE) return false
         // There is no freezer in AutoStore
         if (item.preferredEnvironment == Environment.FREEZE) return false
-
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
             ItemCategory.FILM -> false
             ItemCategory.BULK_ITEMS -> true
-            ItemCategory.FRAGILE -> false
             else -> false
         }
     }
