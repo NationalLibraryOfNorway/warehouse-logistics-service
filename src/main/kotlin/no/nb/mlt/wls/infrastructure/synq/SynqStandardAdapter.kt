@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.synq
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.TimeoutProperties
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -132,12 +133,13 @@ class SynqStandardAdapter(
         }
 
     override fun canHandleItem(item: Item): Boolean {
+        if (item.preferredEnvironment == Environment.FRAGILE) return false
+
         // SynQ can handle both NONE and FREEZE environments, so this is not checked
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
             ItemCategory.FILM -> true
             ItemCategory.BULK_ITEMS -> false
-            ItemCategory.FRAGILE -> false
             else -> false
         }
     }
