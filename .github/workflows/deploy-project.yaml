@@ -296,7 +296,7 @@ jobs:
           tagged_image=harbor.nb.no/mlt/wls:$tag
           echo "Deploying to prod: $tagged_image"
           sed -i "s|<image_name>|$tagged_image|g" k8s/prod/wls.yml
-          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
+          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/prod/wls.yml
           kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
           kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_PROD_USER }} --token=${{ env.K8S_PROD_NB_NO_TOKEN }}
