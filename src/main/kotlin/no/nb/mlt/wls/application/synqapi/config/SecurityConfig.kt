@@ -26,15 +26,15 @@ class SecurityConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http {
-            securityMatcher(PathPatternParserServerWebExchangeMatcher("/synq/v1/**"))
+            securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes/synq/v1/**"))
             csrf { }
             authorizeExchange {
-                authorize("/synq/api-docs", permitAll)
-                authorize("/synq/api-docs/**", permitAll)
-                authorize("/synq/swagger", permitAll)
-                authorize("/synq/swagger/**", permitAll)
-                authorize("/synq/webjars/swagger-ui/**", permitAll)
-                authorize("/synq/v1/**", hasRole("synq"))
+                authorize("/hermes/synq/api-docs", permitAll)
+                authorize("/hermes/synq/api-docs/**", permitAll)
+                authorize("/hermes/synq/swagger", permitAll)
+                authorize("/hermes/synq/swagger/**", permitAll)
+                authorize("/hermes/synq/webjars/swagger-ui/**", permitAll)
+                authorize("/hermes/synq/v1/**", hasRole("synq"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {

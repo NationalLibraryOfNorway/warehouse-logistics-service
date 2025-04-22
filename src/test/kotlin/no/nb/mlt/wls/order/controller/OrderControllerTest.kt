@@ -83,7 +83,7 @@ class OrderControllerTest(
                 .bindToApplicationContext(applicationContext)
                 .apply(springSecurity())
                 .configureClient()
-                .baseUrl("/v1/order")
+                .baseUrl("/hermes/v1/order")
                 .build()
 
         populateDb()

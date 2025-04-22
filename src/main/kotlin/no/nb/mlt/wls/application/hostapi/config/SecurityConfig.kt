@@ -36,17 +36,17 @@ class SecurityConfig {
         http {
             csrf { }
             authorizeExchange {
-                authorize("/api-docs", permitAll)
-                authorize("/api-docs/**", permitAll)
-                authorize("/swagger", permitAll)
-                authorize("/swagger/**", permitAll)
-                authorize("/webjars/swagger-ui/**", permitAll)
-                authorize("/actuator", permitAll)
-                authorize("/actuator/**", permitAll)
-                authorize("/v1/item", hasRole("item"))
-                authorize("/v1/item/**", hasRole("item"))
-                authorize("/v1/order", hasRole("order"))
-                authorize("/v1/order/**", hasRole("order"))
+                authorize("/hermes/api-docs", permitAll)
+                authorize("/hermes/api-docs/**", permitAll)
+                authorize("/hermes/swagger", permitAll)
+                authorize("/hermes/swagger/**", permitAll)
+                authorize("/hermes/webjars/swagger-ui/**", permitAll)
+                authorize("/hermes/actuator", permitAll)
+                authorize("/hermes/actuator/**", permitAll)
+                authorize("/hermes/v1/item", hasRole("item"))
+                authorize("/hermes/v1/item/**", hasRole("item"))
+                authorize("/hermes/v1/order", hasRole("order"))
+                authorize("/hermes/v1/order/**", hasRole("order"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {

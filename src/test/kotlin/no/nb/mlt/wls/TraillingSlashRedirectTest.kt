@@ -46,7 +46,7 @@ class TraillingSlashRedirectTest(
                 .bindToApplicationContext(applicationContext)
                 .apply(springSecurity())
                 .configureClient()
-                .baseUrl("/v1/item/")
+                .baseUrl("/hermes/v1/item/")
                 .build()
     }
 

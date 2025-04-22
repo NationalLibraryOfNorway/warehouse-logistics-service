@@ -234,7 +234,7 @@ spec:
     - host: <host_url>
       http:
         paths:
-          - path: /
+          - path: /hermes
             pathType: Prefix
             backend:
               service:

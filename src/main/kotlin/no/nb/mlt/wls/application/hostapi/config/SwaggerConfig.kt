@@ -63,6 +63,6 @@ class SwaggerConfig {
             .builder()
             .group("Host API")
             .displayName("API for catalogues (hosts) to interact with Hermes WLS")
-            .pathsToMatch("/v1/**")
+            .pathsToMatch("/hermes/v1/**")
             .build()
 }

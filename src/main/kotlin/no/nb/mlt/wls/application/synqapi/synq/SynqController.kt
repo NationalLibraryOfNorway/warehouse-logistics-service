@@ -28,7 +28,7 @@ import java.security.InvalidParameterException
 private val logger = KotlinLogging.logger {}
 
 @RestController
-@RequestMapping(path = ["/synq/v1"])
+@RequestMapping(path = ["/hermes/synq/v1"])
 @Tag(name = "SynQ Controller", description = """API for receiving product and order updates from SynQ in Hermes WLS""")
 class SynqController(
     private val moveItem: MoveItem,
