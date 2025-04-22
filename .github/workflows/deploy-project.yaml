@@ -244,6 +244,7 @@ jobs:
       # Script itself is rather generic, especially for simple deployments, so it can be easily re-used
       # Just make sure to set correct context and namespace when used in other projects
       #
+      # K8S_HOST_URL - URL pointing where to host the app, there are two default options for both stage and prod
       # K8S_STAGE_SERVER - URL to the stage server in form https://<IP_ADDRESS>:<PORT>
       # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Platform team
       # K8S_STAGE_USER - name of the robot user that can deploy to the given namespace, get it from the Platform team
@@ -252,6 +253,7 @@ jobs:
         run: |
           echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
           sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/stage/wls.yml
+          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
           kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
@@ -294,6 +296,7 @@ jobs:
           tagged_image=harbor.nb.no/mlt/wls:$tag
           echo "Deploying to prod: $tagged_image"
           sed -i "s|<image_name>|$tagged_image|g" k8s/prod/wls.yml
+          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
           kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
           kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
           kubectl config set-credentials ${{ env.K8S_PROD_USER }} --token=${{ env.K8S_PROD_NB_NO_TOKEN }}
