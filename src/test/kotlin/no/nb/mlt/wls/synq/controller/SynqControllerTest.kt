@@ -71,7 +71,7 @@ class SynqControllerTest(
                 .bindToApplicationContext(applicationContext)
                 .apply(springSecurity())
                 .configureClient()
-                .baseUrl("/synq/v1")
+                .baseUrl("/hermes/synq/v1")
                 .build()
 
         populateDb()

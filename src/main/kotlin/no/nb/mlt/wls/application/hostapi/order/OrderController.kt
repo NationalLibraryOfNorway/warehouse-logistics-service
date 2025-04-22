@@ -37,7 +37,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 private val logger = KotlinLogging.logger {}
 
 @RestController
-@RequestMapping(path = ["/v1"])
+@RequestMapping(path = ["/hermes/v1"])
 @Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
 class OrderController(
     private val getOrder: GetOrder,

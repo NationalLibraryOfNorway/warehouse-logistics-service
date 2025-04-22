@@ -57,6 +57,6 @@ class SwaggerConfig {
             .builder()
             .group("SynQ API")
             .displayName("SynQ updates port for Hermes WLS")
-            .pathsToMatch("/synq/v1/**")
+            .pathsToMatch("/hermes/synq/v1/**")
             .build()
 }

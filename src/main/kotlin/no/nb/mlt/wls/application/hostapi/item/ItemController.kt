@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
-@RequestMapping(path = ["/v1"])
+@RequestMapping(path = ["/hermes/v1"])
 @Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
 class ItemController(
     private val getItem: GetItem,
