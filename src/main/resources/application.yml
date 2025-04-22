@@ -22,6 +22,9 @@ server:
 
 # Enable actuator endpoints and set the port
 management:
+  endpoints:
+    web:
+      base-path: /hermes/actuator
   endpoint:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes

@@ -161,7 +161,7 @@ In short you will need to start the services using the provided [Docker Compose 
 
 Hermes WLS provides a REST API for interacting with the service.
 The API is documented using Swagger, and can be accessed by running the application and navigating to the following URL:
-`http://localhost:8080/swagger`
+`http://localhost:8080/hermes/swagger`
 
 As the staging and production environments are deployed on internal networks, the deployed API is not accessible from the outside.
 If you need to access the API in these environments, you will need to use a VPN connection to NLN's network.

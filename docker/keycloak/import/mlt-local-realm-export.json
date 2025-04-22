@@ -48,9 +48,9 @@
   "failureFactor" : 30,
   "roles" : {
     "realm" : [ {
-      "id" : "55055ff7-5e2f-4cb4-bf8f-6ba3cc0cd315",
-      "name" : "uma_authorization",
-      "description" : "${role_uma_authorization}",
+      "id" : "64568735-f0af-4b8a-b1b8-17c2a05883f7",
+      "name" : "kardex",
+      "description" : "Adds a \"kardex\" role to the JWT to identify users/clients permitted to access Kardex endpoints",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
@@ -85,19 +85,10 @@
       "description" : "${role_default-roles}",
       "composite" : true,
       "composites" : {
-        "realm" : [ "offline_access", "uma_authorization" ],
         "client" : {
           "account" : [ "view-profile", "manage-account" ]
         }
       },
-      "clientRole" : false,
-      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
-      "attributes" : { }
-    }, {
-      "id" : "220623bf-e8f1-4030-aa44-88c3e883928c",
-      "name" : "offline_access",
-      "description" : "${role_offline-access}",
-      "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
@@ -291,6 +282,7 @@
       } ],
       "security-admin-console" : [ ],
       "admin-cli" : [ ],
+      "kardex" : [ ],
       "account-console" : [ ],
       "broker" : [ {
         "id" : "8f1aaeb7-54a3-4921-b341-247d9d2ae02d",
@@ -449,6 +441,20 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
+    "id" : "6ffca037-a92f-4f5e-a2a2-b94f1fbadbf6",
+    "username" : "service-account-kardex",
+    "emailVerified" : false,
+    "createdTimestamp" : 1744373610356,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "kardex",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "kardex", "default-roles-mlt-realm" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "1d8f33f8-7381-4a14-9c0f-dd4d9990c12c",
     "username" : "service-account-synq",
     "emailVerified" : false,
@@ -462,10 +468,6 @@
     "realmRoles" : [ "synq" ],
     "notBefore" : 0,
     "groups" : [ ]
-  } ],
-  "scopeMappings" : [ {
-    "clientScope" : "offline_access",
-    "roles" : [ "offline_access" ]
   } ],
   "clientScopeMappings" : {
     "account" : [ {
@@ -582,7 +584,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "HktStCCm3rVZmCXtkbZ0dYERGp8ClcMf",
+    "secret" : "asta",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -597,8 +599,8 @@
     "protocol" : "openid-connect",
     "attributes" : {
       "oidc.ciba.grant.enabled" : "false",
-      "client.secret.creation.time" : "1736247290",
-      "backchannel.logout.session.required" : "true",
+      "client.secret.creation.time" : "1745326089",
+      "backchannel.logout.session.required" : "false",
       "post.logout.redirect.uris" : "+",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
@@ -654,7 +656,7 @@
       }
     } ],
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
-    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
+    "optionalClientScopes" : [ ]
   }, {
     "id" : "902b430d-e2c9-4888-b94e-a410bceb26bc",
     "clientId" : "axiell",
@@ -667,7 +669,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "E93MF2F8UfpRrCowAbVMStvsTzy0gmgr",
+    "secret" : "axiell",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -769,6 +771,87 @@
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
+    "id" : "611d6db7-461f-43c3-834b-9d24fc900795",
+    "clientId" : "kardex",
+    "name" : "Kardex (Local Client)",
+    "description" : "A local development version of the client for Kardex to use in communication with Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "kardex",
+    "redirectUris" : [ "/*" ],
+    "webOrigins" : [ "/*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : true,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1744373610",
+      "backchannel.logout.session.required" : "true",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "4ceb8e8b-99d3-443e-a7bd-80fb03ebbde3",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "cb70b764-a1e2-4fd7-aefb-a51fd30555de",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "63f7e25c-3490-4e7a-b109-4e333c30a9fe",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ ]
+  }, {
     "id" : "d4959811-baeb-46f9-a313-14371c9894f1",
     "clientId" : "realm-management",
     "name" : "${client_realm-management}",
@@ -855,7 +938,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "jAiN5r4NjfcXqxpqp48gnqJLw4FFWEXk",
+    "secret" : "synq",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -927,7 +1010,7 @@
       }
     } ],
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
-    "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
+    "optionalClientScopes" : [ ]
   } ],
   "clientScopes" : [ {
     "id" : "f72419b3-e002-4619-99a3-46501fd7977a",
@@ -1482,8 +1565,8 @@
       "display.on.consent.screen" : "true"
     }
   } ],
-  "defaultDefaultClientScopes" : [ "wls-audience", "wls-subject" ],
-  "defaultOptionalClientScopes" : [ "offline_access", "address", "phone", "microprofile-jwt", "email", "profile", "acr", "role_list", "roles", "web-origins" ],
+  "defaultDefaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+  "defaultOptionalClientScopes" : [ ],
   "browserSecurityHeaders" : {
     "contentSecurityPolicyReportOnly" : "",
     "xContentTypeOptions" : "nosniff",
@@ -1561,7 +1644,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1570,7 +1653,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-full-name-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-role-list-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
