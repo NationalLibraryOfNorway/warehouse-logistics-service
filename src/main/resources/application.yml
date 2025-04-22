@@ -34,10 +34,10 @@ management:
 springdoc:
   api-docs:
     # Set the base path for the Swagger API documentation
-    path: /api-docs
+    path: /hermes/api-docs
   swagger-ui:
     # Set the base path for Swagger UI
-    path: /swagger
+    path: /hermes/swagger
   # Don't show actuator endpoints in Swagger, they are on different port
   show-actuator: false
 
