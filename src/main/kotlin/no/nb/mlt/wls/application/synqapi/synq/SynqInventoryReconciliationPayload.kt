@@ -103,6 +103,7 @@ fun LoadUnit.getMappedHostName(): HostName? {
         "asta" -> HostName.ASTA
         "mavis" -> HostName.MAVIS
         "axiell" -> HostName.AXIELL
+        "mellomlager" -> HostName.TEMP_STORAGE
         else -> null
     }
 }
