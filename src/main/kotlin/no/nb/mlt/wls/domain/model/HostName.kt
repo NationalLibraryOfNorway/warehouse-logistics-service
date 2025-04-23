@@ -10,7 +10,9 @@ enum class HostName {
 
     companion object {
         fun fromString(string: String): HostName {
-            return HostName.valueOf(string.uppercase())
+            val potentialHost = string.uppercase()
+            if (potentialHost == "MELLOMLAGER") return TEMP_STORAGE
+            return HostName.valueOf(potentialHost)
         }
     }
 }
