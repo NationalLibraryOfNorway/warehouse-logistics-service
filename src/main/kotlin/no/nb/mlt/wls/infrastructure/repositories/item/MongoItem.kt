@@ -5,9 +5,11 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "items")
+@CompoundIndex(unique = true, def = "{'hostName':1,'hostId':1}")
 data class MongoItem(
     val hostId: String,
     val hostName: HostName,

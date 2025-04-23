@@ -58,6 +58,7 @@ fun toSynqHostname(hostName: HostName): String {
         HostName.ASTA -> "Asta"
         HostName.MAVIS -> "Mavis"
         HostName.AXIELL -> "Axiell"
+        HostName.TEMP_STORAGE -> "mellomlager"
         HostName.NONE -> throw NotImplementedError("Creating Products for HostName.NONE is not supported")
     }
 }

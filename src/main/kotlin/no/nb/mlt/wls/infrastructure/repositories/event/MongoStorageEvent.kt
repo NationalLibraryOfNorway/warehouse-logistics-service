@@ -6,7 +6,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
-@Document(collection = "storage-event")
+@Document(collection = "storage-events")
 data class MongoStorageEvent(
     @CreatedDate
     val createdTimestamp: Instant = Instant.now(),

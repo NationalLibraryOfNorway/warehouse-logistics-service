@@ -5,6 +5,7 @@ enum class HostName {
     ASTA,
     MAVIS,
     AXIELL,
+    TEMP_STORAGE,
     NONE;
 
     companion object {
