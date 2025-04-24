@@ -106,6 +106,31 @@ fun Item.toProduct() =
             )
     )
 
+fun Item.toMovedProduct() =
+    Product(
+        confidentialProduct = false,
+        hostName = this.hostName.name,
+        productId = this.hostId,
+        productOwner = "NB",
+        productVersionId = "Default",
+        quantityOnHand = null,
+        quantityMove = this.quantity,
+        suspect = false,
+        attributeValue =
+            listOf(
+                AttributeValue(
+                    name = "materialStatus",
+                    value = "Available"
+                )
+            ),
+        position =
+            Position(
+                xPosition = 1,
+                yPosition = 1,
+                zPosition = 1
+            )
+    )
+
 fun createOrderAddress(): Order.Address = Order.Address("recipient", "addressLine1", "addressLine2", "postcode", "city", "region", "country")
 
 fun createTestItem(
