@@ -7,6 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
+import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",
@@ -164,19 +165,18 @@ data class Product(
         MoveItemPayload(
             hostName = HostName.fromString(hostName),
             hostId = productId,
-            quantity = quantityMove?: throw RuntimeException(),
+            quantity = quantityMove?: throw ItemMovingException("Quantity moved must not be null"),
             location = location
         )
 
     fun toUpdateItemPayload(prevLocation: String, location: String): UpdateItemPayload {
         // If the previous location was AutoStore Warehouse,
         // then the item is on the way out of the system
-        // TODO - Throw more reasonable exceptions
         val quantity = if (prevLocation == "AutoStore_Warehouse") {
-            quantityOnHand?: throw RuntimeException("")
+            quantityOnHand?: throw ItemMovingException("Quantity on hand must not be null")
             quantityOnHand.unaryMinus()
         } else {
-            quantityOnHand?: throw RuntimeException("")
+            quantityOnHand?: throw ItemMovingException("Quantity on hand must not be null")
             quantityOnHand
         }
 
