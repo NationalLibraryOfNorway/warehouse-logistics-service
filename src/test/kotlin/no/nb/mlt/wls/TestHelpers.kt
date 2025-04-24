@@ -89,6 +89,7 @@ fun Item.toProduct() =
         productOwner = "NB",
         productVersionId = "Default",
         quantityOnHand = this.quantity,
+        quantityMove = null,
         suspect = false,
         attributeValue =
             listOf(

@@ -164,18 +164,20 @@ data class Product(
         MoveItemPayload(
             hostName = HostName.fromString(hostName),
             hostId = productId,
-            quantity = quantityOnHand?: throw RuntimeException(),
+            quantity = quantityMove?: throw RuntimeException(),
             location = location
         )
 
     fun toUpdateItemPayload(prevLocation: String, location: String): UpdateItemPayload {
         // If the previous location was AutoStore Warehouse,
         // then the item is on the way out of the system
+        // TODO - Throw more reasonable exceptions
         val quantity = if (prevLocation == "AutoStore_Warehouse") {
-            quantityMove?: throw RuntimeException("")
-            quantityMove.unaryMinus()
+            quantityOnHand?: throw RuntimeException("")
+            quantityOnHand.unaryMinus()
         } else {
-            quantityMove?: throw RuntimeException("bruh")
+            quantityOnHand?: throw RuntimeException("")
+            quantityOnHand
         }
 
         return UpdateItemPayload(
