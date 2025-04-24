@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",
@@ -139,7 +140,9 @@ data class Product(
         example = "1.0"
     )
     @field:PositiveOrZero(message = "Quantity on hand must not be negative. It must be zero or higher")
-    val quantityOnHand: Int,
+    val quantityOnHand: Int?,
+    @field:PositiveOrZero(message = "Quantity moved must not be negative. It must be zero or higher")
+    val quantityMove: Int?,
     @Schema(
         description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
         example = "false"
@@ -156,7 +159,33 @@ data class Product(
         example = "{...}"
     )
     val position: Position
-)
+) {
+    fun toMoveItemPayload(location: String) =
+        MoveItemPayload(
+            hostName = HostName.fromString(hostName),
+            hostId = productId,
+            quantity = quantityOnHand?: throw RuntimeException(),
+            location = location
+        )
+
+    fun toUpdateItemPayload(prevLocation: String, location: String): UpdateItemPayload {
+        // If the previous location was AutoStore Warehouse,
+        // then the item is on the way out of the system
+        val quantity = if (prevLocation == "AutoStore_Warehouse") {
+            quantityMove?: throw RuntimeException("")
+            quantityMove.unaryMinus()
+        } else {
+            quantityMove?: throw RuntimeException("bruh")
+        }
+
+        return UpdateItemPayload(
+            hostName = HostName.fromString(hostName),
+            hostId = productId,
+            quantity = quantity,
+            location = location
+        )
+    }
+}
 
 @Schema(
     description = """Represents a product's attribute.""",
@@ -208,15 +237,4 @@ data class Position(
     val zPosition: Int
 )
 
-fun Product.toPayload(location: String): MoveItemPayload =
-    MoveItemPayload(
-        hostName = HostName.fromString(hostName),
-        hostId = productId,
-        quantity = quantityOnHand,
-        location = location
-    )
 
-fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> =
-    loadUnit.map {
-        it.toPayload(location)
-    }
