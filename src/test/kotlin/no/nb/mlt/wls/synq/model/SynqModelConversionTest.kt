@@ -32,9 +32,10 @@ class SynqModelConversionTest {
 
     @Test
     fun `SynqBatchMoveItemPayload maps correctly to a list of MoveItemPayloads`() {
-        val moveItemPayloads = synqBatchMoveItemPayload.loadUnit.map {
-            it.toMoveItemPayload(synqBatchMoveItemPayload.location)
-        }
+        val moveItemPayloads =
+            synqBatchMoveItemPayload.loadUnit.map {
+                it.toMoveItemPayload(synqBatchMoveItemPayload.location)
+            }
 
         assertThat(moveItemPayloads).hasSize(3)
         assertThat(moveItemPayloads[0].hostName).isEqualTo(HostName.AXIELL)
@@ -52,9 +53,10 @@ class SynqModelConversionTest {
 
     @Test
     fun `SynqBatchMoveItemPayload maps correctly to a list of UpdateItemPayloads`() {
-        val updateItemPayloads = synqBatchUpdateItemPayload.loadUnit.map {
-            it.toUpdateItemPayload(synqBatchMoveItemPayload.prevLocation, synqBatchUpdateItemPayload.location)
-        }
+        val updateItemPayloads =
+            synqBatchUpdateItemPayload.loadUnit.map {
+                it.toUpdateItemPayload(synqBatchMoveItemPayload.prevLocation, synqBatchUpdateItemPayload.location)
+            }
 
         assertThat(updateItemPayloads).hasSize(3)
         assertThat(updateItemPayloads[0].hostName).isEqualTo(HostName.AXIELL)

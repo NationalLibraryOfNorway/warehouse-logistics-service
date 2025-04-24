@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.*
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -33,6 +32,7 @@ import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
@@ -94,7 +94,13 @@ class WLSService(
 
         val (updatedItem, catalogEvent) =
             transactionPort.executeInTransaction {
-                val updatedItem = itemRepository.updateLocationAndQuantity(item.hostId, item.hostName, updateItemPayload.location, updateItemPayload.quantity)
+                val updatedItem =
+                    itemRepository.updateLocationAndQuantity(
+                        item.hostId,
+                        item.hostName,
+                        updateItemPayload.location,
+                        updateItemPayload.quantity
+                    )
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
                 (updatedItem to event)
@@ -111,7 +117,13 @@ class WLSService(
 
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
-                val movedItem = itemRepository.moveItem(item.hostName, item.hostId, item.quantity + moveItemPayload.quantity, moveItemPayload.location)
+                val movedItem =
+                    itemRepository.moveItem(
+                        item.hostName,
+                        item.hostId,
+                        item.quantity + moveItemPayload.quantity,
+                        moveItemPayload.location
+                    )
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)

@@ -165,20 +165,24 @@ data class Product(
         MoveItemPayload(
             hostName = HostName.fromString(hostName),
             hostId = productId,
-            quantity = quantityMove?: throw ItemMovingException("Quantity moved must not be null"),
+            quantity = quantityMove ?: throw ItemMovingException("Quantity moved must not be null"),
             location = location
         )
 
-    fun toUpdateItemPayload(prevLocation: String, location: String): UpdateItemPayload {
+    fun toUpdateItemPayload(
+        prevLocation: String,
+        location: String
+    ): UpdateItemPayload {
         // If the previous location was AutoStore Warehouse,
         // then the item is on the way out of the system
-        val quantity = if (prevLocation == "AutoStore_Warehouse") {
-            quantityOnHand?: throw ItemMovingException("Quantity on hand must not be null")
-            quantityOnHand.unaryMinus()
-        } else {
-            quantityOnHand?: throw ItemMovingException("Quantity on hand must not be null")
-            quantityOnHand
-        }
+        val quantity =
+            if (prevLocation == "AutoStore_Warehouse") {
+                quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null")
+                quantityOnHand.unaryMinus()
+            } else {
+                quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null")
+                quantityOnHand
+            }
 
         return UpdateItemPayload(
             hostName = HostName.fromString(hostName),
@@ -238,5 +242,3 @@ data class Position(
     )
     val zPosition: Int
 )
-
-
