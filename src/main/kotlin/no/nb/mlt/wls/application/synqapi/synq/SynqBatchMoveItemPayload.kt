@@ -142,6 +142,10 @@ data class Product(
     )
     @field:PositiveOrZero(message = "Quantity on hand must not be negative. It must be zero or higher")
     val quantityOnHand: Int?,
+    @Schema(
+        description = """The amount of product which was moved between TUs. SynQ uses doubles for quantity, however we convert it to integers.""",
+        example = "1.0"
+    )
     @field:PositiveOrZero(message = "Quantity moved must not be negative. It must be zero or higher")
     val quantityMove: Int?,
     @Schema(
