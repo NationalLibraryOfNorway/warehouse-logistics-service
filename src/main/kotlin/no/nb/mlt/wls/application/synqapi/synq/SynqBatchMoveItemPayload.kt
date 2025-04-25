@@ -3,9 +3,12 @@ package no.nb.mlt.wls.application.synqapi.synq
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
+import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",
@@ -139,7 +142,13 @@ data class Product(
         example = "1.0"
     )
     @field:PositiveOrZero(message = "Quantity on hand must not be negative. It must be zero or higher")
-    val quantityOnHand: Int,
+    val quantityOnHand: Int?,
+    @Schema(
+        description = """The amount of product which was moved between TUs. SynQ uses doubles for quantity, however we convert it to integers.""",
+        example = "1.0"
+    )
+    @field:Positive(message = "Quantity moved must not be negative. It must be zero or higher")
+    val quantityMove: Int?,
     @Schema(
         description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
         example = "false"
@@ -156,7 +165,32 @@ data class Product(
         example = "{...}"
     )
     val position: Position
-)
+) {
+    fun toMoveItemPayload(
+        prevLocation: String,
+        location: String
+    ): MoveItemPayload {
+        var quantity = quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
+        if (prevLocation == "AutoStore_Warehouse") {
+            quantity = quantity.unaryMinus()
+        }
+
+        return MoveItemPayload(
+            hostName = HostName.fromString(hostName),
+            hostId = productId,
+            quantity = quantity,
+            location = location
+        )
+    }
+
+    fun toUpdateItemPayload(location: String): UpdateItemPayload =
+        UpdateItemPayload(
+            hostName = HostName.fromString(hostName),
+            hostId = productId,
+            quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
+            location = location
+        )
+}
 
 @Schema(
     description = """Represents a product's attribute.""",
@@ -207,16 +241,3 @@ data class Position(
     )
     val zPosition: Int
 )
-
-fun Product.toPayload(location: String): MoveItemPayload =
-    MoveItemPayload(
-        hostName = HostName.fromString(hostName),
-        hostId = productId,
-        quantity = quantityOnHand,
-        location = location
-    )
-
-fun SynqBatchMoveItemPayload.mapToItemPayloads(): List<MoveItemPayload> =
-    loadUnit.map {
-        it.toPayload(location)
-    }

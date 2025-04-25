@@ -27,6 +27,7 @@ import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
+import no.nb.mlt.wls.toMovedProduct
 import no.nb.mlt.wls.toProduct
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -209,6 +210,34 @@ class SynqControllerTest(
         }
 
     @Test
+    fun `moveItem out of AutoStore with correct payload decrements item count`() =
+        runTest {
+            every {
+                inventoryNotifierAdapterMock.itemChanged(any(), any())
+            }.answers {}
+
+            val item1 = itemRepository.findByHostNameAndHostId(testItem3.hostName, testItem3.hostId).awaitSingle()
+            assertThat(item1.quantity).isEqualTo(testItem3.quantity)
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
+                .put()
+                .uri("/move-item")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(moveItemAutostorePayload)
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            val item2 = itemRepository.findByHostNameAndHostId(testItem3.hostName, testItem3.hostId).awaitSingle()
+
+            assertThat(item2).isNotNull
+            assertThat(item2.location).isEqualTo(moveItemAutostorePayload.location)
+            assertThat(item2.quantity).isEqualTo(testItem3.quantity - 1)
+        }
+
+    @Test
     fun `updateItem correct payload updates item and sends callback`() =
         runTest {
             every {
@@ -384,9 +413,13 @@ class SynqControllerTest(
 
     private val testItem2 = createTestItem(hostId = "testItem2", location = UNKNOWN_LOCATION, quantity = 0)
 
+    private val testItem3 = createTestItem(hostId = "testItem3", location = "AutoStore_Warehouse", quantity = 1)
+
     private val testProduct1 = testItem1.toProduct()
 
     private val testProduct2 = testItem2.toProduct()
+
+    private val testMovedProduct = testItem3.toMovedProduct()
 
     private val order = createTestOrder()
 
@@ -412,9 +445,21 @@ class SynqControllerTest(
             warehouse = "Sikringsmagasin_2"
         )
 
+    private val moveItemAutostorePayload =
+        SynqBatchMoveItemPayload(
+            tuId = "6942066642",
+            location = "WS_AS_1",
+            prevLocation = "AutoStore_Warehouse",
+            loadUnit = listOf(testMovedProduct),
+            user = "per.person@nb.no",
+            warehouse = "AutoStore"
+        )
+
     fun populateDb() {
         runBlocking {
-            itemRepository.deleteAll().thenMany(itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem()))).awaitLast()
+            itemRepository.deleteAll().thenMany(
+                itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem(), testItem3.toMongoItem()))
+            ).awaitLast()
 
             orderRepository.deleteAll().then(orderRepository.save(order.toMongoOrder())).awaitSingle()
         }

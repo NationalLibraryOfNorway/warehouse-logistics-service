@@ -89,6 +89,32 @@ fun Item.toProduct() =
         productOwner = "NB",
         productVersionId = "Default",
         quantityOnHand = this.quantity,
+        quantityMove = null,
+        suspect = false,
+        attributeValue =
+            listOf(
+                AttributeValue(
+                    name = "materialStatus",
+                    value = "Available"
+                )
+            ),
+        position =
+            Position(
+                xPosition = 1,
+                yPosition = 1,
+                zPosition = 1
+            )
+    )
+
+fun Item.toMovedProduct() =
+    Product(
+        confidentialProduct = false,
+        hostName = this.hostName.name,
+        productId = this.hostId,
+        productOwner = "NB",
+        productVersionId = "Default",
+        quantityOnHand = null,
+        quantityMove = this.quantity,
         suspect = false,
         attributeValue =
             listOf(

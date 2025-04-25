@@ -31,6 +31,8 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
@@ -59,6 +61,7 @@ class WLSService(
     UpdateOrder,
     GetOrder,
     GetItem,
+    UpdateItem,
     OrderStatusUpdate,
     MoveItem,
     PickOrderItems,
@@ -84,6 +87,29 @@ class WLSService(
         return createdItem
     }
 
+    override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
+        val item =
+            getItem(updateItemPayload.hostName, updateItemPayload.hostId)
+                ?: throw ItemNotFoundException("Item with id '${updateItemPayload.hostId}' does not exist for '${updateItemPayload.hostName}'")
+
+        val (updatedItem, catalogEvent) =
+            transactionPort.executeInTransaction {
+                val updatedItem =
+                    itemRepository.updateLocationAndQuantity(
+                        item.hostId,
+                        item.hostName,
+                        updateItemPayload.location,
+                        updateItemPayload.quantity
+                    )
+                val event = catalogEventRepository.save(ItemEvent(updatedItem))
+
+                (updatedItem to event)
+            } ?: throw RuntimeException("Could not update item")
+
+        processCatalogEventAsync(catalogEvent)
+        return updatedItem
+    }
+
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
         val item =
             getItem(moveItemPayload.hostName, moveItemPayload.hostId)
@@ -91,7 +117,13 @@ class WLSService(
 
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
-                val movedItem = itemRepository.moveItem(item.hostName, item.hostId, moveItemPayload.quantity, moveItemPayload.location)
+                val movedItem =
+                    itemRepository.moveItem(
+                        item.hostName,
+                        item.hostId,
+                        item.quantity + moveItemPayload.quantity,
+                        moveItemPayload.location
+                    )
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)

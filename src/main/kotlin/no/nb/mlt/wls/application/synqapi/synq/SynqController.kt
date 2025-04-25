@@ -15,6 +15,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
@@ -32,6 +33,7 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "SynQ Controller", description = """API for receiving product and order updates from SynQ in Hermes WLS""")
 class SynqController(
     private val moveItem: MoveItem,
+    private val updateItem: UpdateItem,
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
     private val orderStatusUpdate: OrderStatusUpdate,
@@ -69,7 +71,22 @@ class SynqController(
     suspend fun moveItem(
         @RequestBody @Valid synqBatchMoveItemPayload: SynqBatchMoveItemPayload
     ): ResponseEntity<Unit> {
-        synqBatchMoveItemPayload.mapToItemPayloads().map { moveItem.moveItem(it) }
+        synqBatchMoveItemPayload.loadUnit.forEach { product ->
+            if (product.quantityMove != null) {
+                moveItem.moveItem(
+                    product.toMoveItemPayload(
+                        synqBatchMoveItemPayload.prevLocation,
+                        synqBatchMoveItemPayload.location
+                    )
+                )
+            } else {
+                updateItem.updateItem(
+                    product.toUpdateItemPayload(
+                        synqBatchMoveItemPayload.location
+                    )
+                )
+            }
+        }
         return ResponseEntity.ok().build()
     }
 
