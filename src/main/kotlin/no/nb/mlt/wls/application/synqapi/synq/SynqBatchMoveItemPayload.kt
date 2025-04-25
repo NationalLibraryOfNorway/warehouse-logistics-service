@@ -172,7 +172,7 @@ data class Product(
     ): MoveItemPayload {
         var quantity = quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
         if (prevLocation == "AutoStore_Warehouse") {
-           quantity = quantity.unaryMinus()
+            quantity = quantity.unaryMinus()
         }
 
         return MoveItemPayload(
