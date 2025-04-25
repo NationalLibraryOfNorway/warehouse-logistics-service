@@ -165,36 +165,34 @@ data class Product(
     )
     val position: Position
 ) {
-    fun toMoveItemPayload(location: String) =
-        MoveItemPayload(
-            hostName = HostName.fromString(hostName),
-            hostId = productId,
-            quantity = quantityMove ?: throw ItemMovingException("Quantity moved must not be null"),
-            location = location
-        )
-
-    fun toUpdateItemPayload(
+    fun toMoveItemPayload(
         prevLocation: String,
         location: String
-    ): UpdateItemPayload {
-        // If the previous location was AutoStore Warehouse,
-        // then the item is on the way out of the system
+    ): MoveItemPayload {
         val quantity =
             if (prevLocation == "AutoStore_Warehouse") {
-                quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null")
-                quantityOnHand.unaryMinus()
+                quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
+                quantityMove.unaryMinus()
             } else {
-                quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null")
-                quantityOnHand
+                quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
+                quantityMove
             }
 
-        return UpdateItemPayload(
+        return MoveItemPayload(
             hostName = HostName.fromString(hostName),
             hostId = productId,
             quantity = quantity,
             location = location
         )
     }
+
+    fun toUpdateItemPayload(location: String): UpdateItemPayload =
+        UpdateItemPayload(
+            hostName = HostName.fromString(hostName),
+            hostId = productId,
+            quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
+            location = location
+        )
 }
 
 @Schema(

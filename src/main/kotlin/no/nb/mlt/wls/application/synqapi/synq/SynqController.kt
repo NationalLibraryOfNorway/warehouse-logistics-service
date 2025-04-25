@@ -75,13 +75,13 @@ class SynqController(
             if (product.quantityMove != null) {
                 moveItem.moveItem(
                     product.toMoveItemPayload(
+                        synqBatchMoveItemPayload.prevLocation,
                         synqBatchMoveItemPayload.location
                     )
                 )
             } else {
                 updateItem.updateItem(
                     product.toUpdateItemPayload(
-                        synqBatchMoveItemPayload.prevLocation,
                         synqBatchMoveItemPayload.location
                     )
                 )
