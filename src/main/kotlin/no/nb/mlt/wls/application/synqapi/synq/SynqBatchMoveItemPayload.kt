@@ -3,6 +3,7 @@ package no.nb.mlt.wls.application.synqapi.synq
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
@@ -146,7 +147,7 @@ data class Product(
         description = """The amount of product which was moved between TUs. SynQ uses doubles for quantity, however we convert it to integers.""",
         example = "1.0"
     )
-    @field:PositiveOrZero(message = "Quantity moved must not be negative. It must be zero or higher")
+    @field:Positive(message = "Quantity moved must not be negative. It must be zero or higher")
     val quantityMove: Int?,
     @Schema(
         description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
