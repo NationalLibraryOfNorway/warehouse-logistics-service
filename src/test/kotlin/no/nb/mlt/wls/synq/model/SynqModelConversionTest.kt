@@ -33,7 +33,10 @@ class SynqModelConversionTest {
     fun `SynqBatchMoveItemPayload maps correctly to a list of MoveItemPayloads`() {
         val moveItemPayloads =
             synqBatchMoveItemPayload.loadUnit.map {
-                it.toMoveItemPayload(synqBatchMoveItemPayload.location)
+                it.toMoveItemPayload(
+                    synqBatchMoveItemPayload.prevLocation,
+                    synqBatchMoveItemPayload.location
+                )
             }
 
         assertThat(moveItemPayloads).hasSize(3)
@@ -42,7 +45,11 @@ class SynqModelConversionTest {
         assertThat(moveItemPayloads[0].quantity).isEqualTo(1)
         assertThat(moveItemPayloads[0].location).isEqualTo(synqBatchMoveItemPayload.location)
 
-        val oneProduct = movedProduct.toMoveItemPayload(synqBatchMoveItemPayload.location)
+        val oneProduct =
+            movedProduct.toMoveItemPayload(
+                synqBatchMoveItemPayload.prevLocation,
+                synqBatchMoveItemPayload.location
+            )
 
         assertThat(oneProduct.hostName).isEqualTo(HostName.AXIELL)
         assertThat(oneProduct.hostId).isEqualTo(movedProduct.productId)
@@ -54,7 +61,7 @@ class SynqModelConversionTest {
     fun `SynqBatchMoveItemPayload maps correctly to a list of UpdateItemPayloads`() {
         val updateItemPayloads =
             synqBatchUpdateItemPayload.loadUnit.map {
-                it.toUpdateItemPayload(synqBatchUpdateItemPayload.prevLocation, synqBatchUpdateItemPayload.location)
+                it.toUpdateItemPayload(synqBatchUpdateItemPayload.location)
             }
 
         assertThat(updateItemPayloads).hasSize(3)
@@ -63,7 +70,7 @@ class SynqModelConversionTest {
         assertThat(updateItemPayloads[0].quantity).isEqualTo(1)
         assertThat(updateItemPayloads[0].location).isEqualTo(synqBatchUpdateItemPayload.location)
 
-        val oneProduct = product.toUpdateItemPayload(synqBatchUpdateItemPayload.prevLocation, synqBatchUpdateItemPayload.location)
+        val oneProduct = product.toUpdateItemPayload(synqBatchUpdateItemPayload.location)
 
         assertThat(oneProduct.hostName).isEqualTo(HostName.AXIELL)
         assertThat(oneProduct.hostId).isEqualTo(product.productId)
