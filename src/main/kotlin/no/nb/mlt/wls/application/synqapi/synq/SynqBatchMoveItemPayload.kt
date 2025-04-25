@@ -170,14 +170,10 @@ data class Product(
         prevLocation: String,
         location: String
     ): MoveItemPayload {
-        val quantity =
-            if (prevLocation == "AutoStore_Warehouse") {
-                quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
-                quantityMove.unaryMinus()
-            } else {
-                quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
-                quantityMove
-            }
+        var quantity = quantityMove ?: throw ItemMovingException("Quantity moved must not be null")
+        if (prevLocation == "AutoStore_Warehouse") {
+           quantity = quantity.unaryMinus()
+        }
 
         return MoveItemPayload(
             hostName = HostName.fromString(hostName),
