@@ -14,6 +14,15 @@ spring:
     default: pipeline
   codec:
     max-in-memory-size: 1000KB
+  # Configure Kafka
+  kafka:
+    # If and how to retry sending Kafka messages
+    retry:
+      topic:
+        enabled: true
+        attempts: 5
+        delay: 5s
+        multiplier: 2
 
 # Server port for the main application
 server:
@@ -71,6 +80,13 @@ proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
+
+# Set kafka properties
+kafka:
+  topic: hermes-mythos
+  producer: hermes-core
+  bootstrap-servers: [localhost:9092]
+
 
 ---
 
