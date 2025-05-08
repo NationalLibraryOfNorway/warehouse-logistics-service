@@ -54,6 +54,11 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+# Set a dummycatalog base path to Kardex for testing purposes
+kardex:
+  path:
+    base: http://localhost:8181/kardex/
+
 # Configures destination e-mails for receivers
 wls:
   order:
@@ -105,6 +110,10 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+kardex:
+  path:
+    base: http://localhost:8182/kardex/
+
 # Configures destination e-mails for receivers
 wls:
   order:
@@ -152,6 +161,11 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Set base path to Kardex API in stage environment
+kardex:
+  path:
+    base: ${KARDEX_BASE_URL}
 
 # Secret for the signature on callbacks in stage environment
 callback:
@@ -204,6 +218,11 @@ spring:
 synq:
   path:
     base: ${SYNQ_BASE_URL}
+
+# Set base path to Kardex API in prod environment
+kardex:
+  path:
+    base: ${KARDEX_BASE_URL}
 
 # Secret for the signature on callbacks in prod environment
 callback:
