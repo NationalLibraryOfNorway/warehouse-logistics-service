@@ -96,6 +96,11 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: SYNQ_BASE_URL
+            - name: KARDEX_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: KARDEX_BASE_URL
             - name: EMAIL_SERVER
               valueFrom:
                 secretKeyRef:
