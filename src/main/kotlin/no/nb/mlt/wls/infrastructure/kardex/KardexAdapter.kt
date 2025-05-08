@@ -64,7 +64,7 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
-        TODO("Not yet implemented")
+        // not yet implemented
     }
 
     override suspend fun updateOrder(order: Order): Order {
@@ -72,7 +72,7 @@ class KardexAdapter(
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
-        TODO("Not yet implemented")
+        return false
     }
 
     override fun canHandleItem(item: Item): Boolean {

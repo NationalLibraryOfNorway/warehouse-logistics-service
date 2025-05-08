@@ -52,6 +52,10 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+kardex:
+  path:
+    base: http://localhost:8182/kardex/
+
 # Secret for the signature on callbacks for the local-dev profile
 callback:
   secret: superdupersecretkey
