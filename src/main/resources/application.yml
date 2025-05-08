@@ -54,6 +54,11 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+# Set a dummycatalog base path to Kardex for testing purposes
+kardex:
+  path:
+    base: http://localhost:8181/kardex/
+
 # Configures destination e-mails for receivers
 wls:
   order:
@@ -107,7 +112,7 @@ synq:
 
 kardex:
   path:
-    base: ${KARDEX_BASE_URL}
+    base: http://localhost:8182/kardex/
 
 # Configures destination e-mails for receivers
 wls:
