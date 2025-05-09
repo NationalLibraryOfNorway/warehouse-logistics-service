@@ -57,7 +57,31 @@ class KardexAdapter(
     }
 
     override suspend fun createOrder(order: Order) {
-        TODO("Not yet implemented")
+        val uri = URI.create("$baseUrl/orders")
+
+        webClient
+            .post()
+            .uri(uri)
+            .bodyValue(order.toKardexOrderPayload())
+            .retrieve()
+            .toEntity(KardexResponse::class.java)
+            .timeout(timeoutProperties.storage)
+            .handle<ResponseEntity<KardexResponse>> { it, sink ->
+                if (it.body?.isError() == true) {
+                    sink.error(StorageSystemException("Failed to create order in Kardex: ${it.body?.message}"))
+                    it.body!!.errors.forEach {
+                        logger.error { "${it.item}: ${it.errors}" }
+                    }
+                } else {
+                    sink.next(it)
+                }
+            }
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in Kardex"
+                }
+            }
+            .awaitSingle()
     }
 
     override suspend fun deleteOrder(
@@ -72,7 +96,8 @@ class KardexAdapter(
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
-        return false
+        // TODO - This should not always be true. Decide on proper location
+        return true
     }
 
     override fun canHandleItem(item: Item): Boolean {
