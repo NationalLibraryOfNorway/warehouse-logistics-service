@@ -68,10 +68,10 @@ class KardexAdapter(
             .timeout(timeoutProperties.storage)
             .handle<ResponseEntity<KardexResponse>> { it, sink ->
                 if (it.body?.isError() == true) {
-                    sink.error(StorageSystemException("Failed to create order in Kardex: ${it.body?.message}"))
                     it.body!!.errors.forEach {
                         logger.error { "${it.item}: ${it.errors}" }
                     }
+                    sink.error(StorageSystemException("Failed to create order in Kardex: ${it.body?.message}"))
                 } else {
                     sink.next(it)
                 }
