@@ -88,7 +88,20 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
-        // not yet implemented
+        val uri = URI.create("$baseUrl/orders$orderId")
+
+        webClient
+            .delete()
+            .uri(uri)
+            .retrieve()
+            .toEntity(String::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while deleting order '$orderId' for $hostName in Kardex"
+                }
+            }
+            .awaitSingle()
     }
 
     override suspend fun updateOrder(order: Order): Order {
