@@ -150,7 +150,9 @@ class StorageEventProcessorAdapter(
             if (storageSystemFacade == null) {
                 logger.info { "SEPA: Could not find a storage system to handle items: $itemList" }
             }
-            storageSystemFacade?.updateOrder(updatedOrder)
+            if (storageSystemFacade?.supportsEvent(event) == true) {
+                storageSystemFacade.updateOrder(updatedOrder)
+            }
         }
     }
 

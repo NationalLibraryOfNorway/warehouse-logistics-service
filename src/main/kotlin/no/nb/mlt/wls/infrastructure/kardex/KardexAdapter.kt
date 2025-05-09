@@ -8,6 +8,9 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
+import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
+import no.nb.mlt.wls.domain.ports.outbound.NotSupportedException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
@@ -88,6 +91,7 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
+        // TODO - Should this be removed?
         val uri = URI.create("$baseUrl/orders$orderId")
 
         webClient
@@ -105,7 +109,7 @@ class KardexAdapter(
     }
 
     override suspend fun updateOrder(order: Order): Order {
-        TODO("Not yet implemented")
+        throw NotSupportedException("Kardex does not support updating Orders")
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
@@ -124,5 +128,9 @@ class KardexAdapter(
             ItemCategory.MAGNETIC_TAPE -> true
             ItemCategory.PHOTO -> false
         }
+    }
+
+    override fun supportsEvent(event: StorageEvent): Boolean {
+        return event !is OrderUpdated
     }
 }
