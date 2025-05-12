@@ -7,6 +7,7 @@ data class KardexOrderPayload(
     val orderName: String,
     val directionType: DirectionType,
     val priority: KardexPriority,
+    val info5: String,
     val orderLines: List<OrderLine>
 )
 
@@ -15,6 +16,7 @@ fun Order.toKardexOrderPayload(): KardexOrderPayload {
         orderName = hostOrderId,
         directionType = DirectionType.Pick,
         priority = KardexPriority.Medium,
+        info5 = hostName.toString(),
         orderLines =
             orderLine.mapIndexed { i, orderItem ->
                 OrderLine(i, orderItem.hostId, 1.0)
