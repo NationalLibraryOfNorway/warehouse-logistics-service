@@ -7,5 +7,11 @@ enum class ItemCategory {
     EQUIPMENT,
     BULK_ITEMS,
     MAGNETIC_TAPE,
-    PHOTO
+    PHOTO;
+
+    companion object {
+        fun fromString(value: String): ItemCategory {
+            return valueOf(value.uppercase())
+        }
+    }
 }
