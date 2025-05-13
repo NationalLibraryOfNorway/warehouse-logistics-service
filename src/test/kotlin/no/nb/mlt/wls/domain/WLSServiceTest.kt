@@ -192,11 +192,33 @@ class WLSServiceTest {
 
     @Test
     fun `createOrder should save order in db and outbox`() {
-        val orderCreatedEvent = OrderCreated(testOrder)
+        val order = createTestOrder()
+        val orderCreatedEvent = OrderCreated(order)
+
         coEvery { orderRepoMock.getOrder(createOrderDTO.hostName, createOrderDTO.hostOrderId) } answers { null }
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
         coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { testOrder to orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
+
+        val itemRepoMock =
+            createInMemItemRepo(
+                order.orderLine.map {
+                    createTestItem(
+                        hostId = it.hostId,
+                        hostName = order.hostName
+                    )
+                }.toMutableList()
+            )
+
+        val cut =
+            WLSService(
+                itemRepoMock,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPort,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -220,15 +242,53 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `createOrder should fail if some of the items does not exist`() {
-        coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
+    fun `createOrder should create items with unknown properties if they do not exist`() {
+        val existingItems = mutableListOf(createTestItem(hostName = HostName.AXIELL, hostId = "1"))
+        val unknownItems = mutableListOf(createTestItem(hostName = HostName.AXIELL, hostId = "2"))
+        val testOrder =
+            createTestOrder(
+                hostOrderId = "testOrder",
+                orderLine =
+                    (existingItems + unknownItems).map {
+                        Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                    }
+            )
+
+        val itemRepoMock = createInMemItemRepo(existingItems)
+        coEvery { orderRepoMock.getOrder(HostName.AXIELL, "testOrder") } answers { null }
+        coEvery { orderRepoMock.createOrder(testOrder) } answers { testOrder }
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
+        coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
+        coEvery { storageEventProcessor.handleEvent(any()) } answers { }
+
+        val cut =
+            WLSService(
+                itemRepoMock,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
 
         runTest {
-            assertThrows<ValidationException>(message = "All order items in order must exist") {
-                cut.createOrder(createOrderDTO)
-            }
-            coVerify(exactly = 0) { orderRepoMock.createOrder(any()) }
+            cut.createOrder(
+                CreateOrderDTO(
+                    hostName = testOrder.hostName,
+                    hostOrderId = testOrder.hostOrderId,
+                    orderLine = testOrder.orderLine.map { CreateOrderDTO.OrderItem(it.hostId) },
+                    orderType = testOrder.orderType,
+                    contactPerson = testOrder.contactPerson,
+                    contactEmail = testOrder.contactEmail,
+                    address = testOrder.address,
+                    note = testOrder.note,
+                    callbackUrl = testOrder.callbackUrl
+                )
+            )
+
+            assert(itemRepoMock.doesEveryItemExist(testOrder.orderLine.map { ItemRepository.ItemId(testOrder.hostName, it.hostId) }))
+            assertThat(itemRepoMock.getItem(HostName.AXIELL, "2")).isNotNull
         }
     }
 
@@ -532,7 +592,9 @@ class WLSServiceTest {
             }
 
             override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean {
-                TODO("Not relevant for testing")
+                return ids.all { id ->
+                    itemList.any { it.hostId == id.hostId && it.hostName == id.hostName }
+                }
             }
 
             override suspend fun moveItem(

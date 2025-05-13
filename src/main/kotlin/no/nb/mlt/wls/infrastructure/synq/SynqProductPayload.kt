@@ -50,6 +50,7 @@ fun toSynqCategory(category: ItemCategory): String =
         ItemCategory.BULK_ITEMS -> "sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
         ItemCategory.PHOTO -> "fotografi"
+        ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
     }
 
 fun toSynqHostname(hostName: HostName): String {
