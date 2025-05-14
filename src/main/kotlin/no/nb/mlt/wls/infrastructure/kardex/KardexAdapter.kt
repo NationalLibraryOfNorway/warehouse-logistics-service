@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeoutException
 private val logger = KotlinLogging.logger {}
 
 @Component
+@ConditionalOnProperty(value = ["kardex.enabled"], havingValue = "true")
 class KardexAdapter(
     @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
@@ -64,7 +66,7 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
-        // not yet implemented
+        TODO("Not yet implemented")
     }
 
     override suspend fun updateOrder(order: Order): Order {
