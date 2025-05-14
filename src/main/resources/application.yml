@@ -224,7 +224,7 @@ synq:
 
 # Set base path to Kardex API in prod environment
 kardex:
-  enabled: false
+  enabled: ${KARDEX_ENABLED}
   path:
     base: ${KARDEX_BASE_URL}
 
