@@ -23,7 +23,9 @@ import java.time.Instant
       "packaging": "NONE",
       "callbackUrl": "https://callback-wls.no/item",
       "location": "SYNQ_WAREHOUSE",
-      "quantity": 1
+      "quantity": 1,
+      "eventTimestamp": "2025-03-21T20:30:00.000Z",
+      "messageId": "123e4567-e89b-12d3-a456-426614174000"
     }
     """
 )
@@ -92,7 +94,12 @@ data class NotificationItemPayload(
     )
     @JsonSerialize(using = ToStringSerializer::class)
     @JsonDeserialize(using = CustomInstantDeserializer::class)
-    val eventTimestamp: Instant
+    val eventTimestamp: Instant,
+    @Schema(
+        description = """This messages unique ID in UUID format, allows deduplication""",
+        example = "123e4567-e89b-12d3-a456-426614174000"
+    )
+    val messageId: String
 )
 
 fun NotificationItemPayload.toItem(): Item =
@@ -108,7 +115,10 @@ fun NotificationItemPayload.toItem(): Item =
         quantity = quantity
     )
 
-fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPayload =
+fun Item.toNotificationItemPayload(
+    eventTimestamp: Instant,
+    messageId: String
+): NotificationItemPayload =
     NotificationItemPayload(
         hostId = hostId,
         hostName = hostName,
@@ -119,5 +129,6 @@ fun Item.toNotificationItemPayload(eventTimestamp: Instant): NotificationItemPay
         callbackUrl = callbackUrl,
         location = location,
         quantity = quantity,
-        eventTimestamp = eventTimestamp
+        eventTimestamp = eventTimestamp,
+        messageId = messageId
     )
