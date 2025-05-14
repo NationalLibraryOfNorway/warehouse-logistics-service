@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
@@ -78,5 +77,4 @@ class KardexAdapter(
     }
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
-    }
 }
