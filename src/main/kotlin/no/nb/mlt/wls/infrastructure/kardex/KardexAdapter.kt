@@ -85,6 +85,7 @@ class KardexAdapter(
             ItemCategory.BULK_ITEMS -> false
             ItemCategory.MAGNETIC_TAPE -> true
             ItemCategory.PHOTO -> false
+            ItemCategory.UNKNOWN -> false
         }
     }
 }
