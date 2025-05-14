@@ -77,17 +77,6 @@ class KardexAdapter(
         return location == "NB Mo i Rana"
     }
 
-    override fun canHandleItem(item: Item): Boolean {
-        if (item.preferredEnvironment == Environment.FRAGILE) return false
-        return when (item.itemCategory) {
-            ItemCategory.PAPER -> true
-            ItemCategory.DISC -> true
-            ItemCategory.FILM -> true
-            ItemCategory.EQUIPMENT -> true
-            ItemCategory.BULK_ITEMS -> true
-            ItemCategory.MAGNETIC_TAPE -> true
-            ItemCategory.PHOTO -> true
-            ItemCategory.UNKNOWN -> false
-        }
+    override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
     }
 }
