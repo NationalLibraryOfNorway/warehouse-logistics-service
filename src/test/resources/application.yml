@@ -52,6 +52,12 @@ synq:
   path:
     base: http://localhost:8181/synq/resources
 
+# Set a dummycatalog base path to Kardex for testing purposes
+kardex:
+  enabled: false
+  path:
+    base: http://localhost:8182/kardex/
+
 # Secret for the signature on callbacks for the local-dev profile
 callback:
   secret: superdupersecretkey
@@ -106,6 +112,12 @@ callback:
 synq:
   path:
     base: http://localhost:8181/synq/resources
+
+# Set a dummycatalog base path to Kardex for testing purposes
+kardex:
+  enabled: true
+  path:
+    base: http://localhost:8182/kardex/
 
 # Configures destination e-mails for receivers
 wls:
