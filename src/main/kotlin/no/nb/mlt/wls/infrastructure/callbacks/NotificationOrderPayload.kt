@@ -34,8 +34,8 @@ import java.time.Instant
         "postcode": "CA-55415"
       },
       "callbackUrl": "https://callback-wls.no/order",
-      "eventTimestamp": "2025-03-21T20:30:00.000Z",
-      "messageId": "123e4567-e89b-12d3-a456-426614174000"
+      "eventTimestamp": "2025-05-17T09:30:00.000Z",
+      "messageId": "123e4567-b00b-12d3-a456-426614174000"
     }
     """
 )
