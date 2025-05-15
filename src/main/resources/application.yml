@@ -55,8 +55,7 @@ springdoc:
 
 logging:
   level:
-    # Set the logging level for the web package to debug
-    web: debug
+    no.nb.mlt.wls: debug
 
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
@@ -268,5 +267,4 @@ proxy:
 
 logging:
   level:
-    # Set the logging level for the web package to error
-    web: error
+    no.nb.mlt.wls: info

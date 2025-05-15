@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import no.nb.mlt.wls.domain.ports.outbound.UnableToNotifyException
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
@@ -73,8 +74,9 @@ class InventoryNotifierAdapter(
             .timeout(timeoutConfig.inventory)
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
-                throw it
-            }.block()
+            }
+            .onErrorMap { UnableToNotifyException("Unable to send callback", it) }
+            .block()
     }
 
     private fun generateSignature(
