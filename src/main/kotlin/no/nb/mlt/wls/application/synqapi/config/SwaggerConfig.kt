@@ -46,7 +46,7 @@ class SwaggerConfig {
                             .name("MLT team at the National Library of Norway")
                             .email("mlt@nb.no")
                             .url("https://www.nb.no")
-                    )
+                    ).version("1.0.4")
             ).addSecurityItem(
                 SecurityRequirement().addList("clientCredentials")
             )
