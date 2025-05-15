@@ -38,7 +38,7 @@ private val logger = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping(path = ["/hermes/v1"])
-@Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
+@Tag(name = "Order Controller", description = """API for managing orders in Hermes WLS""")
 class OrderController(
     private val getOrder: GetOrder,
     private val createOrder: CreateOrder,

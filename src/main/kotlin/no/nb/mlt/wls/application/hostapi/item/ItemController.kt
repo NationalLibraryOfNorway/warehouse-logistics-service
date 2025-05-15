@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 @RestController
 @RequestMapping(path = ["/hermes/v1"])
-@Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
+@Tag(name = "Item Controller", description = """API for creating items in Hermes WLS""")
 class ItemController(
     private val getItem: GetItem,
     private val addNewItem: AddNewItem
