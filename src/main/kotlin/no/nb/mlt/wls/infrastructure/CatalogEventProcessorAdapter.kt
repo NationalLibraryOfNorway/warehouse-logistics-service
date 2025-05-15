@@ -20,16 +20,16 @@ class CatalogEventProcessorAdapter(
 ) : EventProcessor<CatalogEvent> {
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
     suspend fun processOutbox() {
-        logger.info { "CEPA: Processing catalog event outbox" }
+        logger.trace { "Processing catalog event outbox" }
 
         val outboxMessages = catalogEventRepository.getUnprocessedSortedByCreatedTime()
 
         if (outboxMessages.isEmpty()) {
-            logger.info { "CEPA: No messages in outbox" }
+            logger.debug { "No messages in outbox" }
             return
         }
 
-        logger.info { "CEPA: Processing ${outboxMessages.size} outbox messages" }
+        logger.trace { "Processing ${outboxMessages.size} outbox messages" }
 
         // Possible technical issue here, duplicate IDs, mayhaps should introduce some better handling, if we think this is a possible issue.
         val messageGroups =
@@ -40,27 +40,27 @@ class CatalogEventProcessorAdapter(
                 }
             }
 
-        logger.info { "CEPA: There are ${messageGroups.keys.size} message groups" }
+        logger.debug { "There are ${messageGroups.keys.size} message groups" }
 
         messageGroups.forEach {
             handleEventGroup(it)
         }
 
-        logger.info { "CEPA: Finished processing catalog event outbox" }
+        logger.trace { "Finished processing catalog event outbox" }
     }
 
     private suspend fun handleEventGroup(eventGroup: Map.Entry<String, List<CatalogEvent>>) {
-        logger.info { "CEPA: Processing message group with id: ${eventGroup.key}" }
+        logger.trace { "Processing message group with id: ${eventGroup.key}" }
 
         try {
             eventGroup.value.forEach { handleEvent(it) }
         } catch (e: Exception) {
-            logger.error(e) { "CEPA: Error occurred while processing event in message group: ${eventGroup.key}" }
+            logger.error(e) { "Error occurred while processing event in message group: ${eventGroup.key}" }
         }
     }
 
     override suspend fun handleEvent(event: CatalogEvent) {
-        logger.info { "CEPA: Processing catalog event: $event" }
+        logger.trace { "Processing catalog event: $event" }
 
         when (event) {
             is ItemEvent -> handleItemUpdate(event)
@@ -68,17 +68,17 @@ class CatalogEventProcessorAdapter(
         }
 
         val processedEvent = catalogEventRepository.markAsProcessed(event)
-        logger.info { "CEPA: Marked event as processed: $processedEvent" }
+        logger.info { "Marked event as processed: $processedEvent" }
     }
 
     private suspend fun handleItemUpdate(event: ItemEvent) {
-        logger.info { "CEPA: Processing ItemUpdate: $event" }
+        logger.trace { "Processing ItemUpdate: $event" }
 
         inventoryNotifier.itemChanged(event.item, event.eventTimestamp)
     }
 
     private suspend fun handleOrderUpdate(event: OrderEvent) {
-        logger.info { "CEPA: Processing OrderUpdate: $event" }
+        logger.trace { "Processing OrderUpdate: $event" }
 
         inventoryNotifier.orderChanged(event.order, event.eventTimestamp)
     }
