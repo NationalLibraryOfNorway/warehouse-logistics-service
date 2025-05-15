@@ -248,7 +248,12 @@ class OrderController(
             description = """Order payload is invalid and the order was not updated.
                 This error might also happen if the order does not exist.
                 Otherwise, the error message contains information about the invalid fields.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
