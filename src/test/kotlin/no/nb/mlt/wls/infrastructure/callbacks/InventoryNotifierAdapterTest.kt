@@ -69,8 +69,8 @@ class InventoryNotifierAdapterTest {
 
         testItemWithCallback = createTestItem(callbackUrl = mockServerItemCallbackPath)
         testOrderWithCallback = createTestOrder(callbackUrl = mockServerOrderCallbackPath)
-        itemNotificationPayload = testItemWithCallback.toNotificationItemPayload(timestamp)
-        orderNotificationPayload = testOrderWithCallback.toNotificationOrderPayload(timestamp)
+        itemNotificationPayload = testItemWithCallback.toNotificationItemPayload(timestamp, messageId)
+        orderNotificationPayload = testOrderWithCallback.toNotificationOrderPayload(timestamp, messageId)
 
         inventoryNotifierAdapter = InventoryNotifierAdapter(webClient, proxyWebClient, secretKey, jacksonObjectMapper(), timeoutConfig)
     }
@@ -84,7 +84,7 @@ class InventoryNotifierAdapterTest {
     fun `should send callback on itemChange`() {
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp)
+        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         assertEquals(itemCallbackPath, request.path)
@@ -99,7 +99,7 @@ class InventoryNotifierAdapterTest {
     fun `should send callback on orderChange`() {
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp)
+        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         assertEquals(orderCallbackPath, request.path)
@@ -116,7 +116,7 @@ class InventoryNotifierAdapterTest {
         val timestamp = Instant.now()
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.itemChanged(item, timestamp)
+        inventoryNotifierAdapter.itemChanged(item, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         assertEquals(itemCallbackPath, request.path)
@@ -130,7 +130,7 @@ class InventoryNotifierAdapterTest {
         val order = testOrderWithCallback.copy(hostName = HostName.ASTA)
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.orderChanged(order, timestamp)
+        inventoryNotifierAdapter.orderChanged(order, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         assertEquals(orderCallbackPath, request.path)
@@ -143,7 +143,7 @@ class InventoryNotifierAdapterTest {
     fun `should include signature header in item changed callback`() {
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp)
+        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         val sigHeader = request.getHeader(signatureHeader)
@@ -160,7 +160,7 @@ class InventoryNotifierAdapterTest {
     fun `should include signature header in order changed callback`() {
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp)
+        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
         val sigHeader = request.getHeader(signatureHeader)
@@ -184,6 +184,8 @@ class InventoryNotifierAdapterTest {
     private val secretKey = "secretKey"
 
     private val timestamp = Instant.now()
+
+    private val messageId = UUID.randomUUID().toString()
 
     private fun getMac(): Mac {
         val hmacSHA256 = "HmacSHA256"

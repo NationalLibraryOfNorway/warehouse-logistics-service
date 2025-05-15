@@ -7,11 +7,13 @@ import java.time.Instant
 interface InventoryNotifier {
     fun itemChanged(
         item: Item,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     )
 
     fun orderChanged(
         order: Order,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     )
 }
