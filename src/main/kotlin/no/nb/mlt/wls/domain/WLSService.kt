@@ -5,9 +5,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -197,10 +200,31 @@ class WLSService(
             return it
         }
 
-        val itemIds = orderDTO.orderLine.map { ItemId(orderDTO.hostName, it.hostId) }
-        if (!itemRepository.doesEveryItemExist(itemIds)) {
-            throw ValidationException("All order items in order must exist")
-        }
+        val itemIds = orderDTO.orderLine.map { it.hostId }
+        val existingItems = itemRepository.getItems(orderDTO.hostName, itemIds)
+
+        // Create missing items
+        itemIds
+            .filter {
+                existingItems.none { existingItem ->
+                    existingItem.hostId == it
+                }
+            }
+            .map {
+                val createdItem =
+                    addItem(
+                        ItemMetadata(
+                            hostName = orderDTO.hostName,
+                            hostId = it,
+                            description = "NO DESCRIPTION",
+                            itemCategory = ItemCategory.UNKNOWN,
+                            preferredEnvironment = Environment.NONE,
+                            packaging = Packaging.UNKNOWN,
+                            callbackUrl = null
+                        )
+                    )
+                logger.info { "Created unknown item: $createdItem, from order: ${orderDTO.hostOrderId}" }
+            }
 
         val (createdOrder, storageEvent) =
             transactionPort.executeInTransaction {

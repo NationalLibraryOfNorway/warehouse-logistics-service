@@ -7,5 +7,6 @@ enum class ItemCategory {
     EQUIPMENT,
     BULK_ITEMS,
     MAGNETIC_TAPE,
-    PHOTO
+    PHOTO,
+    UNKNOWN
 }

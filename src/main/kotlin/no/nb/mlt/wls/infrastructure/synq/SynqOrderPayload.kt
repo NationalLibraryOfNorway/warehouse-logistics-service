@@ -111,6 +111,7 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.NONE -> OBJ
         Packaging.BOX -> ESK
         Packaging.ABOX -> ABOX
+        Packaging.UNKNOWN -> throw IllegalArgumentException("Unknown packaging")
     }
 
 private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String {

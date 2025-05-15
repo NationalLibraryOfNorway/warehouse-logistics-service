@@ -34,7 +34,8 @@ fun fromItemCategory(itemCategory: ItemCategory): String {
     return when (itemCategory) {
         ItemCategory.PAPER -> "PAPIR"
         ItemCategory.FILM -> "FILM"
-        else -> "UNAVAILABLE"
+        ItemCategory.EQUIPMENT -> "UTSTYR"
+        else -> ItemCategory.UNKNOWN.toString()
     }
 }
 

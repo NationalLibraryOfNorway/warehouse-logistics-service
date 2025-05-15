@@ -56,6 +56,7 @@ synq:
 
 # Set a dummycatalog base path to Kardex for testing purposes
 kardex:
+  enabled: true
   path:
     base: http://localhost:8181/kardex/
 
@@ -111,6 +112,7 @@ synq:
     base: http://localhost:8181/synq/resources
 
 kardex:
+  enabled: true
   path:
     base: http://localhost:8182/kardex/
 
@@ -164,6 +166,7 @@ synq:
 
 # Set base path to Kardex API in stage environment
 kardex:
+  enabled: ${KARDEX_ENABLED}
   path:
     base: ${KARDEX_BASE_URL}
 
@@ -221,6 +224,7 @@ synq:
 
 # Set base path to Kardex API in prod environment
 kardex:
+  enabled: ${KARDEX_ENABLED}
   path:
     base: ${KARDEX_BASE_URL}
 

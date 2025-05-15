@@ -15,6 +15,7 @@ import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeoutException
 private val logger = KotlinLogging.logger {}
 
 @Component
+@ConditionalOnProperty(value = ["kardex.enabled"], havingValue = "true")
 class KardexAdapter(
     @Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
@@ -113,22 +115,10 @@ class KardexAdapter(
     }
 
     override suspend fun canHandleLocation(location: String): Boolean {
-        // TODO - This should not always be true. Decide on proper location
-        return true
+        return location == "NB Mo i Rana"
     }
 
-    override fun canHandleItem(item: Item): Boolean {
-        if (item.preferredEnvironment == Environment.FRAGILE) return false
-        return when (item.itemCategory) {
-            ItemCategory.PAPER -> false
-            ItemCategory.DISC -> true
-            ItemCategory.FILM -> true
-            ItemCategory.EQUIPMENT -> true
-            ItemCategory.BULK_ITEMS -> false
-            ItemCategory.MAGNETIC_TAPE -> true
-            ItemCategory.PHOTO -> false
-        }
-    }
+    override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
 
     override fun supportsEvent(event: StorageEvent): Boolean {
         return event !is OrderUpdated
