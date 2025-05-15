@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
@@ -93,8 +92,7 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
-        // TODO - Should this be removed?
-        val uri = URI.create("$baseUrl/orders$orderId")
+        val uri = URI.create("$baseUrl/orders/$orderId")
 
         webClient
             .delete()
