@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
@@ -69,7 +70,12 @@ class ItemController(
                 responseCode = "400",
                 description = """Item payload is invalid, no new item was created.
                     Error message contains information about the invalid field(s).""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = ErrorMessage::class)
+                    )
+                ]
             ),
             ApiResponse(
                 responseCode = "401",
