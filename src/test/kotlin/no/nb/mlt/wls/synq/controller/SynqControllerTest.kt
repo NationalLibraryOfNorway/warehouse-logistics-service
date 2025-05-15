@@ -82,7 +82,7 @@ class SynqControllerTest(
     fun `updateOrder correct payload updates order and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.orderChanged(any(), any())
+                inventoryNotifierAdapterMock.orderChanged(any(), any(), any())
             }.answers { }
 
             webTestClient
@@ -101,14 +101,14 @@ class SynqControllerTest(
             assertThat(res).isNotNull
             assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
 
-            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any()) }
+            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any(), any()) }
         }
 
     @Test
     fun `updateOrder short order ID updates order and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.orderChanged(any(), any())
+                inventoryNotifierAdapterMock.orderChanged(any(), any(), any())
             }.answers { }
 
             webTestClient
@@ -127,7 +127,7 @@ class SynqControllerTest(
             assertThat(res).isNotNull
             assertThat(res.status).isEqualTo(Order.Status.IN_PROGRESS)
 
-            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any()) }
+            verify { inventoryNotifierAdapterMock.orderChanged(order.copy(status = Order.Status.IN_PROGRESS), any(), any()) }
         }
 
     @Test
@@ -213,7 +213,7 @@ class SynqControllerTest(
     fun `moveItem out of AutoStore with correct payload decrements item count`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.itemChanged(any(), any())
+                inventoryNotifierAdapterMock.itemChanged(any(), any(), any())
             }.answers {}
 
             val item1 = itemRepository.findByHostNameAndHostId(testItem3.hostName, testItem3.hostId).awaitSingle()
@@ -241,7 +241,7 @@ class SynqControllerTest(
     fun `updateItem correct payload updates item and sends callback`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.itemChanged(any(), any())
+                inventoryNotifierAdapterMock.itemChanged(any(), any(), any())
             }.answers { }
 
             webTestClient
@@ -267,8 +267,8 @@ class SynqControllerTest(
             assertThat(item2.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item2.quantity).isEqualTo(batchMoveItemPayload.loadUnit[1].quantityOnHand)
 
-            verify { inventoryNotifierAdapterMock.itemChanged(item1.toItem(), any()) }
-            verify { inventoryNotifierAdapterMock.itemChanged(item2.toItem(), any()) }
+            verify { inventoryNotifierAdapterMock.itemChanged(item1.toItem(), any(), any()) }
+            verify { inventoryNotifierAdapterMock.itemChanged(item2.toItem(), any(), any()) }
         }
 
     @Test
@@ -350,7 +350,7 @@ class SynqControllerTest(
     fun `updateItem with no callbackUrl still updates the item`() =
         runTest {
             every {
-                inventoryNotifierAdapterMock.itemChanged(any(), any())
+                inventoryNotifierAdapterMock.itemChanged(any(), any(), any())
             }.answers { }
 
             val testItem = createTestItem(callbackUrl = null, hostId = "test-item")
@@ -373,7 +373,7 @@ class SynqControllerTest(
             assertThat(item.location).isEqualTo(batchMoveItemPayload.location)
             assertThat(item.quantity).isEqualTo(batchMoveItemPayload.loadUnit[0].quantityOnHand)
 
-            verify { inventoryNotifierAdapterMock.itemChanged(item.toItem(), any()) }
+            verify { inventoryNotifierAdapterMock.itemChanged(item.toItem(), any(), any()) }
         }
 
     @Test
