@@ -101,6 +101,11 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: KARDEX_BASE_URL
+            - name: KARDEX_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: KARDEX_ENABLED
             - name: EMAIL_SERVER
               valueFrom:
                 secretKeyRef:

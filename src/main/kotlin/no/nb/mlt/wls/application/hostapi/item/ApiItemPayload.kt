@@ -19,7 +19,9 @@ import org.apache.commons.validator.routines.UrlValidator
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
-      "callbackUrl": "https://callback-wls.no/item"
+      "callbackUrl": "https://callback-wls.no/item",
+      "location": "SYNQ_WAREHOUSE",
+      "quantity": 1
     }
     """
 )

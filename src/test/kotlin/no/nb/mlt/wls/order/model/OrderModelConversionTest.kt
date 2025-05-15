@@ -20,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.LocalDateTime
+import java.util.UUID
 
 class OrderModelConversionTest {
     @Test
@@ -76,7 +77,7 @@ class OrderModelConversionTest {
 
     @Test
     fun `order converts to notification payload`() {
-        val testNotificationOrderPayload = testOrder.toNotificationOrderPayload(Instant.now())
+        val testNotificationOrderPayload = testOrder.toNotificationOrderPayload(Instant.now(), UUID.randomUUID().toString())
 
         assertThat(testNotificationOrderPayload.hostName).isEqualTo(testOrderNotification.hostName)
         assertThat(testNotificationOrderPayload.hostOrderId).isEqualTo(testOrderNotification.hostOrderId)
@@ -94,7 +95,7 @@ class OrderModelConversionTest {
         assertThat(order.hostName).isEqualTo(testApiOrderPayload.hostName)
         assertThat(order.hostOrderId).isEqualTo(testApiOrderPayload.hostOrderId)
         assertThat(order.status).isEqualTo(Order.Status.NOT_STARTED)
-        assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine)
+        assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine.map { it -> it.toOrderItem() })
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
         assertThat(order.contactPerson).isEqualTo(testApiOrderPayload.contactPerson)
         assertThat(order.address).isEqualTo(testApiOrderPayload.address)
@@ -216,7 +217,8 @@ class OrderModelConversionTest {
             contactEmail = "contact@ema.il",
             note = "note",
             callbackUrl = "https://callback-wls.no/order",
-            eventTimestamp = Instant.now()
+            eventTimestamp = Instant.now(),
+            messageId = UUID.randomUUID().toString()
         )
 
     private val testOrderLine =

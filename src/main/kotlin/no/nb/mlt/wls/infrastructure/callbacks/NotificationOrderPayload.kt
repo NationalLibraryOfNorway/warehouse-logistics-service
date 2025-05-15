@@ -33,7 +33,9 @@ import java.time.Instant
         "region": "California",
         "postcode": "CA-55415"
       },
-      "callbackUrl": "https://callback-wls.no/order"
+      "callbackUrl": "https://callback-wls.no/order",
+      "eventTimestamp": "2025-03-21T20:30:00.000Z",
+      "messageId": "123e4567-e89b-12d3-a456-426614174000"
     }
     """
 )
@@ -101,7 +103,12 @@ data class NotificationOrderPayload(
     )
     @JsonSerialize(using = ToStringSerializer::class)
     @JsonDeserialize(using = CustomInstantDeserializer::class)
-    val eventTimestamp: Instant
+    val eventTimestamp: Instant,
+    @Schema(
+        description = """This messages unique ID in UUID format, allows deduplication""",
+        example = "123e4567-e89b-12d3-a456-426614174000"
+    )
+    val messageId: String
 ) {
     data class OrderLine(
         @Schema(
@@ -117,7 +124,10 @@ data class NotificationOrderPayload(
     )
 }
 
-fun Order.toNotificationOrderPayload(eventTimestamp: Instant) =
+fun Order.toNotificationOrderPayload(
+    eventTimestamp: Instant,
+    messageId: String
+): NotificationOrderPayload =
     NotificationOrderPayload(
         hostName = hostName,
         hostOrderId = hostOrderId,
@@ -129,5 +139,6 @@ fun Order.toNotificationOrderPayload(eventTimestamp: Instant) =
         address = address,
         note = note,
         callbackUrl = callbackUrl,
-        eventTimestamp = eventTimestamp
+        eventTimestamp = eventTimestamp,
+        messageId = messageId
     )

@@ -7,7 +7,8 @@ enum class ItemCategory {
     EQUIPMENT,
     BULK_ITEMS,
     MAGNETIC_TAPE,
-    PHOTO;
+    PHOTO,
+    UNKNOWN;
 
     companion object {
         fun fromString(value: String): ItemCategory {

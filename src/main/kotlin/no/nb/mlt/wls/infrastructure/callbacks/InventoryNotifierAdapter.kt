@@ -32,10 +32,11 @@ class InventoryNotifierAdapter(
 ) : InventoryNotifier {
     override fun itemChanged(
         item: Item,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     ) {
         if (item.callbackUrl != null) {
-            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload(eventTimestamp))
+            val payload = objectMapper.writeValueAsString(item.toNotificationItemPayload(eventTimestamp, messageId))
             val timestamp = System.currentTimeMillis().toString()
 
             sendCallback(item.hostName, item.callbackUrl, payload, timestamp)
@@ -44,9 +45,10 @@ class InventoryNotifierAdapter(
 
     override fun orderChanged(
         order: Order,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     ) {
-        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload(eventTimestamp))
+        val payload = objectMapper.writeValueAsString(order.toNotificationOrderPayload(eventTimestamp, messageId))
         val timestamp = System.currentTimeMillis().toString()
 
         sendCallback(order.hostName, order.callbackUrl, payload, timestamp)
