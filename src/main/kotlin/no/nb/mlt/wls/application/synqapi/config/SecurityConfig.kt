@@ -29,7 +29,7 @@ class SecurityConfig {
             securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes/synq/v1/**"))
             csrf { }
             authorizeExchange {
-                authorize("/hermes/synq/api-docs", permitAll)
+                authorize("/hermes/synq/api-docs**", permitAll)
                 authorize("/hermes/synq/api-docs/**", permitAll)
                 authorize("/hermes/synq/swagger", permitAll)
                 authorize("/hermes/synq/swagger/**", permitAll)
