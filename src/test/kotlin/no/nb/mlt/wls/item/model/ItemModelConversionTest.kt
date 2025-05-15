@@ -17,6 +17,7 @@ import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant
+import java.util.UUID
 
 class ItemModelConversionTest {
     @Test
@@ -47,7 +48,7 @@ class ItemModelConversionTest {
 
     @Test
     fun `item converts to notification payload`() {
-        val payload = testItem.toNotificationItemPayload(Instant.now())
+        val payload = testItem.toNotificationItemPayload(Instant.now(), UUID.randomUUID().toString())
         assertThat(payload.hostId).isEqualTo(testItemNotificationPayload.hostId)
         assertThat(payload.hostName).isEqualTo(testItemNotificationPayload.hostName)
         assertThat(payload.description).isEqualTo(testItemNotificationPayload.description)
@@ -111,6 +112,7 @@ class ItemModelConversionTest {
             callbackUrl = "https://callback-wls.no/item",
             location = "SYNQ_WAREHOUSE",
             quantity = 1,
-            eventTimestamp = Instant.now()
+            eventTimestamp = Instant.now(),
+            messageId = UUID.randomUUID().toString()
         )
 }
