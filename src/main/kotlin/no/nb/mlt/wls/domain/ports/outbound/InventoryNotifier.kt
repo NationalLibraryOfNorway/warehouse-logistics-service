@@ -8,13 +8,15 @@ interface InventoryNotifier {
     @Throws(UnableToNotifyException::class)
     fun itemChanged(
         item: Item,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     )
 
     @Throws(UnableToNotifyException::class)
     fun orderChanged(
         order: Order,
-        eventTimestamp: Instant
+        eventTimestamp: Instant,
+        messageId: String
     )
 }
 

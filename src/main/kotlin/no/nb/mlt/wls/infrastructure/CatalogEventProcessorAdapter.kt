@@ -74,12 +74,12 @@ class CatalogEventProcessorAdapter(
     private suspend fun handleItemUpdate(event: ItemEvent) {
         logger.trace { "Processing ItemUpdate: $event" }
 
-        inventoryNotifier.itemChanged(event.item, event.eventTimestamp)
+        inventoryNotifier.itemChanged(event.item, event.eventTimestamp, event.id)
     }
 
     private suspend fun handleOrderUpdate(event: OrderEvent) {
         logger.trace { "Processing OrderUpdate: $event" }
 
-        inventoryNotifier.orderChanged(event.order, event.eventTimestamp)
+        inventoryNotifier.orderChanged(event.order, event.eventTimestamp, event.id)
     }
 }
