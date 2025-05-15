@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
 import io.swagger.v3.oas.annotations.callbacks.Callbacks
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.enums.ParameterStyle
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -99,12 +101,18 @@ class ItemController(
                                 Parameter(
                                     name = "X-Signature",
                                     description = "HMAC SHA-256 signature of timestamp and the payload",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "iBUWzWuoRH05IWVjxUcNwRa260OfXR8Cpo90tcQL5rw=",
                                     required = true,
                                     schema = Schema(type = "string")
                                 ),
                                 Parameter(
                                     name = "X-Timestamp",
                                     description = "Timestamp for when the message was sent",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "1747467000",
                                     required = true,
                                     schema = Schema(type = "string")
                                 )
