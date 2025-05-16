@@ -83,7 +83,7 @@ class ItemController(
                 content = [
                     Content(
                         mediaType = "string",
-                        schema = Schema(implementation = String::class)
+                        schema = Schema(implementation = String::class, example = "Unauthorized")
                     )
                 ]
             ),
@@ -93,7 +93,7 @@ class ItemController(
                 content = [
                     Content(
                         mediaType = "string",
-                        schema = Schema(implementation = String::class)
+                        schema = Schema(implementation = String::class, example = "Forbidden")
                     )
                 ]
             )

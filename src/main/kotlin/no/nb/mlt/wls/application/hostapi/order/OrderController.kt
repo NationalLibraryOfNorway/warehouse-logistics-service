@@ -95,7 +95,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -105,7 +105,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         )
@@ -211,7 +211,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -221,7 +221,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         ),
@@ -231,7 +231,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Not Found")
                 )
             ]
         )
@@ -299,7 +299,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -309,7 +309,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         ),
@@ -319,7 +319,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Not Found")
                 )
             ]
         ),
@@ -329,7 +329,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Conflict")
                 )
             ]
         )
@@ -374,7 +374,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -384,7 +384,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         ),
@@ -394,7 +394,7 @@ class OrderController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Not Found")
                 )
             ]
         )

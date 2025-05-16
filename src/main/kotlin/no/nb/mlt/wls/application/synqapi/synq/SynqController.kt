@@ -51,7 +51,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "OK")
                 )
             ]
         ),
@@ -61,7 +61,17 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Error message")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized to update items.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -71,7 +81,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         ),
@@ -82,7 +92,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Not Found")
                 )
             ]
         )
@@ -122,7 +132,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "OK")
                 )
             ]
         ),
@@ -132,7 +142,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Error message")
                 )
             ]
         ),
@@ -142,7 +152,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -152,7 +162,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         )
@@ -193,7 +203,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "OK")
                 )
             ]
         ),
@@ -203,7 +213,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Error message")
                 )
             ]
         ),
@@ -213,7 +223,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -223,7 +233,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         ),
@@ -234,7 +244,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Not Found")
                 )
             ]
         )
@@ -274,7 +284,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "OK")
                 )
             ]
         ),
@@ -284,7 +294,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Error message")
                 )
             ]
         ),
@@ -294,7 +304,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
                 )
             ]
         ),
@@ -304,7 +314,7 @@ class SynqController(
             content = [
                 Content(
                     mediaType = "string",
-                    schema = Schema(implementation = String::class)
+                    schema = Schema(implementation = String::class, example = "Forbidden")
                 )
             ]
         )
