@@ -4,15 +4,9 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
 import io.swagger.v3.oas.annotations.security.OAuthFlows
 import io.swagger.v3.oas.annotations.security.SecurityScheme
-import io.swagger.v3.oas.models.OpenAPI
-import io.swagger.v3.oas.models.info.Contact
-import io.swagger.v3.oas.models.info.Info
-import io.swagger.v3.oas.models.security.SecurityRequirement
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.Ordered.HIGHEST_PRECEDENCE
-import org.springframework.core.annotation.Order
 
 @Configuration("adminSwaggerConfig")
 @SecurityScheme(
@@ -27,7 +21,7 @@ import org.springframework.core.annotation.Order
                 )
         )
 )
-class AdminSwaggerConfig {
+class SwaggerConfig {
     @Bean("adminApi")
     fun synqApi(): GroupedOpenApi =
         GroupedOpenApi

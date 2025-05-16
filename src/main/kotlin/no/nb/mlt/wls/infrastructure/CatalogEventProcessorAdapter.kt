@@ -7,9 +7,7 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
 
 private val logger = KotlinLogging.logger {}
 
