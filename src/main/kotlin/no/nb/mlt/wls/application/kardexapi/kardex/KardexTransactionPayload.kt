@@ -2,7 +2,6 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import java.time.Instant
 
 @Schema(
@@ -52,14 +51,5 @@ data class KardexTransactionPayload(
 ) {
     fun mapToOrderItems(): List<String> {
         return listOf(material)
-    }
-
-    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
-        return UpdateItem.UpdateItemPayload(
-            hostName = hostName,
-            hostId = material,
-            quantity = quantity.toInt(),
-            location = warehouse
-        )
     }
 }

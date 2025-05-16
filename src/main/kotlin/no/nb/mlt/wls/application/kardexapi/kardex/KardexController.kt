@@ -3,9 +3,8 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import org.springframework.http.ResponseEntity
@@ -22,8 +21,7 @@ private val logger = KotlinLogging.logger {}
 class KardexController(
     private val updateItem: UpdateItem,
     private val pickOrderItems: PickOrderItems,
-    private val orderStatusUpdate: OrderStatusUpdate,
-    private val synchronizeItems: SynchronizeItems
+    private val stockCount: StockCount
 ) {
     @PostMapping("material-update")
     suspend fun materialUpdate(
@@ -48,7 +46,7 @@ class KardexController(
     suspend fun syncMaterialStock(
         @RequestBody @Valid payload: KardexSyncMaterialPayload
     ): ResponseEntity<Unit> {
-        synchronizeItems.synchronizeItems(payload.mapToSyncItems())
+        stockCount.countStock(payload.mapToStockCountPayload())
         return ResponseEntity.ok().build()
     }
 

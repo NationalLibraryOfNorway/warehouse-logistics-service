@@ -3,9 +3,7 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.inbound.StockCount
 
 data class KardexSyncMaterialPayload(
     @Schema(
@@ -50,17 +48,13 @@ data class KardexSyncMaterialPayload(
     )
     val warehouse: String
 ) {
-    fun mapToSyncItems(): List<SynchronizeItems.ItemToSynchronize> {
+    fun mapToStockCountPayload(): List<StockCount.CountStockDTO> {
         return listOf(
-            SynchronizeItems.ItemToSynchronize(
+            StockCount.CountStockDTO(
                 hostId = materialName,
                 hostName = HostName.fromString(hostName),
-                description = description,
-                location = warehouse,
                 quantity = quantity,
-                itemCategory = ItemCategory.fromString(itemCategory),
-                packaging = if (packaging == null) Packaging.NONE else Packaging.valueOf(packaging.uppercase()),
-                currentPreferredEnvironment = environment ?: Environment.NONE
+                location = warehouse
             )
         )
     }
