@@ -261,6 +261,7 @@ jobs:
           kubectl config use-context mlt
           kubectl config view
           kubectl version
+          kubectl create configmap outbox-processor-script --from-file=process-outbox.sh --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/stage/wls.yml
           kubectl rollout restart deploy/wls
 
@@ -304,5 +305,6 @@ jobs:
           kubectl config use-context mlt
           kubectl config view
           kubectl version
+          kubectl create configmap outbox-processor-script --from-file=process-outbox.sh --dry-run=client -o yaml | kubectl apply -f -
           kubectl apply -f k8s/prod/wls.yml
           kubectl rollout restart deploy/wls

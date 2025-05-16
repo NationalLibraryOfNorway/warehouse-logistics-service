@@ -274,6 +274,8 @@ spec:
             - name: process-outboxes
               image: curlimages/curl:8.13.0
               env:
+                - name: HERMES_HOST
+                  value: "http://wls-service:8080"
                 - name: KEYCLOAK_CLIENT_ID
                   valueFrom:
                     secretKeyRef:
@@ -289,36 +291,15 @@ spec:
                     secretKeyRef:
                       name: wls-secrets
                       key: KEYCLOAK_ISSUER_URI
+              volumeMounts:
+                - name: script-volume
+                  mountPath: /scripts
               command:
                 - /bin/sh
                 - -c
-                - |
-                  # Get token from Keycloak
-                  TOKEN_RESPONSE=$(curl -s -X POST "${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/token" \
-                    -H "Content-Type: application/x-www-form-urlencoded" \
-                    -d "grant_type=client_credentials" \
-                    -d "client_id=${KEYCLOAK_CLIENT_ID}" \
-                    -d "client_secret=${KEYCLOAK_CLIENT_SECRET}")
-
-                  # Extract token
-                  TOKEN=$(echo $TOKEN_RESPONSE | sed 's/.*"access_token":"\([^"]*\)".*/\1/')
-
-                  if [ -z "$TOKEN" ]; then
-                    echo "Failed to obtain token from Keycloak"
-                    echo "Response: $TOKEN_RESPONSE"
-                    exit 1
-                  fi
-
-                  # Call process-outbox endpoint with token
-                  RESPONSE=$(curl -s -X POST "http://wls-service:8080/hermes-admin/v1/process-outbox" \
-                    -H "Authorization: Bearer ${TOKEN}" \
-                    -w "\nHTTP_STATUS:%{http_code}")
-
-                  HTTP_STATUS=$(echo "$RESPONSE" | grep HTTP_STATUS | cut -d':' -f2)
-                  BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
-
-                  echo "Process outbox HTTP status: $HTTP_STATUS"
-                  if [ "$HTTP_STATUS" != "200" ]; then
-                    echo "Failed API response: $BODY"
-                    exit 1
-                  fi
+                - /scripts/process-outboxes.sh
+          volumes:
+            - name: script-volume
+              configMap:
+                name: outbox-processor-script
+                defaultMode: 0755
