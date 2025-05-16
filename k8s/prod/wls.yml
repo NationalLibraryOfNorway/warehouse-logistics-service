@@ -298,7 +298,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - ./process-outboxes.sh
+                - ./process-outbox.sh
           volumes:
             - name: script-volume
               configMap:
