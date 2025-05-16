@@ -273,6 +273,7 @@ spec:
           containers:
             - name: process-outboxes
               image: curlimages/curl:8.13.0
+              workingDir: /scripts
               env:
                 - name: HERMES_HOST
                   value: "http://wls-service:8080"
@@ -297,7 +298,7 @@ spec:
               command:
                 - /bin/sh
                 - -c
-                - /scripts/process-outboxes.sh
+                - ./process-outboxes.sh
           volumes:
             - name: script-volume
               configMap:
