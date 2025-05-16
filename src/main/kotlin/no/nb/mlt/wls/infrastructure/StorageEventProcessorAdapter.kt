@@ -13,9 +13,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,8 +24,7 @@ class StorageEventProcessorAdapter(
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
 ) : EventProcessor<StorageEvent> {
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    suspend fun processOutbox() {
+    override suspend fun processOutbox() {
         logger.trace { "Processing storage event outbox" }
 
         val outboxMessages = storageEventRepository.getUnprocessedSortedByCreatedTime()
