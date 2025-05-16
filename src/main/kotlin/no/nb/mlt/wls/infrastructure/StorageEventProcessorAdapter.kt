@@ -26,8 +26,7 @@ class StorageEventProcessorAdapter(
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
 ) : EventProcessor<StorageEvent> {
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    suspend fun processOutbox() {
+    override suspend fun processOutbox() {
         logger.trace { "Processing storage event outbox" }
 
         val outboxMessages = storageEventRepository.getUnprocessedSortedByCreatedTime()

@@ -251,3 +251,74 @@ spec:
                 name: wls-service
                 port:
                   name: rest-port
+
+---
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: process-outboxes
+  namespace: mlt
+  labels:
+    app: wls-cronjob
+    creator: magasin-og-logistikk
+spec:
+  schedule: "* * * * *"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: process-outboxes
+              image: curlimages/curl:8.13.0
+              env:
+                - name: KEYCLOAK_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_ID
+                - name: KEYCLOAK_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_SECRET
+                - name: KEYCLOAK_ISSUER_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: KEYCLOAK_ISSUER_URI
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  # Get token from Keycloak
+                  TOKEN_RESPONSE=$(curl -s -X POST "${KEYCLOAK_ISSUER_URI}/protocol/openid-connect/token" \
+                    -H "Content-Typeadmi: application/x-www-form-urlencoded" \
+                    -d "grant_type=client_credentials" \
+                    -d "client_id=${KEYCLOAK_CLIENT_ID}" \
+                    -d "client_secret=${KEYCLOAK_CLIENT_SECRET}")
+
+                  # Extract token
+                  TOKEN=$(echo $TOKEN_RESPONSE | sed 's/.*"access_token":"\([^"]*\)".*/\1/')
+
+                  if [ -z "$TOKEN" ]; then
+                    echo "Failed to obtain token from Keycloak"
+                    echo "Response: $TOKEN_RESPONSE"
+                    exit 1
+                  fi
+
+                  # Call process-outbox endpoint with token
+                  RESPONSE=$(curl -s -X POST "http://wls-service:8080/hermes/v1/process-outbox" \
+                    -H "Authorization: Bearer ${TOKEN}" \
+                    -w "\nHTTP_STATUS:%{http_code}")
+
+                  HTTP_STATUS=$(echo "$RESPONSE" | grep HTTP_STATUS | cut -d':' -f2)
+                  BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
+
+                  echo "Process outbox HTTP status: $HTTP_STATUS"
+                  if [ "$HTTP_STATUS" != "200" ]; then
+                    echo "Failed API response: $BODY"
+                    exit 1
+                  fi

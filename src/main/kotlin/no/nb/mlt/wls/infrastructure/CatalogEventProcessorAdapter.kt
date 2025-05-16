@@ -18,8 +18,7 @@ class CatalogEventProcessorAdapter(
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val inventoryNotifier: InventoryNotifier
 ) : EventProcessor<CatalogEvent> {
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    suspend fun processOutbox() {
+    override suspend fun processOutbox() {
         logger.trace { "Processing catalog event outbox" }
 
         val outboxMessages = catalogEventRepository.getUnprocessedSortedByCreatedTime()
