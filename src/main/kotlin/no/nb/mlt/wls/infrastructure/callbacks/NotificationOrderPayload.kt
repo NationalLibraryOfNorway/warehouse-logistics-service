@@ -19,6 +19,10 @@ import java.time.Instant
         {
           "hostId": "mlt-12345",
           "status": "NOT_STARTED"
+        },
+        {
+          "hostId": "mlt-67890",
+          "status": "NOT_STARTED"
         }
       ],
       "orderType": "LOAN",
