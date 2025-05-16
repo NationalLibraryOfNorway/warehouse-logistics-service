@@ -241,6 +241,7 @@ class StorageEventProcessorTest {
             coEvery { updateOrder(any()) } returns testOrder
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
+            coEvery { supportsEvent(any()) } returns true
         }
 
     // ... and he's got a friend, a big old email notifier mock...

@@ -149,8 +149,10 @@ class StorageEventProcessorAdapter(
             if (storageSystemFacade == null) {
                 logger.info { "Could not find a storage system to handle items: $itemList" }
             }
-            storageSystemFacade?.updateOrder(updatedOrder)
-            logger.info { "Updated order [$updatedOrder] in storage system: ${storageSystemFacade ?: "none"}" }
+            if (storageSystemFacade?.supportsEvent(event) == true) {
+                storageSystemFacade.updateOrder(updatedOrder)
+                logger.info { "Updated order [$updatedOrder] in storage system: $storageSystemFacade" }
+            }
         }
     }
 
