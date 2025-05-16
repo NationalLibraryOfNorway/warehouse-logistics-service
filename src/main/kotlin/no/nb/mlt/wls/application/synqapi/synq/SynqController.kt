@@ -48,23 +48,43 @@ class SynqController(
         ApiResponse(
             responseCode = "200",
             description = """Item with given "hostName" and "hostId" was found and updated.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "400",
             description = """Moved item payload was invalid and nothing got updated.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "404",
             description = """An item for a specific "hostName" and "hostId" was not found.
                 Error message contains information about the missing item.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         )
     )
     @PutMapping("/move-item")
@@ -99,22 +119,42 @@ class SynqController(
         ApiResponse(
             responseCode = "200",
             description = """The items were picked successfully.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "400",
             description = """Picking confirmation payload was invalid and nothing got updated.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized to update orders.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         )
     )
     @PutMapping("/pick-update/{owner}/{orderId}")
@@ -150,28 +190,53 @@ class SynqController(
             responseCode = "200",
             description = """Order with given "hostName" and "orderId" was found and updated.
                 The response body contains the updated order.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "400",
             description = """Order update payload was invalid and nothing got updated.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized to update orders.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "404",
             description = """Order with given "hostName" and "orderId" was not found.
                 Error message contains information about the missing order.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         )
     )
     @PutMapping("/order-update/{owner}/{orderId}")
@@ -206,22 +271,42 @@ class SynqController(
         ApiResponse(
             responseCode = "200",
             description = """Inventory was reconciled successfully.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "400",
             description = """Inventory reconciliation payload was invalid.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class)
+                )
+            ]
         )
     )
     @PutMapping("/inventory-reconciliation")

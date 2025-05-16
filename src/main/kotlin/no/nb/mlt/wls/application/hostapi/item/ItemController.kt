@@ -80,12 +80,22 @@ class ItemController(
             ApiResponse(
                 responseCode = "401",
                 description = """Client sending the request is not authorized to operate on items.""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "string",
+                        schema = Schema(implementation = String::class)
+                    )
+                ]
             ),
             ApiResponse(
                 responseCode = "403",
                 description = """A valid "Authorization" header is missing from the request.""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "string",
+                        schema = Schema(implementation = String::class)
+                    )
+                ]
             )
         ]
     )
