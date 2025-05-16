@@ -315,7 +315,7 @@
         <artifactId>spotless-maven-plugin</artifactId>
         <version>${spotless.version}</version>
         <executions>
-          <!-- Make spotless:check goal execute during verify phase -->
+          <!-- Make spotless:check goal execute during the verify phase -->
           <execution>
             <goals>
               <goal>check</goal>
@@ -332,7 +332,7 @@
               <include>src/test/kotlin/**/*.kt</include>
             </includes>
 
-            <!-- Configure ktlint, use latest version (version tag ommited) and where to find editorconfig file -->
+            <!-- Configure ktlint, use the latest version (version tag omitted) and where to find an editorconfig file -->
             <ktlint>
               <editorConfigPath>./.editorconfig</editorConfigPath>
             </ktlint>

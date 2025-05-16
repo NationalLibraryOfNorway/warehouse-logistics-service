@@ -4,12 +4,15 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
 import io.swagger.v3.oas.annotations.callbacks.Callbacks
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.enums.ParameterStyle
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
@@ -26,7 +29,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 
 @RestController
 @RequestMapping(path = ["/hermes/v1"])
-@Tag(name = "Item Controller", description = """API endpoints used by catalogs for managing items in Hermes WLS""")
+@Tag(name = "Item Controller", description = """API for creating items in Hermes WLS""")
 class ItemController(
     private val getItem: GetItem,
     private val addNewItem: AddNewItem
@@ -67,17 +70,32 @@ class ItemController(
                 responseCode = "400",
                 description = """Item payload is invalid, no new item was created.
                     Error message contains information about the invalid field(s).""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(implementation = ErrorMessage::class)
+                    )
+                ]
             ),
             ApiResponse(
                 responseCode = "401",
                 description = """Client sending the request is not authorized to operate on items.""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "string",
+                        schema = Schema(implementation = String::class, example = "Unauthorized")
+                    )
+                ]
             ),
             ApiResponse(
                 responseCode = "403",
                 description = """A valid "Authorization" header is missing from the request.""",
-                content = [Content(schema = Schema())]
+                content = [
+                    Content(
+                        mediaType = "string",
+                        schema = Schema(implementation = String::class, example = "Forbidden")
+                    )
+                ]
             )
         ]
     )
@@ -99,12 +117,18 @@ class ItemController(
                                 Parameter(
                                     name = "X-Signature",
                                     description = "HMAC SHA-256 signature of timestamp and the payload",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "iBUWzWuoRH05IWVjxUcNwRa260OfXR8Cpo90tcQL5rw=",
                                     required = true,
                                     schema = Schema(type = "string")
                                 ),
                                 Parameter(
                                     name = "X-Timestamp",
                                     description = "Timestamp for when the message was sent",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "1747467000",
                                     required = true,
                                     schema = Schema(type = "string")
                                 )
