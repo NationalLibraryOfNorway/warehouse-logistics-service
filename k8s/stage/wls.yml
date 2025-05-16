@@ -303,3 +303,4 @@ spec:
               configMap:
                 name: outbox-processor-script
                 defaultMode: 0755
+          restartPolicy: OnFailure
