@@ -251,3 +251,55 @@ spec:
                 name: wls-service
                 port:
                   name: rest-port
+
+---
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: process-outboxes
+  namespace: mlt
+  labels:
+    app: wls-cronjob
+    creator: magasin-og-logistikk
+spec:
+  schedule: "* * * * *"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: process-outboxes
+              image: curlimages/curl:8.13.0
+              env:
+                - name: HERMES_HOST
+                  value: "http://wls-service:8080"
+                - name: KEYCLOAK_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_ID
+                - name: KEYCLOAK_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_SECRET
+                - name: KEYCLOAK_ISSUER_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: KEYCLOAK_ISSUER_URI
+              volumeMounts:
+                - name: script-volume
+                  mountPath: /scripts
+              command:
+                - /bin/sh
+                - -c
+                - /scripts/process-outboxes.sh
+          volumes:
+            - name: script-volume
+              configMap:
+                name: outbox-processor-script
+                defaultMode: 0755
