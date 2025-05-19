@@ -243,7 +243,7 @@ spec:
   # Port exposes the Kubernetes service on the specified port within the cluster to other pods
   ports:
     - port: 8888
-      name: actuator-port
+      name: http
       targetPort: 8888
 
 ---
