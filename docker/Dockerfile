@@ -22,7 +22,7 @@ EXPOSE 8080
 # This is not a replacement for health check in kubernetes
 # However it is convenient when running locally, or in a purely Docker based environment
 HEALTHCHECK --start-period=40s --retries=5 \
-  CMD curl --fail --silent localhost:8888/hermes/actuator/health | grep UP || exit 1
+  CMD curl --fail --silent localhost:8888/actuator/health | grep UP || exit 1
 
 # Set the entrypoint for the container, this is the command that will be run when the container starts up
 ENTRYPOINT ["java", "-Duser.timezone=Europe/Oslo", "-Djava.security.egd=file:/dev/./urandom", "-jar", "/app.jar"]
