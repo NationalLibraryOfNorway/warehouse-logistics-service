@@ -164,7 +164,7 @@ spec:
           # Define settings for running the container's liveness probe
           livenessProbe:
             httpGet:
-              path: /hermes/actuator/health/liveness
+              path: /actuator/health/liveness
               port: actuator-port
               scheme: HTTP
             initialDelaySeconds: 30
@@ -176,7 +176,7 @@ spec:
           # Define settings for running the container's readiness probe
           readinessProbe:
             httpGet:
-              path: /hermes/actuator/health/readiness
+              path: /actuator/health/readiness
               port: actuator-port
               scheme: HTTP
             initialDelaySeconds: 30
