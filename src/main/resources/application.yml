@@ -33,7 +33,7 @@ server:
 management:
   endpoints:
     web:
-      base-path: /hermes/actuator
+      base-path: /actuator
       exposure:
         include: prometheus,health
   endpoint:
