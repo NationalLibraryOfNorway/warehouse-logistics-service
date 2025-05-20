@@ -30,6 +30,7 @@ class SecurityConfig {
             csrf { }
             authorizeExchange {
                 authorize("/hermes/synq/api-docs", permitAll)
+                authorize("/hermes/synq/api-docs.yaml", permitAll)
                 authorize("/hermes/synq/api-docs/**", permitAll)
                 authorize("/hermes/synq/swagger", permitAll)
                 authorize("/hermes/synq/swagger/**", permitAll)
