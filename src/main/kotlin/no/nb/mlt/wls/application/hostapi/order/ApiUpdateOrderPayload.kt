@@ -17,8 +17,10 @@ import org.hibernate.validator.constraints.URL
       "hostOrderId": "mlt-12345-order",
       "orderLine": [
         {
-          "hostId": "mlt-12345",
-          "status": "NOT_STARTED"
+          "hostId": "mlt-12345"
+        },
+        {
+          "hostId": "mlt-67890"
         }
       ],
       "orderType": "LOAN",

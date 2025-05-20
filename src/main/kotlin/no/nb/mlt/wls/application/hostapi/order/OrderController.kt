@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.callbacks.Callback
 import io.swagger.v3.oas.annotations.callbacks.Callbacks
+import io.swagger.v3.oas.annotations.enums.ParameterIn
+import io.swagger.v3.oas.annotations.enums.ParameterStyle
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -38,7 +40,7 @@ private val logger = KotlinLogging.logger {}
 
 @RestController
 @RequestMapping(path = ["/hermes/v1"])
-@Tag(name = "Order Controller", description = """API for ordering items via Hermes WLS""")
+@Tag(name = "Order Controller", description = """API for managing orders in Hermes WLS""")
 class OrderController(
     private val getOrder: GetOrder,
     private val createOrder: CreateOrder,
@@ -90,12 +92,22 @@ class OrderController(
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized to order items.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
         )
     )
     @Callbacks(
@@ -114,12 +126,18 @@ class OrderController(
                                 Parameter(
                                     name = "X-Signature",
                                     description = "HMAC SHA-256 signature of timestamp and the payload",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "iBUWzWuoRH05IWVjxUcNwRa260OfXR8Cpo90tcQL5rw=",
                                     required = true,
                                     schema = Schema(type = "string")
                                 ),
                                 Parameter(
                                     name = "X-Timestamp",
                                     description = "Timestamp for when the message was sent",
+                                    `in` = ParameterIn.HEADER,
+                                    style = ParameterStyle.SIMPLE,
+                                    example = "1747467000",
                                     required = true,
                                     schema = Schema(type = "string")
                                 )
@@ -180,22 +198,42 @@ class OrderController(
             responseCode = "400",
             description = """Some fields in your request are invalid.
                 The error message contains information about the invalid fields.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized to request order info, or this order does not belong to them.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "404",
             description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
         )
     )
     @GetMapping("/order/{hostName}/{hostOrderId}")
@@ -248,27 +286,52 @@ class OrderController(
             description = """Order payload is invalid and the order was not updated.
                 This error might also happen if the order does not exist.
                 Otherwise, the error message contains information about the invalid fields.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "401",
             description = """Client sending the request is not authorized to update orders, or this order does not belong to them.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
             description = """A valid "Authorization" header is missing from the request.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "404",
             description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "409",
             description = """The order is already being processed, and can not be edited at this point.""",
-            content = [Content(schema = Schema())]
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Conflict")
+                )
+            ]
         )
     )
     @PutMapping("/order")
@@ -307,15 +370,33 @@ class OrderController(
         ),
         ApiResponse(
             responseCode = "401",
-            description = """Client sending the request is not authorized to delete orders, or this order does not belong to them."""
+            description = """Client sending the request is not authorized to delete orders, or this order does not belong to them.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "403",
-            description = """A valid "Authorization" header is missing from the request, or the caller is not authorized to delete the order."""
+            description = """A valid "Authorization" header is missing from the request, or the caller is not authorized to delete the order.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
         ),
         ApiResponse(
             responseCode = "404",
-            description = """Order with given "hostName" and "hostOrderId" does not exist in the system."""
+            description = """Order with given "hostName" and "hostOrderId" does not exist in the system.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
         )
     )
     @DeleteMapping("/order/{hostName}/{hostOrderId}")

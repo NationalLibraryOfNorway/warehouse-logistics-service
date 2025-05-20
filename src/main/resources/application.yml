@@ -24,7 +24,9 @@ server:
 management:
   endpoints:
     web:
-      base-path: /hermes/actuator
+      base-path: /actuator
+      exposure:
+        include: prometheus,health
   endpoint:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes

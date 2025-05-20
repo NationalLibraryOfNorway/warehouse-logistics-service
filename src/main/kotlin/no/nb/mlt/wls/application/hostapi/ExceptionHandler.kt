@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.hostapi
 
+import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
@@ -65,6 +66,18 @@ class ExceptionHandler {
             .body(ErrorMessage(e.message))
 }
 
+@Schema(
+    description = """Object containing an error message that occurred during processing of a request in Hermes WLS.""",
+    example = """
+    {
+      "message": "The item's 'hostId' is required, and it cannot be blank"
+    }
+    """
+)
 data class ErrorMessage(
+    @Schema(
+        description = """Message describing the error.""",
+        example = "The item's 'hostId' is required, and it cannot be blank"
+    )
     val message: String
 )

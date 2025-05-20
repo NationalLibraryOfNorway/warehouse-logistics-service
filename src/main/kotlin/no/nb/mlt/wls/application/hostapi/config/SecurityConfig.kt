@@ -37,12 +37,13 @@ class SecurityConfig {
             csrf { }
             authorizeExchange {
                 authorize("/hermes/api-docs", permitAll)
+                authorize("/hermes/api-docs.yaml", permitAll)
                 authorize("/hermes/api-docs/**", permitAll)
                 authorize("/hermes/swagger", permitAll)
                 authorize("/hermes/swagger/**", permitAll)
                 authorize("/hermes/webjars/swagger-ui/**", permitAll)
-                authorize("/hermes/actuator", permitAll)
-                authorize("/hermes/actuator/**", permitAll)
+                authorize("/actuator", permitAll)
+                authorize("/actuator/**", permitAll)
                 authorize("/hermes/v1/item", hasRole("item"))
                 authorize("/hermes/v1/item/**", hasRole("item"))
                 authorize("/hermes/v1/order", hasRole("order"))
