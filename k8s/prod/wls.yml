@@ -164,7 +164,7 @@ spec:
           # Define settings for running the container's liveness probe
           livenessProbe:
             httpGet:
-              path: /hermes/actuator/health/liveness
+              path: /actuator/health/liveness
               port: actuator-port
               scheme: HTTP
             initialDelaySeconds: 30
@@ -176,7 +176,7 @@ spec:
           # Define settings for running the container's readiness probe
           readinessProbe:
             httpGet:
-              path: /hermes/actuator/health/readiness
+              path: /actuator/health/readiness
               port: actuator-port
               scheme: HTTP
             initialDelaySeconds: 30
@@ -215,8 +215,35 @@ spec:
     - port: 8080
       name: rest-port
       targetPort: 8080
+
+---
+
+apiVersion: v1
+
+#  A Service in Kubernetes exposes a network application that is running in your cluster
+kind: Service
+
+# Standard object metadata
+metadata:
+  name: wls-actuator-service
+  namespace: mlt
+  labels:
+    app: springactuator
+
+# Service specification with attributes to use in its creation
+spec:
+  # Makes the service allocate a cluster-internal IP address for load-balancing to endpoints
+  # Endpoints are determined by the selector
+  type: ClusterIP
+
+  # The .spec.selector field defines services endpoint
+  selector:
+    app: wls
+
+  # Port exposes the Kubernetes service on the specified port within the cluster to other pods
+  ports:
     - port: 8888
-      name: actuator-port
+      name: http
       targetPort: 8888
 
 ---
@@ -251,3 +278,57 @@ spec:
                 name: wls-service
                 port:
                   name: rest-port
+
+---
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: process-outboxes
+  namespace: mlt
+  labels:
+    app: wls-cronjob
+    creator: magasin-og-logistikk
+spec:
+  schedule: "* * * * *"
+  timeZone: "Europe/Oslo"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: process-outboxes
+              image: curlimages/curl:8.13.0
+              workingDir: /scripts
+              env:
+                - name: HERMES_HOST
+                  value: "http://wls-service:8080"
+                - name: KEYCLOAK_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_ID
+                - name: KEYCLOAK_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: ADMIN_KEYCLOAK_CLIENT_SECRET
+                - name: KEYCLOAK_ISSUER_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: wls-secrets
+                      key: KEYCLOAK_ISSUER_URI
+              volumeMounts:
+                - name: script-volume
+                  mountPath: /scripts
+              command:
+                - /bin/sh
+                - -c
+                - ./process-outbox.sh
+          volumes:
+            - name: script-volume
+              configMap:
+                name: outbox-processor-script
+                defaultMode: 0755
+          restartPolicy: OnFailure
