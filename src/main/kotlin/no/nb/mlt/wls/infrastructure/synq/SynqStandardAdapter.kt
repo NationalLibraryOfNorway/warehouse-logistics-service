@@ -93,10 +93,16 @@ class SynqStandardAdapter(
     ) {
         // Special handling for Arkivverket is required for the storage systems
         val owner = toSynqOwner(hostName)
+        val synqOrderId =
+            computeOrderId(
+                hostName = hostName,
+                hostOrderId = orderId,
+                type = SynqOrderPayload.SynqOrderType.STANDARD
+            )
 
         webClient
             .delete()
-            .uri(URI.create("$baseUrl/orders/$owner/$orderId"))
+            .uri(URI.create("$baseUrl/orders/$owner/$synqOrderId"))
             .retrieve()
             .toEntity(SynqError::class.java)
             .timeout(timeoutProperties.storage)

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonValue
 import jakarta.validation.constraints.Min
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
@@ -114,7 +115,13 @@ fun Packaging.toSynqPackaging(): SynqPackaging =
         Packaging.UNKNOWN -> throw IllegalArgumentException("Unknown packaging")
     }
 
-private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String {
+private fun Order.generateOrderId(type: SynqOrderPayload.SynqOrderType): String = computeOrderId(hostName, hostOrderId, type)
+
+fun computeOrderId(
+    hostName: HostName,
+    hostOrderId: String,
+    type: SynqOrderPayload.SynqOrderType
+): String {
     val postfix =
         when (type) {
             SynqOrderPayload.SynqOrderType.AUTOSTORE -> "-AS"
