@@ -1,0 +1,129 @@
+{
+  "uuid": "ab3bcc8b-06e1-4453-81c2-973e1324a208",
+  "lastMigration": 33,
+  "name": "WLS Callbacks",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 8282,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "4959d21c-8a10-49af-8ea8-667b1776a532",
+      "type": "http",
+      "documentation": "Respond to a callback with updated item info",
+      "method": "post",
+      "endpoint": "item",
+      "responses": [
+        {
+          "uuid": "1bf219db-0082-4d91-aeab-2626ce0adaee",
+          "body": "{\n  \"hostId\": \"{{body \"$.hostId\"}}\",\n  \"hostName\": \"{{body \"$.hostName\"}}\",\n  \"description\": \"{{body \"$.description\"}}\",\n  \"itemCategory\": \"{{body \"$.itemCategory\"}}\",\n  \"preferredEnvironment\": \"{{body \"$.preferredEnvironment\"}}\",\n  \"packaging\": \"{{body \"$.packaging\"}}\",\n  \"callbackUrl\": \"{{body \"$.callbackUrl\"}}\",\n  \"location\": \"{{body \"$.location\"}}\",\n  \"quantity\": \"{{body \"$.quantity\"}}\",\n  \"eventTimestamp\": \"{{body \"$.eventTimestamp\"}}\",\n  \"messageId\": \"{{body \"$.messageId\"}}\",\n  \"X-signature\": \"{{header \"X-signature\"}}\",\n  \"X-timestamp\": \"{{header \"X-timestamp\"}}\"\n}",
+          "latency": 200,
+          "statusCode": 200,
+          "label": "Message received successfully",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "b8504334-6d50-4505-8a37-1efdc2c87c13",
+      "type": "http",
+      "documentation": "Respond to a callback with updated order info",
+      "method": "post",
+      "endpoint": "order",
+      "responses": [
+        {
+          "uuid": "e12af2b3-40a9-49e2-9496-2055d5c115f8",
+          "body": "{\n  \"hostName\": \"{{body \"$.hostName\"}}\",\n  \"hostOrderId\": \"{{body \"$.hostOrderId\"}}\",\n  \"status\": \"{{body \"$.status\"}}\",\n  \"orderLine\": {{body \"$.orderLine\"}},\n  \"orderType\": \"{{body \"$.orderType\"}}\",\n  \"contactPerson\": \"{{body \"$.contactPerson\"}}\",\n  \"contactEmail\": \"{{body \"$.contactEmail\"}}\",\n  \"address\": {{body \"$.address\"}},\n  \"note\": \"{{body \"$.note\"}}\",\n  \"callbackUrl\": \"{{body \"$.callbackUrl\"}}\",\n  \"eventTimestamp\": \"{{body \"$.eventTimestamp\"}}\",\n  \"messageId\": \"{{body \"$.messageId\"}}\",\n  \"X-signature\": \"{{header \"X-signature\"}}\",\n  \"X-timestamp\": \"{{header \"X-timestamp\"}}\"\n}",
+          "latency": 200,
+          "statusCode": 200,
+          "label": "Message received successfully",
+          "headers": [],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "4959d21c-8a10-49af-8ea8-667b1776a532"
+    },
+    {
+      "type": "route",
+      "uuid": "b8504334-6d50-4505-8a37-1efdc2c87c13"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Content-Type",
+      "value": "application/json"
+    },
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
