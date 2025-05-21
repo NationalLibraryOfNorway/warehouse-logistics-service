@@ -26,11 +26,7 @@ fun Order.toKardexOrderPayload(): KardexOrderPayload {
 
 enum class DirectionType {
     Put,
-    Pick,
-    Return,
-    Transfer,
-    Count,
-    Production
+    Pick
 }
 
 enum class KardexPriority {
