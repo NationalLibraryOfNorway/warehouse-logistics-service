@@ -8,7 +8,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
@@ -143,9 +142,5 @@ class SynqStandardAdapter(
             ItemCategory.BULK_ITEMS -> false
             else -> false
         }
-    }
-
-    override fun supportsEvent(event: StorageEvent): Boolean {
-        return true
     }
 }

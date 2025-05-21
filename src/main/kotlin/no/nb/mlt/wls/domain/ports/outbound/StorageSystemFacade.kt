@@ -3,7 +3,6 @@ package no.nb.mlt.wls.domain.ports.outbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 
 /**
  * Used to split hostname and the host order ID when being sent to storage systems.
@@ -29,8 +28,6 @@ interface StorageSystemFacade {
     suspend fun canHandleLocation(location: String): Boolean
 
     fun canHandleItem(item: Item): Boolean
-
-    fun supportsEvent(event: StorageEvent): Boolean
 }
 
 class StorageSystemException(
