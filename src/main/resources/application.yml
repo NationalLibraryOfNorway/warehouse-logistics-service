@@ -22,6 +22,9 @@ server:
 
 # Enable actuator endpoints and set the port
 management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoints:
     web:
       base-path: /actuator

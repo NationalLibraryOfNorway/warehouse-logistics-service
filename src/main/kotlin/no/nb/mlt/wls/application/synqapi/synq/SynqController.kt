@@ -323,7 +323,7 @@ class SynqController(
     suspend fun inventoryReconciliation(
         @RequestBody payload: SynqInventoryReconciliationPayload
     ): ResponseEntity<Unit> {
-        logger.info { "Reconciliation. loadUnits=${payload.loadUnit.size}" }
+        logger.debug { "Reconciliation. loadUnits=${payload.loadUnit.size}" }
 
         val units =
             payload.loadUnit
@@ -361,7 +361,7 @@ class SynqController(
                     item
                 }.filterNotNull()
 
-        logger.info { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
+        logger.debug { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
 
         try {
             synchronizeItems.synchronizeItems(units)
