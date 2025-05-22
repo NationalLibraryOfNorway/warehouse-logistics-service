@@ -114,7 +114,7 @@ synq:
 kardex:
   enabled: true
   path:
-    base: http://localhost:8182/kardex/
+    base: http://localhost:8182/kardex
 
 # Configures destination e-mails for receivers
 wls:
