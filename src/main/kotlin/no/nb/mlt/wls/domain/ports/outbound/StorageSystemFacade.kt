@@ -39,3 +39,7 @@ class DuplicateResourceException(
     message: String,
     cause: Throwable? = null
 ) : RuntimeException(message, cause)
+
+class NotSupportedException(
+    message: String
+) : RuntimeException(message)
