@@ -13,9 +13,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import java.util.concurrent.TimeUnit
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,18 +24,17 @@ class StorageEventProcessorAdapter(
     private val itemRepository: ItemRepository,
     private val emailNotifier: EmailNotifier
 ) : EventProcessor<StorageEvent> {
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
-    suspend fun processOutbox() {
-        logger.info { "SEPA: Processing storage event outbox" }
+    override suspend fun processOutbox() {
+        logger.trace { "Processing storage event outbox" }
 
         val outboxMessages = storageEventRepository.getUnprocessedSortedByCreatedTime()
 
         if (outboxMessages.isEmpty()) {
-            logger.info { "SEPA: No messages in outbox" }
+            logger.debug { "No messages in outbox" }
             return
         }
 
-        logger.info { "SEPA: Processing ${outboxMessages.size} outbox messages" }
+        logger.trace { "Processing ${outboxMessages.size} outbox messages" }
 
         // Possible technical issue here, duplicate IDs, mayhaps should introduce some better handling, if we think this is a possible issue.
         val messageGroups =
@@ -50,27 +47,27 @@ class StorageEventProcessorAdapter(
                 }
             }
 
-        logger.info { "SEPA: There are ${messageGroups.keys.size} message groups" }
+        logger.trace { "There are ${messageGroups.keys.size} message groups" }
 
         messageGroups.forEach {
             handleEventGroup(it)
         }
 
-        logger.info { "SEPA: Finished processing storage event outbox" }
+        logger.trace { "Finished processing storage event outbox" }
     }
 
     private suspend fun handleEventGroup(eventGroup: Map.Entry<String, List<StorageEvent>>) {
-        logger.info { "SEPA: Processing message group with id: ${eventGroup.key}" }
+        logger.trace { "Processing message group with id: ${eventGroup.key}" }
 
         try {
             eventGroup.value.forEach { handleEvent(it) }
         } catch (e: Exception) {
-            logger.error(e) { "SEPA: Error occurred while processing event in message group: ${eventGroup.key}" }
+            logger.error(e) { "Error occurred while processing event in message group: ${eventGroup.key}" }
         }
     }
 
     override suspend fun handleEvent(event: StorageEvent) {
-        logger.info { "SEPA: Processing storage event: $event" }
+        logger.trace { "Processing storage event: $event" }
 
         when (event) {
             is ItemCreated -> handleItemCreated(event)
@@ -80,27 +77,28 @@ class StorageEventProcessorAdapter(
         }
 
         val processedEvent = storageEventRepository.markAsProcessed(event)
-        logger.info { "SEPA: Marked event as processed: $processedEvent" }
+        logger.debug { "Marked event as processed: $processedEvent" }
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
-        logger.info { "SEPA: Processing ItemCreated: $event" }
+        logger.trace { "Processing ItemCreated: $event" }
 
         val item = event.createdItem
         val storageCandidates = findValidStorageCandidates(item)
 
         if (storageCandidates.isEmpty()) {
-            logger.warn { "SEPA: Could not find a storage system to handle item: $item" }
+            logger.warn { "Could not find a storage system to handle item: $item" }
             return
         }
 
         storageCandidates.forEach {
             it.createItem(item)
+            logger.info { "Created item [$item] in storage system: $it" }
         }
     }
 
     private suspend fun handleOrderCreated(event: OrderCreated) {
-        logger.info { "SEPA: Processing OrderCreated: $event" }
+        logger.trace { "Processing OrderCreated: $event" }
 
         val createdOrder = event.createdOrder
 
@@ -112,7 +110,7 @@ class StorageEventProcessorAdapter(
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
-                logger.warn { "SEPA: Could not find a storage system to handle items: $itemList" }
+                logger.warn { "Could not find a storage system to handle items: $itemList" }
             }
 
             val orderCopy =
@@ -124,12 +122,13 @@ class StorageEventProcessorAdapter(
                 )
 
             storageSystemFacade?.createOrder(orderCopy)
+            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
             createAndSendEmails(orderCopy)
         }
     }
 
     private suspend fun handleOrderDeleted(event: OrderDeleted) {
-        logger.info { "SEPA: Processing OrderDeleted: $event" }
+        logger.trace { "Processing OrderDeleted: $event" }
 
         storageSystems.forEach {
             it.deleteOrder(event.hostOrderId, event.host)
@@ -137,7 +136,7 @@ class StorageEventProcessorAdapter(
     }
 
     private suspend fun handleOrderUpdated(event: OrderUpdated) {
-        logger.info { "SEPA: Processing OrderUpdated: $event" }
+        logger.trace { "Processing OrderUpdated: $event" }
 
         val updatedOrder = event.updatedOrder
         val items =
@@ -148,9 +147,10 @@ class StorageEventProcessorAdapter(
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
-                logger.info { "SEPA: Could not find a storage system to handle items: $itemList" }
+                logger.info { "Could not find a storage system to handle items: $itemList" }
             }
             storageSystemFacade?.updateOrder(updatedOrder)
+            logger.info { "Updated order [$updatedOrder] in storage system: ${storageSystemFacade ?: "none"}" }
         }
     }
 

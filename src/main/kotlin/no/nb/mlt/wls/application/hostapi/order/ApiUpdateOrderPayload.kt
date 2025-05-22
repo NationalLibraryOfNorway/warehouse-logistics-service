@@ -17,8 +17,10 @@ import org.hibernate.validator.constraints.URL
       "hostOrderId": "mlt-12345-order",
       "orderLine": [
         {
-          "hostId": "mlt-12345",
-          "status": "NOT_STARTED"
+          "hostId": "mlt-12345"
+        },
+        {
+          "hostId": "mlt-67890"
         }
       ],
       "orderType": "LOAN",
@@ -34,7 +36,7 @@ import org.hibernate.validator.constraints.URL
         "postcode": "CA-55415"
       },
       "note": "Handle with care",
-      "callbackUrl": "https://callback-wls.no/order"
+      "callbackUrl": "http://callback-wls.no/order"
     }
     """
 )
@@ -89,7 +91,7 @@ data class ApiUpdateOrderPayload(
     @Schema(
         description = """This URL will be used for POSTing order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
-        example = "https://callback-wls.no/order"
+        example = "http://callback-wls.no/order"
     )
     @field:NotBlank(message = "The callback URL is required, and can not be blank")
     @field:URL(message = "The callback URL must be a valid URL")

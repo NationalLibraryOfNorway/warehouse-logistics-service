@@ -22,9 +22,14 @@ server:
 
 # Enable actuator endpoints and set the port
 management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoints:
     web:
-      base-path: /hermes/actuator
+      base-path: /actuator
+      exposure:
+        include: prometheus,health
   endpoint:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes
@@ -46,8 +51,7 @@ springdoc:
 
 logging:
   level:
-    # Set the logging level for the web package to debug
-    web: debug
+    no.nb.mlt.wls: debug
 
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
@@ -252,5 +256,4 @@ proxy:
 
 logging:
   level:
-    # Set the logging level for the web package to error
-    web: error
+    no.nb.mlt.wls: info

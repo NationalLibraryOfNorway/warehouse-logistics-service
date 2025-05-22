@@ -14,10 +14,10 @@ import java.security.InvalidParameterException
         "warehouse" : "Sikringsmagasin_2",
         "loadUnit" : [
             {
-                "productId" : "001a72b4-19bf-4371-8b47-76caa273fc52",
-                "productOwner" : "AV",
+                "productId" : "mlt-12345",
+                "productOwner" : "NB",
                 "quantityOnHand" : 1.0,
-                "hostName" : "Asta",
+                "hostName" : "Axiell",
                 "confidentalProduct" : false
             }
         ]
@@ -31,12 +31,12 @@ data class SynqInventoryReconciliationPayload(
 data class LoadUnit(
     @Schema(
         description = """ID of the product""",
-        example = "001a72b4-19bf-4371-8b47-76caa273fc52"
+        example = "mlt-12345"
     )
     val productId: String,
     @Schema(
         description = """Owner of the product""",
-        example = "AV"
+        example = "NB"
     )
     val productOwner: String,
     @Schema(description = """Description of the product""")
@@ -48,7 +48,7 @@ data class LoadUnit(
     val quantityOnHand: Double,
     @Schema(
         description = """Which host system the product belongs to""",
-        example = "Asta"
+        example = "Axiell"
     )
     val hostName: String?,
     @Schema(
@@ -62,7 +62,7 @@ data class LoadUnit(
     )
     val productCategory: String,
     @Schema(
-        description = "Unit of measure",
+        description = """Unit of measure""",
         example = "ESK"
     )
     val uom: String
