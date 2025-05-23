@@ -82,6 +82,13 @@ services:
     volumes:
       - ./mockoon/wls-callbacks.json:/data/wls-callbacks.json
 
+  jaeger:
+    image: jaegertracing/jaeger:latest
+    ports:
+      - "4318:4318"
+      - "16686:16686"
+      - "13133:13133"
+
 volumes:
   mongodata:
   mongoconfig:
