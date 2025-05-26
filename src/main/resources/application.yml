@@ -122,9 +122,9 @@ synq:
     base: http://localhost:8181/synq/resources
 
 kardex:
-  enabled: true
+  enabled: false
   path:
-    base: http://localhost:8182/kardex/
+    base: http://localhost:8182/kardex
 
 # Configures destination e-mails for receivers
 wls:
