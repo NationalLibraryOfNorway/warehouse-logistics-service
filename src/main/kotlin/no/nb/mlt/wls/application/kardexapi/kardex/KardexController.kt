@@ -25,37 +25,41 @@ class KardexController(
 ) {
     @PostMapping("material-update")
     suspend fun materialUpdate(
-        @RequestBody @Valid payload: KardexMaterialUpdatePayload
+        @RequestBody @Valid payloads: List<KardexMaterialUpdatePayload>
     ): ResponseEntity<Unit> {
-        updateItem.updateItem(payload.toUpdateItemPayload())
-
-        return ResponseEntity.ok().build()
-    }
-
-    @PostMapping("order-transaction")
-    suspend fun transaction(
-        @RequestBody @Valid payload: KardexTransactionPayload
-    ): ResponseEntity<Unit> {
-        val normalizedOrderId = normalizeOrderId(payload.masterOrderId)
-
-        pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
-        return ResponseEntity.ok().build()
-    }
-
-    @PostMapping("synchronize")
-    suspend fun syncMaterialStock(
-        @RequestBody @Valid payload: KardexSyncMaterialPayload
-    ): ResponseEntity<Unit> {
-        stockCount.countStock(payload.mapToStockCountPayload())
-        return ResponseEntity.ok().build()
-    }
-
-    private fun normalizeOrderId(orderId: String): String {
-        val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
-        // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
-        if (orderIdWithoutPrefix == orderId) {
-            logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
+        payloads.forEach { payload ->
+            updateItem.updateItem(payload.toUpdateItemPayload())
         }
-        return orderIdWithoutPrefix
+
+        return ResponseEntity.ok().build()
     }
+
+    @PostMapping("order-update")
+    suspend fun transaction(
+        @RequestBody @Valid payloads: List<KardexTransactionPayload>
+    ): ResponseEntity<Unit> {
+        payloads.forEach { payload ->
+            val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
+            pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
+        }
+
+        return ResponseEntity.ok().build()
+    }
+
+    @PostMapping("stock-sync")
+    suspend fun syncMaterialStock(
+        @RequestBody @Valid payloads: List<KardexSyncMaterialPayload>
+    ): ResponseEntity<Unit> {
+        stockCount.countStock(payloads.toStockCountPayload())
+        return ResponseEntity.ok().build()
+    }
+}
+
+private fun normalizeOrderId(orderId: String): String {
+    val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
+    // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
+    if (orderIdWithoutPrefix == orderId) {
+        logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
+    }
+    return orderIdWithoutPrefix
 }

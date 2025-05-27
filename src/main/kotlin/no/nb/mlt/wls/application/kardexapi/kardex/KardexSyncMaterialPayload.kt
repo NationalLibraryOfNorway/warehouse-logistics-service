@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
-import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 
@@ -9,53 +8,28 @@ data class KardexSyncMaterialPayload(
     @Schema(
         description = """The main material ID of the item."""
     )
-    val materialName: String,
+    val hostId: String,
     @Schema(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
     val hostName: String,
     @Schema(
-        description = """The first info field from Kardex, which usually describes the item."""
-    )
-    val description: String,
-    @Schema(
-        description = """The current quantity of the item."""
+        description = """The current quantity of the material."""
     )
     val quantity: Int,
     @Schema(
-        description = """The item category for this material."""
+        description = """Name of the warehouse where the materials is located."""
     )
-    val itemCategory: String,
-    @Schema(
-        description = """Whether the item is a single object or a container with other items inside.
-            "NONE" is for single objects, "ABOX" is for archival boxes, etc.
-            NOTE: It is up to the catalogue to keep track of the items inside a container.""",
-        examples = ["NONE", "BOX", "ABOX"]
-    )
-    val packaging: String?,
-    @Schema(
-        description = """What kind of environment the item should be stored in.
-            "NONE" means item has no preference for storage environment,
-            "FREEZE" means that item should be stored frozen when stored, etc.
-            NOTE: This is not a guarantee that the item will be stored in the preferred environment.
-            In cases where storage space is limited, the item may be stored in regular environment.""",
-        examples = ["NONE", "FREEZE"]
-    )
-    val environment: Environment?,
-    @Schema(
-        description = """Name of the warehouse where the order materials/items are located."""
-    )
-    val warehouse: String
-) {
-    fun mapToStockCountPayload(): List<StockCount.CountStockDTO> {
-        return listOf(
-            StockCount.CountStockDTO(
-                hostId = materialName,
-                hostName = HostName.fromString(hostName),
-                quantity = quantity,
-                location = warehouse
-            )
+    val location: String
+)
+
+fun List<KardexSyncMaterialPayload>.toStockCountPayload(): List<StockCount.CountStockDTO> =
+    this.map { kardexPayload ->
+        StockCount.CountStockDTO(
+            hostId = kardexPayload.hostId,
+            hostName = HostName.fromString(kardexPayload.hostName),
+            location = kardexPayload.location,
+            quantity = kardexPayload.quantity
         )
     }
-}

@@ -4,30 +4,29 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
-import java.time.Instant
 
 @Schema(
     description = "Payload with updates status for material in Kardex.",
     example = """
     {
       "hostName": "AXIELL",
-      "material": "CM00012345",
+      "hostId": "CM00012345",
       "quantity": 1.0,
-      "warehouse": "NB Mo i Rana",
-      "createdDate": "2024-11-08T19:12:00.000Z",
-      "operator": "Ola Nordmann"
+      "location": "NB Mo i Rana",
+      "operator": "Ola Nordmann",
+      "motiveType": 0
     }"""
 )
 data class KardexMaterialUpdatePayload(
+    @Schema(
+        description = """The main material ID of the item."""
+    )
+    val hostId: String,
     @Schema(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
     val hostName: HostName,
-    @Schema(
-        description = """The main material ID of the item."""
-    )
-    val material: String,
     @Schema(
         description = """The current quantity of the item."""
     )
@@ -36,22 +35,19 @@ data class KardexMaterialUpdatePayload(
         description = """Name of the warehouse where the order materials/items are located."""
     )
     @field:NotBlank(message = "Order status update cannot have blank warehouse")
-    val warehouse: String,
-    @Schema(
-        description = """The date of creation for this order."""
-    )
-    val createdDate: Instant,
+    val location: String,
     @Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
     )
-    val operator: String
+    val operator: String,
+    val motiveType: MotiveType
 ) {
     fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
         return UpdateItem.UpdateItemPayload(
             hostName = hostName,
-            hostId = material,
+            hostId = hostId,
             quantity = quantity.toInt(),
-            location = warehouse
+            location = location
         )
     }
 }
