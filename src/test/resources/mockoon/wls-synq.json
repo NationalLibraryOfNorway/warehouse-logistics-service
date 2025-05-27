@@ -1,0 +1,759 @@
+{
+  "uuid": "1057e089-c829-4f6f-bf1a-d4f1b8ffe856",
+  "lastMigration": 33,
+  "name": "Dummy SynQ API",
+  "endpointPrefix": "synq",
+  "latency": 0,
+  "port": 8181,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "383db140-5b21-432f-acfb-8af4fa65ac72",
+      "type": "http",
+      "documentation": "Simulate order edit in SynQ",
+      "method": "put",
+      "endpoint": "resources/orders/batch",
+      "responses": [
+        {
+          "uuid": "d0d14a1b-27f6-471d-a08b-a07c14130a67",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Order updated, usual response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "b68d848b-1cf6-446e-9dfc-4c7032d8dd7f",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Simulate an error where order cannot be edited because of its status, with 'Wrong-Status' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Wrong-Status",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "b7a50d51-74c8-44a5-ba4e-667acb908958",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "Simulate an order not found error, with 'Not-Found' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Not-Found",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "e89d9d5d-b3a2-48ae-8091-0c98d92d5b45",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "Simulate a SynQ error, with 'Error' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Error",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "a4d5b509-16a1-49e7-8a31-4fcfb8857945",
+      "type": "http",
+      "documentation": "Simulate order creation in SynQ",
+      "method": "post",
+      "endpoint": "resources/orders/batch",
+      "responses": [
+        {
+          "uuid": "80069dad-f632-4c51-8c38-4e43c1cccb59",
+          "body": "",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "Order created, usual response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "fa3755bc-30e9-48fe-b26b-cfc6259a9529",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Simulate a duplicate order error, with 'Duplicate' set, or missing field error with 'Missing' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Duplicate",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "5aed7e25-cd6a-4f28-bf68-94be8f442016",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "Simulate a product not found error, with 'Not-Found' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Not-Found",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "41356af8-a501-45a1-82ec-e738ae388751",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "Simulate a SynQ error, with 'Error' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Error",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "d0e291ff-94a3-4fc9-bd85-47302850c73b",
+      "type": "http",
+      "documentation": "",
+      "method": "put",
+      "endpoint": "resources/nborders/status-update/:owner/:orderId",
+      "responses": [
+        {
+          "uuid": "feea12b8-1bd0-4650-97e2-2eb4076a410b",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "OK",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "*/*"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "b2eeffee-d963-4a6e-ab8e-e58ea3a379db",
+      "type": "http",
+      "documentation": "",
+      "method": "put",
+      "endpoint": "resources/nborders/pick-confirmation/:owner/:orderId",
+      "responses": [
+        {
+          "uuid": "09a731e8-9992-4334-ad91-d2321a05177e",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "OK",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "*/*"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "efd0ccd9-c139-485c-b64d-35513349f707",
+      "type": "http",
+      "documentation": "",
+      "method": "put",
+      "endpoint": "resources/load-units/batch-update",
+      "responses": [
+        {
+          "uuid": "aadf944d-83ec-4c0e-836e-b12b579f8716",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "OK",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "*/*"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "f2ccd7be-19fb-4d0c-aad5-b2900dc5c26f",
+      "type": "http",
+      "documentation": "Simulate product creation in SynQ",
+      "method": "post",
+      "endpoint": "resources/nbproducts",
+      "responses": [
+        {
+          "uuid": "f1b985fa-280a-4c89-916b-d90e40bbbdbc",
+          "body": "",
+          "latency": 0,
+          "statusCode": 201,
+          "label": "Product created, usual response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "08d4d2f9-55ca-4732-a642-4f4b08c4b2d1",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Simulate a duplicate product error, with 'Duplicate' set, or missing field error with 'Missing' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Duplicate",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "7db074ea-e099-4726-817c-157b7563d680",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "Simulate a product category not found error, with 'Unknown' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Unknown",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "5f3abb48-fc34-44b5-98d7-281c85207ed8",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "Simulate a SynQ error, with 'Error' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Error",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "f5c7a523-262c-4e41-8892-c6b5c65feb59",
+      "type": "http",
+      "documentation": "",
+      "method": "post",
+      "endpoint": "resources/load-units/batch-create",
+      "responses": [
+        {
+          "uuid": "836fdb9f-7ae8-4147-a27a-278e2779030d",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "OK",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "*/*"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "e0e09d59-de0e-4b22-9f7d-4b3ff9832e3a",
+      "type": "http",
+      "documentation": "Simulate order edit in SynQ",
+      "method": "delete",
+      "endpoint": "resources/orders/:owner/:orderId",
+      "responses": [
+        {
+          "uuid": "457ad37d-6d6a-48de-b399-7a02dfb502d3",
+          "body": "",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Order deleted, usual response",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "c28e3f7b-426c-4f0e-aca9-03ba342cbc42",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 400,
+          "label": "Simulate an error where order cannot be deleted because of its status, with 'Wrong-Status' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Wrong-Status",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "04de2f23-b798-43a9-98a2-c49b10c1b8df",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 404,
+          "label": "Simulate an order not found error, with 'Not-Found' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Not-Found",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        },
+        {
+          "uuid": "5456fe76-b054-4af5-925b-8462ab504d54",
+          "body": "{\n  \"errorCode\": 1000,\n  \"errorText\": \"Duplicate product PRODUCT_ID with owner ID HOST_NAME.\"\n}",
+          "latency": 0,
+          "statusCode": 500,
+          "label": "Simulate a SynQ error, with 'Error' header set",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Error",
+              "value": "",
+              "invert": true,
+              "operator": "null"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": false,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "383db140-5b21-432f-acfb-8af4fa65ac72"
+    },
+    {
+      "type": "route",
+      "uuid": "a4d5b509-16a1-49e7-8a31-4fcfb8857945"
+    },
+    {
+      "type": "route",
+      "uuid": "d0e291ff-94a3-4fc9-bd85-47302850c73b"
+    },
+    {
+      "type": "route",
+      "uuid": "b2eeffee-d963-4a6e-ab8e-e58ea3a379db"
+    },
+    {
+      "type": "route",
+      "uuid": "efd0ccd9-c139-485c-b64d-35513349f707"
+    },
+    {
+      "type": "route",
+      "uuid": "f2ccd7be-19fb-4d0c-aad5-b2900dc5c26f"
+    },
+    {
+      "type": "route",
+      "uuid": "f5c7a523-262c-4e41-8892-c6b5c65feb59"
+    },
+    {
+      "type": "route",
+      "uuid": "e0e09d59-de0e-4b22-9f7d-4b3ff9832e3a"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}

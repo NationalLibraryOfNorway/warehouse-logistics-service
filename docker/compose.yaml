@@ -61,15 +61,6 @@ services:
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import
 
-  # Set up a local SynQ instance for local development
-  # Provides an option to test out communication with SynQ API locally, without the need to use SynQ in dev/prod environments
-  # Makes Swagger GUI available at: http://localhost:8181/synq/swagger
-  dummy-synq:
-    image: harbor.nb.no/mlt/dummy-synq:main # Get the "latest" version of the dummy-synq image
-    restart: always
-    ports:
-      - "8181:8181"
-
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
   mockoon:
@@ -81,6 +72,17 @@ services:
     command: --data /data/wls-callbacks.json --port 8282 --log-transaction
     volumes:
       - ./mockoon/wls-callbacks.json:/data/wls-callbacks.json
+
+  # Also use Mockoon for testing the SynQ Controller
+  mockoon-synq:
+    image: mockoon/cli:9.2.0
+    restart: always
+    hostname: mockoon
+    ports:
+      - "8181:8181"
+    command: --data /data/wls-synq.json --port 8181 --log-transaction
+    volumes:
+      - ./mockoon/wls-synq.json:/data/wls-synq.json
 
   jaeger:
     image: jaegertracing/jaeger:latest
