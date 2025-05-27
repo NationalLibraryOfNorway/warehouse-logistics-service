@@ -22,6 +22,12 @@ server:
 
 # Enable actuator endpoints and set the port
 management:
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+  tracing:
+    sampling:
+      probability: 1.0
   metrics:
     tags:
       application: ${spring.application.name}
