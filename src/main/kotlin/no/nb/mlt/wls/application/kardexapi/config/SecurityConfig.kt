@@ -24,7 +24,7 @@ class SecurityConfig {
 
     @Bean("kardexSecurityFilterChain")
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+    fun kardexFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http {
             securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes/kardex/v1/**"))
             csrf { }
