@@ -22,7 +22,7 @@ import org.hibernate.validator.constraints.URL
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
-      "callbackUrl": "https://callback-wls.no/item"
+      "callbackUrl": "http://callback-wls.no/item"
     }
     """
 )
@@ -72,7 +72,7 @@ data class ApiCreateItemPayload(
     @Schema(
         description = """This URL will be used for POSTing item updates to the host system.
             For example when item moves or changes quantity in storage.""",
-        example = "https://callback-wls.no/item"
+        example = "http://callback-wls.no/item"
     )
     @field:URL(message = "The item's 'callback URL' must be valid if set")
     @field:Pattern(

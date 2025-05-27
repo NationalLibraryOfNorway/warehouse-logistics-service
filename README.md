@@ -185,6 +185,12 @@ This will spin up the following services:
   - Use the following credentials to log in:
     - Username: `root`
     - Password: `toor`
+- Mockoon: a service used for mocking web server endpoints, used to test callback functionality
+  - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
+  - See below on how to enable mapping `localhost` to `callback-wls.no`
+  - To read the logs with request and response data run:
+    - `docker logs --follow docker-mockoon-1`
+    - Make sure that the container name matches the actual name from running `docker compose`
 
 To start the services, run the following command:
 
@@ -197,7 +203,14 @@ chmod 755 ./setup-replicaset.sh
 ./setup-replicaset.sh
 ```
 
-And to stop the services, run the following command:
+Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
+Simply add the following line to your `/etc/hosts` file, and restart your machine:
+
+```
+127.0.0.1 callback-wls.no
+```
+
+To stop the services, run the following command:
 
 ```shell
 docker compose down

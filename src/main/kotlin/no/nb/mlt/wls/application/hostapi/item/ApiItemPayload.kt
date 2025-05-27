@@ -19,7 +19,7 @@ import org.apache.commons.validator.routines.UrlValidator
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
       "packaging": "NONE",
-      "callbackUrl": "https://callback-wls.no/item",
+      "callbackUrl": "http://callback-wls.no/item",
       "location": "SYNQ_WAREHOUSE",
       "quantity": 1
     }
@@ -69,7 +69,7 @@ data class ApiItemPayload(
     @Schema(
         description = """This URL will be used for POSTing item updates to the host system.
             For example when item moves or changes quantity in storage.""",
-        example = "https://callback-wls.no/item"
+        example = "http://callback-wls.no/item"
     )
     val callbackUrl: String?,
     @Schema(
