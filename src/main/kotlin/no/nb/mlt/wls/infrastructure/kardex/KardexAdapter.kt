@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.NotSupportedException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
@@ -48,29 +49,70 @@ class KardexAdapter(
                 } else {
                     sink.next(it)
                 }
-            }.doOnError(TimeoutException::class.java) {
+            }
+            .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while creating item '${item.hostId}' for ${item.hostName} in Kardex"
                 }
-            }.awaitSingle()
+            }
+            .awaitSingle()
     }
 
     override suspend fun createOrder(order: Order) {
-        TODO("Not yet implemented")
+        val uri = URI.create("$baseUrl/orders")
+
+        webClient
+            .post()
+            .uri(uri)
+            .bodyValue(order.toKardexOrderPayload())
+            .retrieve()
+            .toEntity(KardexResponse::class.java)
+            .timeout(timeoutProperties.storage)
+            .handle<ResponseEntity<KardexResponse>> { it, sink ->
+                if (it.body?.isError() == true) {
+                    it.body!!.errors.forEach {
+                        logger.error { "${it.item}: ${it.errors}" }
+                    }
+                    sink.error(StorageSystemException("Failed to create order in Kardex: ${it.body?.message}"))
+                } else {
+                    sink.next(it)
+                }
+            }
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in Kardex"
+                }
+            }
+            .awaitSingle()
     }
 
     override suspend fun deleteOrder(
         orderId: String,
         hostName: HostName
     ) {
-        TODO("Not yet implemented")
+        val uri = URI.create("$baseUrl/orders/$orderId")
+
+        webClient
+            .delete()
+            .uri(uri)
+            .retrieve()
+            .toEntity(String::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while deleting order '$orderId' for $hostName in Kardex"
+                }
+            }
+            .awaitSingle()
     }
 
     override suspend fun updateOrder(order: Order): Order {
-        TODO("Not yet implemented")
+        throw NotSupportedException("Kardex does not support updating Orders")
     }
 
-    override suspend fun canHandleLocation(location: String): Boolean = location == "NB Mo i Rana"
+    override suspend fun canHandleLocation(location: String): Boolean {
+        return location == "NB Mo i Rana"
+    }
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
 }

@@ -37,6 +37,12 @@ server:
 
 # Enable actuator endpoints and set the port
 management:
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces
+  tracing:
+    sampling:
+      probability: 1.0
   metrics:
     tags:
       application: ${spring.application.name}
@@ -131,9 +137,9 @@ synq:
     base: http://localhost:8181/synq/resources
 
 kardex:
-  enabled: true
+  enabled: false
   path:
-    base: http://localhost:8182/kardex/
+    base: http://localhost:8182/kardex
 
 # Configures destination e-mails for receivers
 wls:

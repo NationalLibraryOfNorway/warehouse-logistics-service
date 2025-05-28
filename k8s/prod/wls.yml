@@ -61,6 +61,8 @@ spec:
               value: PROD
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+            - name: MANAGEMENT_OTLP_TRACING_ENDPOINT
+              value: http://jaeger-service:4318/v1/traces
             - name: KEYCLOAK_ISSUER_URI
               valueFrom:
                 secretKeyRef:

@@ -201,13 +201,12 @@ class WLSServiceTest {
 
         val itemRepoMock =
             createInMemItemRepo(
-                order.orderLine
-                    .map {
-                        createTestItem(
-                            hostId = it.hostId,
-                            hostName = order.hostName
-                        )
-                    }.toMutableList()
+                order.orderLine.map {
+                    createTestItem(
+                        hostId = it.hostId,
+                        hostName = order.hostName
+                    )
+                }.toMutableList()
             )
 
         val cut =

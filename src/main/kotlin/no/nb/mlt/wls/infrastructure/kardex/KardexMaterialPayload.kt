@@ -17,8 +17,8 @@ data class KardexMaterialPayload(
     val storageRules: List<StorageRule>?
 )
 
-fun Item.toKardexPayload(): KardexMaterialPayload =
-    KardexMaterialPayload(
+fun Item.toKardexPayload(): KardexMaterialPayload {
+    return KardexMaterialPayload(
         materialName = hostId,
         info1 = description,
         info2 = "",
@@ -28,14 +28,16 @@ fun Item.toKardexPayload(): KardexMaterialPayload =
         propertyName = fromItemCategory(itemCategory),
         storageRules = listOf()
     )
+}
 
-fun fromItemCategory(itemCategory: ItemCategory): String =
-    when (itemCategory) {
+fun fromItemCategory(itemCategory: ItemCategory): String {
+    return when (itemCategory) {
         ItemCategory.PAPER -> "PAPIR"
         ItemCategory.FILM -> "FILM"
         ItemCategory.EQUIPMENT -> "UTSTYR"
         else -> ItemCategory.UNKNOWN.toString()
     }
+}
 
 data class StorageRule(
     val description: String,

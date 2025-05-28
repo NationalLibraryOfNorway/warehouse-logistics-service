@@ -13,6 +13,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
+import no.nb.mlt.wls.domain.ports.outbound.NotSupportedException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.stereotype.Service
 
@@ -71,11 +72,17 @@ class StorageEventProcessorAdapter(
     override suspend fun handleEvent(event: StorageEvent) {
         logger.trace { "Processing storage event: $event" }
 
-        when (event) {
-            is ItemCreated -> handleItemCreated(event)
-            is OrderCreated -> handleOrderCreated(event)
-            is OrderDeleted -> handleOrderDeleted(event)
-            is OrderUpdated -> handleOrderUpdated(event)
+        try {
+            when (event) {
+                is ItemCreated -> handleItemCreated(event)
+                is OrderCreated -> handleOrderCreated(event)
+                is OrderDeleted -> handleOrderDeleted(event)
+                is OrderUpdated -> handleOrderUpdated(event)
+            }
+        } catch (e: NotSupportedException) {
+            logger.warn { "Can not handle event ${event.id}: ${e.message}" }
+            logger.warn { "Event was not processed" }
+            return
         }
 
         val processedEvent = storageEventRepository.markAsProcessed(event)
