@@ -91,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: MONGODB_URL
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: KAFKA_BOOTSTRAP_SERVERS # Can be a comma-separated list: `server1:9092,server2:9092,...`
             - name: SYNQ_BASE_URL
               valueFrom:
                 secretKeyRef:

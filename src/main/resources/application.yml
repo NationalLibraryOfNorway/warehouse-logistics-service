@@ -23,6 +23,12 @@ spring:
         attempts: 5
         delay: 5s
         multiplier: 2
+    template:
+      default-topic: hermes-mythos
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 # Server port for the main application
 server:
@@ -90,13 +96,6 @@ proxy:
   http-proxy-host: localhost
   http-proxy-port: 3128
   non-proxy-hosts: localhost|127.0.0.1|docker
-
-# Set kafka properties
-kafka:
-  topic: hermes-mythos
-  producer: hermes-core
-  bootstrap-servers: [localhost:9092]
-
 
 ---
 

@@ -48,13 +48,11 @@ class KardexAdapter(
                 } else {
                     sink.next(it)
                 }
-            }
-            .doOnError(TimeoutException::class.java) {
+            }.doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while creating item '${item.hostId}' for ${item.hostName} in Kardex"
                 }
-            }
-            .awaitSingle()
+            }.awaitSingle()
     }
 
     override suspend fun createOrder(order: Order) {
@@ -72,9 +70,7 @@ class KardexAdapter(
         TODO("Not yet implemented")
     }
 
-    override suspend fun canHandleLocation(location: String): Boolean {
-        return location == "NB Mo i Rana"
-    }
+    override suspend fun canHandleLocation(location: String): Boolean = location == "NB Mo i Rana"
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
 }

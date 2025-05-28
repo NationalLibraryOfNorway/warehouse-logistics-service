@@ -457,9 +457,11 @@ class SynqControllerTest(
 
     fun populateDb() {
         runBlocking {
-            itemRepository.deleteAll().thenMany(
-                itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem(), testItem3.toMongoItem()))
-            ).awaitLast()
+            itemRepository
+                .deleteAll()
+                .thenMany(
+                    itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem(), testItem3.toMongoItem()))
+                ).awaitLast()
 
             orderRepository.deleteAll().then(orderRepository.save(order.toMongoOrder())).awaitSingle()
         }

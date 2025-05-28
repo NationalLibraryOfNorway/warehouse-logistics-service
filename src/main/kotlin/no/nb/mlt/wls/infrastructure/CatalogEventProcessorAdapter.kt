@@ -7,6 +7,7 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}
@@ -14,7 +15,8 @@ private val logger = KotlinLogging.logger {}
 @Service
 class CatalogEventProcessorAdapter(
     private val catalogEventRepository: EventRepository<CatalogEvent>,
-    private val inventoryNotifier: InventoryNotifier
+    private val inventoryNotifier: InventoryNotifier,
+    private val statisticsService: StatisticsService
 ) : EventProcessor<CatalogEvent> {
     override suspend fun processOutbox() {
         logger.trace { "Processing catalog event outbox" }
@@ -66,6 +68,8 @@ class CatalogEventProcessorAdapter(
 
         val processedEvent = catalogEventRepository.markAsProcessed(event)
         logger.info { "Marked event as processed: $processedEvent" }
+
+        statisticsService.recordStatisticsEvent(event)
     }
 
     private suspend fun handleItemUpdate(event: ItemEvent) {

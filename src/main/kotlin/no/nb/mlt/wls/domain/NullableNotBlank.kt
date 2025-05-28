@@ -23,7 +23,5 @@ class NullableNotBlankImpl : ConstraintValidator<NullableNotBlank, String> {
     override fun isValid(
         value: String?,
         context: ConstraintValidatorContext?
-    ): Boolean {
-        return value == null || value.isNotBlank()
-    }
+    ): Boolean = value == null || value.isNotBlank()
 }
