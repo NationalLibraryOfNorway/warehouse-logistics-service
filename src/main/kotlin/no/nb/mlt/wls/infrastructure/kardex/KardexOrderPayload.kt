@@ -11,8 +11,8 @@ data class KardexOrderPayload(
     val orderLines: List<OrderLine>
 )
 
-fun Order.toKardexOrderPayload(): KardexOrderPayload {
-    return KardexOrderPayload(
+fun Order.toKardexOrderPayload(): KardexOrderPayload =
+    KardexOrderPayload(
         orderName = hostOrderId,
         directionType = DirectionType.Pick,
         priority = KardexPriority.Medium,
@@ -22,7 +22,6 @@ fun Order.toKardexOrderPayload(): KardexOrderPayload {
                 OrderLine(i, orderItem.hostId, 1.0)
             }
     )
-}
 
 enum class DirectionType {
     Put,

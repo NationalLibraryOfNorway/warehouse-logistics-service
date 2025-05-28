@@ -21,8 +21,9 @@ spring:
       topic:
         enabled: true
         attempts: 5
-        delay: 5s
-        multiplier: 2
+        backoff:
+          delay: 5s
+          multiplier: 2
     template:
       default-topic: hermes-mythos
     producer:
@@ -55,7 +56,7 @@ management:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
-      enabled: true
+      access: read_only
   server:
     port: 8888
 
