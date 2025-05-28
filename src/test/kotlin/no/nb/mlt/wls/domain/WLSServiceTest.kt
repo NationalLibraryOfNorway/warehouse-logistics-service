@@ -201,12 +201,13 @@ class WLSServiceTest {
 
         val itemRepoMock =
             createInMemItemRepo(
-                order.orderLine.map {
-                    createTestItem(
-                        hostId = it.hostId,
-                        hostName = order.hostName
-                    )
-                }.toMutableList()
+                order.orderLine
+                    .map {
+                        createTestItem(
+                            hostId = it.hostId,
+                            hostName = order.hostName
+                        )
+                    }.toMutableList()
             )
 
         val cut =
@@ -591,11 +592,10 @@ class WLSServiceTest {
                 return item
             }
 
-            override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean {
-                return ids.all { id ->
+            override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean =
+                ids.all { id ->
                     itemList.any { it.hostId == id.hostId && it.hostName == id.hostName }
                 }
-            }
 
             override suspend fun moveItem(
                 hostName: HostName,

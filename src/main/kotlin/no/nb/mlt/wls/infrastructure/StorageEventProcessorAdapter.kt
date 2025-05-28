@@ -13,6 +13,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.NotSupportedException
+import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.stereotype.Service
 
@@ -23,7 +24,8 @@ class StorageEventProcessorAdapter(
     private val storageEventRepository: EventRepository<StorageEvent>,
     private val storageSystems: List<StorageSystemFacade>,
     private val itemRepository: ItemRepository,
-    private val emailNotifier: EmailNotifier
+    private val emailNotifier: EmailNotifier,
+    private val statisticsService: StatisticsService
 ) : EventProcessor<StorageEvent> {
     override suspend fun processOutbox() {
         logger.trace { "Processing storage event outbox" }
@@ -85,6 +87,8 @@ class StorageEventProcessorAdapter(
 
         val processedEvent = storageEventRepository.markAsProcessed(event)
         logger.debug { "Marked event as processed: $processedEvent" }
+
+        statisticsService.recordStatisticsEvent(event)
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
@@ -157,7 +161,7 @@ class StorageEventProcessorAdapter(
                 logger.info { "Could not find a storage system to handle items: $itemList" }
             }
             storageSystemFacade?.updateOrder(updatedOrder)
-            logger.info { "Updated order [$updatedOrder] in storage system: $storageSystemFacade" }
+            logger.info { "Updated order [$updatedOrder] in storage system: ${storageSystemFacade ?: "none"}" }
         }
     }
 

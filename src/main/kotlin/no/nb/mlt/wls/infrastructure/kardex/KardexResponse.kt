@@ -4,9 +4,7 @@ data class KardexResponse(
     val message: String,
     val errors: List<KardexError>
 ) {
-    fun isError(): Boolean {
-        return errors.isNotEmpty()
-    }
+    fun isError(): Boolean = errors.isNotEmpty()
 }
 
 data class KardexError(

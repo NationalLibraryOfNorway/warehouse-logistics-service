@@ -74,8 +74,7 @@ class InventoryNotifierAdapter(
             .timeout(timeoutConfig.inventory)
             .doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
-            }
-            .onErrorMap { UnableToNotifyException("Unable to send callback", it) }
+            }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
             .block()
     }
 

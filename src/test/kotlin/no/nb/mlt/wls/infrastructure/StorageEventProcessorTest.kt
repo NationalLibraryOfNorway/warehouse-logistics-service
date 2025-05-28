@@ -17,6 +17,7 @@ import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
+import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +35,8 @@ class StorageEventProcessorTest {
                 storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemFacadeMock),
                 itemRepository = itemRepoMock,
-                emailNotifier = emailNotifierMock
+                emailNotifier = emailNotifierMock,
+                happyStatisticsServiceMock
             )
     }
 
@@ -266,5 +268,10 @@ class StorageEventProcessorTest {
             coEvery { getItem(testItem1.hostName, testItem1.hostId) } returns testItem1
             coEvery { getItem(testItem2.hostName, testItem2.hostId) } returns testItem2
             coEvery { getItem(testItem3.hostName, testItem3.hostId) } returns testItem3
+        }
+
+    private val happyStatisticsServiceMock =
+        mockk<StatisticsService> {
+            coEvery { recordStatisticsEvent(any()) } returns Unit
         }
 }
