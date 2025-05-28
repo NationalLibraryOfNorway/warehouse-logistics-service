@@ -446,19 +446,22 @@ class WLSService(
     }
 
     override suspend fun countStock(items: List<StockCount.CountStockDTO>) {
-        val itemMap = items.associateBy { (it.hostId to it.hostName) }
-        val itemsToCount = getItems(items.map { it.hostId }, items.first().hostName)
+        val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
+        val currentItems = getItems(items.map { it.hostId }, items.first().hostName)
 
-        // TODO - logging
-        itemsToCount.forEach { item ->
-            val itemToUpdate = itemMap[item.hostId to item.hostName]
-            if (itemToUpdate != null) {
-                itemRepository.updateLocationAndQuantity(itemToUpdate.hostId, itemToUpdate.hostName, itemToUpdate.location, itemToUpdate.quantity)
-                logger.trace {
-                    "completed"
+        currentItems.forEach { item ->
+            val updatedItem = updatedItemMap[item.hostId to item.hostName]
+            if (updatedItem != null) {
+                itemRepository.updateLocationAndQuantity(updatedItem.hostId, updatedItem.hostName, updatedItem.location, updatedItem.quantity)
+                logger.info {
+                    """
+                    Updated stock of item item ${updatedItem.hostName}_${updatedItem.hostId}:
+                    Updated quantity [${item.quantity} -> ${updatedItem.quantity}]
+                    Updated location [${item.location} -> ${updatedItem.location}]
+                    """.trimIndent()
                 }
             } else {
-                logger.info { "item not found" }
+                logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
             }
         }
     }
