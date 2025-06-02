@@ -116,21 +116,21 @@ class StorageEventProcessorAdapter(
             )
 
         mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
-            if (storageSystemFacade == null) {
-                logger.warn { "Could not find a storage system to handle items: $itemList" }
+            if (itemList.isEmpty()) {
+                logger.trace { "No items to be processed for $storageSystemFacade" }
+            } else {
+                val orderCopy =
+                    createdOrder.copy(
+                        orderLine =
+                            itemList.map {
+                                Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
+                            }
+                    )
+
+                storageSystemFacade.createOrder(orderCopy)
+                logger.info { "Created order [$orderCopy] in storage system: $storageSystemFacade" }
+                createAndSendEmails(orderCopy)
             }
-
-            val orderCopy =
-                createdOrder.copy(
-                    orderLine =
-                        itemList.map {
-                            Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
-                        }
-                )
-
-            storageSystemFacade?.createOrder(orderCopy)
-            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
-            createAndSendEmails(orderCopy)
         }
     }
 
@@ -152,19 +152,23 @@ class StorageEventProcessorAdapter(
                 updatedOrder.orderLine.map { it.hostId }
             )
 
-        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
-            if (storageSystemFacade == null) {
-                logger.info { "Could not find a storage system to handle items: $itemList" }
-            }
-            storageSystemFacade?.updateOrder(updatedOrder)
+        mapItemsOnLocation(items).forEach { (storageSystemFacade, _) ->
+            storageSystemFacade.updateOrder(updatedOrder)
             logger.info { "Updated order [$updatedOrder] in storage system: $storageSystemFacade" }
         }
     }
 
-    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
-        items.groupBy { item ->
-            storageSystems.firstOrNull { it.canHandleLocation(item.location) }
+    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade, List<Item>> {
+        val map = hashMapOf<StorageSystemFacade, List<Item>>()
+        storageSystems.forEach { systemFacade ->
+            val validItems =
+                items.filter { item ->
+                    systemFacade.canHandleItem(item)
+                }
+            map[systemFacade] = validItems
         }
+        return map
+    }
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
