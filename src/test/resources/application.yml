@@ -12,6 +12,22 @@ spring:
   # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
+  # Configure Kafka
+  kafka:
+    # If and how to retry sending Kafka messages
+    retry:
+      topic:
+        enabled: true
+        attempts: 5
+        backoff:
+          delay: 5s
+          multiplier: 2
+    template:
+      default-topic: hermes-mythos
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 # Server port for the main application
 server:
@@ -27,7 +43,7 @@ management:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
-      enabled: true
+      access: read_only
   server:
     port: 8888
 

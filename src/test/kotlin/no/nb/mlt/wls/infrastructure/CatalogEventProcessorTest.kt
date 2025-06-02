@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
+import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,7 +24,7 @@ class CatalogEventProcessorTest {
 
     @BeforeEach
     fun beforeEach() {
-        cut = CatalogEventProcessorAdapter(catalogMessageRepoMock, happyInventoryNotifierMock)
+        cut = CatalogEventProcessorAdapter(catalogMessageRepoMock, happyInventoryNotifierMock, happyStatisticsServiceMock)
     }
 
     @Test
@@ -174,5 +175,10 @@ class CatalogEventProcessorTest {
         mockk<InventoryNotifier> {
             coEvery { itemChanged(any(), any(), any()) } returns Unit
             coEvery { orderChanged(any(), any(), any()) } returns Unit
+        }
+
+    private val happyStatisticsServiceMock =
+        mockk<StatisticsService> {
+            coEvery { recordStatisticsEvent(any()) } returns Unit
         }
 }

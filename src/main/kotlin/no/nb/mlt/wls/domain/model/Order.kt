@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import no.nb.mlt.wls.domain.NullableNotBlank
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
@@ -166,6 +167,7 @@ data class Order(
             RETURNED
         }
 
+        @JsonIgnore
         fun isPickedOrFailed(): Boolean =
             when (this.status) {
                 Status.NOT_STARTED -> false
@@ -174,9 +176,7 @@ data class Order(
                 Status.RETURNED -> false
             }
 
-        /**
-         * Used to infer from the OrderItems in OrderLines that the Order is complete
-         */
+        @JsonIgnore
         fun isComplete(): Boolean =
             when (this.status) {
                 Status.NOT_STARTED -> false
@@ -185,6 +185,7 @@ data class Order(
                 Status.RETURNED -> true
             }
 
+        @JsonIgnore
         fun isReturned(): Boolean = this.status == Status.RETURNED
     }
 
