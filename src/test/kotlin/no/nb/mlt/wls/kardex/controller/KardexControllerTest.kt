@@ -7,10 +7,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.kardexapi.kardex.KardexMaterialUpdatePayload
+import no.nb.mlt.wls.application.kardexapi.kardex.KardexSyncMaterialPayload
 import no.nb.mlt.wls.application.kardexapi.kardex.KardexTransactionPayload
 import no.nb.mlt.wls.application.kardexapi.kardex.MotiveType
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
@@ -53,6 +55,8 @@ class KardexControllerTest(
                 .configureClient()
                 .baseUrl("/hermes/kardex/v1")
                 .build()
+
+        populateDb()
     }
 
     @Test
@@ -64,10 +68,13 @@ class KardexControllerTest(
                 .post()
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(materialUpdatePayload)
+                .bodyValue(listOf(materialUpdatePayload))
                 .exchange()
                 .expectStatus()
                 .isOk()
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.location == materialUpdatePayload.location)
         }
     }
 
@@ -80,10 +87,18 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue()
+                .bodyValue(listOf(orderUpdatePayload))
                 .exchange()
                 .expectStatus()
                 .isOk()
+
+            val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, testOrder.hostOrderId).awaitSingle()
+            assert(order.status != testOrder.status)
+            assert(order.status == Order.Status.IN_PROGRESS)
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity != testItem1.quantity)
         }
     }
 
@@ -96,18 +111,18 @@ class KardexControllerTest(
                 .post()
                 .uri("/stock-sync")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue()
+                .bodyValue(listOf(stockSyncPayload))
                 .exchange()
                 .expectStatus()
                 .isOk()
         }
     }
 
-    private val testItem1 = createTestItem(location = "")
+    private val testItem1 = createTestItem()
 
     private val testItem2 = createTestItem(hostId = "testItem2", location = UNKNOWN_LOCATION, quantity = 0)
 
-    private val order = createTestOrder()
+    private val testOrder = createTestOrder()
 
     private val materialUpdatePayload =
         KardexMaterialUpdatePayload(
@@ -121,13 +136,21 @@ class KardexControllerTest(
 
     private val orderUpdatePayload =
         KardexTransactionPayload(
-            hostOrderId = TODO(),
-            hostName = TODO(),
-            hostId = TODO(),
-            quantity = TODO(),
-            motiveType = TODO(),
-            location = TODO(),
-            operator = TODO()
+            hostOrderId = testOrder.hostOrderId,
+            hostName = testOrder.hostName,
+            hostId = testItem1.hostId,
+            quantity = 0.0,
+            motiveType = MotiveType.NotSet,
+            location = testItem1.location,
+            operator = "System"
+        )
+
+    private val stockSyncPayload =
+        KardexSyncMaterialPayload(
+            hostId = testItem1.hostId,
+            hostName = testItem1.hostName.toString(),
+            quantity = 1.0,
+            location = testItem1.location
         )
 
     fun populateDb() {
@@ -136,7 +159,7 @@ class KardexControllerTest(
                 itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem()))
             ).awaitLast()
 
-            orderRepository.deleteAll().then(orderRepository.save(order.toMongoOrder())).awaitSingle()
+            orderRepository.deleteAll().then(orderRepository.save(testOrder.toMongoOrder())).awaitSingle()
         }
     }
 }
