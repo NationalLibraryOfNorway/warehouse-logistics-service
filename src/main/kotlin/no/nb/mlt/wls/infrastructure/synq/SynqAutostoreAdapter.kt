@@ -3,10 +3,8 @@ package no.nb.mlt.wls.infrastructure.synq
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.TimeoutProperties
-import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
@@ -135,15 +133,6 @@ class SynqAutostoreAdapter(
             else -> false
         }
 
-    override fun canHandleItem(item: Item): Boolean {
-        if (item.preferredEnvironment == Environment.FRAGILE) return false
-        // There is no freezer in AutoStore
-        if (item.preferredEnvironment == Environment.FREEZE) return false
-        return when (item.itemCategory) {
-            ItemCategory.PAPER -> true
-            ItemCategory.FILM -> false
-            ItemCategory.BULK_ITEMS -> true
-            else -> false
-        }
-    }
+    // This adapter method is a no-op, since the item creation is handled by the standard SynQ adapter
+    override fun canHandleItem(item: Item): Boolean = false
 }

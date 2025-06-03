@@ -141,7 +141,7 @@ class SynqStandardAdapter(
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
             ItemCategory.FILM -> true
-            ItemCategory.BULK_ITEMS -> false
+            ItemCategory.BULK_ITEMS -> true
             else -> false
         }
     }
