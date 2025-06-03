@@ -3,7 +3,6 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
@@ -22,8 +21,7 @@ private val logger = KotlinLogging.logger {}
 class KardexController(
     private val updateItem: UpdateItem,
     private val pickOrderItems: PickOrderItems,
-    private val stockCount: StockCount,
-    private val pickItems: PickItems
+    private val stockCount: StockCount
 ) {
     @PostMapping("material-update")
     suspend fun materialUpdate(
@@ -42,7 +40,7 @@ class KardexController(
     ): ResponseEntity<Unit> {
         payloads.forEach { payload ->
             val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
-            pickItems.pickItems(payload.hostName, TODO())
+            updateItem.updateItem(UpdateItem.UpdateItemPayload(payload.hostName, payload.hostId, payload.quantity.toInt(), payload.location))
             pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
         }
 

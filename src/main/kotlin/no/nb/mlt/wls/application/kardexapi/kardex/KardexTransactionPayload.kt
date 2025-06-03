@@ -47,6 +47,8 @@ data class KardexTransactionPayload(
     fun mapToOrderItems(): List<String> {
         return listOf(hostId)
     }
+
+    fun mapToItemsPickedMap(): Map<String, Int> = mutableMapOf(this.hostId to this.quantity.toInt())
 }
 
 enum class MotiveType {
