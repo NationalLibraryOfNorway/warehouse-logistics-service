@@ -41,6 +41,7 @@ class SecurityConfig {
                 authorize("/hermes/api-docs/**", permitAll)
                 authorize("/hermes/swagger", permitAll)
                 authorize("/hermes/swagger/**", permitAll)
+                authorize("/hermes/swagger-ui/**", permitAll)
                 authorize("/hermes/webjars/swagger-ui/**", permitAll)
                 authorize("/actuator", permitAll)
                 authorize("/actuator/**", permitAll)
