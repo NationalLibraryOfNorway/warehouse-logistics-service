@@ -33,6 +33,7 @@ class SecurityConfig {
                 authorize("/hermes/kardex/api-docs/**", permitAll)
                 authorize("/hermes/kardex/swagger", permitAll)
                 authorize("/hermes/kardex/swagger/**", permitAll)
+                authorize("/hermes/kardex/swagger-ui/**", permitAll)
                 authorize("/hermes/kardex/webjars/swagger-ui/**", permitAll)
                 authorize("/hermes/kardex/v1/**", hasRole("kardex"))
                 authorize(anyExchange, authenticated)
