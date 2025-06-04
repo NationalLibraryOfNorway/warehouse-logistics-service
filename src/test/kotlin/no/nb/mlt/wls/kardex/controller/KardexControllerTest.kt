@@ -189,6 +189,27 @@ class KardexControllerTest(
         }
     }
 
+    @Test
+    fun `stock sync for missing item completes without creating item`() {
+        runTest {
+            val nonExistingItem = "non-existing"
+            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt())
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(stockSyncPayload.copy(hostId = nonExistingItem)))
+                .exchange()
+                .expectStatus()
+                .isOk()
+
+            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+        }
+    }
+
     private val testItem1 = createTestItem()
 
     private val testItem2 = createTestItem(hostId = "testItem2", location = UNKNOWN_LOCATION, quantity = 0)
