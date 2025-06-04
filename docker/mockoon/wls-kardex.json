@@ -1,0 +1,175 @@
+{
+  "uuid": "037f5164-e48b-447c-880d-ccdd5cef6019",
+  "lastMigration": 33,
+  "name": "Dummy Kardex API",
+  "endpointPrefix": "hermes-mock/kardex/v1/",
+  "latency": 0,
+  "port": 8182,
+  "hostname": "",
+  "folders": [],
+  "routes": [
+    {
+      "uuid": "63042113-08b6-4e93-bd37-3191346dd1c1",
+      "type": "http",
+      "documentation": "Stock sync from Kardex",
+      "method": "post",
+      "endpoint": "stock-sync",
+      "responses": [
+        {
+          "uuid": "9df3b789-cd83-4f8c-b51a-bcc01aa96cab",
+          "body": "{\n  \"message\": \"The item's 'hostId' is required, and it cannot be blank\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Update was received and Hermes has processed it.",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "2b070031-adff-480b-9e4b-187fdaa3f088",
+      "type": "http",
+      "documentation": "Update order info",
+      "method": "post",
+      "endpoint": "order-update",
+      "responses": [
+        {
+          "uuid": "dd81aeca-b50c-4002-b80e-dcf6aa266b62",
+          "body": "{\n  \"message\": \"The item's 'hostId' is required, and it cannot be blank\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Update was received and Hermes has processed it.",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    },
+    {
+      "uuid": "af7c4bb5-383c-4351-b916-82de37e60dca",
+      "type": "http",
+      "documentation": "Update material info",
+      "method": "post",
+      "endpoint": "material-update",
+      "responses": [
+        {
+          "uuid": "b54e3db4-c3ae-41a7-bfbe-015e1a2571cb",
+          "body": "{\n  \"message\": \"The item's 'hostId' is required, and it cannot be blank\"\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "label": "Update was received and Hermes has processed it.",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "bodyType": "INLINE",
+          "filePath": "",
+          "databucketID": "",
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false,
+          "fallbackTo404": false,
+          "default": true,
+          "crudKey": "id",
+          "callbacks": []
+        }
+      ],
+      "responseMode": null,
+      "streamingMode": null,
+      "streamingInterval": 0
+    }
+  ],
+  "rootChildren": [
+    {
+      "type": "route",
+      "uuid": "63042113-08b6-4e93-bd37-3191346dd1c1"
+    },
+    {
+      "type": "route",
+      "uuid": "2b070031-adff-480b-9e4b-187fdaa3f088"
+    },
+    {
+      "type": "route",
+      "uuid": "af7c4bb5-383c-4351-b916-82de37e60dca"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyRemovePrefix": false,
+  "tlsOptions": {
+    "enabled": false,
+    "type": "CERT",
+    "pfxPath": "",
+    "certPath": "",
+    "keyPath": "",
+    "caPath": "",
+    "passphrase": ""
+  },
+  "cors": true,
+  "headers": [
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET,POST,PUT,PATCH,DELETE,HEAD,OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Content-Type, Origin, Accept, Authorization, Content-Length, X-Requested-With"
+    }
+  ],
+  "proxyReqHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "proxyResHeaders": [
+    {
+      "key": "",
+      "value": ""
+    }
+  ],
+  "data": [],
+  "callbacks": []
+}
