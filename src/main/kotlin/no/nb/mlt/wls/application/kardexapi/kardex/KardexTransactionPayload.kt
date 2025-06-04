@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
 
 @Schema(
@@ -20,6 +22,7 @@ data class KardexTransactionPayload(
     @Schema(
         description = """Order ID in Kardex."""
     )
+    @field:NotBlank(message = "Order ID can not be blank")
     val hostOrderId: String,
     @Schema(
         description = """Name of the host system which the material belongs to.""",
@@ -29,15 +32,18 @@ data class KardexTransactionPayload(
     @Schema(
         description = """The main material ID of the item."""
     )
+    @field:NotBlank(message = "Item ID can not be blank")
     val hostId: String,
     @Schema(
         description = """The current quantity of the item."""
     )
+    @field:PositiveOrZero(message = "Item quantity must be positive")
     val quantity: Double,
     val motiveType: MotiveType,
     @Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
+    @field:NotBlank(message = "Location can not be blank")
     val location: String,
     @Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
@@ -47,8 +53,6 @@ data class KardexTransactionPayload(
     fun mapToOrderItems(): List<String> {
         return listOf(hostId)
     }
-
-    fun mapToItemsPickedMap(): Map<String, Int> = mutableMapOf(this.hostId to this.quantity.toInt())
 }
 
 enum class MotiveType {
