@@ -3,6 +3,7 @@ package no.nb.mlt.wls.kardex.controller
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
@@ -79,6 +80,41 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `material update with invalid payload fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt())
+                .post()
+                .uri("/material-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf("gibberish"))
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
+    fun `material update for missing item fails`() {
+        runTest {
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, "non-existing").awaitSingleOrNull()
+
+            assert(item == null)
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt())
+                .post()
+                .uri("/material-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(materialUpdatePayload.copy(hostId = "non-existing")))
+                .exchange()
+                .expectStatus()
+                .isNotFound
+        }
+    }
+
+    @Test
     fun `order update with correct payload updates order`() {
         runTest {
             webTestClient
@@ -99,6 +135,41 @@ class KardexControllerTest(
             val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
             assert(item.quantity == orderUpdatePayload.quantity.toInt())
             assert(item.quantity != testItem1.quantity)
+        }
+    }
+
+    @Test
+    fun `order update with invalid payload fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt())
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(orderUpdatePayload.copy(hostOrderId = "")))
+                .exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
+    fun `order update on missing order fails`() {
+        runTest {
+            val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, "non-existing").awaitSingleOrNull()
+            assert(order == null)
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt())
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(orderUpdatePayload.copy(hostOrderId = "non-existing")))
+                .exchange()
+                .expectStatus()
+                .isNotFound
         }
     }
 
