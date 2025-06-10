@@ -47,7 +47,7 @@ fun toSynqCategory(category: ItemCategory): String =
         ItemCategory.DISC -> "plate"
         ItemCategory.FILM -> "film"
         ItemCategory.EQUIPMENT -> "gjenstand"
-        ItemCategory.BULK_ITEMS -> "sekkepost"
+        ItemCategory.BULK_ITEMS -> "Sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
         ItemCategory.PHOTO -> "fotografi"
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
