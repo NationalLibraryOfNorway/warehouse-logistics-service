@@ -28,6 +28,7 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -524,12 +525,96 @@ class WLSServiceTest {
         }
     }
 
+    @Test
+    fun `moveItem should return items for orders`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
+        val testOrder =
+            testOrder.copy(status = Order.Status.COMPLETED, orderLine = listOf(Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED)))
+        val expectedOrder =
+            testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
+        val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
+        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        cut =
+            WLSService(
+                inMemItemRepo,
+                inMemOrderRepo,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.moveItem(testMoveItemPayload)
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+            val order = inMemOrderRepo.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
+        }
+    }
+
+    @Test
+    fun `updateItem should return items for orders`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedItem = createTestItem(location = testUpdateItemPayload.location, quantity = testUpdateItemPayload.quantity)
+        val testOrder =
+            testOrder.copy(status = Order.Status.COMPLETED, orderLine = listOf(Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED)))
+        val expectedOrder =
+            testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
+        val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
+        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        cut =
+            WLSService(
+                inMemItemRepo,
+                inMemOrderRepo,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.updateItem(testUpdateItemPayload)
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+            val order = inMemOrderRepo.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
+        }
+    }
+
+    //
+    // Test Helpers
+    //
+
     private val testItem = createTestItem()
 
     private val testOrder = createTestOrder()
 
     private val testMoveItemPayload =
         MoveItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION"
+        )
+
+    private val testUpdateItemPayload =
+        UpdateItem.UpdateItemPayload(
             hostName = testItem.hostName,
             hostId = testItem.hostId,
             quantity = 1,
@@ -602,9 +687,7 @@ class WLSServiceTest {
                 hostId: String,
                 quantity: Int,
                 location: String
-            ): Item {
-                TODO("Not relevant for testing")
-            }
+            ): Item = updateLocationAndQuantity(hostId, hostName, location, quantity)
 
             override suspend fun updateLocationAndQuantity(
                 hostId: String,
@@ -629,6 +712,46 @@ class WLSServiceTest {
                 itemList[index] = updatedItem
 
                 return itemList[index]
+            }
+        }
+    }
+
+    private fun createInMemoOrderRepo(orders: MutableList<Order>): OrderRepository {
+        return object : OrderRepository {
+            val orderList = orders
+
+            override suspend fun getOrder(
+                hostName: HostName,
+                hostOrderId: String
+            ): Order? = orderList.find { order -> order.hostName == hostName && order.hostOrderId == hostOrderId }
+
+            override suspend fun deleteOrder(order: Order) {
+                orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
+            }
+
+            override suspend fun updateOrder(order: Order): Order {
+                val originalOrder =
+                    orderList.find { it.hostName == order.hostName && it.hostOrderId == order.hostOrderId }
+                        ?: throw OrderNotFoundException("order not found")
+                orderList.remove(originalOrder)
+                if (orderList.add(order)) return order
+                throw RuntimeException()
+            }
+
+            override suspend fun createOrder(order: Order): Order {
+                orderList.add(order)
+                return order
+            }
+
+            override suspend fun getOrdersWithItem(
+                hostName: HostName,
+                returnedItems: List<String>
+            ): List<Order> {
+                val o =
+                    orderList.filter { order ->
+                        order.orderLine.any { orderItem -> returnedItems.contains(orderItem.hostId) }
+                    }
+                return o
             }
         }
     }

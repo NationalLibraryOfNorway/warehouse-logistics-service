@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository
 import org.springframework.data.mongodb.repository.Update
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.concurrent.TimeoutException
 
@@ -101,6 +102,21 @@ class MongoOrderRepositoryAdapter(
                     "Timed out while updating order in WLS database. Order: $order"
                 }
             }.awaitSingle()
+
+    override suspend fun getOrdersWithItem(
+        hostName: HostName,
+        orderItemIds: List<String>
+    ): List<Order> =
+        orderMongoRepository
+            .findAllOrdersWithHostNameAndOrderItems(hostName, orderItemIds)
+            .map { it.toOrder() }
+            .timeout(timeoutConfig.mongo)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while bulk fetching orders in WLS database. HostName: $hostName, Items: $orderItemIds"
+                }
+            }.collectList()
+            .awaitSingle()
 }
 
 @Repository
@@ -122,4 +138,10 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         address: Order.Address?,
         callbackUrl: String
     ): Mono<Long>
+
+    @Query("{hostName: ?0, \"orderLine.hostId\": {\$in: ?1}}")
+    fun findAllOrdersWithHostNameAndOrderItems(
+        hostName: HostName,
+        orderLine: List<String>
+    ): Flux<MongoOrder>
 }
