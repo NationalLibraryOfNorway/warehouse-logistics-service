@@ -110,6 +110,10 @@ class WLSService(
             } ?: throw RuntimeException("Could not update item")
 
         processCatalogEventAsync(catalogEvent)
+
+        if (item.quantity == 0 && updateItemPayload.quantity > 0) {
+            returnOrderItems(updateItemPayload.hostName, listOf(updateItemPayload.hostId))
+        }
         return updatedItem
     }
 
@@ -133,6 +137,10 @@ class WLSService(
             } ?: throw RuntimeException("Could not move item")
 
         processCatalogEventAsync(catalogEvent)
+
+        if (item.quantity == 0 && moveItemPayload.quantity > 0) {
+            returnOrderItems(moveItemPayload.hostName, listOf(moveItemPayload.hostId))
+        }
         return movedItem
     }
 
