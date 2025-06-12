@@ -391,6 +391,23 @@ class WLSService(
             }
         }
 
+    private suspend fun returnOrderItems(
+        hostName: HostName,
+        returnedItems: List<String>
+    ) {
+        val orders: List<Order> = orderRepository.getOrdersWithItem(hostName, returnedItems)
+        orders.forEach { order ->
+            val (_, orderEvent) =
+                transactionPort.executeInTransaction {
+                    val returnOrder = order.returnOrderItems(returnedItems)
+                    val updatedOrder = orderRepository.updateOrder(returnOrder)
+                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                    (updatedOrder to orderEvent)
+                } ?: (order to null)
+            if (orderEvent != null) processCatalogEventAsync(orderEvent)
+        }
+    }
+
     private suspend fun createMissingItems(
         missingId: String,
         hostName: HostName,

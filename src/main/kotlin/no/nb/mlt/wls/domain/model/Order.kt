@@ -32,18 +32,18 @@ data class Order(
         )
     }
 
-    private fun setOrderLineStatus(
-        hostIds: List<String>,
-        status: OrderItem.Status
-    ): Order {
-        if (isOrderClosed() && status != OrderItem.Status.RETURNED) {
+    /**
+     * Sets the status of order lines to PICKED. Will also update main Order if every line is complete/picked/returned
+     */
+    private fun pickOrderItems(hostIds: List<String>): Order {
+        if (isOrderClosed()) {
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
 
         val updatedOrderLineList =
             orderLine.map {
                 if (hostIds.contains(it.hostId)) {
-                    it.copy(status = status)
+                    it.copy(status = OrderItem.Status.PICKED)
                 } else {
                     it
                 }
@@ -55,6 +55,20 @@ data class Order(
 
         return this
             .copy(orderLine = updatedOrderLineList)
+            .updateOrderStatusFromOrderLines()
+    }
+
+    fun returnOrderItems(returnedItems: List<String>): Order {
+        val orderLines = this.orderLine.filter { orderItem -> returnedItems.contains(orderItem.hostId) }
+        val newOrderLines =
+            orderLines.map { orderItem ->
+                if (orderItem.status == OrderItem.Status.PICKED) {
+                    return@map orderItem.copy(status = OrderItem.Status.RETURNED)
+                }
+                orderItem
+            }
+        return this
+            .copy(orderLine = newOrderLines)
             .updateOrderStatusFromOrderLines()
     }
 
@@ -146,7 +160,7 @@ data class Order(
         }
     }
 
-    fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
+    fun pickOrder(itemIds: List<String>): Order = this.pickOrderItems(itemIds)
 
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
@@ -155,6 +169,8 @@ data class Order(
             throw ValidationException("Invalid URL: $url", it)
         }
     }
+
+    fun containsOrderItem(returnedItems: List<String>): Boolean = this.orderLine.any { orderItem -> returnedItems.contains(orderItem.hostId) }
 
     data class OrderItem(
         val hostId: String,
