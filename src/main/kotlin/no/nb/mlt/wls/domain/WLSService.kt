@@ -412,7 +412,9 @@ class WLSService(
                     val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to orderEvent)
                 } ?: (order to null)
-            if (orderEvent != null) processCatalogEventAsync(orderEvent)
+            if (orderEvent != null) {
+                processCatalogEventAsync(orderEvent)
+            }
         }
     }
 
