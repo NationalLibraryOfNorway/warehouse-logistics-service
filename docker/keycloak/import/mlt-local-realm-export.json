@@ -931,7 +931,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "OR22O4qGXFicYLGnkKeRpYZPXdeEjDcx",
+    "secret" : "dashboard",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "+" ],
     "notBefore" : 0,
