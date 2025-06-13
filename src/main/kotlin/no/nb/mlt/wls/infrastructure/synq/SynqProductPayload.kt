@@ -47,14 +47,14 @@ fun toSynqCategory(category: ItemCategory): String =
         ItemCategory.DISC -> "plate"
         ItemCategory.FILM -> "film"
         ItemCategory.EQUIPMENT -> "gjenstand"
-        ItemCategory.BULK_ITEMS -> "sekkepost"
+        ItemCategory.BULK_ITEMS -> "Sekkepost"
         ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
         ItemCategory.PHOTO -> "fotografi"
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
     }
 
-fun toSynqHostname(hostName: HostName): String {
-    return when (hostName) {
+fun toSynqHostname(hostName: HostName): String =
+    when (hostName) {
         HostName.ALMA -> "Alma"
         HostName.ASTA -> "Asta"
         HostName.MAVIS -> "Mavis"
@@ -62,4 +62,3 @@ fun toSynqHostname(hostName: HostName): String {
         HostName.TEMP_STORAGE -> "mellomlager"
         HostName.NONE -> throw NotImplementedError("Creating Products for HostName.NONE is not supported")
     }
-}

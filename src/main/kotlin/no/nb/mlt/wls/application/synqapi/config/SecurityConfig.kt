@@ -34,6 +34,7 @@ class SecurityConfig {
                 authorize("/hermes/synq/api-docs/**", permitAll)
                 authorize("/hermes/synq/swagger", permitAll)
                 authorize("/hermes/synq/swagger/**", permitAll)
+                authorize("/hermes/synq/swagger-ui/**", permitAll)
                 authorize("/hermes/synq/webjars/swagger-ui/**", permitAll)
                 authorize("/hermes/synq/v1/**", hasRole("synq"))
                 authorize(anyExchange, authenticated)

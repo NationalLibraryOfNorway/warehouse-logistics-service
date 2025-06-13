@@ -211,8 +211,7 @@ class WLSService(
                 existingItems.none { existingItem ->
                     existingItem.hostId == it
                 }
-            }
-            .map {
+            }.map {
                 val createdItem =
                     addItem(
                         ItemMetadata(

@@ -185,6 +185,10 @@ This will spin up the following services:
   - Use the following credentials to log in:
     - Username: `root`
     - Password: `toor`
+- Kafka: a message queue system for handling inventory statistics messages
+  - Can be accessed at: `http://localhost:9092`
+  - You can use the Kafka plugin for IntelliJ to view topics, queues, and their contents
+    - [Kafka plugin homepage](https://plugins.jetbrains.com/plugin/21704-kafka "Kafka plugin homepage")
 - Mockoon: a service used for mocking web server endpoints, used to test callback functionality
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`

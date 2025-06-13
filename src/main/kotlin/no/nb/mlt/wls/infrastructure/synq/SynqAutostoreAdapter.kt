@@ -3,10 +3,8 @@ package no.nb.mlt.wls.infrastructure.synq
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.TimeoutProperties
-import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
@@ -44,8 +42,7 @@ class SynqAutostoreAdapter(
                 logger.error(it) {
                     "Timed out while creating item '${item.hostId}' for ${item.hostName} in SynQ"
                 }
-            }
-            .onErrorResume(WebClientResponseException::class.java) { error ->
+            }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
                 if (errorText != null && errorText.contains("Duplicate product")) {
                     Mono.error(SynqError.DuplicateItemException(error))
@@ -72,8 +69,7 @@ class SynqAutostoreAdapter(
                 logger.error(it) {
                     "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
                 }
-            }
-            .onErrorResume(WebClientResponseException::class.java) { error ->
+            }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val synqError = error.getResponseBodyAs(SynqError::class.java) ?: throw createServerError(error)
                 if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
                     throw OrderNotFoundException(synqError.errorText)
@@ -110,8 +106,7 @@ class SynqAutostoreAdapter(
                 logger.error(it) {
                     "Timed out while deleting order '$orderId' for $hostName in SynQ"
                 }
-            }
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
 
@@ -127,8 +122,7 @@ class SynqAutostoreAdapter(
                 logger.error(it) {
                     "Timed out while updating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
                 }
-            }
-            .map { order }
+            }.map { order }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
 
@@ -139,15 +133,6 @@ class SynqAutostoreAdapter(
             else -> false
         }
 
-    override fun canHandleItem(item: Item): Boolean {
-        if (item.preferredEnvironment == Environment.FRAGILE) return false
-        // There is no freezer in AutoStore
-        if (item.preferredEnvironment == Environment.FREEZE) return false
-        return when (item.itemCategory) {
-            ItemCategory.PAPER -> true
-            ItemCategory.FILM -> false
-            ItemCategory.BULK_ITEMS -> true
-            else -> false
-        }
-    }
+    // This adapter method is a no-op, since the item creation is handled by the standard SynQ adapter
+    override fun canHandleItem(item: Item): Boolean = false
 }

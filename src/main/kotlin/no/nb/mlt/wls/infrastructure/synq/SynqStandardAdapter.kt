@@ -44,8 +44,7 @@ class SynqStandardAdapter(
                 logger.error(it) {
                     "Timed out while creating item '${item.hostId}' for ${item.hostName} in SynQ"
                 }
-            }
-            .onErrorResume(WebClientResponseException::class.java) { error ->
+            }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
                 if (errorText != null && errorText.contains("Duplicate product")) {
                     Mono.error(SynqError.DuplicateItemException(error))
@@ -72,8 +71,7 @@ class SynqStandardAdapter(
                 logger.error(it) {
                     "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
                 }
-            }
-            .onErrorResume(WebClientResponseException::class.java) { error ->
+            }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val synqError = error.getResponseBodyAs(SynqError::class.java) ?: throw createServerError(error)
                 if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
                     throw OrderNotFoundException(synqError.errorText)
@@ -110,8 +108,7 @@ class SynqStandardAdapter(
                 logger.error(it) {
                     "Timed out while deleting order '$orderId' for $hostName in SynQ"
                 }
-            }
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
+            }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
     }
 
@@ -127,8 +124,7 @@ class SynqStandardAdapter(
                 logger.error(it) {
                     "Timed out while updating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
                 }
-            }
-            .map { order }
+            }.map { order }
             .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
 
@@ -145,7 +141,7 @@ class SynqStandardAdapter(
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
             ItemCategory.FILM -> true
-            ItemCategory.BULK_ITEMS -> false
+            ItemCategory.BULK_ITEMS -> true
             else -> false
         }
     }

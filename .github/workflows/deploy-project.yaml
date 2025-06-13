@@ -68,7 +68,7 @@ jobs:
       - name: Install Maven and Initialize Repo
         # Map of environment variables available for this step only, you can define it on job or workflow level too
         env:
-          MAVEN_VERSION: 3.9.7 # So we can easily change the Maven version
+          MAVEN_VERSION: 3.9.10 # So we can easily change the Maven version
         run: | # Pipe allows to make the script multiline, if you need to run only one command you can skip it
           sudo apt-get update -y
           sudo apt-get install wget git gettext -y
