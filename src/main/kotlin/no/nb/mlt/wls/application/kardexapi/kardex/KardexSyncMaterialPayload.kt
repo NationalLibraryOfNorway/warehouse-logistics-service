@@ -17,7 +17,7 @@ data class KardexSyncMaterialPayload(
     @Schema(
         description = """The current quantity of the material."""
     )
-    val quantity: Int,
+    val quantity: Double,
     @Schema(
         description = """Name of the warehouse where the materials is located."""
     )
@@ -30,6 +30,6 @@ fun List<KardexSyncMaterialPayload>.toStockCountPayload(): List<StockCount.Count
             hostId = kardexPayload.hostId,
             hostName = HostName.fromString(kardexPayload.hostName),
             location = kardexPayload.location,
-            quantity = kardexPayload.quantity
+            quantity = kardexPayload.quantity.toInt()
         )
     }

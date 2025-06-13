@@ -40,6 +40,7 @@ class KardexController(
     ): ResponseEntity<Unit> {
         payloads.forEach { payload ->
             val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
+            updateItem.updateItem(UpdateItem.UpdateItemPayload(payload.hostName, payload.hostId, payload.quantity.toInt(), payload.location))
             pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
         }
 
