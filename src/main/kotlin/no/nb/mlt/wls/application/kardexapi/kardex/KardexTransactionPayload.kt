@@ -50,9 +50,7 @@ data class KardexTransactionPayload(
     )
     val operator: String
 ) {
-    fun mapToOrderItems(): List<String> {
-        return listOf(hostId)
-    }
+    fun mapToOrderItems(): List<String> = listOf(hostId)
 }
 
 enum class MotiveType {

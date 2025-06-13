@@ -247,9 +247,11 @@ class KardexControllerTest(
 
     fun populateDb() {
         runBlocking {
-            itemRepository.deleteAll().thenMany(
-                itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem()))
-            ).awaitLast()
+            itemRepository
+                .deleteAll()
+                .thenMany(
+                    itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem()))
+                ).awaitLast()
 
             orderRepository.deleteAll().then(orderRepository.save(testOrder.toMongoOrder())).awaitSingle()
         }

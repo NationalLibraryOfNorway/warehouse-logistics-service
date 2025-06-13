@@ -11,8 +11,6 @@ enum class ItemCategory {
     UNKNOWN;
 
     companion object {
-        fun fromString(value: String): ItemCategory {
-            return valueOf(value.uppercase())
-        }
+        fun fromString(value: String): ItemCategory = valueOf(value.uppercase())
     }
 }

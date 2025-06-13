@@ -42,12 +42,11 @@ data class KardexMaterialUpdatePayload(
     val operator: String,
     val motiveType: MotiveType
 ) {
-    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
-        return UpdateItem.UpdateItemPayload(
+    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload =
+        UpdateItem.UpdateItemPayload(
             hostName = hostName,
             hostId = hostId,
             quantity = quantity.toInt(),
             location = location
         )
-    }
 }
