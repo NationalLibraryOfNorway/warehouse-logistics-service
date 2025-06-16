@@ -95,7 +95,7 @@ class ItemModelConversionTest {
             owner = SynqOwner.NB,
             barcode = SynqProductPayload.Barcode("testItem-01"),
             description = "description",
-            productCategory = toSynqCategory(ItemCategory.PAPER, Environment.NONE),
+            productCategory = toSynqCategory(SynqOwner.NB, ItemCategory.PAPER, Environment.NONE),
             productUom = SynqProductPayload.ProductUom(SynqProductPayload.SynqPackaging.OBJ),
             false,
             hostName = toSynqHostname(HostName.AXIELL)
