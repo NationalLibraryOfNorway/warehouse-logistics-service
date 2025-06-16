@@ -36,16 +36,19 @@ fun Item.toSynqPayload() =
         owner = toSynqOwner(hostName),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
-        productCategory = toSynqCategory(itemCategory, preferredEnvironment),
+        productCategory = toSynqCategory(toSynqOwner(hostName), itemCategory, preferredEnvironment),
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
         hostName = toSynqHostname(hostName)
     )
 
 fun toSynqCategory(
+    owner: SynqOwner,
     category: ItemCategory,
     environment: Environment
 ): String {
+    if (owner == SynqOwner.AV) return "Arkivmateriale"
+
     if (environment == Environment.FREEZE) {
         if (category == ItemCategory.FILM) return "Film_Frys"
         if (category == ItemCategory.PHOTO) return "Fotografi_Frys"
