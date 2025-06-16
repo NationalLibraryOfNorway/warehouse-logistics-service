@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -35,23 +36,31 @@ fun Item.toSynqPayload() =
         owner = toSynqOwner(hostName),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
-        productCategory = toSynqCategory(itemCategory),
+        productCategory = toSynqCategory(itemCategory, preferredEnvironment),
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
         hostName = toSynqHostname(hostName)
     )
 
-fun toSynqCategory(category: ItemCategory): String =
-    when (category) {
-        ItemCategory.PAPER -> "papir"
-        ItemCategory.DISC -> "plate"
-        ItemCategory.FILM -> "film"
-        ItemCategory.EQUIPMENT -> "gjenstand"
+fun toSynqCategory(
+    category: ItemCategory,
+    environment: Environment
+): String {
+    if (environment == Environment.FREEZE) {
+        if (category == ItemCategory.FILM) return "Film_Frys"
+        if (category == ItemCategory.PHOTO) return "Fotografi_Frys"
+    }
+    return when (category) {
+        ItemCategory.FILM -> "Film"
+        ItemCategory.PHOTO -> "Fotografi"
+        ItemCategory.EQUIPMENT -> "Gjenstand"
+        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd"
+        ItemCategory.PAPER -> "Papir"
+        ItemCategory.DISC -> "Plate"
         ItemCategory.BULK_ITEMS -> "Sekkepost"
-        ItemCategory.MAGNETIC_TAPE -> "magnetbånd"
-        ItemCategory.PHOTO -> "fotografi"
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
     }
+}
 
 fun toSynqHostname(hostName: HostName): String =
     when (hostName) {
