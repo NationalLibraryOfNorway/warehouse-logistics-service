@@ -39,7 +39,6 @@ data class Order(
         if (isOrderClosed() && status != OrderItem.Status.RETURNED) {
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
-
         val updatedOrderLineList =
             orderLine.map {
                 if (hostIds.contains(it.hostId)) {
@@ -52,7 +51,6 @@ data class Order(
         if (updatedOrderLineList == orderLine) {
             throw IllegalOrderStateException("Order line item not found: $hostIds")
         }
-
         return this
             .copy(orderLine = updatedOrderLineList)
             .updateOrderStatusFromOrderLines()
@@ -148,6 +146,8 @@ data class Order(
 
     fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
 
+    fun returnOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
+
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
             URI(url).toURL().toURI()
@@ -155,6 +155,8 @@ data class Order(
             throw ValidationException("Invalid URL: $url", it)
         }
     }
+
+    fun containsOrderItem(returnedItems: List<String>): Boolean = this.orderLine.any { orderItem -> returnedItems.contains(orderItem.hostId) }
 
     data class OrderItem(
         val hostId: String,

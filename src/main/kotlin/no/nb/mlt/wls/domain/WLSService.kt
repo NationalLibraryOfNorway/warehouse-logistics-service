@@ -110,6 +110,10 @@ class WLSService(
             } ?: throw RuntimeException("Could not update item")
 
         processCatalogEventAsync(catalogEvent)
+
+        if (item.quantity == 0 && updateItemPayload.quantity > 0) {
+            returnOrderItems(updateItemPayload.hostName, listOf(updateItemPayload.hostId))
+        }
         return updatedItem
     }
 
@@ -133,6 +137,10 @@ class WLSService(
             } ?: throw RuntimeException("Could not move item")
 
         processCatalogEventAsync(catalogEvent)
+
+        if (item.quantity == 0 && moveItemPayload.quantity > 0) {
+            returnOrderItems(moveItemPayload.hostName, listOf(moveItemPayload.hostId))
+        }
         return movedItem
     }
 
@@ -390,6 +398,30 @@ class WLSService(
                 }
             }
         }
+
+    private suspend fun returnOrderItems(
+        hostName: HostName,
+        returnedItems: List<String>
+    ) {
+        val orders: List<Order> = orderRepository.getOrdersWithItem(hostName, returnedItems)
+
+        orders.forEach { order ->
+            val (_, orderEvent) =
+                transactionPort.executeInTransaction {
+                    val returnOrder = order.returnOrder(returnedItems)
+                    val updatedOrder = orderRepository.updateOrder(returnOrder)
+                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                    (updatedOrder to orderEvent)
+                } ?: (order to null)
+
+            if (orderEvent == null) {
+                logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as returned, transaction failed" }
+                return@forEach
+            }
+
+            processCatalogEventAsync(orderEvent)
+        }
+    }
 
     private suspend fun createMissingItems(
         missingId: String,
