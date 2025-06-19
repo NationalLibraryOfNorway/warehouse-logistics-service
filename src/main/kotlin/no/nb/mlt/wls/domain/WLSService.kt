@@ -404,6 +404,7 @@ class WLSService(
         returnedItems: List<String>
     ) {
         val orders: List<Order> = orderRepository.getOrdersWithItem(hostName, returnedItems)
+
         orders.forEach { order ->
             val (_, orderEvent) =
                 transactionPort.executeInTransaction {
@@ -412,9 +413,13 @@ class WLSService(
                     val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to orderEvent)
                 } ?: (order to null)
-            if (orderEvent != null) {
-                processCatalogEventAsync(orderEvent)
+
+            if (orderEvent == null) {
+                logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as returned, transaction failed" }
+                return@forEach
             }
+
+            processCatalogEventAsync(orderEvent)
         }
     }
 
