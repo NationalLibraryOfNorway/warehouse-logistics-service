@@ -139,7 +139,7 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         callbackUrl: String
     ): Mono<Long>
 
-    @Query("{hostName: ?0, \"orderLine.hostId\": {\$in: ?1}}")
+    @Query("{hostName: ?0, \"orderLine.hostId\": {\$in: ?1}, \"orderLine.status\": \"PICKED\"}")
     fun findAllOrdersWithHostNameAndOrderItems(
         hostName: HostName,
         orderLine: List<String>
