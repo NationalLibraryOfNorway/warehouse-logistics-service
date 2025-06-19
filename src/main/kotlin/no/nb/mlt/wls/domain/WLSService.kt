@@ -407,7 +407,7 @@ class WLSService(
         orders.forEach { order ->
             val (_, orderEvent) =
                 transactionPort.executeInTransaction {
-                    val returnOrder = order.returnOrderItems(returnedItems)
+                    val returnOrder = order.returnOrder(returnedItems)
                     val updatedOrder = orderRepository.updateOrder(returnOrder)
                     val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to orderEvent)

@@ -32,18 +32,17 @@ data class Order(
         )
     }
 
-    /**
-     * Sets the status of order lines to PICKED. Will also update main Order if every line is complete/picked/returned
-     */
-    private fun pickOrderItems(hostIds: List<String>): Order {
-        if (isOrderClosed()) {
+    private fun setOrderLineStatus(
+        hostIds: List<String>,
+        status: OrderItem.Status
+    ): Order {
+        if (isOrderClosed() && status != OrderItem.Status.RETURNED) {
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
-
         val updatedOrderLineList =
             orderLine.map {
                 if (hostIds.contains(it.hostId)) {
-                    it.copy(status = OrderItem.Status.PICKED)
+                    it.copy(status = status)
                 } else {
                     it
                 }
@@ -52,23 +51,8 @@ data class Order(
         if (updatedOrderLineList == orderLine) {
             throw IllegalOrderStateException("Order line item not found: $hostIds")
         }
-
         return this
             .copy(orderLine = updatedOrderLineList)
-            .updateOrderStatusFromOrderLines()
-    }
-
-    fun returnOrderItems(returnedItems: List<String>): Order {
-        val orderLines = this.orderLine.filter { orderItem -> returnedItems.contains(orderItem.hostId) }
-        val newOrderLines =
-            orderLines.map { orderItem ->
-                if (orderItem.status == OrderItem.Status.PICKED) {
-                    return@map orderItem.copy(status = OrderItem.Status.RETURNED)
-                }
-                orderItem
-            }
-        return this
-            .copy(orderLine = newOrderLines)
             .updateOrderStatusFromOrderLines()
     }
 
@@ -160,7 +144,9 @@ data class Order(
         }
     }
 
-    fun pickOrder(itemIds: List<String>): Order = this.pickOrderItems(itemIds)
+    fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
+
+    fun returnOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
