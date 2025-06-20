@@ -5,7 +5,6 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.statistics.ItemStatisticsEvent
 import no.nb.mlt.wls.domain.model.statistics.OrderStatisticsEvent
 
@@ -62,19 +61,6 @@ fun OrderCreated.toStatisticsEvent(): OrderStatisticsEvent =
                 "type" to createdOrder.orderType,
                 "status" to createdOrder.status,
                 "orderLines" to createdOrder.orderLine
-            )
-    )
-
-fun OrderUpdated.toStatisticsEvent(): OrderStatisticsEvent =
-    OrderStatisticsEvent(
-        orderId = updatedOrder.hostOrderId,
-        eventType = "OrderUpdate",
-        details =
-            mapOf(
-                "host" to updatedOrder.hostName,
-                "type" to updatedOrder.orderType,
-                "status" to updatedOrder.status,
-                "orderLines" to updatedOrder.orderLine
             )
     )
 

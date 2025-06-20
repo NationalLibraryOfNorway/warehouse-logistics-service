@@ -2,12 +2,12 @@
 name: Deploy Project
 run-name: ${{ github.actor }} is deploying the project
 
-# Decides when the workflow gets triggered, this is a "coarse" definition for whole workflow
+# Decides when the workflow gets triggered, this is a "coarse" definition for the whole workflow
 # Jobs can refine it further or use the defaults defined here
 # List of all events that can be used for triggering workflows:
 # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
 on:
-  # Run on push to main branch and tags in the form v*.*.* eg.: v1.0.0
+  # Run on push to the main branch, and tags in the form v*.*.* eg.: v1.0.0
   push:
     branches:
       - main
@@ -18,7 +18,7 @@ on:
 
 # Used to make sure that only one workflow in the specified group runs at the same time
 concurrency:
-  # Define concurrency group which is then used to determine duplicate workflow runs
+  # Define a concurrency group which is then used to determine duplicate workflow runs
   # The second property uses fallback values since not every run is a PR run
   group: ${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
   cancel-in-progress: true
@@ -32,12 +32,12 @@ permissions:
 
 # List of jobs that this workflow executes, each job can run on different runners, have different steps, etc.
 jobs:
-  # Unique identifier for this job, make sure it is unique, you can use "name" property to give it a more descriptive name
+  # Unique identifier for this job, make sure it is unique, you can use the "name" property to give it a more descriptive name
   test-project:
     # This name is displayed in the GitHub UI when the job is running
     name: Build and Test the Project
     # Defines what runner to run this job on, if you want you can use an array of tags/identifiers to match the runner name
-    # For example this can be written as [self-hosted, linux] and only runner matching all of these values will run it
+    # For example, this can be written as [self-hosted, linux], and only the runner matching all of these values will run it
     runs-on: self-hosted-linux
     # List of steps that this job executes in sequential order, any changes done in one step will carry over to others
     # Be mindful of that when making changes to files
@@ -48,7 +48,7 @@ jobs:
         # In this case the provided identifier is a reference to a repository in: https://github.com/actions/checkout and the version is set tov4
         uses: actions/checkout@v4
 
-      # This steps installs specified Java JDK
+      # This step installs the specified Java JDK
       - name: Setup Java JDK
         uses: actions/setup-java@v4
         # Settings/Inputs/Parameters for the action
@@ -58,7 +58,7 @@ jobs:
           java-version: 21
           architecture: x64
           # Sets up caching and restoring of dependencies for the specified package manager
-          # NB! If you decide to use a non-standard path for package repositories you need to set up caching yourself
+          # NB! If you decide to use a non-standard path for package repositories, you need to set up caching yourself
           #     In that case use the "@actions/cache" action
           cache: maven
 
@@ -80,12 +80,12 @@ jobs:
           mvn -v
 
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing the secrets
-      # GitHub does not permit to check secret value or re-use the secrets
-      # Speak with Platform team to set up a namespace if needed
+      # GitHub does not permit checking secret's value or re-use the secrets
+      # Speak with the Platform team to set up a namespace if needed
       # They should also create an approle "user" which allows fetching the secrets within a GitHub action
       #
       # The url must be in form: https://<URL>, while IDs are UUIDs
-      # When providing path to the secret you need to include "/data" after namespace and before the secret name
+      # When providing the path to the secret you need to include "/data" after namespace and before the secret name
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
@@ -137,7 +137,7 @@ jobs:
           if-no-files-found: error # Fail if artifact is not found
           overwrite: true # Allow overwriting of previous artifacts
 
-  # This job builds a Docker image with relevant tags and labels, and publishes it to Harbor
+  # This job builds a Docker image with relevant tags and labels and publishes it to Harbor
   publish-image:
     name: Build and Publish the Docker Image
     # Defines that test-project job must finish successfully first, before this one can run
@@ -145,7 +145,7 @@ jobs:
     # The if statement limits the job to only run if action was triggered on main branch or one of the tags
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: self-hosted-linux
-    # Outputs allows a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
+    # Outputs allow a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
       # The metadata step produces an image name that is then used in deployment jobs
       # Gets the value from the "meta" step: [[meta-step-id]]
@@ -181,13 +181,13 @@ jobs:
           password: ${{ env.HARBOR_PASSWORD }}
 
       - name: Extract Metadata for Docker
-        # Give this step a unique ID for referencing it elsewhere, here it is used to get the value of tags #[[meta-step-id]]
+        # Give this step a unique ID for referencing it elsewhere; here it is used to get the value of tags #[[meta-step-id]]
         id: meta
         uses: docker/metadata-action@v5
         with:
           # Define to use for tags, can be multiple values if needed
           images: harbor.nb.no/mlt/wls
-          # Defines list of tag types to use for generating the metadata
+          # Defines a list of tag types to use for generating the metadata
           # the semver type uses GitHub tag in semver form and turns it into a proper tag for the image (semantic versioning: v4.2.0 -> 4.2.0)
           # the ref type bases its version either on branch or PR event and generates the tag for the image based on that (branch -> branch-name, pr -> pr-number)
           tags: |
@@ -195,7 +195,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
 
-      # Downloads previously uploaded artifact with provided id/name, see [[packaged-project-id]] to see how it was defined
+      # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
       - name: Download the JAR File
         uses: actions/download-artifact@v4
         with:
@@ -203,20 +203,20 @@ jobs:
 
       # Builds and publishes the image in Harbor
       - name: Build the Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: true # Makes the action push image to Harbor, equivalent to "--output-type=registry"
           context: . # Build context, makes the build process use actual files in the runner instead of using files from GitHub
           file: ./docker/Dockerfile # Override the path to the Dockerfile, since this project has it in the docker folder
-          tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta step
-          labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta step
+          tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta-step
+          labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta-step
 
   # Deploys the image to kubernetes stage environment
   deploy-to-stage:
     name: Deploy to Kubernetes Stage
     needs: publish-image
-    # Runs only on main branch
-    # Can be changed to also run on tags, to ensure that stage & prod use same image after a new version release
+    # Runs only on the main branch
+    # Can be changed to also run on tags to ensure that stage and prod use the same image after a new version release
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
     # Defines what environment this job references, this allows for setting deployment protections in the project
@@ -289,8 +289,7 @@ jobs:
         uses: azure/setup-kubectl@v4
 
       # Same concept as in stage deployment, just using production values
-      # Since production often generates an extra image with the latest tag,
-      # we grab the first image
+      # Since production often generates an extra image with the latest tag, we grab the first image
       - name: Deploy to Prod
         run: |
           tag=$(echo "${{ github.ref_name }}" | sed 's/v//g')

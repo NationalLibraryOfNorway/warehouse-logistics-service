@@ -17,7 +17,6 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
@@ -36,8 +35,6 @@ import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
-import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -61,7 +58,6 @@ class WLSService(
 ) : AddNewItem,
     CreateOrder,
     DeleteOrder,
-    UpdateOrder,
     GetOrder,
     GetItem,
     UpdateItem,
@@ -260,47 +256,6 @@ class WLSService(
         processStorageEventAsync(storageEvent)
     }
 
-    override suspend fun updateOrder(
-        hostName: HostName,
-        hostOrderId: String,
-        itemHostIds: List<String>,
-        orderType: Order.Type,
-        contactPerson: String,
-        address: Order.Address?,
-        note: String?,
-        callbackUrl: String
-    ): Order {
-        val itemIds = itemHostIds.map { ItemId(hostName, it) }
-
-        if (!itemRepository.doesEveryItemExist(itemIds)) {
-            throw ValidationException("All order items in order must exist")
-        }
-
-        val order = getOrderOrThrow(hostName, hostOrderId)
-
-        val (updatedOrder, storageEvent) =
-            transactionPort.executeInTransaction {
-                val updatedOrder =
-                    orderRepository.updateOrder(
-                        order.updateOrder(
-                            itemIds = itemHostIds,
-                            callbackUrl = callbackUrl,
-                            orderType = orderType,
-                            address = address ?: order.address,
-                            note = note,
-                            contactPerson = contactPerson
-                        )
-                    )
-                val storageEvent = storageEventRepository.save(OrderUpdated(updatedOrder))
-
-                (updatedOrder to storageEvent)
-            } ?: throw RuntimeException("Could not update order")
-
-        processStorageEventAsync(storageEvent)
-
-        return updatedOrder
-    }
-
     override suspend fun updateOrderStatus(
         hostName: HostName,
         hostOrderId: String,
@@ -403,7 +358,7 @@ class WLSService(
         hostName: HostName,
         returnedItems: List<String>
     ) {
-        val orders: List<Order> = orderRepository.getOrdersWithItem(hostName, returnedItems)
+        val orders: List<Order> = orderRepository.getOrdersWithItems(hostName, returnedItems)
 
         orders.forEach { order ->
             val (_, orderEvent) =

@@ -103,7 +103,7 @@ class MongoOrderRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun getOrdersWithItem(
+    override suspend fun getOrdersWithItems(
         hostName: HostName,
         orderItemIds: List<String>
     ): List<Order> =
