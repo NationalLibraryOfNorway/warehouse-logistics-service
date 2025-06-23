@@ -32,6 +32,7 @@ import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
@@ -65,6 +66,7 @@ class WLSService(
     MoveItem,
     PickOrderItems,
     PickItems,
+    StockCount,
     SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -425,6 +427,27 @@ class WLSService(
                 Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
                 Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
                 """.trimIndent()
+            }
+        }
+    }
+
+    override suspend fun countStock(items: List<StockCount.CountStockDTO>) {
+        val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
+        val currentItems = getItems(items.map { it.hostId }, items.first().hostName)
+
+        currentItems.forEach { item ->
+            val updatedItem = updatedItemMap[item.hostId to item.hostName]
+            if (updatedItem != null) {
+                itemRepository.updateLocationAndQuantity(updatedItem.hostId, updatedItem.hostName, updatedItem.location, updatedItem.quantity)
+                logger.info {
+                    """
+                    Updated stock of item item ${updatedItem.hostName}_${updatedItem.hostId}:
+                    Updated quantity [${item.quantity} -> ${updatedItem.quantity}]
+                    Updated location [${item.location} -> ${updatedItem.location}]
+                    """.trimIndent()
+                }
+            } else {
+                logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
             }
         }
     }

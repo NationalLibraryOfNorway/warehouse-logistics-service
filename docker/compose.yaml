@@ -123,6 +123,17 @@ services:
     volumes:
       - ./mockoon/wls-callbacks.json:/data/wls-callbacks.json
 
+  # Also use Mockoon for testing Kardex
+  mockoon-kardex:
+    image: mockoon/cli:9.2.0
+    restart: always
+    hostname: mockoon
+    ports:
+      - "8182:8182"
+    command: --data /data/wls-kardex.json --port 8182 --log-transaction
+    volumes:
+      - ./mockoon/wls-kardex.json:/data/wls-kardex.json
+
   # Also use Mockoon for testing the SynQ Controller
   mockoon-synq:
     image: mockoon/cli:9.2.0

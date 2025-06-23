@@ -287,6 +287,7 @@ class OrderControllerTest(
     fun `deleteOrder with valid data deletes order`() =
         runTest {
             coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
             coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
