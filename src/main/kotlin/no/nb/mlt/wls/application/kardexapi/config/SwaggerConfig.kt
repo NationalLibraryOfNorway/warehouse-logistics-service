@@ -31,13 +31,13 @@ class SwaggerConfig {
         OpenAPI()
             .info(
                 Info()
-                    .title("SynQ updates port for Hermes WLS")
+                    .title("Kardex updates port for Hermes WLS")
                     .description(
                         """
                         Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
                         Hermes facilitates communication between the NLN's storage systems and catalogues, serving as a master system.
 
-                        This submodule of Hermes is responsible for receiving product/item and order updates from SynQ.
+                        This submodule of Hermes is responsible for receiving product/item and order updates from Kardex.
                         Hermes converts these updates into a format that can be used by the rest of the system.
                         These are then sent along to appropriate catalogues, they also update internal item and order information.
                         """.trimIndent()
