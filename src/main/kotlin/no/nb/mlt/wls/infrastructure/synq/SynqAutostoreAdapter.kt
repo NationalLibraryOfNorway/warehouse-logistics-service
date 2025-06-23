@@ -110,22 +110,6 @@ class SynqAutostoreAdapter(
             .awaitSingle()
     }
 
-    override suspend fun updateOrder(order: Order): Order =
-        webClient
-            .put()
-            .uri(URI.create("$baseUrl/orders/batch"))
-            .bodyValue(SynqOrder(listOf(order.toAutostorePayload())))
-            .retrieve()
-            .toBodilessEntity()
-            .timeout(timeoutProperties.storage)
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while updating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
-                }
-            }.map { order }
-            .onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
-            .awaitSingle()
-
     override suspend fun canHandleLocation(location: String): Boolean =
         when (location.uppercase()) {
             "SYNQ_AUTOSTORE" -> true

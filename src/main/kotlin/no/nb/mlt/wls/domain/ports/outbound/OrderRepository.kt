@@ -16,6 +16,11 @@ interface OrderRepository {
     suspend fun updateOrder(order: Order): Order
 
     suspend fun createOrder(order: Order): Order
+
+    suspend fun getOrdersWithItems(
+        hostName: HostName,
+        orderItemIds: List<String>
+    ): List<Order>
 }
 
 class OrderUpdateException(

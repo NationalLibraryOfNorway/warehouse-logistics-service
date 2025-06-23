@@ -21,14 +21,13 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -337,55 +336,6 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `updateOrder with valid items should complete`() {
-        val updateOrderEvent = OrderUpdated(updatedOrder)
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(updatedOrder.hostName, updatedOrder.hostOrderId) } answers { testOrder }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { updatedOrder to updateOrderEvent }
-        coEvery { storageEventProcessor.handleEvent(updateOrderEvent) } answers { }
-
-        runTest {
-            val updateOrderResult = callUpdateOrder()
-
-            assertThat(updateOrderResult).isEqualTo(updatedOrder)
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 1) { storageEventProcessor.handleEvent(updateOrderEvent) }
-        }
-    }
-
-    @Test
-    fun `updateOrder should fail if items don't exist`() {
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
-
-        runTest {
-            assertThrows<ValidationException>(message = "All order items in order must exist") {
-                callUpdateOrder()
-            }
-
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
-        }
-    }
-
-    @Test
-    fun `updateOrder should fail when order does not exist`() {
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
-
-        runTest {
-            assertThrows<OrderNotFoundException>(message = "Order not found") {
-                callUpdateOrder()
-            }
-
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
-        }
-    }
-
-    @Test
     fun `updateOrderStatus should update status and send callback`() {
         val completedOrder = testOrder.copy(status = Order.Status.COMPLETED)
         val orderStatusUpdatedEvent = OrderEvent(completedOrder)
@@ -524,12 +474,96 @@ class WLSServiceTest {
         }
     }
 
+    @Test
+    fun `moveItem should return items for orders`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
+        val testOrder =
+            testOrder.copy(status = Order.Status.COMPLETED, orderLine = listOf(Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED)))
+        val expectedOrder =
+            testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
+        val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
+        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        cut =
+            WLSService(
+                inMemItemRepo,
+                inMemOrderRepo,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.moveItem(testMoveItemPayload)
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+            val order = inMemOrderRepo.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
+        }
+    }
+
+    @Test
+    fun `updateItem should return items for orders`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedItem = createTestItem(location = testUpdateItemPayload.location, quantity = testUpdateItemPayload.quantity)
+        val testOrder =
+            testOrder.copy(status = Order.Status.COMPLETED, orderLine = listOf(Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED)))
+        val expectedOrder =
+            testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
+        val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
+        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        cut =
+            WLSService(
+                inMemItemRepo,
+                inMemOrderRepo,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.updateItem(testUpdateItemPayload)
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+            val order = inMemOrderRepo.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
+        }
+    }
+
+    //
+    // Test Helpers
+    //
+
     private val testItem = createTestItem()
 
     private val testOrder = createTestOrder()
 
     private val testMoveItemPayload =
         MoveItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION"
+        )
+
+    private val testUpdateItemPayload =
+        UpdateItem.UpdateItemPayload(
             hostName = testItem.hostName,
             hostId = testItem.hostId,
             quantity = 1,
@@ -549,18 +583,6 @@ class WLSServiceTest {
             address = testOrder.address,
             note = testOrder.note,
             callbackUrl = testOrder.callbackUrl
-        )
-
-    private suspend fun callUpdateOrder() =
-        cut.updateOrder(
-            updatedOrder.hostName,
-            updatedOrder.hostOrderId,
-            updatedOrder.orderLine.map { it.hostId },
-            updatedOrder.orderType,
-            updatedOrder.contactPerson,
-            updatedOrder.address,
-            updatedOrder.note,
-            updatedOrder.callbackUrl
         )
 
     private fun createInMemItemRepo(items: MutableList<Item>): ItemRepository {
@@ -602,9 +624,7 @@ class WLSServiceTest {
                 hostId: String,
                 quantity: Int,
                 location: String
-            ): Item {
-                TODO("Not relevant for testing")
-            }
+            ): Item = updateLocationAndQuantity(hostId, hostName, location, quantity)
 
             override suspend fun updateLocationAndQuantity(
                 hostId: String,
@@ -629,6 +649,46 @@ class WLSServiceTest {
                 itemList[index] = updatedItem
 
                 return itemList[index]
+            }
+        }
+    }
+
+    private fun createInMemoOrderRepo(orders: MutableList<Order>): OrderRepository {
+        return object : OrderRepository {
+            val orderList = orders
+
+            override suspend fun getOrder(
+                hostName: HostName,
+                hostOrderId: String
+            ): Order? = orderList.find { order -> order.hostName == hostName && order.hostOrderId == hostOrderId }
+
+            override suspend fun deleteOrder(order: Order) {
+                orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
+            }
+
+            override suspend fun updateOrder(order: Order): Order {
+                val originalOrder =
+                    orderList.find { it.hostName == order.hostName && it.hostOrderId == order.hostOrderId }
+                        ?: throw OrderNotFoundException("order not found")
+                orderList.remove(originalOrder)
+                if (orderList.add(order)) return order
+                throw RuntimeException()
+            }
+
+            override suspend fun createOrder(order: Order): Order {
+                orderList.add(order)
+                return order
+            }
+
+            override suspend fun getOrdersWithItems(
+                hostName: HostName,
+                orderItemIds: List<String>
+            ): List<Order> {
+                val o =
+                    orderList.filter { order ->
+                        order.orderLine.any { orderItem -> orderItemIds.contains(orderItem.hostId) }
+                    }
+                return o
             }
         }
     }

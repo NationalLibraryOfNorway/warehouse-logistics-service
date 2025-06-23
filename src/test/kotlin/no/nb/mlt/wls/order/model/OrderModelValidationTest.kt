@@ -8,7 +8,6 @@ import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.toApiUpdatePayload
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -80,41 +79,6 @@ class OrderModelValidationTest {
         assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
-    @Test
-    fun `valid update order should pass validation`() {
-        assert(validator.validate(validUpdateOrderPayload).isEmpty())
-    }
-
-    @Test
-    fun `update order with blank hostOrderId should fail validation`() {
-        val invalidPayload = validUpdateOrderPayload.copy(hostOrderId = "")
-        assert(validator.validate(invalidPayload).isNotEmpty())
-    }
-
-    @Test
-    fun `update order with empty orderLine should fail validation`() {
-        val invalidPayload = validUpdateOrderPayload.copy(orderLine = emptyList())
-        assert(validator.validate(invalidPayload).isNotEmpty())
-    }
-
-    @Test
-    fun `update order with invalid callback URL should fail validation`() {
-        val invalidPayload = validUpdateOrderPayload.copy(callbackUrl = "")
-        assert(validator.validate(invalidPayload).isNotEmpty())
-    }
-
-    @Test
-    fun `update order with invalid orderLine should fail validation`() {
-        val invalidPayload = validUpdateOrderPayload.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
-        assert(validator.validate(invalidPayload).isNotEmpty())
-    }
-
-    @Test
-    fun `update order with invalid address should fail validation`() {
-        val invalidOrder = validUpdateOrderPayload.copy(address = validAddress.copy(recipient = ""))
-        assert(validator.validate(invalidOrder).isNotEmpty())
-    }
-
     private val testItem = createTestItem()
 
     private val testOrder = createTestOrder()
@@ -125,6 +89,4 @@ class OrderModelValidationTest {
     private val validAddress = testOrder.address!!
 
     private val validOrder = testOrder.toApiPayload()
-
-    private val validUpdateOrderPayload = testOrder.toApiUpdatePayload()
 }

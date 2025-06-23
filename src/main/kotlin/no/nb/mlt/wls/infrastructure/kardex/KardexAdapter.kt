@@ -7,7 +7,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.outbound.NotSupportedException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.beans.factory.annotation.Qualifier
@@ -100,8 +99,6 @@ class KardexAdapter(
                 }
             }.awaitSingle()
     }
-
-    override suspend fun updateOrder(order: Order): Order = throw NotSupportedException("Kardex does not support updating Orders")
 
     override suspend fun canHandleLocation(location: String): Boolean = location == "NB Mo i Rana"
 

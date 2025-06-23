@@ -13,7 +13,6 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.statistics.StatisticsEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -85,21 +84,6 @@ class KafkaStatisticsServiceTest {
     fun `recordStatisticsEvent should handle OrderEvent event`() =
         runTest {
             val event = OrderEvent(testOrder)
-            val expected = event.toStatisticsEvent()
-            val statisticsEventSlot = slot<StatisticsEvent>()
-
-            kafkaStatisticsService.recordStatisticsEvent(event)
-
-            verify { statisticsProducer.sendStatisticsMessage(any(), capture(statisticsEventSlot)) }
-            assertThat(statisticsEventSlot.captured)
-                .extracting("orderId", "eventType", "details")
-                .containsExactly(expected.orderId, expected.eventType, expected.details)
-        }
-
-    @Test
-    fun `recordStatisticsEvent should handle OrderUpdated event`() =
-        runTest {
-            val event = OrderUpdated(testOrder)
             val expected = event.toStatisticsEvent()
             val statisticsEventSlot = slot<StatisticsEvent>()
 

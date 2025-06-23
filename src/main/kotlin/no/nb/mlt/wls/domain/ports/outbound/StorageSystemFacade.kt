@@ -22,9 +22,6 @@ interface StorageSystemFacade {
         hostName: HostName
     )
 
-    @Throws(StorageSystemException::class)
-    suspend fun updateOrder(order: Order): Order
-
     suspend fun canHandleLocation(location: String): Boolean
 
     fun canHandleItem(item: Item): Boolean

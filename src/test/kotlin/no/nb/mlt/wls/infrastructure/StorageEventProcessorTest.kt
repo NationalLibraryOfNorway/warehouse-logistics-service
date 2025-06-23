@@ -11,7 +11,6 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
@@ -121,36 +120,15 @@ class StorageEventProcessorTest {
         }
 
     @Test
-    fun `UpdateOrder event should be marked as processed if successful`() =
-        runTest {
-            val updatedOrder =
-                createTestOrder(
-                    note = "I want this soon",
-                    orderLine = testItemListLarge.map { Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED) }
-                )
-            val event = OrderUpdated(updatedOrder)
-
-            cut.handleEvent(event)
-
-            assertThat(storageMessageRepoMock.processed).hasSize(1).contains(event)
-            coVerify(exactly = 1) { happyStorageSystemFacadeMock.updateOrder(any()) }
-        }
-
-    @Test
     fun `Events get grouped and if one group fails, other gets processed`() =
         runTest {
             // Test data
             val createdOrder1 = createTestOrder(hostOrderId = "order1")
-            val updatedOrder1 =
-                createdOrder1.copy(
-                    orderLine = testItemListLarge.map { Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED) }
-                )
             val createdOrder2 = createTestOrder(hostOrderId = "order2")
 
             // Test events, grouped visually to show how they should be grouped
             val order1event1 = OrderCreated(createdOrder1)
-            val order1event2 = OrderUpdated(updatedOrder1)
-            val order1event3 = OrderDeleted(createdOrder1.hostName, createdOrder1.hostOrderId)
+            val order1event2 = OrderDeleted(createdOrder1.hostName, createdOrder1.hostOrderId)
 
             val order2event1 = OrderCreated(createdOrder2)
             val order2event2 = OrderDeleted(createdOrder2.hostName, createdOrder2.hostOrderId)
@@ -162,7 +140,7 @@ class StorageEventProcessorTest {
             val item3event = ItemCreated(testItem3)
 
             // Make happyStorageSystemMock fail in during order1 update, and during item 2 creation
-            coEvery { happyStorageSystemFacadeMock.updateOrder(updatedOrder1) } throws StorageSystemException("Could not update order")
+            coEvery { happyStorageSystemFacadeMock.createOrder(createdOrder1) } throws StorageSystemException("Could not create order")
             coEvery { happyStorageSystemFacadeMock.createItem(testItem2) } throws DuplicateResourceException("Duplicate product")
 
             // Create list of unprocessed events, mixing them, making sure order2 events happen "after" order1 fails, mix in items all over the list
@@ -172,7 +150,6 @@ class StorageEventProcessorTest {
                     item1event,
                     order1event2,
                     order2event1,
-                    order1event3,
                     item2event,
                     order2event2,
                     item3event
@@ -184,13 +161,12 @@ class StorageEventProcessorTest {
 
             // Order1 has 1 processed event, Order2 has 2, Item 1 and 3 have one each --> 5
             assertThat(storageMessageRepoMock.processed)
-                .hasSize(5)
-                .contains(order1event1, order2event1, order2event2, item1event, item3event)
+                .hasSize(4)
+                .contains(order2event1, order2event2, item1event, item3event)
 
             // Make sure every event got called
             coVerify(exactly = 1) { happyStorageSystemFacadeMock.createOrder(createdOrder1) }
-            coVerify(exactly = 1) { happyStorageSystemFacadeMock.updateOrder(updatedOrder1) }
-            // Delete should not be called as update order above should fail
+            // Delete should not be called as the create order above should fail
             coVerify(exactly = 0) { happyStorageSystemFacadeMock.deleteOrder(createdOrder1.hostOrderId, createdOrder1.hostName) }
 
             coVerify(exactly = 1) { happyStorageSystemFacadeMock.createOrder(createdOrder2) }
@@ -240,7 +216,6 @@ class StorageEventProcessorTest {
             coEvery { canHandleLocation("SYNQ_WAREHOUSE") } returns true
             coEvery { canHandleLocation("WITH_LENDER") } returns true
             coEvery { deleteOrder(any(), any()) } returns Unit
-            coEvery { updateOrder(any()) } returns testOrder
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
         }
