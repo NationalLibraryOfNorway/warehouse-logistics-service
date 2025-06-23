@@ -93,28 +93,6 @@ data class Order(
 
     private fun isOrderProcessingStarted(): Boolean = status != Status.NOT_STARTED
 
-    /**
-     * Makes a copy of the order with the updated fields
-     */
-    fun updateOrder(
-        itemIds: List<String>,
-        callbackUrl: String,
-        orderType: Type,
-        address: Address?,
-        note: String?,
-        contactPerson: String
-    ): Order {
-        throwIfInProgress()
-
-        return this
-            .setOrderLines(itemIds)
-            .setCallbackUrl(callbackUrl)
-            .setOrderType(orderType)
-            .setAddress(address)
-            .setNote(note)
-            .setContactPerson(contactPerson)
-    }
-
     private fun setNote(note: String?): Order = this.copy(note = note)
 
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())

@@ -20,7 +20,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
-import no.nb.mlt.wls.domain.ports.inbound.UpdateOrder
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -44,7 +42,6 @@ private val logger = KotlinLogging.logger {}
 class OrderController(
     private val getOrder: GetOrder,
     private val createOrder: CreateOrder,
-    private val updateOrder: UpdateOrder,
     private val deleteOrder: DeleteOrder
 ) {
     @Operation(
@@ -261,99 +258,6 @@ class OrderController(
         return ResponseEntity
             .status(HttpStatus.OK)
             .body(order.toApiPayload())
-    }
-
-    @Operation(
-        summary = "Update an existing order in the WLS",
-        description = """Updates the specified order in Hermes WLS and appropriate storage systems.
-            The order must have a status of "NOT_STARTED" to be updated.
-            The caller must "own" the order, e.g. be the creator of the order, in order to update it."""
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = """The order was updated, and sent to appropriate systems.
-                Returns the updated order information for inspection.""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ApiOrderPayload::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "400",
-            description = """Order payload is invalid and the order was not updated.
-                This error might also happen if the order does not exist.
-                Otherwise, the error message contains information about the invalid fields.""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ErrorMessage::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "401",
-            description = """Client sending the request is not authorized to update orders, or this order does not belong to them.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Unauthorized")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "403",
-            description = """A valid "Authorization" header is missing from the request.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Forbidden")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Not Found")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "409",
-            description = """The order is already being processed, and can not be edited at this point.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Conflict")
-                )
-            ]
-        )
-    )
-    @PutMapping("/order")
-    suspend fun updateOrder(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody @Valid payload: ApiUpdateOrderPayload
-    ): ResponseEntity<ApiOrderPayload> {
-        jwt.checkIfAuthorized(payload.hostName)
-
-        val updatedOrder =
-            updateOrder.updateOrder(
-                hostName = payload.hostName,
-                hostOrderId = payload.hostOrderId,
-                itemHostIds = payload.orderLine.map { it.hostId },
-                orderType = payload.orderType,
-                contactPerson = payload.contactPerson,
-                address = payload.address,
-                note = payload.note,
-                callbackUrl = payload.callbackUrl
-            )
-
-        return ResponseEntity.ok(updatedOrder.toApiPayload())
     }
 
     @Operation(

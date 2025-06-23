@@ -7,7 +7,6 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import org.springframework.stereotype.Service
 
@@ -25,7 +24,6 @@ class KafkaStatisticsService(
                 is OrderCreated -> event.toStatisticsEvent()
                 is OrderEvent -> event.toStatisticsEvent()
                 is OrderDeleted -> event.toStatisticsEvent()
-                is OrderUpdated -> event.toStatisticsEvent()
                 else -> {
                     logger.error { "Error while converting event to statistics event, unknown event type: $event" }
                     return

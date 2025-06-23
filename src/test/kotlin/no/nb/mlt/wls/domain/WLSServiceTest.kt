@@ -21,7 +21,6 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
@@ -29,7 +28,6 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -338,55 +336,6 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `updateOrder with valid items should complete`() {
-        val updateOrderEvent = OrderUpdated(updatedOrder)
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(updatedOrder.hostName, updatedOrder.hostOrderId) } answers { testOrder }
-        coEvery { transactionPort.executeInTransaction<Pair<Any, Any>>(any()) } answers { updatedOrder to updateOrderEvent }
-        coEvery { storageEventProcessor.handleEvent(updateOrderEvent) } answers { }
-
-        runTest {
-            val updateOrderResult = callUpdateOrder()
-
-            assertThat(updateOrderResult).isEqualTo(updatedOrder)
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 1) { storageEventProcessor.handleEvent(updateOrderEvent) }
-        }
-    }
-
-    @Test
-    fun `updateOrder should fail if items don't exist`() {
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { false }
-
-        runTest {
-            assertThrows<ValidationException>(message = "All order items in order must exist") {
-                callUpdateOrder()
-            }
-
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 0) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
-        }
-    }
-
-    @Test
-    fun `updateOrder should fail when order does not exist`() {
-        coEvery { itemRepoMock.doesEveryItemExist(any()) } answers { true }
-        coEvery { orderRepoMock.getOrder(any(), any()) } throws OrderNotFoundException("Order not found")
-
-        runTest {
-            assertThrows<OrderNotFoundException>(message = "Order not found") {
-                callUpdateOrder()
-            }
-
-            coVerify(exactly = 1) { itemRepoMock.doesEveryItemExist(any()) }
-            coVerify(exactly = 1) { orderRepoMock.getOrder(any(), any()) }
-            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
-        }
-    }
-
-    @Test
     fun `updateOrderStatus should update status and send callback`() {
         val completedOrder = testOrder.copy(status = Order.Status.COMPLETED)
         val orderStatusUpdatedEvent = OrderEvent(completedOrder)
@@ -636,18 +585,6 @@ class WLSServiceTest {
             callbackUrl = testOrder.callbackUrl
         )
 
-    private suspend fun callUpdateOrder() =
-        cut.updateOrder(
-            updatedOrder.hostName,
-            updatedOrder.hostOrderId,
-            updatedOrder.orderLine.map { it.hostId },
-            updatedOrder.orderType,
-            updatedOrder.contactPerson,
-            updatedOrder.address,
-            updatedOrder.note,
-            updatedOrder.callbackUrl
-        )
-
     private fun createInMemItemRepo(items: MutableList<Item>): ItemRepository {
         return object : ItemRepository {
             val itemList = items
@@ -743,13 +680,13 @@ class WLSServiceTest {
                 return order
             }
 
-            override suspend fun getOrdersWithItem(
+            override suspend fun getOrdersWithItems(
                 hostName: HostName,
-                returnedItems: List<String>
+                orderItemIds: List<String>
             ): List<Order> {
                 val o =
                     orderList.filter { order ->
-                        order.orderLine.any { orderItem -> returnedItems.contains(orderItem.hostId) }
+                        order.orderLine.any { orderItem -> orderItemIds.contains(orderItem.hostId) }
                     }
                 return o
             }

@@ -1,7 +1,7 @@
 # Define the API version of the Kubernetes object
 apiVersion: apps/v1
 
-# Kind is a string value representing type of object this manifest represents
+# Kind is a string value representing the type of object this manifest represents
 # A Deployment is a declaration of a desired state of pods and other objects in your cluster
 kind: Deployment
 
@@ -17,7 +17,7 @@ metadata:
 spec:
   # The .spec.selector field defines how the Deployment finds which Pods to manage
   selector:
-    # In this case, you simply select a label that is defined in the Pod template (app: wls)
+    # In this case, select a label defined in the Pod template
     matchLabels:
       app: wls
 
@@ -32,7 +32,7 @@ spec:
       labels:
         app: wls
 
-    # The Pod template's specification, indicates that the Pod runs one container, with image <image_name>
+    # The Pod template's specification indicates that the Pod runs one container, with image <image_name>
     spec:
       # Pod priority, low in stage, high in prod
       priorityClassName: low-priority
@@ -157,7 +157,7 @@ spec:
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
 
-          # Set resources limits for the container
+          # Set resource limits for the container
           resources:
             requests:
               cpu: 200m
@@ -210,10 +210,10 @@ metadata:
 # Service specification with attributes to use in its creation
 spec:
   # Makes the service allocate a cluster-internal IP address for load-balancing to endpoints
-  # Endpoints are determined by the selector
+  # The selector determines the endpoints
   type: ClusterIP
 
-  # The .spec.selector field defines services endpoint
+  # The .spec.selector field defines the service endpoint
   selector:
     app: wls
 
@@ -227,7 +227,7 @@ spec:
 
 apiVersion: v1
 
-#  A Service in Kubernetes exposes a network application that is running in your cluster
+#  A Service in Kubernetes exposes a network application running in your cluster
 kind: Service
 
 # Standard object metadata
@@ -240,10 +240,10 @@ metadata:
 # Service specification with attributes to use in its creation
 spec:
   # Makes the service allocate a cluster-internal IP address for load-balancing to endpoints
-  # Endpoints are determined by the selector
+  # The selector determines the endpoints
   type: ClusterIP
 
-  # The .spec.selector field defines services endpoint
+  # The .spec.selector field defines the service endpoint
   selector:
     app: wls
 

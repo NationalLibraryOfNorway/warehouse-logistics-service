@@ -17,9 +17,9 @@ interface OrderRepository {
 
     suspend fun createOrder(order: Order): Order
 
-    suspend fun getOrdersWithItem(
+    suspend fun getOrdersWithItems(
         hostName: HostName,
-        returnedItems: List<String>
+        orderItemIds: List<String>
     ): List<Order>
 }
 

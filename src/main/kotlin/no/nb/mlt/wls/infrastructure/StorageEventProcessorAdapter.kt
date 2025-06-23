@@ -6,7 +6,6 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
-import no.nb.mlt.wls.domain.model.events.storage.OrderUpdated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -46,7 +45,6 @@ class StorageEventProcessorAdapter(
                     is ItemCreated -> it.createdItem.hostId
                     is OrderCreated -> it.createdOrder.hostOrderId
                     is OrderDeleted -> it.hostOrderId
-                    is OrderUpdated -> it.updatedOrder.hostOrderId
                 }
             }
 
@@ -77,7 +75,6 @@ class StorageEventProcessorAdapter(
                 is ItemCreated -> handleItemCreated(event)
                 is OrderCreated -> handleOrderCreated(event)
                 is OrderDeleted -> handleOrderDeleted(event)
-                is OrderUpdated -> handleOrderUpdated(event)
             }
         } catch (e: NotSupportedException) {
             logger.warn { "Can not handle event ${event.id}: ${e.message}" }
@@ -143,25 +140,6 @@ class StorageEventProcessorAdapter(
 
         storageSystems.forEach {
             it.deleteOrder(event.hostOrderId, event.host)
-        }
-    }
-
-    private suspend fun handleOrderUpdated(event: OrderUpdated) {
-        logger.trace { "Processing OrderUpdated: $event" }
-
-        val updatedOrder = event.updatedOrder
-        val items =
-            itemRepository.getItems(
-                updatedOrder.hostName,
-                updatedOrder.orderLine.map { it.hostId }
-            )
-
-        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
-            if (storageSystemFacade == null) {
-                logger.info { "Could not find a storage system to handle items: $itemList" }
-            }
-            storageSystemFacade?.updateOrder(updatedOrder)
-            logger.info { "Updated order [$updatedOrder] in storage system: ${storageSystemFacade ?: "none"}" }
         }
     }
 
