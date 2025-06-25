@@ -22,12 +22,20 @@ class TestcontainerInitializer : ApplicationContextInitializer<ConfigurableAppli
                     MountableFile.forClasspathResource("mockoon/wls-synq.json"),
                     "/data/wls-synq.json"
                 )
+        val DummyKardexContainer =
+            GenericContainer(DockerImageName.parse("mockoon/cli:9.2.0"))
+                .withExposedPorts(8182)
+                .withCommand("--data /data/wls-synq.json --port 8182 --log-transaction")
+                .withCopyFileToContainer(
+                    MountableFile.forClasspathResource("mockoon/wls-kardex.json"),
+                    "/data/wls-kardex.json"
+                )
         val MailhogContainer =
             GenericContainer(DockerImageName.parse("mailhog/mailhog"))
                 .withExposedPorts(MAILHOG_SMTP_PORT, MAILHOG_HTTP_PORT)
 
         init {
-            Startables.deepStart(MongoContainer, MailhogContainer, DummySynqContainer).join()
+            Startables.deepStart(MongoContainer, MailhogContainer, DummySynqContainer, DummyKardexContainer).join()
         }
     }
 

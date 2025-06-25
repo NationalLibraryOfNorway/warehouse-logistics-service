@@ -25,11 +25,13 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockJwt
 import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.springSecurity
@@ -38,6 +40,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @EnableTestcontainers
 @TestInstance(PER_CLASS)
 @ExtendWith(MockKExtension::class)
+@AutoConfigureWebTestClient
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class KardexControllerTest(
@@ -65,7 +68,7 @@ class KardexControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -84,7 +87,7 @@ class KardexControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -103,7 +106,7 @@ class KardexControllerTest(
             assert(item == null)
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -119,7 +122,7 @@ class KardexControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -143,7 +146,7 @@ class KardexControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -162,7 +165,7 @@ class KardexControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
@@ -178,7 +181,7 @@ class KardexControllerTest(
         runTest {
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/stock-sync")
                 .accept(MediaType.APPLICATION_JSON)
@@ -197,7 +200,7 @@ class KardexControllerTest(
 
             webTestClient
                 .mutateWith(csrf())
-                .mutateWith(mockJwt())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
                 .post()
                 .uri("/stock-sync")
                 .accept(MediaType.APPLICATION_JSON)
