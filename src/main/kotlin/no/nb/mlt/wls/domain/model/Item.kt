@@ -60,6 +60,12 @@ class Item(
         }
 
         this.quantity = quantity
+
+        // do not override with lender location
+        if (location == null && this.location == WITH_LENDER_LOCATION) {
+            return
+        }
+
         this.location = location ?: UNKNOWN_LOCATION
     }
 
