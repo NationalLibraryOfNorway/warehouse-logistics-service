@@ -89,3 +89,10 @@ fun JwtAuthenticationToken.checkIfAuthorized(host: HostName) {
         "Client $name does not have a role that gives access to resources owned by $host"
     )
 }
+
+fun JwtAuthenticationToken.getUsersHosts(): List<HostName> {
+    val hostNameStrings = HostName.entries.map { it.name }.toSet()
+    val roles = authorities.map { it.authority.removePrefix("ROLE_").uppercase() }
+
+    return roles.intersect(hostNameStrings).map { HostName.valueOf(it) }
+}

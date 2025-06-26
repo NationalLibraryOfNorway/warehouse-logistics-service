@@ -14,6 +14,8 @@ interface ItemRepository {
         hostIds: List<String>
     ): List<Item>
 
+    suspend fun getAllItemsForHosts(hostnames: List<HostName>): List<Item>
+
     suspend fun createItem(item: Item): Item
 
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean

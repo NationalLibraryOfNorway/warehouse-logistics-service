@@ -23,6 +23,7 @@ import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
+import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
@@ -61,6 +62,7 @@ class WLSService(
     DeleteOrder,
     GetOrder,
     GetItem,
+    GetItems,
     UpdateItem,
     OrderStatusUpdate,
     MoveItem,
@@ -284,6 +286,8 @@ class WLSService(
         hostName: HostName,
         hostId: String
     ): Item? = itemRepository.getItem(hostName, hostId)
+
+    override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
     override suspend fun getOrder(
         hostName: HostName,
