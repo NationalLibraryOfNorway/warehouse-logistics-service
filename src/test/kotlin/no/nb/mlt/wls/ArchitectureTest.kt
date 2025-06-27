@@ -18,7 +18,7 @@ internal class ArchitectureTest {
             .that()
             .resideInAPackage("no.nb.mlt.wls.domain..")
             .should()
-            .accessClassesThat()
+            .dependOnClassesThat()
             .resideInAnyPackage("no.nb.mlt.wls.infrastructure..", "no.nb.mlt.wls.application..")
             .check(javaClasses)
     }
@@ -40,7 +40,7 @@ internal class ArchitectureTest {
             .that()
             .resideInAPackage("no.nb.mlt.wls.infrastructure..")
             .should()
-            .accessClassesThat()
+            .dependOnClassesThat()
             .resideInAnyPackage("no.nb.mlt.wls.application..")
             .check(javaClasses)
     }
@@ -51,7 +51,12 @@ internal class ArchitectureTest {
             .matching("no.nb.mlt.wls.infrastructure..(*)")
             .should()
             .notDependOnEachOther()
-            .ignoreDependency(nameMatching(".*Config"), DescribedPredicate.alwaysTrue())
-            .check(javaClasses)
+            .ignoreDependency(
+                nameMatching("no.nb.mlt.wls.infrastructure.config.*"),
+                DescribedPredicate.alwaysTrue()
+            ).ignoreDependency(
+                DescribedPredicate.alwaysTrue(),
+                nameMatching("no.nb.mlt.wls.infrastructure.config.*")
+            ).check(javaClasses)
     }
 }
