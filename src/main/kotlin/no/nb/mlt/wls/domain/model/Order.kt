@@ -138,7 +138,32 @@ data class Order(
         if (isOrderClosed()) {
             throw ValidationException("The order is already closed, and can therefore not be changed")
         }
-        return this.copy(status = status)
+        return when (this.status) {
+            Status.COMPLETED -> {
+                if (status == Status.NOT_STARTED ||
+                    status == Status.IN_PROGRESS
+                ) {
+                    throw ValidationException(
+                        "The order status can not be updated in an invalid direction. Tried updating from COMPLETED to $status"
+                    )
+                } else {
+                    this.copy(status = status)
+                }
+            }
+            Status.IN_PROGRESS -> {
+                if (status ==
+                    Status.NOT_STARTED
+                ) {
+                    throw ValidationException(
+                        "The order status can not be updated in an invalid direction. Tried updating from IN_PROGRESS to $status"
+                    )
+                } else {
+                    this.copy(status = status)
+                }
+            }
+
+            else -> this.copy(status = status)
+        }
     }
 
     fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
