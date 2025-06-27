@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.order.model
 
+import no.nb.mlt.wls.application.hostapi.order.Address
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.hostapi.order.OrderLine
 import no.nb.mlt.wls.application.hostapi.order.toApiOrderLine
@@ -33,7 +34,19 @@ class OrderModelConversionTest {
         assertThat(payload.orderLine[0].hostId).isEqualTo(testOrder.orderLine[0].hostId)
         assertThat(payload.orderType).isEqualTo(testOrder.orderType)
         assertThat(payload.contactPerson).isEqualTo(testOrder.contactPerson)
-        assertThat(payload.address).isEqualTo(testOrder.address)
+        assertThat(payload.address).isEqualTo(
+            testOrder.address?.let {
+                Address(
+                    recipient = it.recipient,
+                    addressLine1 = it.addressLine1,
+                    addressLine2 = it.addressLine2,
+                    postcode = it.postcode,
+                    city = it.city,
+                    region = it.region,
+                    country = it.country
+                )
+            }
+        )
         assertThat(payload.callbackUrl).isEqualTo(testOrder.callbackUrl)
     }
 
@@ -98,7 +111,19 @@ class OrderModelConversionTest {
         assertThat(order.orderLine).isEqualTo(testApiOrderPayload.orderLine.map { it -> it.toOrderItem() })
         assertThat(order.orderType).isEqualTo(testApiOrderPayload.orderType)
         assertThat(order.contactPerson).isEqualTo(testApiOrderPayload.contactPerson)
-        assertThat(order.address).isEqualTo(testApiOrderPayload.address)
+        assertThat(order.address).isEqualTo(
+            testApiOrderPayload.address?.let {
+                Order.Address(
+                    recipient = it.recipient,
+                    addressLine1 = it.addressLine1,
+                    addressLine2 = it.addressLine2,
+                    postcode = it.postcode,
+                    city = it.city,
+                    region = it.region,
+                    country = it.country
+                )
+            }
+        )
         assertThat(order.callbackUrl).isEqualTo(testApiOrderPayload.callbackUrl)
     }
 
@@ -141,7 +166,7 @@ class OrderModelConversionTest {
             contactPerson = "contactPerson",
             contactEmail = "contact@ema.il",
             address =
-                Order.Address(
+                Address(
                     recipient = "recipient",
                     addressLine1 = "addressLine1",
                     addressLine2 = "addressLine2",

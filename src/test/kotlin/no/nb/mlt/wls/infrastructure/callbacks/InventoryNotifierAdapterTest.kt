@@ -7,10 +7,10 @@ import com.ninjasquad.springmockk.SpykDefinition
 import io.mockk.verify
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
-import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach

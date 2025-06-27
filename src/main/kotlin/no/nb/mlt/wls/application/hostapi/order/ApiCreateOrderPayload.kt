@@ -89,7 +89,7 @@ data class ApiCreateOrderPayload(
         description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
-    val address: Order.Address?,
+    val address: Address?,
     @Schema(
         description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
         example = "I need this order in four weeks, not right now."
@@ -111,7 +111,18 @@ data class ApiCreateOrderPayload(
             hostOrderId = hostOrderId,
             orderLine = orderLine.map { it.toCreateOrderItem() },
             orderType = orderType,
-            address = address,
+            address =
+                address?.let {
+                    Order.Address(
+                        recipient = it.recipient,
+                        addressLine1 = it.addressLine1,
+                        addressLine2 = it.addressLine2,
+                        city = it.city,
+                        country = it.country,
+                        region = it.region,
+                        postcode = it.postcode
+                    )
+                },
             contactPerson = contactPerson,
             contactEmail = contactEmail,
             note = note,

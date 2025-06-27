@@ -48,7 +48,18 @@ fun ApiOrderPayload.toOrder() =
         status = status ?: Order.Status.NOT_STARTED,
         orderLine = orderLine.map { it.toOrderItem() },
         orderType = orderType,
-        address = address,
+        address =
+            address?.let {
+                Order.Address(
+                    recipient = it.recipient,
+                    addressLine1 = it.addressLine1,
+                    addressLine2 = it.addressLine2,
+                    postcode = it.postcode,
+                    city = it.city,
+                    region = it.region,
+                    country = it.country
+                )
+            },
         contactPerson = contactPerson,
         contactEmail = contactEmail,
         note = note,
