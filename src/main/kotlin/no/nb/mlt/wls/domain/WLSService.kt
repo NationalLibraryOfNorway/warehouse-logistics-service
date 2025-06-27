@@ -269,7 +269,7 @@ class WLSService(
 
         val (updatedOrder, catalogEvent) =
             transactionPort.executeInTransaction {
-                val updatedOrder = orderRepository.updateOrder(order.copy(status = status))
+                val updatedOrder = orderRepository.updateOrder(order.updateStatus(status))
                 val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
 
                 (updatedOrder to catalogEvent)
