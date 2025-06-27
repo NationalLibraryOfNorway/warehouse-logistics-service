@@ -36,8 +36,12 @@ data class Order(
         hostIds: List<String>,
         status: OrderItem.Status
     ): Order {
-        if (isOrderClosed() && status != OrderItem.Status.RETURNED) {
+        if (isOrderClosed()) {
             throw IllegalOrderStateException("Order is already closed with status: $status")
+        }
+
+        if (isOrderComplete() && status != OrderItem.Status.RETURNED) {
+            throw IllegalOrderStateException("Order is already complete with status: $status")
         }
         val updatedOrderLineList =
             orderLine.map {
@@ -70,26 +74,34 @@ data class Order(
         // This might benefit from a small refactor of sorts
         return when {
             orderLine.all(OrderItem::isReturned) -> {
-                this.copy(status = Status.RETURNED)
+                updateStatus(Status.RETURNED)
             }
 
             orderLine.all(OrderItem::isComplete) -> {
-                this.copy(status = Status.COMPLETED)
+                updateStatus(Status.COMPLETED)
             }
 
             orderLine.all(OrderItem::isPickedOrFailed) -> {
-                this.copy(status = Status.COMPLETED)
+                updateStatus(Status.COMPLETED)
             }
 
             orderLine.all { it.status == OrderItem.Status.NOT_STARTED } -> {
-                this.copy(status = Status.NOT_STARTED)
+                updateStatus(Status.NOT_STARTED)
             }
 
-            else -> this.copy(status = Status.IN_PROGRESS)
+            else -> updateStatus(Status.IN_PROGRESS)
         }
     }
 
-    private fun isOrderClosed(): Boolean = listOf(Status.COMPLETED, Status.DELETED, Status.RETURNED).contains(status)
+    /**
+     * Order can not receive any further updates
+     */
+    private fun isOrderClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
+
+    /**
+     * Order is completed, but is not returned yet
+     */
+    private fun isOrderComplete(): Boolean = listOf(Status.COMPLETED, Status.DELETED).contains(status)
 
     private fun isOrderProcessingStarted(): Boolean = status != Status.NOT_STARTED
 
@@ -120,6 +132,13 @@ data class Order(
         if (this.isOrderProcessingStarted()) {
             throw IllegalOrderStateException("The order is currently being processed, and can therefore not be changed")
         }
+    }
+
+    fun updateStatus(status: Status): Order {
+        if (isOrderClosed()) {
+            throw ValidationException("The order is already closed, and can therefore not be changed")
+        }
+        return this.copy(status = status)
     }
 
     fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
