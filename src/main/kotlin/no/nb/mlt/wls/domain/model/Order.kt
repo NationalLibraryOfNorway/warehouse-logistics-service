@@ -40,7 +40,7 @@ data class Order(
             throw IllegalOrderStateException("Order is already closed with status: $status")
         }
 
-        if (isOrderComplete() && status != OrderItem.Status.RETURNED) {
+        if (isOrderPicked() && status != OrderItem.Status.RETURNED) {
             throw IllegalOrderStateException("Order is already complete with status: $status")
         }
         val updatedOrderLineList =
@@ -99,9 +99,9 @@ data class Order(
     private fun isOrderClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
 
     /**
-     * Order is completed, but is not returned yet
+     * Order is picked and finished, but is not returned yet
      */
-    private fun isOrderComplete(): Boolean = listOf(Status.COMPLETED, Status.DELETED).contains(status)
+    private fun isOrderPicked(): Boolean = listOf(Status.COMPLETED).contains(status)
 
     private fun isOrderProcessingStarted(): Boolean = status != Status.NOT_STARTED
 
