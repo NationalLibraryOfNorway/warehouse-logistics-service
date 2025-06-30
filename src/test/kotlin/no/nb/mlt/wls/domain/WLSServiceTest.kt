@@ -602,6 +602,8 @@ class WLSServiceTest {
                     itemList.firstOrNull { it.hostName == hostName && it.hostId == id }
                 }
 
+            override suspend fun getAllItemsForHosts(hostnames: List<HostName>): List<Item> = items.filter { hostnames.contains(it.hostName) }
+
             override suspend fun createItem(item: Item): Item {
                 val existingIndex = itemList.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
 

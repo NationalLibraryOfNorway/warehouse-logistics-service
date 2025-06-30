@@ -3,6 +3,8 @@ package no.nb.mlt.wls.item.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -186,6 +188,34 @@ class ItemControllerTest(
             .isForbidden
     }
 
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getItem with unauthorized user returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
+            .get()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+    }
+
     private val testItem = createTestItem()
 
     private val testItemPayload = testItem.toApiPayload()
@@ -194,7 +224,15 @@ class ItemControllerTest(
 
     fun populateDb() {
         runBlocking {
-            repository.deleteAll().then(repository.save(duplicateItemPayload.toItem().toMongoItem())).awaitSingle()
+            val i1 = createTestItem(hostId = "axiell-01", hostName = HostName.AXIELL).toMongoItem()
+            val i2 = createTestItem(hostId = "axiell-02", hostName = HostName.AXIELL).toMongoItem()
+            val i3 = createTestItem(hostId = "asta-01", hostName = HostName.ASTA).toMongoItem()
+            val i4 = createTestItem(hostId = "asta-02", hostName = HostName.ASTA).toMongoItem()
+            val i5 = createTestItem(hostId = "alma-01", hostName = HostName.ALMA).toMongoItem()
+            val i6 = createTestItem(hostId = "alma-02", hostName = HostName.ALMA).toMongoItem()
+            val items = listOf(i1, i2, i3, i4, i5, i6, duplicateItemPayload.toItem().toMongoItem())
+
+            repository.deleteAll().thenMany(repository.saveAll(items)).awaitLast()
         }
     }
 }
