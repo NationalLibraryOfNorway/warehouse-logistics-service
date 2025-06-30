@@ -185,6 +185,10 @@ spring:
       database: ${MONGODB_DATABASE}
       host: ${MONGODB_URL}
 
+  mail:
+    host: ${EMAIL_SERVER}
+    port: ${EMAIL_PORT}
+
 # Set base path to SynQ API in stage environment
 synq:
   path:
@@ -242,6 +246,10 @@ spring:
       password: ${MONGODB_PASSWORD}
       database: ${MONGODB_DATABASE}
       host: ${MONGODB_URL}
+
+  mail:
+    host: ${EMAIL_SERVER}
+    port: ${EMAIL_PORT}
 
 # Set base path to SynQ API in prod environment
 synq:
