@@ -153,6 +153,11 @@ spec:
                 secretKeyRef:
                   name: wls-secrets
                   key: TIMEOUT_STORAGE
+            - name: ORDER_HANDLER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: wls-secrets
+                  key: ORDER_HANDLER_EMAIL
 
           # Set to always pull the image from Harbor, even if present
           imagePullPolicy: Always
