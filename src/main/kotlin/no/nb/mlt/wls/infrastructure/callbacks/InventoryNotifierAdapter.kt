@@ -76,7 +76,7 @@ class InventoryNotifierAdapter(
             .onErrorComplete { error ->
                 val callbackUrlIsMalformed = error.cause is DnsErrorCauseException || error.stackTraceToString().contains("Failed to resolve")
                 if (callbackUrlIsMalformed) {
-                    logger.error(error) { "Given callback URL: $callbackUrl is malformed, we will never retry sending this message: $payload" }
+                    logger.error(error) { "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload" }
                 }
                 callbackUrlIsMalformed
             }.doOnError {
