@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.model
 
 import no.nb.mlt.wls.createTestOrder
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -11,7 +11,7 @@ class OrderTest {
     fun `should not be able to update to NOT_STARTED when processing is started`() {
         val order = createTestOrder(status = Order.Status.IN_PROGRESS)
 
-        assertThrows(ValidationException::class.java) {
+        assertThrows(IllegalOrderStateException::class.java) {
             order.updateStatus(Order.Status.NOT_STARTED)
         }
     }
@@ -20,11 +20,11 @@ class OrderTest {
     fun `should not be able to update to IN_PROGRESS or NOT_STARTED when order is picked`() {
         val order = createPickedOrder()
 
-        assertThrows(ValidationException::class.java) {
+        assertThrows(IllegalOrderStateException::class.java) {
             order.updateStatus(Order.Status.NOT_STARTED)
         }
 
-        assertThrows(ValidationException::class.java) {
+        assertThrows(IllegalOrderStateException::class.java) {
             order.updateStatus(Order.Status.IN_PROGRESS)
         }
     }
@@ -34,7 +34,7 @@ class OrderTest {
         val deletedOrder = createTestOrder(status = Order.Status.DELETED)
 
         Order.Status.entries.forEach { status ->
-            assertThrows(ValidationException::class.java) {
+            assertThrows(IllegalOrderStateException::class.java) {
                 deletedOrder.updateStatus(status)
             }
         }
@@ -45,7 +45,7 @@ class OrderTest {
         val returnedOrder = createTestOrder(status = Order.Status.RETURNED)
 
         Order.Status.entries.forEach { status ->
-            assertThrows(ValidationException::class.java) {
+            assertThrows(IllegalOrderStateException::class.java) {
                 returnedOrder.updateStatus(status)
             }
         }
@@ -54,6 +54,9 @@ class OrderTest {
     @Test
     fun `should be able to update status in correct direction`() {
         var order = createTestOrder(status = Order.Status.NOT_STARTED)
+        val deletedOrder = order.updateStatus(Order.Status.DELETED)
+
+        assertThat(deletedOrder.status).isEqualTo(Order.Status.DELETED)
 
         // Valid transitions
         order = order.updateStatus(Order.Status.IN_PROGRESS)
@@ -63,24 +66,24 @@ class OrderTest {
         assertThat(order.status).isEqualTo(Order.Status.COMPLETED)
 
         val returnedOrder = order.updateStatus(Order.Status.RETURNED)
-        val deletedOrder = order.updateStatus(Order.Status.DELETED)
 
         assertThat(returnedOrder.status).isEqualTo(Order.Status.RETURNED)
-        assertThat(deletedOrder.status).isEqualTo(Order.Status.DELETED)
     }
 
     @Test
     fun `should be closed when status is DELETED or RETURNED`() {
         var order = createTestOrder(status = Order.Status.NOT_STARTED)
+
+        val deletedOrder = order.updateStatus(Order.Status.DELETED)
+        assertThat(deletedOrder.isClosed()).isTrue()
+
         assertThat(order.isClosed()).isFalse()
         order = order.updateStatus(Order.Status.IN_PROGRESS)
         assertThat(order.isClosed()).isFalse()
         order = order.updateStatus(Order.Status.COMPLETED)
         assertThat(order.isClosed()).isFalse()
 
-        val deletedOrder = order.updateStatus(Order.Status.DELETED)
         val returnedOrder = order.updateStatus(Order.Status.RETURNED)
-        assertThat(deletedOrder.isClosed()).isTrue()
         assertThat(returnedOrder.isClosed()).isTrue()
     }
 
@@ -88,12 +91,12 @@ class OrderTest {
     fun `should not be able to update order line status for closed order`() {
         val returnedOrder = createTestOrder(status = Order.Status.RETURNED)
 
-        assertThrows(ValidationException::class.java) {
+        assertThrows(IllegalOrderStateException::class.java) {
             returnedOrder.pickItems(returnedOrder.orderLine.map { it.hostId })
         }
 
         val deletedOrder = createTestOrder(status = Order.Status.DELETED)
-        assertThrows(ValidationException::class.java) {
+        assertThrows(IllegalOrderStateException::class.java) {
             deletedOrder.pickItems(deletedOrder.orderLine.map { it.hostId })
         }
     }
@@ -138,6 +141,15 @@ class OrderTest {
         assertThat(order.status).isEqualTo(Order.Status.RETURNED)
         order.orderLine.forEach {
             assertThat(it.status).isEqualTo(Order.OrderItem.Status.RETURNED)
+        }
+    }
+
+    @Test
+    fun `should not be able to delete order that is in progress`() {
+        val order = createTestOrder(status = Order.Status.IN_PROGRESS)
+
+        assertThrows(IllegalOrderStateException::class.java) {
+            order.deleteOrder()
         }
     }
 

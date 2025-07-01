@@ -2,6 +2,7 @@ package no.nb.mlt.wls.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import no.nb.mlt.wls.domain.NullableNotBlank
+import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
 
@@ -22,11 +23,11 @@ data class Order(
         status: OrderItem.Status
     ): Order {
         if (isClosed()) {
-            throw ValidationException("Order is already closed with status: $status")
+            throw IllegalOrderStateException("Order is already closed with status: $status")
         }
 
         if (isPicked() && status != OrderItem.Status.RETURNED) {
-            throw ValidationException("Order is already complete with status: $status")
+            throw IllegalOrderStateException("Order is already complete with status: $status")
         }
 
         val hasUnknownItems =
@@ -39,8 +40,12 @@ data class Order(
         }
 
         val updatedOrderLineList =
-            hostIds.map { hostIdToUpdate ->
-                orderLine.first { it.hostId == hostIdToUpdate }.copy(status = status)
+            orderLine.map { orderLine ->
+                if (hostIds.contains(orderLine.hostId)) {
+                    orderLine.copy(status = status)
+                } else {
+                    orderLine
+                }
             }
 
         return this
@@ -89,9 +94,9 @@ data class Order(
     /**
      * Order is picked and finished, but is not returned yet
      */
-    private fun isPicked(): Boolean = listOf(Status.COMPLETED).contains(status)
+    private fun isPicked(): Boolean = status == Status.COMPLETED
 
-    private fun isInProgress(): Boolean = status != Status.NOT_STARTED
+    private fun isProcessingStarted(): Boolean = status != Status.NOT_STARTED
 
     private fun setNote(note: String?): Order = this.copy(note = note)
 
@@ -109,17 +114,20 @@ data class Order(
 
     fun updateStatus(newStatus: Status): Order {
         if (isClosed()) {
-            throw ValidationException("The order is already closed, and can therefore not be changed")
+            throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
         }
 
         // In progress orders cannot be changed to not started
         // Picked orders cannot be set to in progress
         val isInvalidTransition =
-            (newStatus == Status.NOT_STARTED && isInProgress()) ||
-                (newStatus == Status.IN_PROGRESS && isPicked())
+            (newStatus == Status.NOT_STARTED && isProcessingStarted()) ||
+                (newStatus == Status.IN_PROGRESS && isPicked()) ||
+                (newStatus == Status.DELETED && isProcessingStarted())
 
         if (isInvalidTransition) {
-            throw ValidationException("The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus")
+            throw IllegalOrderStateException(
+                "The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus"
+            )
         }
 
         return this.copy(status = newStatus)
