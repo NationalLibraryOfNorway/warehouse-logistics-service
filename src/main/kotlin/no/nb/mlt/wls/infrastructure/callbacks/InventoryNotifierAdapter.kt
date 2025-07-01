@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.callbacks
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.netty.resolver.dns.DnsErrorCauseException
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -72,7 +73,13 @@ class InventoryNotifierAdapter(
             }.retrieve()
             .bodyToMono(Void::class.java)
             .timeout(timeoutConfig.inventory)
-            .doOnError {
+            .onErrorComplete { error ->
+                val callbackUrlIsMalformed = error.cause is DnsErrorCauseException || error.stackTraceToString().contains("Failed to resolve")
+                if (callbackUrlIsMalformed) {
+                    logger.error(error) { "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload" }
+                }
+                callbackUrlIsMalformed
+            }.doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
             }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
             .block()
