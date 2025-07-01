@@ -2,7 +2,6 @@ package no.nb.mlt.wls.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import no.nb.mlt.wls.domain.NullableNotBlank
-import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
 
@@ -18,43 +17,32 @@ data class Order(
     val note: String?,
     val callbackUrl: String
 ) {
-    // This is only used by order updating
-    private fun setOrderLines(listOfHostIds: List<String>): Order {
-        if (isOrderProcessingStarted()) {
-            throw IllegalOrderStateException("Order processing is already started")
-        }
-
-        return this.copy(
-            orderLine =
-                listOfHostIds.map {
-                    OrderItem(it, OrderItem.Status.NOT_STARTED)
-                }
-        )
-    }
-
     private fun setOrderLineStatus(
         hostIds: List<String>,
         status: OrderItem.Status
     ): Order {
-        if (isOrderClosed()) {
-            throw IllegalOrderStateException("Order is already closed with status: $status")
+        if (isClosed()) {
+            throw ValidationException("Order is already closed with status: $status")
         }
 
-        if (isOrderPicked() && status != OrderItem.Status.RETURNED) {
-            throw IllegalOrderStateException("Order is already complete with status: $status")
+        if (isPicked() && status != OrderItem.Status.RETURNED) {
+            throw ValidationException("Order is already complete with status: $status")
         }
-        val updatedOrderLineList =
-            orderLine.map {
-                if (hostIds.contains(it.hostId)) {
-                    it.copy(status = status)
-                } else {
-                    it
-                }
+
+        val hasUnknownItems =
+            hostIds.any { hostIdToUpdate ->
+                orderLine.none { it.hostId == hostIdToUpdate }
             }
 
-        if (updatedOrderLineList == orderLine) {
-            throw IllegalOrderStateException("Order line item not found: $hostIds")
+        if (hasUnknownItems) {
+            throw ValidationException("Can't update order line items that do not exist in the order: $hostIds")
         }
+
+        val updatedOrderLineList =
+            hostIds.map { hostIdToUpdate ->
+                orderLine.first { it.hostId == hostIdToUpdate }.copy(status = status)
+            }
+
         return this
             .copy(orderLine = updatedOrderLineList)
             .updateOrderStatusFromOrderLines()
@@ -94,16 +82,16 @@ data class Order(
     }
 
     /**
-     * Order can not receive any further updates
+     * Order cannot receive any further updates
      */
-    private fun isOrderClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
+    fun isClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
 
     /**
      * Order is picked and finished, but is not returned yet
      */
-    private fun isOrderPicked(): Boolean = listOf(Status.COMPLETED).contains(status)
+    private fun isPicked(): Boolean = listOf(Status.COMPLETED).contains(status)
 
-    private fun isOrderProcessingStarted(): Boolean = status != Status.NOT_STARTED
+    private fun isInProgress(): Boolean = status != Status.NOT_STARTED
 
     private fun setNote(note: String?): Order = this.copy(note = note)
 
@@ -117,58 +105,28 @@ data class Order(
      * This validates if the order can be deleted, and sets the status on it if it can.
      * Deleting it from the storage systems is handled by the outbox processor.
      */
-    fun deleteOrder(): Order {
-        throwIfInProgress()
-        return this.copy(status = Status.DELETED)
-    }
+    fun deleteOrder(): Order = updateStatus(Status.DELETED)
 
-    /**
-     * Throws an exception if the order has been started or finished
-     */
-    private fun throwIfInProgress() {
-        if (this.isOrderClosed()) {
-            throw IllegalOrderStateException("The order is already completed, and can therefore not be changed")
-        }
-        if (this.isOrderProcessingStarted()) {
-            throw IllegalOrderStateException("The order is currently being processed, and can therefore not be changed")
-        }
-    }
-
-    fun updateStatus(status: Status): Order {
-        if (isOrderClosed()) {
+    fun updateStatus(newStatus: Status): Order {
+        if (isClosed()) {
             throw ValidationException("The order is already closed, and can therefore not be changed")
         }
-        return when (this.status) {
-            Status.COMPLETED -> {
-                if (status == Status.NOT_STARTED ||
-                    status == Status.IN_PROGRESS
-                ) {
-                    throw ValidationException(
-                        "The order status can not be updated in an invalid direction. Tried updating from COMPLETED to $status"
-                    )
-                } else {
-                    this.copy(status = status)
-                }
-            }
-            Status.IN_PROGRESS -> {
-                if (status ==
-                    Status.NOT_STARTED
-                ) {
-                    throw ValidationException(
-                        "The order status can not be updated in an invalid direction. Tried updating from IN_PROGRESS to $status"
-                    )
-                } else {
-                    this.copy(status = status)
-                }
-            }
 
-            else -> this.copy(status = status)
+        // Order can never be updated to NOT_STARTED after it has been started
+        val isInvalidTransition =
+            (newStatus == Status.NOT_STARTED && isInProgress()) ||
+                (newStatus == Status.IN_PROGRESS && isPicked())
+
+        if (isInvalidTransition) {
+            throw ValidationException("The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus")
         }
+
+        return this.copy(status = newStatus)
     }
 
-    fun pickOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
+    fun pickItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
 
-    fun returnOrder(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
+    fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
@@ -177,8 +135,6 @@ data class Order(
             throw ValidationException("Invalid URL: $url", it)
         }
     }
-
-    fun containsOrderItem(returnedItems: List<String>): Boolean = this.orderLine.any { orderItem -> returnedItems.contains(orderItem.hostId) }
 
     data class OrderItem(
         val hostId: String,
