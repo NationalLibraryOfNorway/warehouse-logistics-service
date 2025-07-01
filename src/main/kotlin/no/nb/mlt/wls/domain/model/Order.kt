@@ -112,7 +112,8 @@ data class Order(
             throw ValidationException("The order is already closed, and can therefore not be changed")
         }
 
-        // Order can never be updated to NOT_STARTED after it has been started
+        // In progress orders cannot be changed to not started
+        // Picked orders cannot be set to in progress
         val isInvalidTransition =
             (newStatus == Status.NOT_STARTED && isInProgress()) ||
                 (newStatus == Status.IN_PROGRESS && isPicked())
