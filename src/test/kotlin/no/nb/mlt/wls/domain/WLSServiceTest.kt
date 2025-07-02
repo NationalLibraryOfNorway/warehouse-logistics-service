@@ -232,7 +232,7 @@ class WLSServiceTest {
             )
 
         runTest {
-            val updatedOrder = testOrder.pickOrder(itemsToPick)
+            val updatedOrder = testOrder.pickItems(itemsToPick)
             cut.pickOrderItems(HostName.AXIELL, listOf(testItem1.hostId), testOrder.hostOrderId)
 
             val order = orderRepoMock.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
