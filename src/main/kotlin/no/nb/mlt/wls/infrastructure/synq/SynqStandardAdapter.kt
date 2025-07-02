@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.Environment
@@ -40,20 +41,29 @@ class SynqStandardAdapter(
             .retrieve()
             .toEntity(SynqError::class.java)
             .timeout(timeoutProperties.storage)
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while creating item '${item.hostId}' for ${item.hostName} in SynQ"
+            .doOnError {
+                if (it is TimeoutException) {
+                    logger.error { "Timed out while creating item '${item.hostId}' for ${item.hostName} in SynQ" }
+                } else {
+                    logger.error(it) { "Error while creating item '${item.hostId}' for ${item.hostName} in SynQ" }
                 }
             }.onErrorResume(WebClientResponseException::class.java) { error ->
-                val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
-                if (errorText != null && errorText.contains("Duplicate product")) {
+                val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText ?: throw createServerError(error)
+                // No better way of checking for duplicate errors in SynQ
+                if (errorText.contains("Duplicate product")) {
+                    // Log and modify error to an DuplicateItemException
+                    logger.warn { "Trying to create a duplicate item in SynQ!" }
                     Mono.error(SynqError.DuplicateItemException(error))
                 } else {
+                    // Pass the error along with just simple logging
+                    logger.error { "Some other error occurred! Text is as follows: $errorText" }
                     Mono.error(error)
                 }
-            }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
-            .onErrorComplete(SynqError.DuplicateItemException::class.java)
-            .awaitSingle()
+            }.onErrorMap(WebClientResponseException::class.java) {
+                // Convert non-duplicate errors into server errors, only these will throw
+                createServerError(it)
+            }.onErrorComplete(SynqError.DuplicateItemException::class.java) // Treat duplicate errors as non-issues
+            .awaitFirstOrNull()
     }
 
     override suspend fun createOrder(order: Order) {
@@ -67,18 +77,28 @@ class SynqStandardAdapter(
             .retrieve()
             .toEntity(SynqError::class.java)
             .timeout(timeoutProperties.storage)
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ"
+            .doOnError {
+                if (it is TimeoutException) {
+                    logger.error { "Timed out while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ" }
+                } else {
+                    logger.error(it) { "Error while creating order '${order.hostOrderId}' for ${order.hostName} in SynQ" }
                 }
             }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val synqError = error.getResponseBodyAs(SynqError::class.java) ?: throw createServerError(error)
+
+                // Convert specific errors to other types for better info
                 if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
+                    logger.error {
+                        "Items in order  ${order.hostOrderId}' for ${order.hostName} are not found in SynQ, error text: ${synqError.errorText}"
+                    }
                     throw OrderNotFoundException(synqError.errorText)
                 }
                 if (synqError.errorText.contains("Duplicate order")) {
-                    Mono.error(DuplicateResourceException("errorCode: ${synqError.errorCode}, errorText: ${synqError.errorText}", error))
+                    logger.error { "Order ${order.hostOrderId}' for ${order.hostName} already exists, error text: ${synqError.errorText}" }
+                    throw DuplicateResourceException("errorCode: ${synqError.errorCode}, errorText: ${synqError.errorText}", error)
                 } else {
+                    // Pass other errors along with just simple logging
+                    logger.error { "Some other error occurred! Code: ${synqError.errorCode}, text: ${synqError.errorText}" }
                     Mono.error(error)
                 }
             }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
@@ -104,9 +124,11 @@ class SynqStandardAdapter(
             .retrieve()
             .toEntity(SynqError::class.java)
             .timeout(timeoutProperties.storage)
-            .doOnError(TimeoutException::class.java) {
-                logger.error(it) {
-                    "Timed out while deleting order '$orderId' for $hostName in SynQ"
+            .doOnError {
+                if (it is TimeoutException) {
+                    logger.error { "Timed out while deleting order '$orderId' for $hostName in SynQ" }
+                } else {
+                    logger.error(it) { "Error while  deleting order '$orderId' for $hostName in SynQ" }
                 }
             }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()
