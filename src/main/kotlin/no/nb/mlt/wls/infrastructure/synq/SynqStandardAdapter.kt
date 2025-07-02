@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.Environment
@@ -62,7 +63,7 @@ class SynqStandardAdapter(
                 // Convert non-duplicate errors into server errors, only these will throw
                 createServerError(it)
             }.onErrorComplete(SynqError.DuplicateItemException::class.java) // Treat duplicate errors as non-issues
-            .awaitSingle()
+            .awaitFirstOrNull()
     }
 
     override suspend fun createOrder(order: Order) {
