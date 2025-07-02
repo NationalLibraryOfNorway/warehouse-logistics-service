@@ -39,7 +39,7 @@
             <b>Kontaktperson:</b> ${order.contactPerson}
         </div>
         <div>
-            <b>Melding fra bestiller:</b> ${order.note}
+            <b>Melding fra bestiller:</b> <#if order.note??>${order.note}</#if>
         </div>
     </div>
     <div>
