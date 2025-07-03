@@ -176,7 +176,7 @@ data class Product(
         }
 
         return MoveItemPayload(
-            hostName = HostName.fromString(hostName),
+            hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantity,
             location = location
@@ -185,11 +185,21 @@ data class Product(
 
     fun toUpdateItemPayload(location: String): UpdateItemPayload =
         UpdateItemPayload(
-            hostName = HostName.fromString(hostName),
+            hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
             location = location
         )
+
+    private fun getHostNameFromSynqTypes(): HostName {
+        if (hostName.lowercase() == "mavis") {
+            // As of now over 160k items exist with hostName Mavis in SynQ.
+            // These need to be migrated to Axiell, but before that is done we can cheat the system by converting Mavis -> Axiell
+            return HostName.AXIELL
+        }
+
+        return HostName.fromString(hostName)
+    }
 }
 
 @Schema(

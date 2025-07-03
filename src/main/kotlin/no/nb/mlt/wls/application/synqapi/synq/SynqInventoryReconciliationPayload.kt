@@ -101,10 +101,10 @@ fun LoadUnit.getMappedHostName(): HostName? {
     return when (hostName.lowercase()) {
         "alma" -> HostName.ALMA
         "asta" -> HostName.ASTA
-        "mavis" -> HostName.MAVIS
+        "mavis" -> HostName.AXIELL // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
         "axiell" -> HostName.AXIELL
         "mellomlager" -> HostName.TEMP_STORAGE
-        else -> null
+        else -> null // @Tom shouldn't this be HostName.NONE or at least a ValidationException?
     }
 }
 
