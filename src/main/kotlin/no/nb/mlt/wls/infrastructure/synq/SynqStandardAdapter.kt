@@ -146,7 +146,7 @@ class SynqStandardAdapter(
         // SynQ can handle both NONE and FREEZE environments, so this is not checked
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
-            ItemCategory.FILM -> true
+            ItemCategory.FILM -> item.preferredEnvironment == Environment.FREEZE
             ItemCategory.BULK_ITEMS -> true
             else -> false
         }
