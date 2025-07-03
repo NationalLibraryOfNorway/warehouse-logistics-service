@@ -1,7 +1,6 @@
 package no.nb.mlt.wls.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import no.nb.mlt.wls.domain.NullableNotBlank
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
 import java.net.URI
@@ -179,19 +178,12 @@ data class Order(
     }
 
     data class Address(
-        @field:NullableNotBlank(message = "Invalid address: recipient must not be blank if defined")
         val recipient: String?,
-        @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
         val addressLine1: String?,
-        @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
         val addressLine2: String?,
-        @field:NullableNotBlank(message = "Invalid address: postcode must not be blank if defined")
         val postcode: String?,
-        @field:NullableNotBlank(message = "Invalid address: city must not be blank if defined")
         val city: String?,
-        @field:NullableNotBlank(message = "Invalid address: region must not be blank if defined")
         val region: String?,
-        @field:NullableNotBlank(message = "Invalid address: country must not be blank if defined")
         val country: String?
     )
 

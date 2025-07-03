@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
+import no.nb.mlt.wls.application.validations.NullableNotBlank
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
@@ -100,7 +101,7 @@ data class ApiOrderPayload(
         example = "{...}"
     )
     @field:Valid
-    val address: Order.Address?,
+    val address: Address?,
     @Schema(
         description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
         example = "I need this order in four weeks, not right now."
@@ -126,7 +127,18 @@ fun Order.toApiPayload() =
         orderType = orderType,
         contactPerson = contactPerson,
         contactEmail = contactEmail,
-        address = address,
+        address =
+            address?.let {
+                Address(
+                    recipient = it.recipient,
+                    addressLine1 = it.addressLine1,
+                    addressLine2 = it.addressLine2,
+                    postcode = it.postcode,
+                    city = it.city,
+                    region = it.region,
+                    country = it.country
+                )
+            },
         note = note,
         callbackUrl = callbackUrl
     )
@@ -158,5 +170,22 @@ data class OrderLine(
 
     fun toCreateOrderItem() = CreateOrderDTO.OrderItem(hostId)
 }
+
+data class Address(
+    @field:NullableNotBlank(message = "Invalid address: recipient must not be blank if defined")
+    val recipient: String?,
+    @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
+    val addressLine1: String?,
+    @field:NullableNotBlank(message = "Invalid address: address line must not be blank if defined")
+    val addressLine2: String?,
+    @field:NullableNotBlank(message = "Invalid address: postcode must not be blank if defined")
+    val postcode: String?,
+    @field:NullableNotBlank(message = "Invalid address: city must not be blank if defined")
+    val city: String?,
+    @field:NullableNotBlank(message = "Invalid address: region must not be blank if defined")
+    val region: String?,
+    @field:NullableNotBlank(message = "Invalid address: country must not be blank if defined")
+    val country: String?
+)
 
 fun Order.OrderItem.toApiOrderLine() = OrderLine(hostId, status)

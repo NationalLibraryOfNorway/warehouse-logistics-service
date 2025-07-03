@@ -3,12 +3,12 @@ package no.nb.mlt.wls.infrastructure.callbacks
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.resolver.dns.DnsErrorCauseException
-import no.nb.mlt.wls.domain.TimeoutProperties
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.InventoryNotifier
 import no.nb.mlt.wls.domain.ports.outbound.UnableToNotifyException
+import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
