@@ -664,6 +664,8 @@ class WLSServiceTest {
                 hostOrderId: String
             ): Order? = orderList.find { order -> order.hostName == hostName && order.hostOrderId == hostOrderId }
 
+            override suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order> = orders.filter { hostnames.contains(it.hostName) }
+
             override suspend fun deleteOrder(order: Order) {
                 orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
             }

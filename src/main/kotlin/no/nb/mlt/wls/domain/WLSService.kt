@@ -25,6 +25,7 @@ import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
@@ -45,6 +46,7 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import org.eclipse.angus.mail.imap.protocol.FetchResponse.getItems
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 private val logger = KotlinLogging.logger {}
@@ -61,6 +63,7 @@ class WLSService(
     CreateOrder,
     DeleteOrder,
     GetOrder,
+    GetOrders,
     GetItem,
     GetItems,
     UpdateItem,
@@ -293,6 +296,8 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ): Order? = orderRepository.getOrder(hostName, hostOrderId)
+
+    override suspend fun getAllOrders(hostnames: List<HostName>): List<Order> = orderRepository.getAllOrdersForHosts(hostnames)
 
     private suspend fun getItems(
         hostIds: List<String>,

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.callbacks.Callback
 import io.swagger.v3.oas.annotations.callbacks.Callbacks
 import io.swagger.v3.oas.annotations.enums.ParameterIn
 import io.swagger.v3.oas.annotations.enums.ParameterStyle
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -16,10 +17,12 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
+import no.nb.mlt.wls.application.hostapi.config.getUsersHosts
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationOrderPayload
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -41,9 +44,146 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Order Controller", description = """API for managing orders in Hermes WLS""")
 class OrderController(
     private val getOrder: GetOrder,
+    private val getOrders: GetOrders,
     private val createOrder: CreateOrder,
     private val deleteOrder: DeleteOrder
 ) {
+    @Operation(
+        summary = "Retrieve all orders from the system",
+        description = """Retrieves all orders that the authenticated user has access to based on their roles.
+            This endpoint requires appropriate user roles to access orders information across the system."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "List of all orders the user has access to",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    array = ArraySchema(schema = Schema(implementation = ApiOrderPayload::class))
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = "Client sending the request is not authorized to retrieve orders.",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
+        )
+    )
+    @GetMapping("/order")
+    suspend fun getAllOrders(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken
+    ): ResponseEntity<List<ApiOrderPayload>> {
+        val items = getOrders.getAllOrders(jwt.getUsersHosts())
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(items.map { it.toApiPayload() })
+    }
+
+    @Operation(
+        summary = "Retrieves order information from Hermes WLS",
+        description = """Endpoint for receiving detailed order information from our system, with updated status information.
+            Order status is updated based on information provided from the storage systems.
+            As such there might be a delay in the status update.
+            Some systems don't give any status updates and the order might be stuck in "NOT_STARTED" status until it's manually marked as "COMPLETED".
+            The caller must "own" the order, e.g. be the creator of the order, in order to request it."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Information about the order with given "hostname" and "hostOrderId"""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiOrderPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Some fields in your request are invalid.
+                The error message contains information about the invalid fields.""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized to request order info, or this order does not belong to them.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
+        )
+    )
+    @GetMapping("/order/{hostName}/{hostOrderId}")
+    suspend fun getOrder(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @Parameter(
+            description = """Name of the host system which made the order.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "AXIELL"
+        )
+        @PathVariable("hostName") hostName: HostName,
+        @Parameter(
+            description = """ID of the order which you wish to retrieve.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "mlt-12345-order"
+        )
+        @PathVariable("hostOrderId") hostOrderId: String
+    ): ResponseEntity<ApiOrderPayload> {
+        jwt.checkIfAuthorized(hostName)
+
+        val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(order.toApiPayload())
+    }
+
     @Operation(
         summary = "Creates an order for items from the storage system",
         description = """Creates an order for specified items to appropriate storage systems via Hermes WLS.
@@ -170,94 +310,6 @@ class OrderController(
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(createdOrder.toApiPayload())
-    }
-
-    @Operation(
-        summary = "Retrieves order information from Hermes WLS",
-        description = """Endpoint for receiving detailed order information from our system, with updated status information.
-            Order status is updated based on information provided from the storage systems.
-            As such there might be a delay in the status update.
-            Some systems don't give any status updates and the order might be stuck in "NOT_STARTED" status until it's manually marked as "COMPLETED".
-            The caller must "own" the order, e.g. be the creator of the order, in order to request it."""
-    )
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = """Information about the order with given "hostname" and "hostOrderId"""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ApiOrderPayload::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "400",
-            description = """Some fields in your request are invalid.
-                The error message contains information about the invalid fields.""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ErrorMessage::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "401",
-            description = """Client sending the request is not authorized to request order info, or this order does not belong to them.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Unauthorized")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "403",
-            description = """A valid "Authorization" header is missing from the request.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Forbidden")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = """The order with given "hostname" and "hostOrderId" does not exist in the system.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Not Found")
-                )
-            ]
-        )
-    )
-    @GetMapping("/order/{hostName}/{hostOrderId}")
-    suspend fun getOrder(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @Parameter(
-            description = """Name of the host system which made the order.""",
-            required = true,
-            allowEmptyValue = false,
-            example = "AXIELL"
-        )
-        @PathVariable("hostName") hostName: HostName,
-        @Parameter(
-            description = """ID of the order which you wish to retrieve.""",
-            required = true,
-            allowEmptyValue = false,
-            example = "mlt-12345-order"
-        )
-        @PathVariable("hostOrderId") hostOrderId: String
-    ): ResponseEntity<ApiOrderPayload> {
-        jwt.checkIfAuthorized(hostName)
-
-        val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(order.toApiPayload())
     }
 
     @Operation(
