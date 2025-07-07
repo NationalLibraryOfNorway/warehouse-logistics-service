@@ -413,13 +413,13 @@ class WLSServiceTest {
             assertThat(axiell).hasSize(2)
             assertThat(axiell).containsExactlyInAnyOrder(i1, i2)
 
-            val AA_BATTERY = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL))
-            assertThat(AA_BATTERY).hasSize(4)
-            assertThat(AA_BATTERY).containsExactlyInAnyOrder(i1, i2, i3, i4)
+            val axiellAndAsta = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL))
+            assertThat(axiellAndAsta).hasSize(4)
+            assertThat(axiellAndAsta).containsExactlyInAnyOrder(i1, i2, i3, i4)
 
-            val AAA_BATTERY = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL, HostName.ALMA))
-            assertThat(AAA_BATTERY).hasSize(5)
-            assertThat(AAA_BATTERY).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
+            val axiellAstaAndAlma = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL, HostName.ALMA))
+            assertThat(axiellAstaAndAlma).hasSize(5)
+            assertThat(axiellAstaAndAlma).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
 
             val none = cut.getAllItems(listOf(HostName.NONE))
             assertThat(none).isEmpty()
