@@ -388,6 +388,84 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `getAllItems should return all items for given hosts`() {
+        val i1 = createTestItem(hostName = HostName.AXIELL, hostId = "axiell-01")
+        val i2 = createTestItem(hostName = HostName.AXIELL, hostId = "axiell-02")
+        val i3 = createTestItem(hostName = HostName.ASTA, hostId = "asta-01")
+        val i4 = createTestItem(hostName = HostName.ASTA, hostId = "asta-02")
+        val i5 = createTestItem(hostName = HostName.ALMA, hostId = "alma-01")
+
+        val itemRepo = createInMemItemRepo(mutableListOf(i1, i2, i3, i4, i5))
+
+        val cut =
+            WLSService(
+                itemRepo,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            val axiell = cut.getAllItems(listOf(HostName.AXIELL))
+            assertThat(axiell).hasSize(2)
+            assertThat(axiell).containsExactlyInAnyOrder(i1, i2)
+
+            val AA_BATTERY = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL))
+            assertThat(AA_BATTERY).hasSize(4)
+            assertThat(AA_BATTERY).containsExactlyInAnyOrder(i1, i2, i3, i4)
+
+            val AAA_BATTERY = cut.getAllItems(listOf(HostName.ASTA, HostName.AXIELL, HostName.ALMA))
+            assertThat(AAA_BATTERY).hasSize(5)
+            assertThat(AAA_BATTERY).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
+
+            val none = cut.getAllItems(listOf(HostName.NONE))
+            assertThat(none).isEmpty()
+        }
+    }
+
+    @Test
+    fun `getAllOrders should return all orders for given hosts`() {
+        val i1 = createTestOrder(hostName = HostName.AXIELL, hostOrderId = "axiell-01")
+        val i2 = createTestOrder(hostName = HostName.AXIELL, hostOrderId = "axiell-02")
+        val i3 = createTestOrder(hostName = HostName.ASTA, hostOrderId = "asta-01")
+        val i4 = createTestOrder(hostName = HostName.ASTA, hostOrderId = "asta-02")
+        val i5 = createTestOrder(hostName = HostName.ALMA, hostOrderId = "alma-01")
+
+        val orderRepo = createInMemOrderRepo(mutableListOf(i1, i2, i3, i4, i5))
+
+        val cut =
+            WLSService(
+                itemRepoMock,
+                orderRepo,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            val axiell = cut.getAllOrders(listOf(HostName.AXIELL))
+            assertThat(axiell).hasSize(2)
+            assertThat(axiell).containsExactlyInAnyOrder(i1, i2)
+
+            val astaAndAxiell = cut.getAllOrders(listOf(HostName.ASTA, HostName.AXIELL))
+            assertThat(astaAndAxiell).hasSize(4)
+            assertThat(astaAndAxiell).containsExactlyInAnyOrder(i1, i2, i3, i4)
+
+            val allOrders = cut.getAllOrders(listOf(HostName.ASTA, HostName.AXIELL, HostName.ALMA))
+            assertThat(allOrders).hasSize(5)
+            assertThat(allOrders).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
+
+            val none = cut.getAllOrders(listOf(HostName.NONE))
+            assertThat(none).isEmpty()
+        }
+    }
+
+    @Test
     fun `getOrder should return requested order when it exists in DB`() {
         coEvery { orderRepoMock.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
 
@@ -483,7 +561,7 @@ class WLSServiceTest {
         val expectedOrder =
             testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
         val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
-        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+        val inMemOrderRepo = createInMemOrderRepo(mutableListOf(testOrder))
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -519,7 +597,7 @@ class WLSServiceTest {
         val expectedOrder =
             testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
         val inMemItemRepo = createInMemItemRepo(mutableListOf(storedItem))
-        val inMemOrderRepo = createInMemoOrderRepo(mutableListOf(testOrder))
+        val inMemOrderRepo = createInMemOrderRepo(mutableListOf(testOrder))
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -569,8 +647,6 @@ class WLSServiceTest {
             quantity = 1,
             location = "KNOWN_LOCATION"
         )
-
-    private val updatedOrder = createTestOrder()
 
     private val createOrderDTO =
         CreateOrderDTO(
@@ -655,7 +731,7 @@ class WLSServiceTest {
         }
     }
 
-    private fun createInMemoOrderRepo(orders: MutableList<Order>): OrderRepository {
+    private fun createInMemOrderRepo(orders: MutableList<Order>): OrderRepository {
         return object : OrderRepository {
             val orderList = orders
 

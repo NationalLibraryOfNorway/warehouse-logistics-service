@@ -4,7 +4,6 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -66,6 +65,104 @@ class ItemControllerTest(
                 .build()
 
         populateDb()
+    }
+
+    @Test
+    fun `getItem returns the order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody(ApiItemPayload::class.java)
+            .consumeWith { response ->
+                assertThat(response?.responseBody?.hostId.equals(duplicateItemPayload.hostId))
+                assertThat(response?.responseBody?.description?.equals(duplicateItemPayload.description))
+            }
+    }
+
+    @Test
+    fun `getItem when order doesn't exist returns 404`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, "not-an-id")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    @Test
+    fun `getItems returns list of items`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(3)
+            .contains(duplicateItemPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(
+                mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole), SimpleGrantedAuthority("ROLE_asta"))
+            ).get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(5)
+            .contains(duplicateItemPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item")))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(0)
+    }
+
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getItem for wrong client returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
     }
 
     @Test

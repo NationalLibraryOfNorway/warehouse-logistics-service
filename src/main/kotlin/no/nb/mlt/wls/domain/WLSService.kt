@@ -46,7 +46,6 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
-import org.eclipse.angus.mail.imap.protocol.FetchResponse.getItems
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 private val logger = KotlinLogging.logger {}
@@ -292,17 +291,17 @@ class WLSService(
 
     override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
+    private suspend fun getItems(
+        hostIds: List<String>,
+        hostName: HostName
+    ): List<Item> = itemRepository.getItems(hostName, hostIds)
+
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
     ): Order? = orderRepository.getOrder(hostName, hostOrderId)
 
     override suspend fun getAllOrders(hostnames: List<HostName>): List<Order> = orderRepository.getAllOrdersForHosts(hostnames)
-
-    private suspend fun getItems(
-        hostIds: List<String>,
-        hostName: HostName
-    ): List<Item> = itemRepository.getItems(hostName, hostIds)
 
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }

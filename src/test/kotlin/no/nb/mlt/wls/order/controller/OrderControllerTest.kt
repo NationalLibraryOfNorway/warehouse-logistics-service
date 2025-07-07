@@ -233,6 +233,45 @@ class OrderControllerTest(
     }
 
     @Test
+    fun `getOrders returns list of orders`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiOrderPayload::class.java)
+            .hasSize(3)
+            .contains(duplicateOrderPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(
+                mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole), SimpleGrantedAuthority("ROLE_asta"))
+            ).get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiOrderPayload::class.java)
+            .hasSize(5)
+            .contains(duplicateOrderPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiOrderPayload::class.java)
+            .hasSize(0)
+    }
+
+    @Test
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -345,9 +384,9 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
-            coEvery {
-                synqStandardAdapterMock.deleteOrder(any(), any())
-            } answers {}
+            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
+            coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 
             webTestClient
                 .mutateWith(csrf())
@@ -394,21 +433,36 @@ class OrderControllerTest(
 
     private val orderInProgress = testOrder.copy(hostOrderId = "order-in-progress", status = Order.Status.IN_PROGRESS)
 
-    private val completeOrder = testOrder.copy(hostOrderId = "order-completed", status = Order.Status.COMPLETED)
-
     private val clientRole: String = "ROLE_${HostName.AXIELL.name.lowercase()}"
 
     fun populateDb() {
         runBlocking {
             mongoStorageEventRepository.deleteAll().awaitSingleOrNull()
-            repository.deleteAll().then(repository.save(duplicateOrderPayload.toOrder().toMongoOrder())).awaitSingle()
 
-            // Create all items in testOrderPayload and duplicateOrderPayload in the database
-            val allItems = (testOrderPayload.orderLine + duplicateOrderPayload.orderLine).toSet()
-            val mongoItems = allItems.map { createTestItem(hostId = it.hostId).toMongoItem() }
+            val o1 = createTestOrder(hostOrderId = "axiell-01", hostName = HostName.AXIELL).toMongoOrder()
+            val o2 = createTestOrder(hostOrderId = "axiell-02", hostName = HostName.AXIELL).toMongoOrder()
+            val o3 = createTestOrder(hostOrderId = "asta-01", hostName = HostName.ASTA).toMongoOrder()
+            val o4 = createTestOrder(hostOrderId = "asta-02", hostName = HostName.ASTA).toMongoOrder()
+            val o5 = createTestOrder(hostOrderId = "alma-01", hostName = HostName.ALMA).toMongoOrder()
+            val o6 = createTestOrder(hostOrderId = "alma-02", hostName = HostName.ALMA).toMongoOrder()
+            val orders = listOf(o1, o2, o3, o4, o5, o6, duplicateOrderPayload.toOrder().toMongoOrder())
+
+            repository.deleteAll().thenMany(repository.saveAll(orders)).awaitLast()
+
+            // Create all items in orders in the database
+            val allItems =
+                orders.flatMap { order ->
+                    order.orderLine.map { item ->
+                        createTestItem(
+                            hostId = item.hostId,
+                            hostName = order.hostName
+                        ).toMongoItem()
+                    }
+                }
+
             itemMongoRepository
                 .deleteAll()
-                .thenMany(itemMongoRepository.saveAll(mongoItems))
+                .thenMany(itemMongoRepository.saveAll(allItems))
                 .awaitLast()
         }
     }
