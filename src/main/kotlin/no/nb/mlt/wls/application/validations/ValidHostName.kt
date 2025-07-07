@@ -1,4 +1,4 @@
-package no.nb.mlt.wls.domain
+package no.nb.mlt.wls.application.validations
 
 import jakarta.validation.Constraint
 import jakarta.validation.ConstraintValidator

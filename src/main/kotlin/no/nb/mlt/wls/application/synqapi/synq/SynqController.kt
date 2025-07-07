@@ -267,7 +267,7 @@ class SynqController(
             return ResponseEntity.badRequest().body("Warehouse cannot be blank")
         }
 
-        val hostName = HostName.fromString(orderUpdatePayload.hostName)
+        val hostName = HostName.fromString(orderUpdatePayload.sanitizedHostName) // Must be changed when we fix SynQ to use Axiel, not Mavis
         orderStatusUpdate.updateOrderStatus(hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()

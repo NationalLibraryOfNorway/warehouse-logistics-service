@@ -190,6 +190,59 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `pickOrderItems should set order to in progress during partial picking`() {
+        // Specific test setup
+        val testItem1 = createTestItem()
+        val unchangedTestItem = createTestItem(hostId = "test-item-2")
+        val testOrder =
+            createTestOrder(
+                orderLine =
+                    listOf(
+                        Order.OrderItem(testItem1.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem(unchangedTestItem.hostId, Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val expectedItem1 = testItem1.pickItem(1)
+        val expectedOrder =
+            testOrder.copy(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem(expectedItem1.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem(unchangedTestItem.hostId, Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val itemsToPick = listOf(testItem1.hostId)
+        coEvery { catalogEventRepository.save(any()) } answers { ItemEvent(expectedItem1) }
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
+        coEvery { storageEventProcessor.handleEvent(any()) } answers { }
+
+        val itemRepoMock = createInMemItemRepo(mutableListOf(testItem1, unchangedTestItem))
+        val orderRepoMock = createInMemoOrderRepo(mutableListOf(testOrder))
+
+        val cut =
+            WLSService(
+                itemRepoMock,
+                orderRepoMock,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortSkipMock,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            val updatedOrder = testOrder.pickItems(itemsToPick)
+            cut.pickOrderItems(HostName.AXIELL, listOf(testItem1.hostId), testOrder.hostOrderId)
+
+            val order = orderRepoMock.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
+            assert(updatedOrder == expectedOrder)
+        }
+    }
+
+    @Test
     fun `createOrder should save order in db and outbox`() {
         val order = createTestOrder()
         val orderCreatedEvent = OrderCreated(order)

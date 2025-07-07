@@ -131,7 +131,11 @@ class StorageEventProcessorAdapter(
 
             storageSystemFacade?.createOrder(orderCopy)
             logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
-            createAndSendEmails(orderCopy)
+            try {
+                createAndSendEmails(order = orderCopy, items = itemList)
+            } catch (e: Exception) {
+                logger.error(e) { "Error while sending email for created order, but continuing processing." }
+            }
         }
     }
 
@@ -150,11 +154,12 @@ class StorageEventProcessorAdapter(
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
-    private suspend fun createAndSendEmails(order: Order) {
-        val items = order.orderLine.map { it.hostId }
-        val orderItems = itemRepository.getItems(order.hostName, items)
-        if (orderItems.isNotEmpty()) {
-            emailNotifier.orderCreated(order, orderItems)
+    private suspend fun createAndSendEmails(
+        order: Order,
+        items: List<Item>
+    ) {
+        if (items.isNotEmpty()) {
+            emailNotifier.orderCreated(order, items)
         }
     }
 }

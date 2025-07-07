@@ -38,7 +38,7 @@ class OrderModelValidationTest {
 
     @Test
     fun `address with blank fields should fail validation`() {
-        val invalidAddress = validAddress.copy(recipient = "", city = "")
+        val invalidAddress = validOrderPayloadAddress.copy(recipient = "", city = "")
         val validationErrors = validator.validate(invalidAddress)
         assert(validationErrors.isNotEmpty())
         assert(validationErrors.size == 2)
@@ -75,7 +75,7 @@ class OrderModelValidationTest {
 
     @Test
     fun `order with invalid address should fail validation`() {
-        val invalidOrder = validOrder.copy(address = validAddress.copy(recipient = ""))
+        val invalidOrder = validOrder.copy(address = validOrderPayloadAddress.copy(recipient = ""))
         assert(validator.validate(invalidOrder).isNotEmpty())
     }
 
@@ -89,4 +89,6 @@ class OrderModelValidationTest {
     private val validAddress = testOrder.address!!
 
     private val validOrder = testOrder.toApiPayload()
+
+    private val validOrderPayloadAddress = validOrder.address!!
 }
