@@ -218,7 +218,7 @@ class WLSServiceTest {
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
 
         val itemRepoMock = createInMemItemRepo(mutableListOf(testItem1, unchangedTestItem))
-        val orderRepoMock = createInMemoOrderRepo(mutableListOf(testOrder))
+        val orderRepoMock = createInMemOrderRepo(mutableListOf(testOrder))
 
         val cut =
             WLSService(
