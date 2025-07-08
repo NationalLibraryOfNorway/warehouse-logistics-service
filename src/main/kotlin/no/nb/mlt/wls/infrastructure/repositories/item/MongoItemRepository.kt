@@ -54,6 +54,17 @@ class MongoItemRepositoryAdapter(
             }.awaitSingle()
             .map { it.toItem() }
 
+    override suspend fun getAllItemsForHosts(hostnames: List<HostName>): List<Item> =
+        mongoRepo
+            .findAllByHostNameIn(hostnames)
+            .collectList()
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching all items for $hostnames"
+                }
+            }.awaitSingle()
+            .map { it.toItem() }
+
     override suspend fun createItem(item: Item): Item =
         mongoRepo
             .save(item.toMongoItem())
@@ -160,4 +171,6 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         hostName: HostName,
         hostId: Collection<String>
     ): Flux<MongoItem>
+
+    fun findAllByHostNameIn(hostnames: Collection<HostName>): Flux<MongoItem>
 }

@@ -23,7 +23,9 @@ import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
+import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
@@ -60,7 +62,9 @@ class WLSService(
     CreateOrder,
     DeleteOrder,
     GetOrder,
+    GetOrders,
     GetItem,
+    GetItems,
     UpdateItem,
     OrderStatusUpdate,
     MoveItem,
@@ -285,15 +289,19 @@ class WLSService(
         hostId: String
     ): Item? = itemRepository.getItem(hostName, hostId)
 
-    override suspend fun getOrder(
-        hostName: HostName,
-        hostOrderId: String
-    ): Order? = orderRepository.getOrder(hostName, hostOrderId)
+    override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
     private suspend fun getItems(
         hostIds: List<String>,
         hostName: HostName
     ): List<Item> = itemRepository.getItems(hostName, hostIds)
+
+    override suspend fun getOrder(
+        hostName: HostName,
+        hostOrderId: String
+    ): Order? = orderRepository.getOrder(hostName, hostOrderId)
+
+    override suspend fun getAllOrders(hostnames: List<HostName>): List<Order> = orderRepository.getAllOrdersForHosts(hostnames)
 
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }

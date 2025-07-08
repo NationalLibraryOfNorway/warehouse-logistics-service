@@ -3,6 +3,7 @@ package no.nb.mlt.wls.item.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.junit5.MockKExtension
+import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -64,6 +65,104 @@ class ItemControllerTest(
                 .build()
 
         populateDb()
+    }
+
+    @Test
+    fun `getItem returns the order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBody(ApiItemPayload::class.java)
+            .consumeWith { response ->
+                assertThat(response?.responseBody?.hostId.equals(duplicateItemPayload.hostId))
+                assertThat(response?.responseBody?.description?.equals(duplicateItemPayload.description))
+            }
+    }
+
+    @Test
+    fun `getItem when order doesn't exist returns 404`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, "not-an-id")
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    @Test
+    fun `getItems returns list of items`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(3)
+            .contains(duplicateItemPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(
+                mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole), SimpleGrantedAuthority("ROLE_asta"))
+            ).get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(5)
+            .contains(duplicateItemPayload)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item")))
+            .get()
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList(ApiItemPayload::class.java)
+            .hasSize(0)
+    }
+
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getItem for wrong client returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", duplicateItemPayload.hostName, duplicateItemPayload.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
     }
 
     @Test
@@ -186,6 +285,34 @@ class ItemControllerTest(
             .isForbidden
     }
 
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getItem with unauthorized user returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
+            .get()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .get()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+    }
+
     private val testItem = createTestItem()
 
     private val testItemPayload = testItem.toApiPayload()
@@ -194,7 +321,15 @@ class ItemControllerTest(
 
     fun populateDb() {
         runBlocking {
-            repository.deleteAll().then(repository.save(duplicateItemPayload.toItem().toMongoItem())).awaitSingle()
+            val i1 = createTestItem(hostId = "axiell-01", hostName = HostName.AXIELL).toMongoItem()
+            val i2 = createTestItem(hostId = "axiell-02", hostName = HostName.AXIELL).toMongoItem()
+            val i3 = createTestItem(hostId = "asta-01", hostName = HostName.ASTA).toMongoItem()
+            val i4 = createTestItem(hostId = "asta-02", hostName = HostName.ASTA).toMongoItem()
+            val i5 = createTestItem(hostId = "alma-01", hostName = HostName.ALMA).toMongoItem()
+            val i6 = createTestItem(hostId = "alma-02", hostName = HostName.ALMA).toMongoItem()
+            val items = listOf(i1, i2, i3, i4, i5, i6, duplicateItemPayload.toItem().toMongoItem())
+
+            repository.deleteAll().thenMany(repository.saveAll(items)).awaitLast()
         }
     }
 }

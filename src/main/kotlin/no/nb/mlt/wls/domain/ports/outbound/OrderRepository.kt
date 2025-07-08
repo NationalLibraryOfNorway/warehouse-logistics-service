@@ -10,6 +10,8 @@ interface OrderRepository {
         hostOrderId: String
     ): Order?
 
+    suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order>
+
     @Throws(OrderNotFoundException::class)
     suspend fun deleteOrder(order: Order)
 

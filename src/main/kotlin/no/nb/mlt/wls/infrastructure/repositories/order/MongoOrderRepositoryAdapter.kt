@@ -44,6 +44,17 @@ class MongoOrderRepositoryAdapter(
             .awaitSingleOrNull()
             ?.toOrder()
 
+    override suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order> =
+        orderMongoRepository
+            .findAllByHostNameIn(hostnames)
+            .collectList()
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching all orders for $hostnames"
+                }
+            }.awaitSingle()
+            .map { it.toOrder() }
+
     override suspend fun deleteOrder(order: Order) {
         val modified =
             orderMongoRepository
@@ -144,4 +155,6 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         hostName: HostName,
         orderLine: List<String>
     ): Flux<MongoOrder>
+
+    fun findAllByHostNameIn(hostnames: Collection<HostName>): Flux<MongoOrder>
 }
