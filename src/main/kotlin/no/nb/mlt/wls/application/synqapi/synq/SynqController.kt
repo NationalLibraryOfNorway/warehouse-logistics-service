@@ -11,11 +11,11 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
-import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
@@ -36,7 +36,7 @@ class SynqController(
     private val updateItem: UpdateItem,
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
-    private val orderStatusUpdate: OrderStatusUpdate,
+    private val updateOrderStatus: UpdateOrderStatus,
     private val synchronizeItems: SynchronizeItems
 ) {
     @Operation(
@@ -268,7 +268,7 @@ class SynqController(
         }
 
         val hostName = HostName.fromString(orderUpdatePayload.sanitizedHostName) // Must be changed when we fix SynQ to use Axiel, not Mavis
-        orderStatusUpdate.updateOrderStatus(hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
+        updateOrderStatus.updateOrderStatus(hostName, orderIdWithoutPrefix, orderUpdatePayload.getConvertedStatus())
 
         return ResponseEntity.ok().build()
     }
