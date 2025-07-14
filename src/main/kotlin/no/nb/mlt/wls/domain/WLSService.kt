@@ -189,14 +189,14 @@ class WLSService(
 
     override suspend fun pickOrderItems(
         hostName: HostName,
-        pickedHostIds: List<String>,
+        pickedItemIds: List<String>,
         orderId: String
     ) {
         val order = getOrderOrThrow(hostName, orderId)
 
         val catalogEvent =
             transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedHostIds))
+                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedItemIds))
 
                 catalogEventRepository.save(OrderEvent(pickedOrder))
             } ?: throw RuntimeException("Could not pick order items")
