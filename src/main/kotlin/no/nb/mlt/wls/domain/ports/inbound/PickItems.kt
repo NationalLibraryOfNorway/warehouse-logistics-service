@@ -9,6 +9,6 @@ import no.nb.mlt.wls.domain.model.HostName
 fun interface PickItems {
     suspend fun pickItems(
         hostName: HostName,
-        itemsPickedMap: Map<String, Int>
+        pickedItems: Map<String, Int>
     )
 }

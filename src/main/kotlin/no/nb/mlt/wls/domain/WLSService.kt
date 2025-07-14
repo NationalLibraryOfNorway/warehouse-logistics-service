@@ -148,10 +148,10 @@ class WLSService(
 
     override suspend fun pickItems(
         hostName: HostName,
-        itemsPickedMap: Map<String, Int>
+        pickedItems: Map<String, Int>
     ) {
         val itemIds =
-            itemsPickedMap.map {
+            pickedItems.map {
                 ItemId(hostName, it.key)
             }
 
@@ -159,9 +159,9 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        val itemsToPick = getItems(itemsPickedMap.keys.toList(), hostName)
+        val itemsToPick = getItems(pickedItems.keys.toList(), hostName)
         itemsToPick.map { item ->
-            val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
+            val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
             val pickedItem = item.pickItem(pickedItemsQuantity)
 
             // Picking an item is guaranteed to set quantity or location.
