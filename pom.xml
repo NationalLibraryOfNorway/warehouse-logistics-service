@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.6</version>
+    <version>3.5.3</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>
 
@@ -79,21 +79,21 @@
     <java.version>21</java.version>
     <mockk.version>4.0.2</mockk.version>
     <openapi.version>2.8.8</openapi.version>
-    <spotless.version>2.44.4</spotless.version>
-    <spring.cloud.version>2024.0.1</spring.cloud.version>
-    <testcontainers.version>1.21.0</testcontainers.version>
+    <spotless.version>2.45.0</spotless.version>
+    <spring.cloud.version>2025.0.0</spring.cloud.version>
+    <testcontainers.version>1.21.3</testcontainers.version>
     <archunit.junit5.version>1.4.1</archunit.junit5.version>
     <commons.validator.version>1.9.0</commons.validator.version>
-    <jsoup.version>1.20.1</jsoup.version>
+    <jsoup.version>1.21.1</jsoup.version>
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
     <mockwebserver.version>4.12.0</mockwebserver.version>
 
-    <kotlin.version>2.1.21</kotlin.version>
+    <kotlin.version>2.2.0</kotlin.version>
     <kotlin.code.style>official</kotlin.code.style>
     <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
-    <kotlin.compiler.apiVersion>2.1</kotlin.compiler.apiVersion>
+    <kotlin.compiler.apiVersion>2.2</kotlin.compiler.apiVersion>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
-    <kotlin.compiler.languageVersion>2.1</kotlin.compiler.languageVersion>
+    <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
     <kotlin.logging.version>7.0.7</kotlin.logging.version>
   </properties>
 
