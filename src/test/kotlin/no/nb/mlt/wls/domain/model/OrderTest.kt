@@ -112,6 +112,26 @@ class OrderTest {
     }
 
     @Test
+    fun `partially picking items should keep order status as IN_PROGRESS`() {
+        var order =
+            createTestOrder(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem("test1", Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("test2", Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem("test3", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        order = order.pickItems(listOf(order.orderLine[1].hostId))
+
+        assertThat(order.status).isEqualTo(Order.Status.IN_PROGRESS)
+        assertThat(order.orderLine[0].status).isEqualTo(Order.OrderItem.Status.PICKED)
+        assertThat(order.orderLine[1].status).isEqualTo(Order.OrderItem.Status.PICKED)
+        assertThat(order.orderLine[2].status).isEqualTo(Order.OrderItem.Status.NOT_STARTED)
+    }
+
+    @Test
     fun `picking all items should set order status to COMPLETED and items to picked`() {
         var order = createTestOrder(status = Order.Status.NOT_STARTED)
         order = order.pickItems(order.orderLine.map { it.hostId })
@@ -150,6 +170,14 @@ class OrderTest {
 
         assertThrows(IllegalOrderStateException::class.java) {
             order.deleteOrder()
+        }
+    }
+
+    @Test
+    fun `updating order status from NOT_STARTED to NOT_STARTED should fail`() {
+        val order = createTestOrder()
+        assertThrows(IllegalOrderStateException::class.java) {
+            order.updateStatus(Order.Status.NOT_STARTED)
         }
     }
 

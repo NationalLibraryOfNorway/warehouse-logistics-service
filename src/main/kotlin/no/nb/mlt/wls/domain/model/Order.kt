@@ -116,6 +116,8 @@ data class Order(
             throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
         }
 
+        if (newStatus == status && newStatus == Status.NOT_STARTED) throw IllegalOrderStateException("The order status is already $status")
+
         // In progress orders cannot be changed to not started
         // Picked orders cannot be set to in progress
         val isInvalidTransition =
