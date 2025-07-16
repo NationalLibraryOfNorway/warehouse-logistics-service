@@ -31,13 +31,13 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
-import no.nb.mlt.wls.domain.ports.inbound.OrderStatusUpdate
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
+import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
 import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
@@ -66,7 +66,7 @@ class WLSService(
     GetItem,
     GetItems,
     UpdateItem,
-    OrderStatusUpdate,
+    UpdateOrderStatus,
     MoveItem,
     PickOrderItems,
     PickItems,
@@ -148,10 +148,10 @@ class WLSService(
 
     override suspend fun pickItems(
         hostName: HostName,
-        itemsPickedMap: Map<String, Int>
+        pickedItems: Map<String, Int>
     ) {
         val itemIds =
-            itemsPickedMap.map {
+            pickedItems.map {
                 ItemId(hostName, it.key)
             }
 
@@ -159,9 +159,9 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        val itemsToPick = getItems(itemsPickedMap.keys.toList(), hostName)
+        val itemsToPick = getItems(pickedItems.keys.toList(), hostName)
         itemsToPick.map { item ->
-            val pickedItemsQuantity = itemsPickedMap[item.hostId] ?: 0
+            val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
             val pickedItem = item.pickItem(pickedItemsQuantity)
 
             // Picking an item is guaranteed to set quantity or location.
@@ -189,14 +189,14 @@ class WLSService(
 
     override suspend fun pickOrderItems(
         hostName: HostName,
-        pickedHostIds: List<String>,
+        pickedItemIds: List<String>,
         orderId: String
     ) {
         val order = getOrderOrThrow(hostName, orderId)
 
         val catalogEvent =
             transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedHostIds))
+                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedItemIds))
 
                 catalogEventRepository.save(OrderEvent(pickedOrder))
             } ?: throw RuntimeException("Could not pick order items")
