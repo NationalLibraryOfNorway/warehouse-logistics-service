@@ -95,8 +95,6 @@ data class Order(
      */
     private fun isPicked(): Boolean = status == Status.COMPLETED
 
-    private fun isProcessingStarted(): Boolean = status != Status.NOT_STARTED
-
     private fun setNote(note: String?): Order = this.copy(note = note)
 
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
@@ -116,14 +114,12 @@ data class Order(
             throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
         }
 
-        if (newStatus == status && newStatus == Status.NOT_STARTED) throw IllegalOrderStateException("The order status is already $status")
-
         // In progress orders cannot be changed to not started
         // Picked orders cannot be set to in progress
         val isInvalidTransition =
-            (newStatus == Status.NOT_STARTED && isProcessingStarted()) ||
+            (newStatus == Status.NOT_STARTED) ||
                 (newStatus == Status.IN_PROGRESS && isPicked()) ||
-                (newStatus == Status.DELETED && isProcessingStarted())
+                (newStatus == Status.DELETED && status != Status.NOT_STARTED)
 
         if (isInvalidTransition) {
             throw IllegalOrderStateException(
