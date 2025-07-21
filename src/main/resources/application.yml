@@ -12,8 +12,6 @@ spring:
   # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
-  codec:
-    max-in-memory-size: 1000KB
   # Configure Kafka
   kafka:
     # If and how to retry sending Kafka messages
@@ -30,6 +28,9 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  http:
+    codecs:
+      max-in-memory-size: 1000KB
 
 # Server port for the main application
 server:
