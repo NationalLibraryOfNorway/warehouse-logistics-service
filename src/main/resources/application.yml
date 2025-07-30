@@ -91,7 +91,7 @@ kardex:
 wls:
   order:
     handler:
-      email: daniel@mlt.hermes.no
+      email: noah.aanonli@nb.no
 
 # Define timeouts for calls to external services
 timeout:
@@ -251,7 +251,10 @@ spring:
   mail:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
-
+    properties:
+      "[mail.smtp.connectiontimeout]": 8000
+      "[mail.smtp.timeout]": 5000
+      "[mail.smtp.writetimeout]": 8000
 # Set base path to SynQ API in prod environment
 synq:
   path:
