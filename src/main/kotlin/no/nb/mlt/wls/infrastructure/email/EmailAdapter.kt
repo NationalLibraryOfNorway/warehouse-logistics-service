@@ -54,6 +54,12 @@ class EmailAdapter(
         successInfo: String,
         errorHandler: (e: Exception) -> Any
     ) {
+        if (email == null) {
+            logger.error {
+                "Cannot send email because message is null"
+            }
+            return
+        }
         try {
             emailSender.send(email)
             logger.info {
