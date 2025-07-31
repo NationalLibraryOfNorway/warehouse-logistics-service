@@ -159,7 +159,7 @@ class WLSService(
             throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
         }
 
-        val itemsToPick = getItems(pickedItems.keys.toList(), hostName)
+        val itemsToPick = getItemsByIds(hostName, pickedItems.keys.toList())
         itemsToPick.map { item ->
             val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
             val pickedItem = item.pickItem(pickedItemsQuantity)
@@ -192,7 +192,7 @@ class WLSService(
         }
 
         val itemIds = orderDTO.orderLine.map { it.hostId }
-        val existingItems = itemRepository.getItems(orderDTO.hostName, itemIds)
+        val existingItems = itemRepository.getItemsByIds(orderDTO.hostName, itemIds)
 
         // Create missing items
         itemIds
@@ -289,10 +289,10 @@ class WLSService(
 
     override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
-    private suspend fun getItems(
-        hostIds: List<String>,
-        hostName: HostName
-    ): List<Item> = itemRepository.getItems(hostName, hostIds)
+    private suspend fun getItemsByIds(
+        hostName: HostName,
+        hostIds: List<String>
+    ): List<Item> = itemRepository.getItemsByIds(hostName, hostIds)
 
     override suspend fun getOrder(
         hostName: HostName,
@@ -308,7 +308,7 @@ class WLSService(
             .forEach { (hostName, syncItems) ->
                 transactionPort.executeInTransaction {
                     val ids = syncItems.map { it.hostId }
-                    val existingItems = getItems(ids, hostName)
+                    val existingItems = getItemsByIds(hostName, ids)
                     val existingIds = existingItems.map { it.hostId }
                     val missingIds = ids.toSet() - existingIds.toSet()
 
@@ -439,7 +439,7 @@ class WLSService(
 
     override suspend fun countStock(items: List<StockCount.CountStockDTO>) {
         val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
-        val currentItems = getItems(items.map { it.hostId }, items.first().hostName)
+        val currentItems = getItemsByIds(items.first().hostName, items.map { it.hostId })
 
         currentItems.forEach { item ->
             val updatedItem = updatedItemMap[item.hostId to item.hostName]

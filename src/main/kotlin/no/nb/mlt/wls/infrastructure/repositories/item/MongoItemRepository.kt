@@ -40,7 +40,7 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingleOrNull()
 
-    override suspend fun getItems(
+    override suspend fun getItemsByIds(
         hostName: HostName,
         hostIds: List<String>
     ): List<Item> =
