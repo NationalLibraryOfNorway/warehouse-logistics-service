@@ -285,7 +285,8 @@ jobs:
         run: |
           IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep 'sha-' | head -n1 | sed 's/.*sha-//')
           FILE="mlt-argo/hermes/stage/wls.yml"
-          sed -E "s|(image: harbor.nb.no/mlt/wls:).*|\1sha-${IMAGE_TAG}|" "$FILE"
+          sed -i.bak -E "s|(image: harbor.nb.no/mlt/wls:).*|\1sha-${IMAGE_TAG}|" "$FILE"
+          rm "$FILE.bak"
 
       - name: Commit and push changes
         run: |
