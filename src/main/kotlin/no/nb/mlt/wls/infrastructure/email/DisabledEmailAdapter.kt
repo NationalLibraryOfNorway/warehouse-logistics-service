@@ -12,6 +12,6 @@ class DisabledEmailAdapter : EmailNotifier {
         order: Order,
         orderItems: List<Item>
     ) {
-        logger.debug { "Sending emails for orders is disabled" }
+        logger.warn { "Sending emails for orders is disabled" }
     }
 }
