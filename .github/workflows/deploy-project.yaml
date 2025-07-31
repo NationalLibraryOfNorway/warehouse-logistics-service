@@ -267,7 +267,8 @@ jobs:
         with:
           app-id: ${{ vars.MLT_ARGO_APP_ID }}
           private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
-
+          owner: ${{ github.repository_owner }}
+          repository: mlt-argo
 
       - name: Checkout mlt-argo repository
         uses: actions/checkout@v4
