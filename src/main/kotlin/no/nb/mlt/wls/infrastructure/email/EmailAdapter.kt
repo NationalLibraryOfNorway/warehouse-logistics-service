@@ -70,6 +70,10 @@ class EmailAdapter(
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
+        } catch (e: Exception) {
+            logger.error(e) {
+                "Unexpected exception while sending email"
+            }
         }
     }
 
