@@ -54,6 +54,12 @@ class EmailAdapter(
         successInfo: String,
         errorHandler: (e: Exception) -> Any
     ) {
+        if (email == null) {
+            logger.error {
+                "Cannot send email because message is null"
+            }
+            return
+        }
         try {
             emailSender.send(email)
             logger.info {
@@ -64,12 +70,16 @@ class EmailAdapter(
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
+        } catch (e: Exception) {
+            logger.error(e) {
+                "Unexpected exception while sending email"
+            }
         }
     }
 
-    private suspend fun createOrderConfirmationEmail(order: Order): MimeMessage? {
-        val receiver = emailRepository.getHostEmail(order.hostName)
-        if (receiver == null || receiver.email.isBlank()) {
+    private fun createOrderConfirmationEmail(order: Order): MimeMessage? {
+        val receiver = order.contactEmail
+        if (receiver.isNullOrBlank()) {
             logger.warn {
                 "Email address for ${order.hostName} not found, and email was not sent"
             }
@@ -92,7 +102,7 @@ class EmailAdapter(
         helper.setText(htmlBody, true)
         helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
         helper.setFrom("noreply@wls-api.no")
-        helper.setTo(receiver.email)
+        helper.setTo(receiver)
 
         return helper.mimeMessage
     }
