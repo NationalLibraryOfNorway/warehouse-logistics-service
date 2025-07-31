@@ -327,10 +327,11 @@ class WLSServiceTest {
 
     @Test
     fun `deleteOrder should complete when order exists`() {
+        val deletedOrder = testOrder.copy(status = Order.Status.DELETED)
         val deletedOrderEvent = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
-        coEvery { orderRepository.deleteOrder(testOrder) } answers {}
+        coEvery { orderRepository.deleteOrder(deletedOrder) } answers {}
         coEvery { storageEventRepository.save(any()) } answers { deletedOrderEvent }
         coEvery { storageEventProcessor.handleEvent(deletedOrderEvent) } answers {}
 
@@ -338,7 +339,7 @@ class WLSServiceTest {
             serviceAvecTrans.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
 
             coVerify(exactly = 1) { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) }
-            coVerify(exactly = 1) { orderRepository.deleteOrder(testOrder) }
+            coVerify(exactly = 1) { orderRepository.deleteOrder(deletedOrder) }
             coVerify(exactly = 1) { storageEventRepository.save(any()) }
             coVerify(exactly = 1) { storageEventProcessor.handleEvent(deletedOrderEvent) }
         }

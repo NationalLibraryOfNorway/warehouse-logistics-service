@@ -250,11 +250,11 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        val order = getOrderOrThrow(hostName, hostOrderId)
+        val deletedOrder = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
         val storageEvent =
             transactionPort.executeInTransaction {
-                orderRepository.deleteOrder(order)
-                storageEventRepository.save(OrderDeleted(order.hostName, order.hostOrderId))
+                orderRepository.deleteOrder(deletedOrder)
+                storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
             } ?: throw RuntimeException("Could not delete order")
 
         processStorageEventAsync(storageEvent)
