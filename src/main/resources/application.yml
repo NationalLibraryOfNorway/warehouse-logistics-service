@@ -91,7 +91,7 @@ kardex:
 wls:
   order:
     handler:
-      email: noah.aanonli@nb.no
+      email: daniel@mlt.hermes.no
 
 # Define timeouts for calls to external services
 timeout:
