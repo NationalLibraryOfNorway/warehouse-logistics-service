@@ -182,26 +182,7 @@ class WLSService(
             processCatalogEventAsync(catalogEvent)
         }
 
-        logger.debug {
-            "Items picked for $hostName"
-        }
-    }
-
-    override suspend fun pickOrderItems(
-        hostName: HostName,
-        pickedItemIds: List<String>,
-        orderId: String
-    ) {
-        val order = getOrderOrThrow(hostName, orderId)
-
-        val catalogEvent =
-            transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedItemIds))
-
-                catalogEventRepository.save(OrderEvent(pickedOrder))
-            } ?: throw RuntimeException("Could not pick order items")
-
-        processCatalogEventAsync(catalogEvent)
+        logger.debug { "Items picked for $hostName" }
     }
 
     override suspend fun createOrder(orderDTO: CreateOrderDTO): Order {
@@ -248,11 +229,28 @@ class WLSService(
         return createdOrder
     }
 
+    override suspend fun pickOrderItems(
+        hostName: HostName,
+        pickedItemIds: List<String>,
+        orderId: String
+    ) {
+        val order = getOrderOrThrow(hostName, orderId)
+
+        val catalogEvent =
+            transactionPort.executeInTransaction {
+                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedItemIds))
+
+                catalogEventRepository.save(OrderEvent(pickedOrder))
+            } ?: throw RuntimeException("Could not pick order items")
+
+        processCatalogEventAsync(catalogEvent)
+    }
+
     override suspend fun deleteOrder(
         hostName: HostName,
         hostOrderId: String
     ) {
-        val order = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
+        val order = getOrderOrThrow(hostName, hostOrderId)
         val storageEvent =
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(order)
