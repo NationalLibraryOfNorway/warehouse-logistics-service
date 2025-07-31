@@ -189,6 +189,12 @@ spring:
   mail:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: "8000"
+          timeout: "5000"
+          writetimeout: "8000"
 
 # Set base path to SynQ API in stage environment
 synq:
@@ -252,9 +258,12 @@ spring:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
     properties:
-      "[mail.smtp.connectiontimeout]": 8000
-      "[mail.smtp.timeout]": 5000
-      "[mail.smtp.writetimeout]": 8000
+      mail:
+        smtp:
+          connectiontimeout: "8000"
+          timeout: "5000"
+          writetimeout: "8000"
+
 # Set base path to SynQ API in prod environment
 synq:
   path:
