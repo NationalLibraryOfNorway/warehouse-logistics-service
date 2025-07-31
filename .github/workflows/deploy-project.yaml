@@ -194,6 +194,7 @@ jobs:
             type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
+            type=sha,format=short
 
       # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
       - name: Download the JAR File
@@ -210,60 +211,6 @@ jobs:
           file: ./docker/Dockerfile # Override the path to the Dockerfile, since this project has it in the docker folder
           tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta-step
           labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta-step
-
-  # Deploys the image to kubernetes stage environment
-  deploy-to-stage:
-    name: Deploy to Kubernetes Stage
-    needs: publish-image
-    # Runs only on the main branch
-    # Can be changed to also run on tags to ensure that stage and prod use the same image after a new version release
-    if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted-linux
-    # Defines what environment this job references, this allows for setting deployment protections in the project
-    # Allows requiring a number of reviewers or specific reviewers, or allow only specific branches or tags
-    # It also permits setting specific secrets and variables
-    environment: stage
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Import Secrets
-        uses: hashicorp/vault-action@v3
-        with:
-          url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/k8s-stage *
-
-      # Installs and prepares a local kubectl instance
-      - name: Setup Kubectl
-        uses: azure/setup-kubectl@v4
-
-      # Script that sets some needed variables in deployment file, and then configures kubectl for deploying to stage
-      # Script itself is rather generic, especially for simple deployments, so it can be easily re-used
-      # Just make sure to set correct context and namespace when used in other projects
-      #
-      # K8S_HOST_URL - URL pointing where to host the app, there are two default options for both stage and prod
-      # K8S_STAGE_SERVER - URL to the stage server in form https://<IP_ADDRESS>:<PORT>
-      # K8S_STAGE_NB_NO_CA - certificate auth data, get it from the Platform team
-      # K8S_STAGE_USER - name of the robot user that can deploy to the given namespace, get it from the Platform team
-      # K8S_STAGE_NB_NO_TOKEN - credentials token for the robot user, get it from the Platform team
-      - name: Deploy to Stage
-        run: |
-          echo "Deploying to stage: ${{ needs.publish-image.outputs.image-name }}"
-          sed -i "s|<image_name>|${{ needs.publish-image.outputs.image-name }}|g" k8s/stage/wls.yml
-          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/stage/wls.yml
-          kubectl config set-cluster stagecl --server=${{ env.K8S_STAGE_SERVER }}
-          kubectl config set clusters.stagecl.certificate-authority-data ${{ env.K8S_STAGE_NB_NO_CA }}
-          kubectl config set-credentials ${{ env.K8S_STAGE_USER }} --token=${{ env.K8S_STAGE_NB_NO_TOKEN }}
-          kubectl config set-context mlt --cluster=stagecl --user=${{ env.K8S_STAGE_USER }} --namespace=mlt
-          kubectl config use-context mlt
-          kubectl config view
-          kubectl version
-          kubectl create configmap outbox-processor-script --from-file=process-outbox.sh --dry-run=client -o yaml | kubectl apply -f -
-          kubectl apply -f k8s/stage/wls.yml
-          kubectl rollout restart deploy/wls
 
   deploy-to-prod:
     name: Deploy to Kubernetes Prod
