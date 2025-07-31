@@ -194,6 +194,7 @@ jobs:
             type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
+            type=sha,format=short
 
       # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
       - name: Download the JAR File
