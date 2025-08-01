@@ -9,7 +9,7 @@ interface ItemRepository {
         hostId: String
     ): Item?
 
-    suspend fun getItems(
+    suspend fun getItemsByIds(
         hostName: HostName,
         hostIds: List<String>
     ): List<Item>

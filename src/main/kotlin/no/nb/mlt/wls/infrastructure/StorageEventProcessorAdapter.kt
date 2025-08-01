@@ -111,7 +111,7 @@ class StorageEventProcessorAdapter(
         val createdOrder = event.createdOrder
 
         val items =
-            itemRepository.getItems(
+            itemRepository.getItemsByIds(
                 createdOrder.hostName,
                 createdOrder.orderLine.map { it.hostId }
             )

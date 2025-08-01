@@ -85,14 +85,8 @@ data class Order(
         }
     }
 
-    /**
-     * Order cannot receive any further updates
-     */
     fun isClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
 
-    /**
-     * Order is picked and finished, but is not returned yet
-     */
     private fun isPicked(): Boolean = status == Status.COMPLETED
 
     private fun setNote(note: String?): Order = this.copy(note = note)
@@ -101,12 +95,6 @@ data class Order(
 
     private fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
 
-    /**
-     * Delete the order as long as it is possible.
-     *
-     * This validates if the order can be deleted, and sets the status on it if it can.
-     * Deleting it from the storage systems is handled by the outbox processor.
-     */
     fun deleteOrder(): Order = updateStatus(Status.DELETED)
 
     fun updateStatus(newStatus: Status): Order {

@@ -238,8 +238,8 @@ class StorageEventProcessorTest {
     // ... and this itemRepoMock over here will be our little secret
     private val itemRepoMock =
         mockk<ItemRepository> {
-            coEvery { getItems(testItem1.hostName, listOf(testItem1.hostId, testItem2.hostId, testItem3.hostId)) } returns testItemListLarge
-            coEvery { getItems(testItem1.hostName, listOf(testItem1.hostId, testItem2.hostId)) } returns testItemListSmall
+            coEvery { getItemsByIds(testItem1.hostName, listOf(testItem1.hostId, testItem2.hostId, testItem3.hostId)) } returns testItemListLarge
+            coEvery { getItemsByIds(testItem1.hostName, listOf(testItem1.hostId, testItem2.hostId)) } returns testItemListSmall
             coEvery { getItem(testItem1.hostName, testItem1.hostId) } returns testItem1
             coEvery { getItem(testItem2.hostName, testItem2.hostId) } returns testItem2
             coEvery { getItem(testItem3.hostName, testItem3.hostId) } returns testItem3
