@@ -149,7 +149,7 @@ jobs:
     outputs:
       # The metadata step produces an image name that is then used in deployment jobs
       # Gets the value from the "meta" step: [[meta-step-id]]
-      image-name: ${{ steps.meta.outputs.tags }}
+      image-tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -267,7 +267,9 @@ jobs:
         with:
           app-id: ${{ vars.MLT_ARGO_APP_ID }}
           private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
-
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            mlt-argo
 
       - name: Checkout mlt-argo repository
         uses: actions/checkout@v4
@@ -283,7 +285,7 @@ jobs:
 
       - name: Update image tag in stage manifest
         run: |
-          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | grep 'sha-' | head -n1 | sed 's/.*sha-//')
+          IMAGE_TAG=$(echo "${{ needs.publish-image.outputs.image-tags }}" | grep 'sha-' | head -n1 | sed 's/.*sha-//')
           FILE="mlt-argo/hermes/stage/wls.yml"
           sed -i.bak -E "s|(image: harbor.nb.no/mlt/wls:).*|\1sha-${IMAGE_TAG}|" "$FILE"
           rm "$FILE.bak"
