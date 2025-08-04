@@ -49,7 +49,7 @@ data class Order(
 
         return this
             .copy(orderLine = updatedOrderLineList)
-            .updateOrderStatusFromOrderLines()
+            .updateStatusFromOrderLines()
     }
 
     private fun setContactPerson(contactPerson: String): Order = this.copy(contactPerson = contactPerson)
@@ -62,7 +62,7 @@ data class Order(
         return this.copy(callbackUrl = callbackUrl)
     }
 
-    private fun updateOrderStatusFromOrderLines(): Order {
+    private fun updateStatusFromOrderLines(): Order {
         // This might benefit from a small refactor of sorts
         return when {
             orderLine.all(OrderItem::isReturned) -> {
@@ -95,7 +95,7 @@ data class Order(
 
     private fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
 
-    fun deleteOrder(): Order = updateStatus(Status.DELETED)
+    fun delete(): Order = updateStatus(Status.DELETED)
 
     fun updateStatus(newStatus: Status): Order {
         if (isClosed()) {

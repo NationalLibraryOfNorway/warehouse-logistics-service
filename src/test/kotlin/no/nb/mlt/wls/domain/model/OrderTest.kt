@@ -169,7 +169,7 @@ class OrderTest {
         val order = createTestOrder(status = Order.Status.IN_PROGRESS)
 
         assertThrows(IllegalOrderStateException::class.java) {
-            order.deleteOrder()
+            order.delete()
         }
     }
 

@@ -162,7 +162,7 @@ class WLSService(
         val itemsToPick = getItemsByIds(hostName, pickedItems.keys.toList())
         itemsToPick.map { item ->
             val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
-            val pickedItem = item.pickItem(pickedItemsQuantity)
+            val pickedItem = item.pick(pickedItemsQuantity)
 
             // Picking an item is guaranteed to set quantity or location.
             // An exception is thrown otherwise
@@ -250,7 +250,7 @@ class WLSService(
         hostName: HostName,
         hostOrderId: String
     ) {
-        val deletedOrder = getOrderOrThrow(hostName, hostOrderId).deleteOrder()
+        val deletedOrder = getOrderOrThrow(hostName, hostOrderId).delete()
         val storageEvent =
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(deletedOrder)
