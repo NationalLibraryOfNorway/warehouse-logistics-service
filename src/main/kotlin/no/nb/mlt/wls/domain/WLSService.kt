@@ -238,7 +238,7 @@ class WLSService(
 
         val catalogEvent =
             transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pickItems(pickedItemIds))
+                val pickedOrder = orderRepository.updateOrder(order.pick(pickedItemIds))
 
                 catalogEventRepository.save(OrderEvent(pickedOrder))
             } ?: throw RuntimeException("Could not pick order items")

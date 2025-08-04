@@ -17,6 +17,35 @@ data class Order(
     val note: String?,
     val callbackUrl: String
 ) {
+    fun pick(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
+
+    fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
+
+    fun delete(): Order = updateStatus(Status.DELETED)
+
+    fun updateStatus(newStatus: Status): Order {
+        if (isClosed()) {
+            throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
+        }
+
+        // In progress orders cannot be changed to not started
+        // Picked orders cannot be set to in progress
+        val isInvalidTransition =
+            (newStatus == Status.NOT_STARTED) ||
+                (newStatus == Status.IN_PROGRESS && isPicked()) ||
+                (newStatus == Status.DELETED && status != Status.NOT_STARTED)
+
+        if (isInvalidTransition) {
+            throw IllegalOrderStateException(
+                "The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus"
+            )
+        }
+
+        return this.copy(status = newStatus)
+    }
+
+    fun isClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
+
     private fun setOrderLineStatus(
         hostIds: List<String>,
         status: OrderItem.Status
@@ -85,8 +114,6 @@ data class Order(
         }
     }
 
-    fun isClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
-
     private fun isPicked(): Boolean = status == Status.COMPLETED
 
     private fun setNote(note: String?): Order = this.copy(note = note)
@@ -94,33 +121,6 @@ data class Order(
     private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
 
     private fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
-
-    fun delete(): Order = updateStatus(Status.DELETED)
-
-    fun updateStatus(newStatus: Status): Order {
-        if (isClosed()) {
-            throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
-        }
-
-        // In progress orders cannot be changed to not started
-        // Picked orders cannot be set to in progress
-        val isInvalidTransition =
-            (newStatus == Status.NOT_STARTED) ||
-                (newStatus == Status.IN_PROGRESS && isPicked()) ||
-                (newStatus == Status.DELETED && status != Status.NOT_STARTED)
-
-        if (isInvalidTransition) {
-            throw IllegalOrderStateException(
-                "The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus"
-            )
-        }
-
-        return this.copy(status = newStatus)
-    }
-
-    fun pickItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
-
-    fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
     private fun throwIfInvalidUrl(url: String) {
         runCatching {
