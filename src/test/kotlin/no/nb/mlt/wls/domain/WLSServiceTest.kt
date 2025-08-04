@@ -613,7 +613,7 @@ class WLSServiceTest {
                         Order.OrderItem(item2.hostId, Order.OrderItem.Status.NOT_STARTED)
                     )
             )
-        val pickedOrder = order.pickItems(itemsToPick)
+        val pickedOrder = order.pick(itemsToPick)
         val orderRepository = createInMemOrderRepo(mutableListOf(order))
         val cut =
             WLSService(

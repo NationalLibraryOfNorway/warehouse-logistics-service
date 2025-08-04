@@ -31,7 +31,7 @@ class Item(
     var quantity: Int = quantity
         private set
 
-    fun pickItem(amountPicked: Int): Item {
+    fun pick(amountPicked: Int): Item {
         val itemsInStockQuantity = quantity
 
         // In the case of over-picking, log it and set quantity to zero.

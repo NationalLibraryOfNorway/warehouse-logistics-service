@@ -92,19 +92,19 @@ class OrderTest {
         val returnedOrder = createTestOrder(status = Order.Status.RETURNED)
 
         assertThrows(IllegalOrderStateException::class.java) {
-            returnedOrder.pickItems(returnedOrder.orderLine.map { it.hostId })
+            returnedOrder.pick(returnedOrder.orderLine.map { it.hostId })
         }
 
         val deletedOrder = createTestOrder(status = Order.Status.DELETED)
         assertThrows(IllegalOrderStateException::class.java) {
-            deletedOrder.pickItems(deletedOrder.orderLine.map { it.hostId })
+            deletedOrder.pick(deletedOrder.orderLine.map { it.hostId })
         }
     }
 
     @Test
     fun `partially picking items should set order status to IN_PROGRESS and items to picked`() {
         var order = createTestOrder(status = Order.Status.NOT_STARTED)
-        order = order.pickItems(listOf(order.orderLine[0].hostId))
+        order = order.pick(listOf(order.orderLine[0].hostId))
 
         assertThat(order.status).isEqualTo(Order.Status.IN_PROGRESS)
         assertThat(order.orderLine[0].status).isEqualTo(Order.OrderItem.Status.PICKED)
@@ -123,7 +123,7 @@ class OrderTest {
                         Order.OrderItem("test3", Order.OrderItem.Status.NOT_STARTED)
                     )
             )
-        order = order.pickItems(listOf(order.orderLine[1].hostId))
+        order = order.pick(listOf(order.orderLine[1].hostId))
 
         assertThat(order.status).isEqualTo(Order.Status.IN_PROGRESS)
         assertThat(order.orderLine[0].status).isEqualTo(Order.OrderItem.Status.PICKED)
@@ -134,7 +134,7 @@ class OrderTest {
     @Test
     fun `picking all items should set order status to COMPLETED and items to picked`() {
         var order = createTestOrder(status = Order.Status.NOT_STARTED)
-        order = order.pickItems(order.orderLine.map { it.hostId })
+        order = order.pick(order.orderLine.map { it.hostId })
 
         assertThat(order.status).isEqualTo(Order.Status.COMPLETED)
         order.orderLine.forEach {
@@ -169,7 +169,7 @@ class OrderTest {
         val order = createTestOrder(status = Order.Status.IN_PROGRESS)
 
         assertThrows(IllegalOrderStateException::class.java) {
-            order.deleteOrder()
+            order.delete()
         }
     }
 
