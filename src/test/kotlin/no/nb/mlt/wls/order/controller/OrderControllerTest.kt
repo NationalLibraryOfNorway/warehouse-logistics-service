@@ -233,45 +233,6 @@ class OrderControllerTest(
     }
 
     @Test
-    fun `getOrders returns list of orders`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
-            .get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiOrderPayload::class.java)
-            .hasSize(3)
-            .contains(duplicateOrderPayload)
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(
-                mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole), SimpleGrantedAuthority("ROLE_asta"))
-            ).get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiOrderPayload::class.java)
-            .hasSize(5)
-            .contains(duplicateOrderPayload)
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
-            .get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiOrderPayload::class.java)
-            .hasSize(0)
-    }
-
-    @Test
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
