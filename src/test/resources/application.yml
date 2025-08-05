@@ -83,6 +83,8 @@ wls:
   order:
     handler:
       email: daniel@mlt.hermes.no
+    sender:
+      email: hermes+mlt@nb.no
 
 # Define timeouts for calls to external services
 timeout:
