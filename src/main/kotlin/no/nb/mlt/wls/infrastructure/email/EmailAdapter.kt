@@ -36,13 +36,17 @@ class EmailAdapter(
             createOrderConfirmationEmail(order),
             "Email sent to host"
         ) { error ->
-            "Failed to send order confirmation emails: ${error.message}"
+            logger.error {
+                "Failed to send order confirmation emails: ${error.message}"
+            }
         }
         sendEmail(
             createOrderHandlerEmail(order, orderItems),
             "Email sent to order handlers"
         ) { error ->
-            "Failed to send orders: ${error.message}"
+            logger.error {
+                "Failed to send orders: ${error.message}"
+            }
         }
     }
 
@@ -52,7 +56,7 @@ class EmailAdapter(
     private fun sendEmail(
         email: MimeMessage?,
         successInfo: String,
-        errorHandler: (e: Exception) -> Any
+        errorLogger: (e: Exception) -> Unit
     ) {
         if (email == null) {
             logger.error {
@@ -66,7 +70,7 @@ class EmailAdapter(
                 successInfo
             }
         } catch (e: MailException) {
-            errorHandler(e)
+            errorLogger(e)
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
