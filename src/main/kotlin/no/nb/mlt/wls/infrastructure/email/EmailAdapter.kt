@@ -35,12 +35,12 @@ class EmailAdapter(
         sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
-            "Failed to send order confirmation emails: ${error.message}"
+            "Failed to send order confirmation emails"
         )
         sendEmail(
             createOrderHandlerEmail(order, orderItems),
             "Email sent to order handlers",
-            "Failed to send orders: ${error.message}"
+            "Failed to send orders"
         )
     }
 
@@ -65,14 +65,14 @@ class EmailAdapter(
             }
         } catch (e: MailException) {
             logger.error {
-                errorInfo
+                errorInfo + ": ${e.message}"
             }
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
         } catch (e: Exception) {
             logger.error(e) {
-                "Unexpected exception while sending email"
+                "Unexpected exception while sending email: ${e.message}"
             }
         }
     }
