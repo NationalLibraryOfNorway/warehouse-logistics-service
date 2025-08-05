@@ -250,6 +250,7 @@ jobs:
           echo "Updating image tag in $FILE to $IMAGE_FULL_NAME"
           sed -i.bak -E "s|image: harbor.nb.no/mlt/wls:[^ ]*|image: ${IMAGE_FULL_NAME}|" "$FILE"
           rm "$FILE.bak"
+          echo "IMAGE_FULL_NAME=$IMAGE_FULL_NAME" >> $GITHUB_ENV
 
       - name: Commit and push changes
         run: |
@@ -292,6 +293,7 @@ jobs:
           FILE="mlt-argo/hermes/stage/wls.yml"
           sed -i.bak -E "s|(image: harbor.nb.no/mlt/wls:).*|\1sha-${IMAGE_TAG}|" "$FILE"
           rm "$FILE.bak"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Commit and push changes
         run: |
