@@ -250,7 +250,7 @@ class OrderController(
     @Callbacks(
         Callback(
             name = "Order Callback",
-            callbackUrlExpression = "\$request.body#/callbackUrl",
+            callbackUrlExpression = $$"$request.body#/callbackUrl",
             operation =
                 arrayOf(
                     Operation(

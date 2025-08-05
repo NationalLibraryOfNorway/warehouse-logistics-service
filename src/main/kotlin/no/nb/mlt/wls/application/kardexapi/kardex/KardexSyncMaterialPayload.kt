@@ -5,20 +5,20 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 
 data class KardexSyncMaterialPayload(
-    @Schema(
+    @field:Schema(
         description = """The main material ID of the item."""
     )
     val hostId: String,
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
     val hostName: String,
-    @Schema(
+    @field:Schema(
         description = """The current quantity of the material."""
     )
     val quantity: Double,
-    @Schema(
+    @field:Schema(
         description = """Name of the warehouse where the materials is located."""
     )
     val location: String

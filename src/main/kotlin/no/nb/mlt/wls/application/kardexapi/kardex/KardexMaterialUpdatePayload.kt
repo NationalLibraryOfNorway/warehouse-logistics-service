@@ -18,25 +18,25 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
     }"""
 )
 data class KardexMaterialUpdatePayload(
-    @Schema(
+    @field:Schema(
         description = """The main material ID of the item."""
     )
     val hostId: String,
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
     val hostName: HostName,
-    @Schema(
+    @field:Schema(
         description = """The current quantity of the item."""
     )
     val quantity: Double,
-    @Schema(
+    @field:Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
     @field:NotBlank(message = "Order status update cannot have blank warehouse")
     val location: String,
-    @Schema(
+    @field:Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
     )
     val operator: String,
