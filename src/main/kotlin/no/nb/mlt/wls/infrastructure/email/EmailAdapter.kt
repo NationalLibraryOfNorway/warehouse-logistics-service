@@ -6,7 +6,6 @@ import jakarta.mail.internet.MimeMessage
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
-import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
@@ -18,10 +17,12 @@ import java.awt.image.BufferedImage
 private val logger = KotlinLogging.logger {}
 
 class EmailAdapter(
-    private val emailRepository: EmailRepository,
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
 ) : EmailNotifier {
+    @Value("\${wls.order.sender.email}")
+    val senderEmail: String = ""
+
     @Value("\${wls.order.handler.email}")
     val storageEmail: String = ""
 
@@ -101,7 +102,7 @@ class EmailAdapter(
         // Email Metadata
         helper.setText(htmlBody, true)
         helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
-        helper.setFrom("noreply@wls-api.no")
+        helper.setFrom(senderEmail)
         helper.setTo(receiver)
 
         return helper.mimeMessage
