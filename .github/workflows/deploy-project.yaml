@@ -213,47 +213,50 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta-step
 
   deploy-to-prod:
-    name: Deploy to Kubernetes Prod
+    name: Deploy to Prod
     needs: publish-image
     # Runs only on tags
     if: startsWith(github.event.ref,'refs/tags/v')
     runs-on: self-hosted-linux
     environment: prod
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Import Secrets
-        uses: hashicorp/vault-action@v3
+      - name: Generate token for mlt-argo repository
+        uses: actions/create-github-app-token@v2
+        id: generate-token
         with:
-          url: ${{ secrets.VAULT_URL }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/k8s-prod *
+          app-id: ${{ vars.MLT_ARGO_APP_ID }}
+          private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            mlt-argo
 
-      - name: Setup Kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Checkout mlt-argo repository
+        uses: actions/checkout@v4
+        with:
+          repository: NationalLibraryOfNorway/mlt-argo
+          token: ${{ steps.generate-token.outputs.token }}
+          path: mlt-argo
 
-      # Same concept as in stage deployment, just using production values
-      # Since production often generates an extra image with the latest tag, we grab the first image
-      - name: Deploy to Prod
+      - name: Set up Git user
         run: |
-          tag=$(echo "${{ github.ref_name }}" | sed 's/v//g')
-          tagged_image=harbor.nb.no/mlt/wls:$tag
-          echo "Deploying to prod: $tagged_image"
-          sed -i "s|<image_name>|$tagged_image|g" k8s/prod/wls.yml
-          sed -i "s|<host_url>|${{ env.K8S_HOST_URL }}|g" k8s/prod/wls.yml
-          kubectl config set-cluster prodcl --server=${{ env.K8S_PROD_SERVER }}
-          kubectl config set clusters.prodcl.certificate-authority-data ${{ env.K8S_PROD_NB_NO_CA }}
-          kubectl config set-credentials ${{ env.K8S_PROD_USER }} --token=${{ env.K8S_PROD_NB_NO_TOKEN }}
-          kubectl config set-context mlt --cluster=prodcl --user=${{ env.K8S_PROD_USER }} --namespace=mlt
-          kubectl config use-context mlt
-          kubectl config view
-          kubectl version
-          kubectl create configmap outbox-processor-script --from-file=process-outbox.sh --dry-run=client -o yaml | kubectl apply -f -
-          kubectl apply -f k8s/prod/wls.yml
-          kubectl rollout restart deploy/wls
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      - name: Update image tag in stage manifest
+        run: |
+          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/v//g')
+          IMAGE_FULL_NAME=harbor.nb.no/mlt/wls:${IMAGE_TAG}
+          FILE="mlt-argo/hermes/prod/wls.yml"
+          echo "Updating image tag in $FILE to $IMAGE_FULL_NAME"
+          sed -i.bak -E "s|image: harbor.nb.no/mlt/wls:[^ ]*|image: ${IMAGE_FULL_NAME}|" "$FILE"
+          rm "$FILE.bak"
+
+      - name: Commit and push changes
+        run: |
+          cd mlt-argo
+          git add hermes/prod/wls.yml
+          git commit -m "ci: update prod wls image tag to ${IMAGE_FULL_NAME}" || echo "No changes to commit"
+          git push
 
   update-argo-stage-manifest:
     name: Update ArgoCD Stage Manifest
