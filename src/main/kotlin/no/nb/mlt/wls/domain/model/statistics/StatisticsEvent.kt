@@ -1,6 +1,8 @@
 package no.nb.mlt.wls.domain.model.statistics
 
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
+import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import java.time.Instant
 
@@ -14,7 +16,7 @@ import java.time.Instant
  * Properties:
  * - `id`: A unique identifier for the event, either item or order id.
  * - `timestamp`: The time at which the event occurred.
- * - `eventType`: The type of event being represented (e.g., "ItemCreated", "OrderDeleted").
+ * - `eventType`: The type of event being represented (e.g., [ItemCreated] or [OrderDeleted]).
  * - `details`: A map containing additional metadata about the event.
  */
 sealed interface StatisticsEvent {

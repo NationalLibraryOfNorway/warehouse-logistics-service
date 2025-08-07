@@ -59,7 +59,7 @@ class Item(
      * Picks a specified amount of items from the stock.
      * If the amount picked exceeds the available quantity, it logs an error and sets the quantity
      * to zero, indicating that the item is no longer available.
-     * If after picking the quantity becomes zero, it sets the location to `WITH_LENDER_LOCATION`.
+     * If after picking the quantity becomes zero, it sets the location to [WITH_LENDER_LOCATION].
      *
      * @param amountPicked The number of items to pick from the stock.
      * @return The updated Item instance with the new quantity.

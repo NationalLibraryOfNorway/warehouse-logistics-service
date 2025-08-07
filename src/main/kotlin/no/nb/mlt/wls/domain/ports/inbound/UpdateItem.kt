@@ -5,6 +5,22 @@ import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
+/**
+ * A port for updating items in the system.
+ *
+ * An item move is different from an item update, even though they contain the same info.
+ * An item move says that item moved to a new location and how many items have moved.
+ * In our case this will always be one item.
+ * An item update says that the item has updated and provides its new location and quantity.
+ * This can be 0 or 1.
+ *
+ * These ports are used as storage systems can send either one of those types of messages.
+ * For example, the old SynQ sends an item update, while the Autostore sends an item move message.
+ *
+ * @see UpdateItemPayload
+ * @see MoveItem
+ * @see Item
+ */
 fun interface UpdateItem {
     suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item
 

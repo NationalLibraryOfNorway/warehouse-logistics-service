@@ -12,6 +12,10 @@ import no.nb.mlt.wls.domain.model.Order
  */
 const val DELIMITER = "---"
 
+/**
+ * A facade interface for operations related to the storage system. It provides methods to manage
+ * items and orders, check if certain locations can be handled, and evaluate item compatibility.
+ */
 interface StorageSystemFacade {
     @Throws(StorageSystemException::class)
     suspend fun createItem(item: Item)

@@ -6,12 +6,20 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
 /**
- * This port is used for handling messages regarding items moving
- * inside the storage system.
- * Some examples include handling status messages when crates arrive
- * at picking stations, or when items return to the
- * storage systems.
- * In both cases we want to know where the item went, and if the count changed
+ * A port for moving items in the system.
+ *
+ * An item move is different from an item update, even though they contain the same info.
+ * An item move says that item moved to a new location and how many items have moved.
+ * In our case this will always be one item.
+ * An item update says that the item has updated and provides its new location and quantity.
+ * This can be 0 or 1.
+ *
+ * These ports are used as storage systems can send either one of those types of messages.
+ * For example, the old SynQ sends an item update, while the Autostore sends an item move message.
+ *
+ * @see MoveItemPayload
+ * @see UpdateItem
+ * @see Item
  */
 fun interface MoveItem {
     suspend fun moveItem(moveItemPayload: MoveItemPayload): Item

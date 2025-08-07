@@ -11,8 +11,8 @@ import java.time.Instant
  * This sealed interface ensures that all implementations are known at compile-time, allowing for
  * exhaustive handling of all event types by the processor.
  *
- * Every `CatalogEvent` has the following properties:
- * - A unique identifier inherited from the `Event` interface.
+ * Every [CatalogEvent] has the following properties:
+ * - A unique identifier inherited from the [Event] interface.
  * - A body representing the domain entity related to the event (e.g., an item or an order).
  * - A timestamp denoting when the event occurred.
  *

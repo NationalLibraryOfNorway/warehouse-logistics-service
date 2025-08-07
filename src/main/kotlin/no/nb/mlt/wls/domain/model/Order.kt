@@ -146,15 +146,15 @@ data class Order(
     /**
      * Updates the status of the order based on the statuses of all its order lines.
      *
-     * The method evaluates the status of every `OrderItem` in the `orderLine` collection and updates the overall
+     * The method evaluates the status of every [OrderItem] in the `orderLine` collection and updates the overall
      * order status accordingly:
-     * - If all `OrderItem` are marked as `RETURNED`, the order status is updated to `RETURNED`.
-     * - If all `OrderItem` are marked as `COMPLETE`, the order status is updated to `COMPLETED`.
-     * - If all `OrderItem` are either `PICKED` or `FAILED`, the order status is also updated to `COMPLETED`.
-     * - If all `OrderItem` have a status of `NOT_STARTED`, the order status is updated to `NOT_STARTED`.
-     * - For all other combinations of `OrderItem` statuses, the order status is updated to `IN_PROGRESS`.
+     * - If all [OrderItem] are marked as `RETURNED`, the order status is updated to `RETURNED`.
+     * - If all [OrderItem] are marked as `COMPLETE`, the order status is updated to `COMPLETED`.
+     * - If all [OrderItem] are either `PICKED` or `FAILED`, the order status is also updated to `COMPLETED`.
+     * - If all [OrderItem] have a status of `NOT_STARTED`, the order status is updated to `NOT_STARTED`.
+     * - For all other combinations of [OrderItem] statuses, the order status is updated to `IN_PROGRESS`.
      *
-     * @return The updated `Order` instance with its new status.
+     * @return The updated [Order] instance with its new status.
      */
     private fun updateStatusFromOrderLines(): Order {
         // This might benefit from a small refactor of sorts
