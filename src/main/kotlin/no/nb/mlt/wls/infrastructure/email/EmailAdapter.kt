@@ -20,10 +20,10 @@ class EmailAdapter(
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
 ) : EmailNotifier {
-    @Value("\${wls.order.sender.email}")
+    @Value($$"${wls.order.sender.email}")
     val senderEmail: String = ""
 
-    @Value("\${wls.order.handler.email}")
+    @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
     override suspend fun orderCreated(
