@@ -17,3 +17,4 @@ enum class Environment {
      * No preference for the storage environment.
      */
     NONE
+}
