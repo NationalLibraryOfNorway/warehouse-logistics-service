@@ -5,8 +5,10 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 
 /**
- * Used to split hostname and the host order ID when being sent to storage systems.
- * This is due to hosts potentially sharing the same IDs between each other (E.G. numeric ids)
+ * When creating orders, we need to ensure their IDs are unique in storage systems.
+ * So each order ID is modified to be: <HOST_NAME>---<HOST_ORDER_ID>.
+ * This constant holds the value of delimiter so we can ensure the same is used everywhere, and so we can change it as need be.
+ * It's motivated by the fact that two catalogs can come up with the same order IDs.
  */
 const val DELIMITER = "---"
 
