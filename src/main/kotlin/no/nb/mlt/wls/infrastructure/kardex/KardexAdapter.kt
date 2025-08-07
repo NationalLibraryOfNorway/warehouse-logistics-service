@@ -12,7 +12,6 @@ import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.net.URI
@@ -23,9 +22,9 @@ private val logger = KotlinLogging.logger {}
 @Component
 @ConditionalOnProperty(value = ["kardex.enabled"], havingValue = "true")
 class KardexAdapter(
-    @Qualifier("nonProxyWebClient")
+    @param:Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
-    @Value("\${kardex.path.base}")
+    @param:Value($$"${kardex.path.base}")
     private val baseUrl: String,
     private val timeoutProperties: TimeoutProperties
 ) : StorageSystemFacade {
@@ -39,7 +38,7 @@ class KardexAdapter(
             .retrieve()
             .toEntity(KardexResponse::class.java)
             .timeout(timeoutProperties.storage)
-            .handle<ResponseEntity<KardexResponse>> { it, sink ->
+            .handle { it, sink ->
                 if (it.body?.isError() == true) {
                     sink.error(StorageSystemException("Failed to create item in Kardex: ${it.body?.message}"))
                     it.body!!.errors.forEach {
@@ -65,7 +64,7 @@ class KardexAdapter(
             .retrieve()
             .toEntity(KardexResponse::class.java)
             .timeout(timeoutProperties.storage)
-            .handle<ResponseEntity<KardexResponse>> { it, sink ->
+            .handle { it, sink ->
                 if (it.body?.isError() == true) {
                     it.body!!.errors.forEach {
                         logger.error { "${it.item}: ${it.errors}" }

@@ -3,6 +3,12 @@ package no.nb.mlt.wls.domain.ports.outbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
+/**
+ * Defines an interface for interacting with a database to manage items.
+ * Offers various functions for retrieving, creating, updating, and managing item records.
+ *
+ * @see Item
+ */
 interface ItemRepository {
     suspend fun getItem(
         hostName: HostName,

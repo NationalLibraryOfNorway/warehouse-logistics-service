@@ -4,9 +4,9 @@ import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
- * Converts a WebClient error into a ServerErrorException.
+ * Converts a WebClient error into a StorageSystemException.
  * This is used for propagating error data to the client.
- * @see ServerErrorException
+ * @see StorageSystemException
  */
 fun createServerError(error: WebClientResponseException): StorageSystemException {
     val errorBody = error.getResponseBodyAs(SynqError::class.java)

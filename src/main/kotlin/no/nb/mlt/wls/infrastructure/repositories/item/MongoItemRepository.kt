@@ -155,11 +155,11 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         hostId: String
     ): Mono<MongoItem>
 
-    @Query(count = true, value = "{ '\$or': ?0 }")
+    @Query(count = true, value = $$"{ '$or': ?0 }")
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
 
     @Query("{hostName: ?0,hostId: ?1}")
-    @Update("{'\$set':{quantity: ?2,location: ?3}}")
+    @Update($$"{'$set':{quantity: ?2,location: ?3}}")
     fun findAndUpdateItemByHostNameAndHostId(
         hostName: HostName,
         hostId: String,

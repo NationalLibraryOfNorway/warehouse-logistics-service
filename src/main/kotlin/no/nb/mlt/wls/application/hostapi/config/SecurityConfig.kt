@@ -27,7 +27,7 @@ import java.util.stream.Collectors
 @Profile("!pipeline")
 @EnableWebFluxSecurity
 class SecurityConfig {
-    @Value("\${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+    @Value($$"${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     val issuerUri: String = ""
 
     @Bean

@@ -24,44 +24,44 @@ import java.security.InvalidParameterException
     }"""
 )
 data class SynqInventoryReconciliationPayload(
-    @Schema(description = """List of load units in the warehouse""")
+    @field:Schema(description = """List of load units in the warehouse""")
     val loadUnit: List<LoadUnit>
 )
 
 data class LoadUnit(
-    @Schema(
+    @field:Schema(
         description = """ID of the product""",
         example = "mlt-12345"
     )
     val productId: String,
-    @Schema(
+    @field:Schema(
         description = """Owner of the product""",
         example = "NB"
     )
     val productOwner: String,
-    @Schema(description = """Description of the product""")
+    @field:Schema(description = """Description of the product""")
     val description: String?,
-    @Schema(
+    @field:Schema(
         description = """Quantity of the product""",
         example = "1.0"
     )
     val quantityOnHand: Double,
-    @Schema(
+    @field:Schema(
         description = """Which host system the product belongs to""",
         example = "Axiell"
     )
     val hostName: String?,
-    @Schema(
+    @field:Schema(
         description = """Location of the product""",
         example = "SYNQ_WAREHOUSE"
     )
     val location: String?,
-    @Schema(
+    @field:Schema(
         description = """Category of the product""",
         example = "PAPER"
     )
     val productCategory: String,
-    @Schema(
+    @field:Schema(
         description = """Unit of measure""",
         example = "ESK"
     )

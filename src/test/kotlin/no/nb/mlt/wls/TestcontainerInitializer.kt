@@ -14,7 +14,7 @@ class TestcontainerInitializer : ApplicationContextInitializer<ConfigurableAppli
         const val MAILHOG_SMTP_PORT = 1025
         const val MAILHOG_HTTP_PORT = 8025
         val MongoContainer = MongoDBContainer(DockerImageName.parse("mongo:4.4.22"))
-        val DummySynqContainer =
+        val DummySynqContainer: GenericContainer<*> =
             GenericContainer(DockerImageName.parse("mockoon/cli:9.2.0"))
                 .withExposedPorts(8181)
                 .withCommand("--data /data/wls-synq.json --port 8181 --log-transaction")
@@ -22,7 +22,7 @@ class TestcontainerInitializer : ApplicationContextInitializer<ConfigurableAppli
                     MountableFile.forClasspathResource("mockoon/wls-synq.json"),
                     "/data/wls-synq.json"
                 )
-        val MailhogContainer =
+        val MailhogContainer: GenericContainer<*> =
             GenericContainer(DockerImageName.parse("mailhog/mailhog"))
                 .withExposedPorts(MAILHOG_SMTP_PORT, MAILHOG_HTTP_PORT)
 

@@ -75,7 +75,7 @@ class ExceptionHandler {
     """
 )
 data class ErrorMessage(
-    @Schema(
+    @field:Schema(
         description = """Message describing the error.""",
         example = "The item's 'hostId' is required, and it cannot be blank"
     )

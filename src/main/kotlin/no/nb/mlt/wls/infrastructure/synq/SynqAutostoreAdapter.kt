@@ -22,9 +22,9 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class SynqAutostoreAdapter(
-    @Qualifier("nonProxyWebClient")
+    @param:Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
-    @Value("\${synq.path.base}")
+    @param:Value($$"${synq.path.base}")
     private val baseUrl: String,
     private val timeoutProperties: TimeoutProperties
 ) : StorageSystemFacade {

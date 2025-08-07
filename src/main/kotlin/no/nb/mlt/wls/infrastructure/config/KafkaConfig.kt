@@ -11,7 +11,7 @@ import reactor.kafka.sender.SenderOptions
 
 @Configuration
 class KafkaConfig {
-    @Value("\${spring.kafka.bootstrap-servers}")
+    @Value($$"${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 
     @Bean

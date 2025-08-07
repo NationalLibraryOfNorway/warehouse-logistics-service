@@ -15,22 +15,22 @@ import no.nb.mlt.wls.domain.model.Order
     }"""
 )
 data class SynqOrderStatusUpdatePayload(
-    @Schema(
+    @field:Schema(
         description = """Previous order status.""",
         example = "PICKED"
     )
     val prevStatus: SynqOrderStatus,
-    @Schema(
+    @field:Schema(
         description = """Current order status.""",
         example = "COMPLETED"
     )
     val status: SynqOrderStatus,
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which placed the order.""",
         example = "AXIELL"
     )
     val hostName: String,
-    @Schema(
+    @field:Schema(
         description = """Name of the warehouse where the order products/items are located.""",
         example = "Sikringmagasin_2"
     )

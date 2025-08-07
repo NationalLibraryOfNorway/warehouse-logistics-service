@@ -44,24 +44,24 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemMovingException
     }"""
 )
 data class SynqBatchMoveItemPayload(
-    @Schema(
+    @field:Schema(
         description = """ID of the transport unit in the SynQ storage system.""",
         example = "6942066642"
     )
     @field:NotBlank
     val tuId: String,
-    @Schema(
+    @field:Schema(
         description = """Current location of the transport unit and its contents in the SynQ storage system.""",
         example = "SYNQ_WAREHOUSE"
     )
     @field:NotBlank
     val location: String,
-    @Schema(
+    @field:Schema(
         description = """Previous location of the transport unit and its contents in the SynQ storage system.""",
         example = "WS_PLUKKSENTER_1"
     )
     val prevLocation: String,
-    @Schema(
+    @field:Schema(
         description = """List of products/items in the transport unit (referred to as load units in SynQ).
             Since we only have unique items an LU is equivalent to product.
             In usual warehouses you have multiple copies of the same product, so an LU can be a stack of products.""",
@@ -69,13 +69,13 @@ data class SynqBatchMoveItemPayload(
     )
     @field:Valid
     val loadUnit: List<Product>,
-    @Schema(
+    @field:Schema(
         description = """Who cause the load unit to move, can be system if that was an automatic action.""",
         example = "per.person@nb.no"
     )
     @field:NotBlank
     val user: String,
-    @Schema(
+    @field:Schema(
         description = """Warehouse in which the TU moved.""",
         example = "Sikringsmagasin_2"
     )
@@ -108,59 +108,59 @@ data class SynqBatchMoveItemPayload(
     }"""
 )
 data class Product(
-    @Schema(
+    @field:Schema(
         description = """Marks the product as confidential, meaning only people with special access can view, modify, or request the product.""",
         example = "false"
     )
     val confidentialProduct: Boolean,
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
     )
     @field:NotBlank
     val hostName: String,
-    @Schema(
+    @field:Schema(
         description = """Product ID from the host system, usually a barcode value or an equivalent ID.""",
         example = "mlt-12345"
     )
     @field:NotBlank
     val productId: String,
-    @Schema(
+    @field:Schema(
         description = """Product's owner, usually the National Library of Norway (NB) or the National Archives of Norway (AV).""",
         example = "NB"
     )
     @field:NotBlank
     val productOwner: String,
-    @Schema(
+    @field:Schema(
         description = """Product version ID in the storage system, seems to always have value "Default".""",
         example = "Default"
     )
     @field:NotBlank
     val productVersionId: String,
-    @Schema(
+    @field:Schema(
         description = """Product quantity in the TU, SynQ uses doubles for quantity, however we convert it to integers.""",
         example = "1.0"
     )
     @field:PositiveOrZero(message = "Quantity on hand must not be negative. It must be zero or higher")
     val quantityOnHand: Int?,
-    @Schema(
+    @field:Schema(
         description = """The amount of product which was moved between TUs. SynQ uses doubles for quantity, however we convert it to integers.""",
         example = "1.0"
     )
     @field:Positive(message = "Quantity moved must not be negative. It must be zero or higher")
     val quantityMove: Int?,
-    @Schema(
+    @field:Schema(
         description = """Signifies the product is missing, damaged, or otherwise suspect, and it requires manual action from the operator.""",
         example = "false"
     )
     val suspect: Boolean,
-    @Schema(
+    @field:Schema(
         description = """List of attributes for the product.""",
         example = "[{...}]"
     )
     @field:Valid
     val attributeValue: List<AttributeValue>,
-    @Schema(
+    @field:Schema(
         description = """Position of the product in the TU, not used by us so this is pretty irrelevant.""",
         example = "{...}"
     )
@@ -211,13 +211,13 @@ data class Product(
     }"""
 )
 data class AttributeValue(
-    @Schema(
+    @field:Schema(
         description = """Name of the attribute.""",
         example = "materialStatus"
     )
     @field:NotBlank
     val name: String,
-    @Schema(
+    @field:Schema(
         description = """Value of the attribute.""",
         example = "Available"
     )
@@ -235,17 +235,17 @@ data class AttributeValue(
     }"""
 )
 data class Position(
-    @Schema(
+    @field:Schema(
         description = """X position of the product in the TU.""",
         example = "1"
     )
     val xPosition: Int,
-    @Schema(
+    @field:Schema(
         description = """Y position of the product in the TU.""",
         example = "1"
     )
     val yPosition: Int,
-    @Schema(
+    @field:Schema(
         description = """Z position of the product in the TU.""",
         example = "1"
     )

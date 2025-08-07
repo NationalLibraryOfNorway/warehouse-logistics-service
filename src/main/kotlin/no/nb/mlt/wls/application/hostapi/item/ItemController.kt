@@ -185,7 +185,7 @@ class ItemController(
     @Callbacks(
         Callback(
             name = "Item Callback",
-            callbackUrlExpression = "{\$request.body#/callbackUrl}",
+            callbackUrlExpression = $$"{$request.body#/callbackUrl}",
             operation =
                 arrayOf(
                     Operation(

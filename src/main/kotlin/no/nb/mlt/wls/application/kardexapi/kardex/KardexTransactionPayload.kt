@@ -19,33 +19,33 @@ import no.nb.mlt.wls.domain.model.HostName
     }"""
 )
 data class KardexTransactionPayload(
-    @Schema(
+    @field:Schema(
         description = """Order ID in Kardex."""
     )
     @field:NotBlank(message = "Order ID can not be blank")
     val hostOrderId: String,
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL, ASTA"
     )
     val hostName: HostName,
-    @Schema(
+    @field:Schema(
         description = """The main material ID of the item."""
     )
     @field:NotBlank(message = "Item ID can not be blank")
     val hostId: String,
-    @Schema(
+    @field:Schema(
         description = """The current quantity of the item."""
     )
     @field:PositiveOrZero(message = "Item quantity must be positive")
     val quantity: Double,
     val motiveType: MotiveType,
-    @Schema(
+    @field:Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
     @field:NotBlank(message = "Location can not be blank")
     val location: String,
-    @Schema(
+    @field:Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
     )
     val operator: String

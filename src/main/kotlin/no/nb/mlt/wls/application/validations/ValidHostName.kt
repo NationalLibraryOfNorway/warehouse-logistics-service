@@ -8,7 +8,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import kotlin.reflect.KClass
 
 /**
- * Tests the field on whether it is a valid HostName
+ * Annotation for testing whether a given string is a valid HostName
  *
  * @see HostName
  */
@@ -31,7 +31,8 @@ class ValidHostNameImpl : ConstraintValidator<ValidHostName, String> {
         }
         try {
             HostName.fromString(value)
-        } catch (e: IllegalArgumentException) {
+            return true
+        } catch (_: Exception) {
             return false
         }
         return true
