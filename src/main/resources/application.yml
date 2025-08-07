@@ -92,6 +92,8 @@ wls:
   order:
     handler:
       email: daniel@mlt.hermes.no
+    sender:
+      email: hermes+mlt@nb.no
 
 # Define timeouts for calls to external services
 timeout:
@@ -148,6 +150,8 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+    sender:
+      email: ${ORDER_SENDER_EMAIL}
 
 # Define timeouts for calls to external services
 timeout:
@@ -216,6 +220,8 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+    sender:
+      email: ${ORDER_SENDER_EMAIL}
 
 # Define timeouts for calls to external service
 timeout:
@@ -284,6 +290,8 @@ wls:
   order:
     handler:
       email: ${ORDER_HANDLER_EMAIL}
+    sender:
+      email: ${ORDER_SENDER_EMAIL}
 
 # Define timeouts for calls to external service
 timeout:

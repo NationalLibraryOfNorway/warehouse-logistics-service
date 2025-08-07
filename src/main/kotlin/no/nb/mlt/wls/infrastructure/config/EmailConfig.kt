@@ -2,7 +2,6 @@ package no.nb.mlt.wls.infrastructure.config
 
 import no.nb.mlt.wls.infrastructure.email.DisabledEmailAdapter
 import no.nb.mlt.wls.infrastructure.email.EmailAdapter
-import no.nb.mlt.wls.infrastructure.repositories.mail.MongoEmailRepositoryAdapter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -16,10 +15,9 @@ class EmailConfig {
     @ConditionalOnProperty("spring.mail.host")
     @Bean
     fun emailAdapter(
-        emailRepository: MongoEmailRepositoryAdapter,
         emailSender: JavaMailSender,
         freeMarkerConfigurer: FreeMarkerConfigurer
-    ) = EmailAdapter(emailRepository, emailSender, freeMarkerConfigurer)
+    ) = EmailAdapter(emailSender, freeMarkerConfigurer)
 
     @ConditionalOnMissingBean(EmailAdapter::class)
     @Bean

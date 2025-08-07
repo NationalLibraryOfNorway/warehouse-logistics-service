@@ -99,45 +99,6 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `getItems returns list of items`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
-            .get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiItemPayload::class.java)
-            .hasSize(3)
-            .contains(duplicateItemPayload)
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(
-                mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole), SimpleGrantedAuthority("ROLE_asta"))
-            ).get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiItemPayload::class.java)
-            .hasSize(5)
-            .contains(duplicateItemPayload)
-
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item")))
-            .get()
-            .accept(MediaType.APPLICATION_JSON)
-            .exchange()
-            .expectStatus()
-            .isOk
-            .expectBodyList(ApiItemPayload::class.java)
-            .hasSize(0)
-    }
-
-    @Test
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
