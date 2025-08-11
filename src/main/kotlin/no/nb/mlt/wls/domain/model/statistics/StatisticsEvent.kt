@@ -9,7 +9,7 @@ import java.time.Instant
 /**
  * Represents a statistical event related to an item or order.
  *
- * Implementers of this interface represent different types of statistical events
+ * Implementations of this interface represent different types of statistical events
  * such as item-related or order-related events. These events are characterized
  * by unique identifiers, timestamps, event types, and metadata details.
  *

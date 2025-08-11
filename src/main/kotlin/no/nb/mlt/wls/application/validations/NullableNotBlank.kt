@@ -7,7 +7,7 @@ import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
 /**
- * Annotation for testing whether a given field is not blank if it's not null
+ * Annotation for ensuring that when a given field is not null, it's also not blank
  */
 @Target(AnnotationTarget.TYPE, AnnotationTarget.FIELD)
 @Retention

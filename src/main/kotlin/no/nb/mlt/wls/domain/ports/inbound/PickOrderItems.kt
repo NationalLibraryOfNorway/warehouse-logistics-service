@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.model.Order
  * a given order.
  *
  * The purpose of this operation is to update the status of items within an order,
- * adjust inventory quantities, update order status, notify catalogs, etc.
+ * update order status, notify catalogs, etc.
  *
  * @see Item
  * @see Order

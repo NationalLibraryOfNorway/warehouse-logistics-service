@@ -5,8 +5,8 @@ import no.nb.mlt.wls.domain.model.Order
 
 /**
  * Functional interface that defines a method to update the status of an [Order] in the system.
- * This interface is designed to handle the transition of an order's status for a specific host.
  *
+ * This interface is designed to handle the transition of an order's status for a specific host.
  * The implementation will identify the order to be updated by its unique host name and order ID,
  * and then update its status to the given value.
  *

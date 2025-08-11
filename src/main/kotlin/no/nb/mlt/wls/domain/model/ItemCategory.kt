@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.model
 
 /**
- * Represents item's category.
+ * Represents the item's category.
  * Items sharing a category can, in theory, be stored together in storage systems.
  * Names are pretty self-explanatory, bulk items in theory are the only ones that can have quantity > 1.
  * Unknown category is used for unknown items we receive in an order.

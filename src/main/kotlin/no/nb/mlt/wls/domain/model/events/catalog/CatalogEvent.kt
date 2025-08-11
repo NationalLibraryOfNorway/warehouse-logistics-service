@@ -5,7 +5,7 @@ import java.time.Instant
 
 /**
  * Represents a catalog-related event in the system. Catalog events are domain events pertaining
- * to items or orders updates, which are part of the catalog's life cycle. For example, when an
+ * to item or order updates, which are part of the catalog's life cycle. For example, when an
  * order is picked, an order event will be fired off to update the catalog about it.
  *
  * This sealed interface ensures that all implementations are known at compile-time, allowing for

@@ -8,8 +8,8 @@ import no.nb.mlt.wls.domain.model.Item
  * Given a list of [HostName], it retrieves the corresponding [Item] entities
  * associated with those hosts.
  *
- * This interface is typically used for scenarios where multiple host systems
- * need to be queried to retrieve their respective items. The function is
+ * This interface is typically used when someone wants to retrieve updated
+ * info about items belonging to specified host systems. The function is
  * asynchronous and returns a list of items that belong to the specified hostnames.
  *
  * @see Item
