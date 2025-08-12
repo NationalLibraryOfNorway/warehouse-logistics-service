@@ -46,7 +46,7 @@ jobs:
       - name: Checkout
         # Specifies that this step should run a pre-defined action, meaning an action that was made by someone else or exists elsewhere
         # In this case the provided identifier is a reference to a repository in: https://github.com/actions/checkout and the version is set tov4
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # This step installs the specified Java JDK
       - name: Setup Java JDK
@@ -152,7 +152,7 @@ jobs:
       image-tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Sets up a Docker Build action which is then used to produce the Docker image
       - name: Set up Docker Buildx
@@ -231,7 +231,7 @@ jobs:
             mlt-argo
 
       - name: Checkout mlt-argo repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: NationalLibraryOfNorway/mlt-argo
           token: ${{ steps.generate-token.outputs.token }}
@@ -276,7 +276,7 @@ jobs:
             mlt-argo
 
       - name: Checkout mlt-argo repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: NationalLibraryOfNorway/mlt-argo
           token: ${{ steps.generate-token.outputs.token }}
