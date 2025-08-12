@@ -107,7 +107,7 @@ jobs:
       # It looks for any file named "TEST-...xml" in the project and uses it to publish the test results
       # The job name in GitHub with the test results is "JUnit Test Results"
       - name: Publish Test Report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         # If defines conditions that need to be fulfilled to run this step, in this case this step will always run
         # That is because the report should be published, even if the tests failed
         if: always()
