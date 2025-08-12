@@ -105,7 +105,7 @@ interface MongoCatalogMessageRepository : ReactiveMongoRepository<MongoCatalogEv
     fun findAllByProcessedTimestampIsNull(): Flux<MongoCatalogEvent>
 
     @Query("{_id: ?0}")
-    @Update("{'\$set':{processedTimestamp: ?1}}")
+    @Update($$"{'$set':{processedTimestamp: ?1}}")
     fun findAndUpdateProcessedTimestampById(
         id: String,
         processedTimestamp: Instant

@@ -3,8 +3,25 @@ package no.nb.mlt.wls.domain.model
 import com.fasterxml.jackson.annotation.JsonIgnore
 import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.ValidationException
-import java.net.URI
+import kotlin.collections.all
+import kotlin.collections.map
 
+/**
+ * Represents an order containing a set of order lines, along with associated metadata such as status, type, and contact details.
+ * This class supports managing the state and data of an order, including updating its status
+ * and handling order line items for operations like picking or returning items.
+ *
+ * @property hostName The host associated with the order, indicating where the order originates.
+ * @property hostOrderId The unique identifier for the order provided by the host system.
+ * @property status The current status of the order, represented by the Status enum.
+ * @property orderLine The list of order items associated with this order.
+ * @property orderType The type of the order, represented by the Type enum.
+ * @property address The recipient's address for the order. Can be null if no address is provided.
+ * @property contactPerson The name of the contact person associated with the order.
+ * @property contactEmail The email address of the contact person. Can be null if not provided.
+ * @property note An optional note or comment about the order.
+ * @property callbackUrl The URL that can be used as a callback endpoint for order-related operations.
+ */
 data class Order(
     val hostName: HostName,
     val hostOrderId: String,
@@ -17,25 +34,58 @@ data class Order(
     val note: String?,
     val callbackUrl: String
 ) {
+    /**
+     * Updates the status of the specified order items to `PICKED`.
+     *
+     * @param itemIds The list of unique identifiers for the items to be marked as `PICKED`.
+     * @return The updated instance of the order with the affected item's statuses set to `PICKED`.
+     * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
+     * @throws ValidationException If any of the specified item IDs do not exist in the order.
+     */
     fun pick(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.PICKED)
 
+    /**
+     * Updates the status of the specified order items to `RETURNED`.
+     *
+     * @param itemIds The list of unique identifiers for the items to be marked as `RETURNED`.
+     * @return The updated instance of the order with the affected item's statuses set to `RETURNED`.
+     * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
+     * @throws ValidationException If any of the specified item IDs do not exist in the order.
+     */
     fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
+    /**
+     * Marks the order as deleted by updating its status to `DELETED`.
+     *
+     * @return The updated instance of the order with its status set to `DELETED`.
+     * @throws IllegalOrderStateException if the current status prohibits the deletion of the order.
+     */
+    @Throws(IllegalOrderStateException::class)
     fun delete(): Order = updateStatus(Status.DELETED)
 
+    /**
+     * Updates the status of the order to the specified new status.
+     * To change the order status, it cannot be considered closed (all items are returned, or it was deleted).
+     * Additionally, the status progression must make sense, e.g. we cannot go from COMPLETED to NOT_STARTED.
+     *
+     * @param newStatus The new status to set for the order.
+     * @return The updated instance of the order with the new status.
+     * @throws IllegalOrderStateException if the order is already closed or if the status progression is invalid.
+     */
+    @Throws(IllegalOrderStateException::class)
     fun updateStatus(newStatus: Status): Order {
         if (isClosed()) {
             throw IllegalOrderStateException("The order is already closed, and can therefore not be changed")
         }
 
-        // In progress orders cannot be changed to not started
+        // In progress orders cannot be changed to "not started"
         // Picked orders cannot be set to in progress
-        val isInvalidTransition =
+        val isInvalidProgression =
             (newStatus == Status.NOT_STARTED) ||
                 (newStatus == Status.IN_PROGRESS && isPicked()) ||
                 (newStatus == Status.DELETED && status != Status.NOT_STARTED)
 
-        if (isInvalidTransition) {
+        if (isInvalidProgression) {
             throw IllegalOrderStateException(
                 "The order status can not be updated in an invalid direction. Tried updating from ${this.status} to $newStatus"
             )
@@ -44,10 +94,17 @@ data class Order(
         return this.copy(status = newStatus)
     }
 
-    fun isClosed(): Boolean = listOf(Status.DELETED, Status.RETURNED).contains(status)
+    /**
+     * Checks whether the order is considered closed.
+     *
+     * An order is classified as closed if its status is either `DELETED` or `RETURNED`.
+     *
+     * @return true if the order status is `DELETED` or `RETURNED`, false otherwise.
+     */
+    fun isClosed(): Boolean = status in listOf(Status.DELETED, Status.RETURNED)
 
     private fun setOrderLineStatus(
-        hostIds: List<String>,
+        itemIds: List<String>,
         status: OrderItem.Status
     ): Order {
         if (isClosed()) {
@@ -58,22 +115,13 @@ data class Order(
             throw IllegalOrderStateException("Order is already complete with status: $status")
         }
 
-        val hasUnknownItems =
-            hostIds.any { hostIdToUpdate ->
-                orderLine.none { it.hostId == hostIdToUpdate }
-            }
-
-        if (hasUnknownItems) {
-            throw ValidationException("Can't update order line items that do not exist in the order: $hostIds")
+        if (hasUnknownItems(itemIds.toSet())) {
+            throw ValidationException("Can't update order line items that do not exist in the order: $itemIds")
         }
 
         val updatedOrderLineList =
-            orderLine.map { orderLine ->
-                if (hostIds.contains(orderLine.hostId)) {
-                    orderLine.copy(status = status)
-                } else {
-                    orderLine
-                }
+            orderLine.map { orderItem ->
+                if (orderItem.hostId in itemIds) orderItem.copy(status = status) else orderItem
             }
 
         return this
@@ -81,16 +129,33 @@ data class Order(
             .updateStatusFromOrderLines()
     }
 
-    private fun setContactPerson(contactPerson: String): Order = this.copy(contactPerson = contactPerson)
+    /**
+     * Determines if the given set of item IDs contains any unknown items,
+     * i.e., items that do not correspond to the existing host IDs in the order lines.
+     *
+     * @param itemIds The set of unique identifiers for the items to be checked.
+     * @return `true` if there are unknown items in the provided set, `false` otherwise.
+     */
+    private fun hasUnknownItems(itemIds: Set<String>): Boolean {
+        val existingHostIds = orderLine.map { it.hostId }.toSet()
+        val unknownItemIds = itemIds - existingHostIds
 
-    private fun setOrderType(orderType: Type): Order = this.copy(orderType = orderType)
-
-    private fun setCallbackUrl(callbackUrl: String): Order {
-        throwIfInvalidUrl(callbackUrl)
-
-        return this.copy(callbackUrl = callbackUrl)
+        return unknownItemIds.isNotEmpty()
     }
 
+    /**
+     * Updates the status of the order based on the statuses of all its order lines.
+     *
+     * The method evaluates the status of every [OrderItem] in the `orderLine` collection and updates the overall
+     * order status accordingly:
+     * - If all [OrderItem] are marked as `RETURNED`, the order status is updated to `RETURNED`.
+     * - If all [OrderItem] are marked as `COMPLETE`, the order status is updated to `COMPLETED`.
+     * - If all [OrderItem] are either `PICKED` or `FAILED`, the order status is also updated to `COMPLETED`.
+     * - If all [OrderItem] have a status of `NOT_STARTED`, the order status is updated to `NOT_STARTED`.
+     * - For all other combinations of [OrderItem] statuses, the order status is updated to `IN_PROGRESS`.
+     *
+     * @return The updated [Order] instance with its new status.
+     */
     private fun updateStatusFromOrderLines(): Order {
         // This might benefit from a small refactor of sorts
         return when {
@@ -106,7 +171,7 @@ data class Order(
                 updateStatus(Status.COMPLETED)
             }
 
-            orderLine.all { it.status == OrderItem.Status.NOT_STARTED } -> {
+            orderLine.all(OrderItem::isNotStarted) -> {
                 updateStatus(Status.NOT_STARTED)
             }
 
@@ -114,26 +179,31 @@ data class Order(
         }
     }
 
+    /**
+     * Check whether the order is completed by having all its items picked.
+     */
     private fun isPicked(): Boolean = status == Status.COMPLETED
 
-    private fun setNote(note: String?): Order = this.copy(note = note)
-
-    private fun setAddress(address: Address?): Order = this.copy(address = address ?: createOrderAddress())
-
-    private fun createOrderAddress(): Address = Address(null, null, null, null, null, null, null)
-
-    private fun throwIfInvalidUrl(url: String) {
-        runCatching {
-            URI(url).toURL().toURI()
-        }.exceptionOrNull()?.let {
-            throw ValidationException("Invalid URL: $url", it)
-        }
-    }
-
+    /**
+     * Represents an ordered item with its ID and status.
+     *
+     * @property hostId The unique identifier for the item in the host system.
+     * @property status The status of the item, represented by the Status enum.
+     */
     data class OrderItem(
         val hostId: String,
         val status: Status
     ) {
+        /**
+         * Represents the possible statuses for an order item.
+         *
+         * The Status enum defines the various stages or states an order item can be in during its lifecycle.
+         *
+         * NOT_STARTED: Indicates that the order process has not begun for the item.
+         * PICKED: Indicates that the item has been picked and is ready for further processing or delivery.
+         * FAILED: Indicates that an item could not be picked due to an error in the system, item missing, being damaged or cancelled.
+         * RETURNED: Indicates that the item has been returned to its original location or a different one.
+         */
         enum class Status {
             NOT_STARTED,
             PICKED,
@@ -141,28 +211,54 @@ data class Order(
             RETURNED
         }
 
+        /**
+         * Determines whether the order item was PICKED or FAILED.
+         *
+         * @return `true` if the status is PICKED or FAILED, `false` otherwise.
+         */
         @JsonIgnore
-        fun isPickedOrFailed(): Boolean =
-            when (this.status) {
-                Status.NOT_STARTED -> false
-                Status.PICKED -> true
-                Status.FAILED -> true
-                Status.RETURNED -> false
-            }
+        fun isPickedOrFailed(): Boolean = this.status in listOf(Status.PICKED, Status.FAILED)
 
+        /**
+         * Determines whether the order item's status is considered complete.
+         * A status is considered complete if it is PICKED, FAILED, or RETURNED.
+         *
+         * @return `true` if the status is PICKED, FAILED, or RETURNED, `false` if the status is NOT_STARTED.
+         */
         @JsonIgnore
-        fun isComplete(): Boolean =
-            when (this.status) {
-                Status.NOT_STARTED -> false
-                Status.PICKED -> true
-                Status.FAILED -> true
-                Status.RETURNED -> true
-            }
+        fun isComplete(): Boolean = this.status != Status.NOT_STARTED
 
+        /**
+         * Determines whether the order item's status is RETURNED.
+         *
+         * @return true if the status is RETURNED, false otherwise.
+         */
         @JsonIgnore
         fun isReturned(): Boolean = this.status == Status.RETURNED
+
+        /**
+         * Determines whether the order item's status is NOT_STARTED.
+         *
+         * @return true if the status is NOT_STARTED, false otherwise.
+         */
+        @JsonIgnore
+        fun isNotStarted(): Boolean = this.status == Status.NOT_STARTED
     }
 
+    /**
+     * Represents an address associated with an order.
+     *
+     * This class stores detailed address information including recipient name,
+     * address lines, postal code, city, region, and country.
+     *
+     * @property recipient The name of the person or entity receiving at the address.
+     * @property addressLine1 The first line of the address, typically including street name and number.
+     * @property addressLine2 The second line of the address, often used for supplemental information like apartment or suite details.
+     * @property postcode The postal code associated with the address.
+     * @property city The city where the address is located.
+     * @property region The region or state of the address.
+     * @property country The country where the address is located.
+     */
     data class Address(
         val recipient: String?,
         val addressLine1: String?,
@@ -173,6 +269,18 @@ data class Order(
         val country: String?
     )
 
+    /**
+     * Represents the current state of an order.
+     *
+     * Used to track the lifecycle of an order from its initiation to its resolution or closure.
+     * The states include:
+     *
+     * - NOT_STARTED: The order has been created but is yet to be processed.
+     * - IN_PROGRESS: The order is currently being processed.
+     * - COMPLETED: The order has been successfully processed and finalized.
+     * - DELETED: The order has been removed or marked for deletion.
+     * - RETURNED: The order or its items have been returned to the storage.
+     */
     enum class Status {
         NOT_STARTED,
         IN_PROGRESS,
@@ -181,6 +289,11 @@ data class Order(
         RETURNED
     }
 
+    /**
+     * Represents the type of the order.
+     * It specifies whether the order is related to borrowing items (LOAN)
+     * or is associated with digitization requests (DIGITIZATION).
+     */
     enum class Type {
         LOAN,
         DIGITIZATION

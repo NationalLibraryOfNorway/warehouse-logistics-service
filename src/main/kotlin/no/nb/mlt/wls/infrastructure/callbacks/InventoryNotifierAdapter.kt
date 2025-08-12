@@ -23,11 +23,11 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class InventoryNotifierAdapter(
-    @Qualifier("nonProxyWebClient")
+    @param:Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
-    @Qualifier("proxyWebClient")
+    @param:Qualifier("proxyWebClient")
     private val proxyWebClient: WebClient,
-    @Value("\${callback.secret}")
+    @param:Value($$"${callback.secret}")
     private val signatureSecretKey: String,
     private val objectMapper: ObjectMapper,
     private val timeoutConfig: TimeoutProperties

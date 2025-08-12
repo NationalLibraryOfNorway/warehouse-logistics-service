@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Primary
         OAuthFlows(
             clientCredentials =
                 OAuthFlow(
-                    tokenUrl = "\${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
+                    tokenUrl = $$"${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/token",
                     scopes = []
                 )
         )

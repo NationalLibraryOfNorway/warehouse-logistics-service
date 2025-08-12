@@ -138,7 +138,7 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
     ): Mono<MongoOrder>
 
     @Query("{hostName: ?0, hostOrderId: ?1}")
-    @Update("{'\$set':{status: ?2,orderLine: ?3,orderType: ?4,contactPerson: ?5,address: ?6, callbackUrl: ?7}}")
+    @Update($$"{'$set':{status: ?2,orderLine: ?3,orderType: ?4,contactPerson: ?5,address: ?6, callbackUrl: ?7}}")
     fun findAndUpdateByHostNameAndHostOrderId(
         hostName: HostName,
         hostOrderId: String,
@@ -150,7 +150,7 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         callbackUrl: String
     ): Mono<Long>
 
-    @Query("{hostName: ?0, \"orderLine.hostId\": {\$in: ?1}, \"orderLine.status\": \"PICKED\"}")
+    @Query($$"{hostName: ?0, \"orderLine.hostId\": {$in: ?1}, \"orderLine.status\": \"PICKED\"}")
     fun findAllOrdersWithHostNameAndOrderItems(
         hostName: HostName,
         orderLine: List<String>

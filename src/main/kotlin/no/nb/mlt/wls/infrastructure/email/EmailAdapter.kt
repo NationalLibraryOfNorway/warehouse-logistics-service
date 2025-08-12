@@ -6,7 +6,6 @@ import jakarta.mail.internet.MimeMessage
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
-import no.nb.mlt.wls.domain.ports.outbound.EmailRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
@@ -18,11 +17,13 @@ import java.awt.image.BufferedImage
 private val logger = KotlinLogging.logger {}
 
 class EmailAdapter(
-    private val emailRepository: EmailRepository,
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
 ) : EmailNotifier {
-    @Value("\${wls.order.handler.email}")
+    @Value($$"${wls.order.sender.email}")
+    val senderEmail: String = ""
+
+    @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
     override suspend fun orderCreated(
@@ -34,16 +35,14 @@ class EmailAdapter(
         }
         sendEmail(
             createOrderConfirmationEmail(order),
-            "Email sent to host"
-        ) { error ->
-            "Failed to send order confirmation emails: ${error.message}"
-        }
+            "Email sent to host",
+            "Failed to send order confirmation emails"
+        )
         sendEmail(
             createOrderHandlerEmail(order, orderItems),
-            "Email sent to order handlers"
-        ) { error ->
-            "Failed to send orders: ${error.message}"
-        }
+            "Email sent to order handlers",
+            "Failed to send orders"
+        )
     }
 
     /**
@@ -52,7 +51,7 @@ class EmailAdapter(
     private fun sendEmail(
         email: MimeMessage?,
         successInfo: String,
-        errorHandler: (e: Exception) -> Any
+        errorInfo: String
     ) {
         if (email == null) {
             logger.error {
@@ -66,13 +65,15 @@ class EmailAdapter(
                 successInfo
             }
         } catch (e: MailException) {
-            errorHandler(e)
+            logger.error {
+                errorInfo + ": ${e.message}"
+            }
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
         } catch (e: Exception) {
             logger.error(e) {
-                "Unexpected exception while sending email"
+                "Unexpected exception while sending email: ${e.message}"
             }
         }
     }
@@ -101,7 +102,7 @@ class EmailAdapter(
         // Email Metadata
         helper.setText(htmlBody, true)
         helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
-        helper.setFrom("noreply@wls-api.no")
+        helper.setFrom(senderEmail)
         helper.setTo(receiver)
 
         return helper.mimeMessage
@@ -140,7 +141,7 @@ class EmailAdapter(
             )
         helper.setText(htmlBody, true)
         helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
-        helper.setFrom("noreply@wls-api.no")
+        helper.setFrom(senderEmail)
         helper.setTo(storageEmail)
         // QR-Code image handling for order ID and order items
         val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId, scale = 3, border = 4)
