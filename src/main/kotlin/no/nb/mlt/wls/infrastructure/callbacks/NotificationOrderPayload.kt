@@ -44,29 +44,29 @@ import java.time.Instant
     """
 )
 data class NotificationOrderPayload(
-    @Schema(
+    @field:Schema(
         description = """Name of the host system which made the order.""",
         examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
     val hostName: HostName,
-    @Schema(
+    @field:Schema(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
         example = "mlt-12345-order"
     )
     val hostOrderId: String,
-    @Schema(
+    @field:Schema(
         description = """Current status for the whole order.
             "COMPLETED" means that the order is finished and items are ready for pickup / shipping to receiver.
             "RETURNED" means that the order items have been returned to the storage.""",
         examples = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "RETURNED", "DELETED"]
     )
     val status: Order.Status?,
-    @Schema(
+    @field:Schema(
         description = """List of items in the order, also called order lines.""",
         example = "NOT_STARTED"
     )
     val orderLine: List<OrderLine>,
-    @Schema(
+    @field:Schema(
         description = """Describes what type of order this is.
             "LOAN" means that the order is for borrowing items to external or internal users,
             usually meaning the items will be viewed, inspected, etc.
@@ -75,52 +75,52 @@ data class NotificationOrderPayload(
         examples = ["LOAN", "DIGITIZATION"]
     )
     val orderType: Order.Type,
-    @Schema(
+    @field:Schema(
         description = """Who to contact in relation to the order if case of any problems/issues/questions.""",
         example = "Dr. Heinz Doofenshmirtz"
     )
     val contactPerson: String,
-    @Schema(
+    @field:Schema(
         description = """Where to send emails with communication or updates regarding the order.""",
         example = "heinz@doofenshmir.tz"
     )
     val contactEmail: String?,
-    @Schema(
+    @field:Schema(
         description = """Address for the order, can be used as additional way of keeping track of where the order went to.""",
         example = "{...}"
     )
     val address: Order.Address?,
-    @Schema(
+    @field:Schema(
         description = """Notes regarding the order, such as delivery instructions, special requests, etc.""",
         example = "I need this order in four weeks, not right now."
     )
     val note: String?,
-    @Schema(
+    @field:Schema(
         description = """This URL will be used for POSTing order updates to the host system.
             For example when order items get picked or the order is cancelled.""",
         example = "https://callback-wls.no/order"
     )
     val callbackUrl: String,
-    @Schema(
+    @field:Schema(
         description = """Time at which Hermes WLS received order update from storage system""",
         example = "2025-03-21T20:30:00.000Z"
     )
-    @JsonSerialize(using = ToStringSerializer::class)
-    @JsonDeserialize(using = CustomInstantDeserializer::class)
+    @field:JsonSerialize(using = ToStringSerializer::class)
+    @field:JsonDeserialize(using = CustomInstantDeserializer::class)
     val eventTimestamp: Instant,
-    @Schema(
+    @field:Schema(
         description = """This messages unique ID in UUID format, allows deduplication""",
         example = "123e4567-e89b-12d3-a456-426614174000"
     )
     val messageId: String
 ) {
     data class OrderLine(
-        @Schema(
+        @field:Schema(
             description = """Item ID from the host system.""",
             example = "mlt-12345"
         )
         val hostId: String,
-        @Schema(
+        @field:Schema(
             description = """Current status for the ordered item.""",
             examples = ["NOT_STARTED", "PICKED", "RETURNED", "FAILED"]
         )

@@ -4,6 +4,12 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 
+/**
+ * Defines an interface for interacting with a database to manage orders.
+ * Offers various functions for retrieving, creating, updating, and managing order records.
+ *
+ * @see Order
+ */
 interface OrderRepository {
     suspend fun getOrder(
         hostName: HostName,

@@ -10,7 +10,7 @@ import reactor.kafka.sender.SenderResult
 class StatisticsProducer(
     private val kafkaTemplate: ReactiveKafkaProducerTemplate<String, Any>
 ) {
-    @Value("\${spring.kafka.template.default-topic}")
+    @Value($$"${spring.kafka.template.default-topic}")
     private lateinit var defaultTopic: String
 
     fun sendStatisticsMessage(

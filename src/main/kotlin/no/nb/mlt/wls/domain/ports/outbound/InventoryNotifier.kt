@@ -4,6 +4,10 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import java.time.Instant
 
+/**
+ * Defines functions for notifying other systems about changes in storage inventory.
+ * This includes events such as item stock changes, item movements, order updates, etc.
+ */
 interface InventoryNotifier {
     @Throws(UnableToNotifyException::class)
     fun itemChanged(

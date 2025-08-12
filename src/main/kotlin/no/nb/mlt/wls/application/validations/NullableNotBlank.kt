@@ -7,14 +7,13 @@ import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
 /**
- * The annotated element must not be blank.
- *
+ * Annotation for ensuring that when a given field is not null, it's also not blank
  */
 @Target(AnnotationTarget.TYPE, AnnotationTarget.FIELD)
 @Retention
 @Constraint(validatedBy = [NullableNotBlankImpl::class])
 annotation class NullableNotBlank(
-    val message: String = "Validation for field failed",
+    val message: String = "This nullable field must not be blank if not null.",
     val groups: Array<KClass<*>> = [],
     val payload: Array<KClass<out Payload>> = []
 )
