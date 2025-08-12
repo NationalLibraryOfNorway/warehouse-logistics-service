@@ -86,7 +86,7 @@
     <commons.validator.version>1.9.0</commons.validator.version>
     <jsoup.version>1.21.1</jsoup.version>
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
-    <mockwebserver.version>4.12.0</mockwebserver.version>
+    <mockwebserver.version>5.1.0</mockwebserver.version>
 
     <kotlin.version>2.2.0</kotlin.version>
     <kotlin.code.style>official</kotlin.code.style>
