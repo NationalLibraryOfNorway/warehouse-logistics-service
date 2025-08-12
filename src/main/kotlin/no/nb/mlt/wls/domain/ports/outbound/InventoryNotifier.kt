@@ -5,8 +5,8 @@ import no.nb.mlt.wls.domain.model.Order
 import java.time.Instant
 
 /**
- * Provides notification mechanisms for inventory-related events.
- * This interface defines methods to notify changes in inventory items and orders.
+ * Defines functions for notifying other systems about changes in storage inventory.
+ * This includes events such as item stock changes, item movements, order updates, etc.
  */
 interface InventoryNotifier {
     @Throws(UnableToNotifyException::class)
