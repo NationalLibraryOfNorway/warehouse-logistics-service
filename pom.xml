@@ -86,7 +86,7 @@
     <commons.validator.version>1.10.0</commons.validator.version>
     <jsoup.version>1.21.1</jsoup.version>
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
-    <mockwebserver.version>4.12.0</mockwebserver.version>
+    <mockwebserver.version>5.1.0</mockwebserver.version>
 
     <kotlin.version>2.2.0</kotlin.version>
     <kotlin.code.style>official</kotlin.code.style>
@@ -118,6 +118,7 @@
     <dependency>
       <groupId>io.opentelemetry</groupId>
       <artifactId>opentelemetry-exporter-otlp</artifactId>
+      <version>1.53.0</version>
     </dependency>
 
     <dependency>
@@ -280,12 +281,24 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${mockwebserver.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>mockwebserver3</artifactId>
+      <version>${mockwebserver.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>
-      <artifactId>mockwebserver</artifactId>
+      <artifactId>mockwebserver3-junit5</artifactId>
       <version>${mockwebserver.version}</version>
       <scope>test</scope>
     </dependency>
