@@ -180,6 +180,28 @@ class SynqControllerTest(
         }
 
     @Test
+    fun `updateOrder does not set status to complete with unfinished order lines`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
+                .put()
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, orderIdInSynq)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(orderStatusCompletePayload)
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            val result = orderRepository.findByHostNameAndHostOrderId(order.hostName, order.hostOrderId).awaitSingle()
+            // order lines should be unchanged here
+            assertThat(result.orderLine).isEqualTo(order.orderLine)
+            // and the status should not have been updated
+            assertThat(result.status).isNotEqualTo(Order.Status.COMPLETED)
+        }
+    }
+
+    @Test
     fun `updateOrder with invalid payload returns 400`() =
         runTest {
             webTestClient
@@ -431,6 +453,14 @@ class SynqControllerTest(
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.ALLOCATED,
             status = SynqOrderStatus.RELEASED,
+            hostName = toSynqHostname(HostName.AXIELL),
+            warehouse = "Sikringmagasin_2"
+        )
+
+    private val orderStatusCompletePayload =
+        SynqOrderStatusUpdatePayload(
+            prevStatus = SynqOrderStatus.PICKED,
+            status = SynqOrderStatus.COMPLETED,
             hostName = toSynqHostname(HostName.AXIELL),
             warehouse = "Sikringmagasin_2"
         )

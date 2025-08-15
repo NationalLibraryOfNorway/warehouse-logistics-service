@@ -3,6 +3,7 @@ package no.nb.mlt.wls.application.synqapi.synq
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 
 @Schema(
     description = """Payload with updated status information for an order placed in SynQ.""",
@@ -66,7 +67,7 @@ enum class SynqOrderStatus {
 fun SynqOrderStatusUpdatePayload.getConvertedStatus() =
     when (status) {
         SynqOrderStatus.NEW -> Order.Status.NOT_STARTED
-        SynqOrderStatus.COMPLETED -> Order.Status.COMPLETED
+        SynqOrderStatus.COMPLETED -> throw IllegalOrderStateException("SynQ is not allowed to decide if the order is complete")
         SynqOrderStatus.CANCELLED -> Order.Status.DELETED
         else -> Order.Status.IN_PROGRESS
     }
