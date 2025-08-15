@@ -7,11 +7,13 @@ import no.nb.mlt.wls.application.synqapi.synq.getConvertedStatus
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.toMovedProduct
 import no.nb.mlt.wls.toProduct
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class SynqModelConversionTest {
     @Test
@@ -23,10 +25,10 @@ class SynqModelConversionTest {
         val released = synqOrderStatusUpdatePayload.copy(status = SynqOrderStatus.RELEASED)
 
         assertThat(notStarted.getConvertedStatus()).isEqualTo(Order.Status.NOT_STARTED)
-        assertThat(completed.getConvertedStatus()).isEqualTo(Order.Status.COMPLETED)
         assertThat(cancelled.getConvertedStatus()).isEqualTo(Order.Status.DELETED)
         assertThat(allocated.getConvertedStatus()).isEqualTo(Order.Status.IN_PROGRESS)
         assertThat(released.getConvertedStatus()).isEqualTo(Order.Status.IN_PROGRESS)
+        assertThrows<IllegalOrderStateException> { completed.getConvertedStatus() }
     }
 
     @Test
