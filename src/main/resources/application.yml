@@ -45,6 +45,9 @@ management:
   tracing:
     sampling:
       probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
   metrics:
     tags:
       application: ${spring.application.name}
@@ -52,7 +55,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: prometheus,health
+        include: prometheus,health,info
   endpoint:
     health:
       # Not completely sure but I think it's useful/needed for Kubernetes
