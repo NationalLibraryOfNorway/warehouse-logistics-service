@@ -5,14 +5,14 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.ninjasquad.springmockk.SpykBean
 import com.ninjasquad.springmockk.SpykDefinition
 import io.mockk.verify
-import mockwebserver3.MockResponse
-import mockwebserver3.MockWebServer
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -35,6 +35,7 @@ class InventoryNotifierAdapterTest {
     @Qualifier("nonProxyWebClient")
     private lateinit var webClient: WebClient
 
+    private lateinit var mockWebServer: MockWebServer
     private lateinit var mockServerItemCallbackPath: String
     private lateinit var mockServerOrderCallbackPath: String
 
@@ -46,10 +47,9 @@ class InventoryNotifierAdapterTest {
     private lateinit var orderNotificationPayload: NotificationOrderPayload
     private val timeoutConfig = TimeoutProperties(8, 8, 8)
 
-    val mockWebServer: MockWebServer = MockWebServer()
-
     @BeforeEach
     fun setUp() {
+        mockWebServer = MockWebServer()
         mockWebServer.start()
 
         webClient =
@@ -77,19 +77,19 @@ class InventoryNotifierAdapterTest {
 
     @AfterEach
     fun tearDown() {
-        mockWebServer.close()
+        mockWebServer.shutdown()
     }
 
     @Test
     fun `should send callback on itemChange`() {
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        assertEquals(itemCallbackPath, request.url.pathSegments.last())
+        assertEquals(itemCallbackPath, request.path)
         assertEquals("POST", request.method)
-        val requestItem: NotificationItemPayload = jacksonObjectMapper().readValue(request.body?.utf8().toString())
+        val requestItem: NotificationItemPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
         assertEquals(itemNotificationPayload, requestItem)
         verify(exactly = 0) { proxyWebClient.post() }
         verify(exactly = 1) { webClient.post() }
@@ -97,14 +97,14 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should send callback on orderChange`() {
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        assertEquals(orderCallbackPath, request.url.pathSegments.last())
+        assertEquals(orderCallbackPath, request.path)
         assertEquals("POST", request.method)
-        val requestOrder: NotificationOrderPayload = jacksonObjectMapper().readValue(request.body?.utf8().toString())
+        val requestOrder: NotificationOrderPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
         assertEquals(orderNotificationPayload, requestOrder)
         verify(exactly = 0) { proxyWebClient.post() }
         verify(exactly = 1) { webClient.post() }
@@ -114,12 +114,12 @@ class InventoryNotifierAdapterTest {
     fun `should use proxied web client when notifying of item belonging to proxied host`() {
         val item = createTestItem(hostName = HostName.ASTA, callbackUrl = mockServerItemCallbackPath)
         val timestamp = Instant.now()
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.itemChanged(item, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        assertEquals(itemCallbackPath, request.url.pathSegments.last())
+        assertEquals(itemCallbackPath, request.path)
         assertEquals("POST", request.method)
         verify(exactly = 1) { proxyWebClient.post() }
         verify(exactly = 0) { webClient.post() }
@@ -128,12 +128,12 @@ class InventoryNotifierAdapterTest {
     @Test
     fun `should use proxied web client when notifying of order belonging to proxied host`() {
         val order = testOrderWithCallback.copy(hostName = HostName.ASTA)
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.orderChanged(order, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        assertEquals(orderCallbackPath, request.url.pathSegments.last())
+        assertEquals(orderCallbackPath, request.path)
         assertEquals("POST", request.method)
         verify(exactly = 1) { proxyWebClient.post() }
         verify(exactly = 0) { webClient.post() }
@@ -141,16 +141,16 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should include signature header in item changed callback`() {
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        val sigHeader = request.headers[signatureHeader]
+        val sigHeader = request.getHeader(signatureHeader)
         assertNotNull(sigHeader)
-        val timestampHeader = request.headers[timestampHeader]
+        val timestampHeader = request.getHeader(timestampHeader)
         assertNotNull(timestampHeader)
-        val bodyString = request.body?.utf8().toString()
+        val bodyString = request.body.readUtf8()
         val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
         val signature = Base64.getEncoder().encodeToString(expectedSignature)
         assertEquals(signature, sigHeader)
@@ -158,24 +158,24 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should include signature header in order changed callback`() {
-        mockWebServer.enqueue(MockResponse(200))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
         inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
         val request = mockWebServer.takeRequest()
 
-        val sigHeader = request.headers[signatureHeader]
+        val sigHeader = request.getHeader(signatureHeader)
         assertNotNull(sigHeader)
-        val timestampHeader = request.headers[timestampHeader]
+        val timestampHeader = request.getHeader(timestampHeader)
         assertNotNull(timestampHeader)
-        val bodyString = request.body?.utf8().toString()
+        val bodyString = request.body.readUtf8()
         val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
         val signature = Base64.getEncoder().encodeToString(expectedSignature)
         assertEquals(signature, sigHeader)
     }
 
-    private val itemCallbackPath = "item-callback"
+    private val itemCallbackPath = "/item-callback"
 
-    private val orderCallbackPath = "order-callback"
+    private val orderCallbackPath = "/order-callback"
 
     private val signatureHeader = "X-Signature"
 
