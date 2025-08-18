@@ -104,12 +104,10 @@ services:
         --replication-factor 1
       '
 
-  jaeger:
-    image: jaegertracing/jaeger:latest
+  zipkin:
+    image: openzipkin/zipkin:latest
     ports:
-      - "4318:4318"
-      - "16686:16686"
-      - "13133:13133"
+      - "9411:9411"
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
