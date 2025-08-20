@@ -5,9 +5,10 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderUpdateException
+import no.nb.mlt.wls.domain.ports.outbound.RepositoryException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.data.mongodb.repository.Query
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository
@@ -31,6 +32,7 @@ class MongoOrderRepositoryAdapter(
     ): Order? =
         orderMongoRepository
             .findByHostNameAndHostOrderId(hostName, hostOrderId)
+            .map(MongoOrder::toOrder)
             .timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
@@ -40,9 +42,9 @@ class MongoOrderRepositoryAdapter(
                         "Error while fetching order"
                     }
                 }
-            }.onErrorMap { OrderNotFoundException(it.message ?: "Could not fetch order") }
-            .awaitSingleOrNull()
-            ?.toOrder()
+            }.onErrorMap {
+                RepositoryException("Unable to fetch the order")
+            }.awaitSingleOrNull()
 
     override suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order> =
         orderMongoRepository
@@ -100,7 +102,7 @@ class MongoOrderRepositoryAdapter(
             }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
             .awaitSingleOrNull()
 
-        return getOrder(order.hostName, order.hostOrderId)!!
+        return getOrder(order.hostName, order.hostOrderId) ?: throw OrderNotFoundException("Order was not found after updating!")
     }
 
     override suspend fun createOrder(order: Order): Order =

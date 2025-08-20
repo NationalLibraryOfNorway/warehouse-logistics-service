@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.application.validations.ValidHostName
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 
 @Schema(
     description = """Payload which confirms the picking of products/items in a SynQ order.""",

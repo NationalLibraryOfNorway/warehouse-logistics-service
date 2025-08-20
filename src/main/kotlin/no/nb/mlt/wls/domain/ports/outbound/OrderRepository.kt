@@ -2,7 +2,7 @@ package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 
 /**
  * Defines an interface for interacting with a database to manage orders.

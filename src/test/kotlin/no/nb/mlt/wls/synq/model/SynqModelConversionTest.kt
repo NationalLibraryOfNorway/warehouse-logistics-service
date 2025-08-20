@@ -7,7 +7,7 @@ import no.nb.mlt.wls.application.synqapi.synq.getConvertedStatus
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.toMovedProduct
 import no.nb.mlt.wls.toProduct

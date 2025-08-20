@@ -3,7 +3,7 @@ package no.nb.mlt.wls.application.synqapi.synq
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 
 @Schema(
     description = """Payload with updated status information for an order placed in SynQ.""",
