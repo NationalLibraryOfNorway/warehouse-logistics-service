@@ -2,6 +2,8 @@ package no.nb.mlt.wls.domain.ports.inbound
 
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 
 /**
  * Functional interface that defines a method to update the status of an [Order] in the system.
