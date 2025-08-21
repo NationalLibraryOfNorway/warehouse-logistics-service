@@ -55,6 +55,9 @@ class EmailAdapter(
     ) {
         if (email == null) {
             logger.error {
+                errorInfo
+            }
+            logger.error {
                 "Cannot send email because message is null"
             }
             return
@@ -82,7 +85,7 @@ class EmailAdapter(
         val receiver = order.contactEmail
         if (receiver.isNullOrBlank()) {
             logger.warn {
-                "Email address for ${order.hostName} not found, and email was not sent"
+                "No contact email was present for ${order.hostOrderId}, so and email was not sent"
             }
             return null
         }
