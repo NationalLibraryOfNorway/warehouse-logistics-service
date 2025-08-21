@@ -34,9 +34,9 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -591,6 +591,62 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `pickOrderItems with duplicate lines should only generate one event`() {
+        val pickedItem = createTestItem(location = WITH_LENDER_LOCATION, quantity = 0)
+        val order =
+            createTestOrder(
+                orderLine =
+                    listOf(
+                        Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem(testItem.hostId, Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem("testItem2", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val expectedOrder =
+            order.copy(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem(pickedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem(pickedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem(pickedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem(pickedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem(pickedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("testItem2", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val pickedOrder = order.pick(listOf(pickedItem.hostId))
+        val orderRepository = createInMemOrderRepo(mutableListOf(order))
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(testItem)),
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } answers { ItemEvent(pickedItem) }
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
+        coEvery { storageEventProcessor.handleEvent(any()) } answers { }
+
+        runTest {
+            cut.pickOrderItems(HostName.AXIELL, listOf(testItem.hostId), order.hostOrderId)
+
+            val orderFromRepo = orderRepository.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(orderFromRepo != null)
+            assert(orderFromRepo == expectedOrder)
+            assert(pickedOrder == expectedOrder)
+            coVerify(exactly = 1) { catalogEventRepository.save(any()) }
+        }
+    }
+
+    @Test
     fun `pickOrderItems should set order to in progress during partial picking`() {
         val item1 = createTestItem()
         val item2 = createTestItem(hostId = "testItem-02")
@@ -777,6 +833,55 @@ class WLSServiceTest {
             assertThat(createdItem).matches {
                 it?.quantity == 1 && it.location == "SYNQ_WAREHOUSE"
             }
+        }
+    }
+
+    @Test
+    fun `updateItem marks partially picked order items as returned`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedItem = createTestItem(location = testUpdateItemPayload.location, quantity = testUpdateItemPayload.quantity)
+        val testOrder =
+            testOrder.copy(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("untouchedItem", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val expectedOrder =
+            testOrder.copy(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED),
+                        Order.OrderItem("untouchedItem", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                createInMemOrderRepo(mutableListOf(testOrder)),
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        runTest {
+            cut.updateItem(testUpdateItemPayload)
+
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+
+            val order = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assert(order != null)
+            assert(order == expectedOrder)
         }
     }
 
