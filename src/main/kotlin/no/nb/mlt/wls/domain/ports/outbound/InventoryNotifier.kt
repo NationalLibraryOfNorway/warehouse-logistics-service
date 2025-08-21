@@ -2,6 +2,7 @@ package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.UnableToNotifyException
 import java.time.Instant
 
 /**
@@ -23,8 +24,3 @@ interface InventoryNotifier {
         messageId: String
     )
 }
-
-class UnableToNotifyException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)
