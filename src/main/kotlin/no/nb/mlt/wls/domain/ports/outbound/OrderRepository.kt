@@ -30,8 +30,3 @@ interface OrderRepository {
         orderItemIds: List<String>
     ): List<Order>
 }
-
-class OrderUpdateException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)

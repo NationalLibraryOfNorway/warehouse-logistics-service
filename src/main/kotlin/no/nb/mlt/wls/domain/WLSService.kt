@@ -38,14 +38,14 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
-import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 private val logger = KotlinLogging.logger {}
