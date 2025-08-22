@@ -45,8 +45,3 @@ interface ItemRepository {
         val hostId: String
     )
 }
-
-class ItemMovingException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)

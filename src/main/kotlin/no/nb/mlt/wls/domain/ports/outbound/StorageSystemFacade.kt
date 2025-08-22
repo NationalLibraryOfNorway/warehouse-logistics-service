@@ -3,6 +3,8 @@ package no.nb.mlt.wls.domain.ports.outbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 
 /**
  * When creating orders, we need to ensure their IDs are unique in storage systems.
@@ -32,17 +34,3 @@ interface StorageSystemFacade {
 
     fun canHandleItem(item: Item): Boolean
 }
-
-class StorageSystemException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)
-
-class DuplicateResourceException(
-    message: String,
-    cause: Throwable? = null
-) : RuntimeException(message, cause)
-
-class NotSupportedException(
-    message: String
-) : RuntimeException(message)

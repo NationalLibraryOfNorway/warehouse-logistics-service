@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 /**
