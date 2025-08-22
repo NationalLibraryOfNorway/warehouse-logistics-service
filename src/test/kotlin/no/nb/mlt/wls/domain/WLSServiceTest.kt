@@ -34,9 +34,9 @@ import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
