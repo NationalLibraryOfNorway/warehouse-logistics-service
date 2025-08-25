@@ -9,6 +9,7 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.model.MISSING
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
@@ -44,6 +45,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
+import no.nb.mlt.wls.domain.ports.outbound.ReportItemAsMissing
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -70,6 +72,7 @@ class WLSService(
     MoveItem,
     PickOrderItems,
     PickItems,
+    ReportItemAsMissing,
     StockCount,
     SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -289,7 +292,7 @@ class WLSService(
 
     override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
-    private suspend fun getItemsByIds(
+    override suspend fun getItemsByIds(
         hostName: HostName,
         hostIds: List<String>
     ): List<Item> = itemRepository.getItemsByIds(hostName, hostIds)
@@ -454,6 +457,23 @@ class WLSService(
                 }
             } else {
                 logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
+            }
+        }
+    }
+
+    override suspend fun reportItemMissing(
+        hostName: HostName,
+        hostId: String
+    ) {
+        val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Could not find item")
+        transactionPort.executeInTransaction {
+            itemRepository.updateLocationAndQuantity(item.hostId, item.hostName, MISSING, 0)
+        }
+        val orders = orderRepository.getOrdersWithItems(hostName, listOf(hostId))
+        transactionPort.executeInTransaction {
+            orders.forEach { order ->
+                val order = order.markMissing(hostId)
+                orderRepository.updateOrder(order)
             }
         }
     }

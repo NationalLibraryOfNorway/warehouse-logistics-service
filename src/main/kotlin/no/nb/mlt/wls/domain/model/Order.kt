@@ -54,6 +54,8 @@ data class Order(
      */
     fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
+    fun markMissing(itemId: String): Order = this.setOrderLineStatus(listOf(itemId), OrderItem.Status.MISSING)
+
     /**
      * Marks the order as deleted by updating its status to `DELETED`.
      *
@@ -201,13 +203,15 @@ data class Order(
          *
          * NOT_STARTED: Indicates that the order process has not begun for the item.
          * PICKED: Indicates that the item has been picked and is ready for further processing or delivery.
-         * FAILED: Indicates that an item could not be picked due to an error in the system, item missing, being damaged or cancelled.
+         * MISSING: Indicates that the item could not be picked due to it being missing.
+         * FAILED: Indicates that an item could not be picked due to an error in the system, being damaged or cancelled.
          * RETURNED: Indicates that the item has been returned to its original location or a different one.
          */
         enum class Status {
             NOT_STARTED,
             PICKED,
             FAILED,
+            MISSING,
             RETURNED
         }
 

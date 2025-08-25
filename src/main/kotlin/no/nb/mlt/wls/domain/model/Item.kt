@@ -19,6 +19,12 @@ const val WITH_LENDER_LOCATION = "WITH_LENDER"
 const val UNKNOWN_LOCATION = "UNKNOWN"
 
 /**
+ * Marks the location of an item as missing.
+ * Used by the storage handlers to indicate that an item previously had a known location, but is missing.
+ */
+const val MISSING = "MISSING"
+
+/**
  * Represents an item in the storage system.
  * It contains information about the item that is relevant for the storage operations, it should not contain any catalog-specific information.
  *

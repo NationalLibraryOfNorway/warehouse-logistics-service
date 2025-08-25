@@ -1,0 +1,43 @@
+package no.nb.mlt.wls.application.logisticsapi
+
+import io.swagger.v3.oas.annotations.tags.Tag
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.GetItems
+import no.nb.mlt.wls.domain.ports.inbound.GetOrder
+import no.nb.mlt.wls.domain.ports.outbound.ReportItemAsMissing
+import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
+
+@RestController
+@RequestMapping("/logistics/v1")
+@Tag(name = "Logistics endpoints", description = """API for managing logistics within Hermes WLS""")
+class LogisticsController(
+    private val getItems: GetItems,
+    private val getOrder: GetOrder,
+    private val reportItemMissing: ReportItemAsMissing
+) {
+    @GetMapping("/order/{hostName}/{hostId}")
+    suspend fun getOrderWithDetails(
+        @PathVariable hostName: HostName,
+        @PathVariable hostId: String
+    ): ResponseEntity<ApiDetailedOrder> {
+        val order = getOrder.getOrder(hostName, hostId) ?: return ResponseEntity.notFound().build()
+        val itemIds = order.orderLine.map { it.hostId }
+        val items = getItems.getItemsByIds(hostName, itemIds)
+        val detailedOrder = order.toDetailedOrder(items)
+        return ResponseEntity.ok(detailedOrder)
+    }
+
+    @PutMapping("/item/{hostName}/{hostId}/report-missing")
+    suspend fun markAsMissing(
+        @PathVariable hostName: HostName,
+        @PathVariable hostId: String
+    ): ResponseEntity<Unit> {
+        reportItemMissing.reportItemMissing(hostName, hostId)
+        return ResponseEntity.ok().build()
+    }
+}
