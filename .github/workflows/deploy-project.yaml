@@ -50,7 +50,7 @@ jobs:
 
       # This step installs the specified Java JDK
       - name: Setup Java JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         # Settings/Inputs/Parameters for the action
         with:
           # What JDK distribution to download and use
