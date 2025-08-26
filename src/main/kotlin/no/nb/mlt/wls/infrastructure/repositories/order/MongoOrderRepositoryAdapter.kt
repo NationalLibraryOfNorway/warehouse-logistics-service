@@ -128,6 +128,21 @@ class MongoOrderRepositoryAdapter(
                 }
             }.collectList()
             .awaitSingle()
+
+    override suspend fun getAllOrdersWithHostId(
+        hostNames: List<HostName>,
+        hostOrderId: String
+    ): List<Order> =
+        orderMongoRepository
+            .findAllByHostNameInAndHostOrderId(hostNames, hostOrderId)
+            .map { it.toOrder() }
+            .timeout(timeoutConfig.mongo)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while bulk fetching orders in WLS database. HostNames: $hostNames, Order ID: $hostOrderId"
+                }
+            }.collectList()
+            .awaitSingle()
 }
 
 @Repository
@@ -157,4 +172,9 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
     ): Flux<MongoOrder>
 
     fun findAllByHostNameIn(hostnames: Collection<HostName>): Flux<MongoOrder>
+
+    fun findAllByHostNameInAndHostOrderId(
+        hostnames: Collection<HostName>,
+        hostOrderId: String
+    ): Flux<MongoOrder>
 }

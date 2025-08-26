@@ -304,6 +304,11 @@ class WLSService(
 
     override suspend fun getAllOrders(hostnames: List<HostName>): List<Order> = orderRepository.getAllOrdersForHosts(hostnames)
 
+    override suspend fun getOrdersById(
+        hostNames: List<HostName>,
+        hostOrderId: String
+    ): List<Order> = orderRepository.getAllOrdersWithHostId(hostNames, hostOrderId)
+
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
         items

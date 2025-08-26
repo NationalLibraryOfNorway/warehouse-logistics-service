@@ -998,6 +998,13 @@ class WLSServiceTest {
                     }
                 return o
             }
+
+            override suspend fun getAllOrdersWithHostId(
+                hostNames: List<HostName>,
+                hostOrderId: String
+            ): List<Order> {
+                TODO("Not yet implemented")
+            }
         }
     }
 }

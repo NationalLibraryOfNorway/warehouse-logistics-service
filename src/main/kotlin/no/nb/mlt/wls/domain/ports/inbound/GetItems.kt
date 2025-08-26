@@ -17,7 +17,7 @@ import no.nb.mlt.wls.domain.model.Item
  */
 interface GetItems {
     suspend fun getItemsByIds(
-        hosTName: HostName,
+        hostName: HostName,
         hostIds: List<String>
     ): List<Item>
 
