@@ -1,11 +1,11 @@
 package no.nb.mlt.wls.application.hostapi
 
 import io.swagger.v3.oas.annotations.media.Schema
-import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
-import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
-import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
-import no.nb.mlt.wls.domain.ports.inbound.ServerException
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ServerException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 import org.springframework.core.codec.DecodingException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
