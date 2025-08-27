@@ -1,8 +1,8 @@
 package no.nb.mlt.wls.domain.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import no.nb.mlt.wls.domain.ports.inbound.IllegalOrderStateException
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 import kotlin.collections.all
 import kotlin.collections.map
 

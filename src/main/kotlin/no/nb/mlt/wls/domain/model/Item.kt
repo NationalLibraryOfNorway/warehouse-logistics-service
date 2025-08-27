@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.model
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import no.nb.mlt.wls.domain.ports.inbound.ValidationException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 
 private val logger = KotlinLogging.logger {}
 

@@ -28,10 +28,8 @@ import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
-import no.nb.mlt.wls.domain.ports.inbound.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
-import no.nb.mlt.wls.domain.ports.inbound.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
@@ -40,14 +38,16 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
-import no.nb.mlt.wls.domain.ports.outbound.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.OrderRepository
-import no.nb.mlt.wls.domain.ports.outbound.StorageSystemException
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
 private val logger = KotlinLogging.logger {}
@@ -377,7 +377,7 @@ class WLSService(
         val orders: List<Order> = orderRepository.getOrdersWithItems(hostName, returnedItems)
 
         orders.forEach { order ->
-            val (_, orderEvent) =
+            val (returnedOrder, orderEvent) =
                 transactionPort.executeInTransaction {
                     val returnOrder = order.returnItems(returnedItems)
                     val updatedOrder = orderRepository.updateOrder(returnOrder)
@@ -386,7 +386,9 @@ class WLSService(
                 } ?: (order to null)
 
             if (orderEvent == null) {
-                logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as returned, transaction failed" }
+                logger.error {
+                    "Failed to properly mark order: ${returnedOrder.hostOrderId} in host: ${returnedOrder.hostName} as returned, transaction failed"
+                }
                 return@forEach
             }
 
