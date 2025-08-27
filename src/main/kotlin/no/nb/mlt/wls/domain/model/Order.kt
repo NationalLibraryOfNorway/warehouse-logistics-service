@@ -54,7 +54,15 @@ data class Order(
      */
     fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
-    fun markMissing(itemId: String): Order = this.setOrderLineStatus(listOf(itemId), OrderItem.Status.MISSING)
+    /**
+     * Updates the status of the specified order items to `MISSING`.
+     *
+     * @param itemIds The list of unique identifiers for the items to be marked as `MISSING`.
+     * @return The updated instance of the order with the affected item's statuses set to `MISSING`.
+     * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
+     * @throws ValidationException If any of the specified item IDs do not exist in the order.
+     */
+    fun markMissing(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.MISSING)
 
     /**
      * Marks the order as deleted by updating its status to `DELETED`.

@@ -485,7 +485,7 @@ class WLSService(
         orders.forEach { order ->
             val (_, orderEvent) =
                 transactionPort.executeInTransaction {
-                    val returnOrder = order.markMissing(hostId)
+                    val returnOrder = order.markMissing(listOf(hostId))
                     val updatedOrder = orderRepository.updateOrder(returnOrder)
                     val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to orderEvent)
