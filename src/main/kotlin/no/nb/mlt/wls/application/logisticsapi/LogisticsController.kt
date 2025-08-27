@@ -11,7 +11,7 @@ import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
-import no.nb.mlt.wls.domain.ports.outbound.ReportItemAsMissing
+import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
