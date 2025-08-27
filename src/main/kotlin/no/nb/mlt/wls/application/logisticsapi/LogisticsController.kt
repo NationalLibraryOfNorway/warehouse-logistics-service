@@ -38,11 +38,11 @@ class LogisticsController(
     }
 
     @PutMapping("/item/{hostName}/{hostId}/report-missing")
-    suspend fun markAsMissing(
+    suspend fun reportItemMissing(
         @PathVariable hostName: HostName,
         @PathVariable hostId: String
-    ): ResponseEntity<Unit> {
-        reportItemMissing.reportItemMissing(hostName, hostId)
-        return ResponseEntity.ok().build()
+    ): ResponseEntity<ApiItemPayload> {
+        val item = reportItemMissing.reportItemMissing(hostName, hostId)
+        return ResponseEntity.ok(item.toApiPayload())
     }
 }

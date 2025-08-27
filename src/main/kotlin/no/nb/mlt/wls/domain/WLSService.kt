@@ -469,17 +469,38 @@ class WLSService(
     override suspend fun reportItemMissing(
         hostName: HostName,
         hostId: String
-    ) {
+    ): Item {
         val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Could not find item")
-        transactionPort.executeInTransaction {
-            itemRepository.updateLocationAndQuantity(item.hostId, item.hostName, MISSING, 0)
-        }
+        val (missingItem, catalogItemEvent) =
+            transactionPort.executeInTransaction {
+                val missingItem = itemRepository.updateLocationAndQuantity(item.hostId, item.hostName, MISSING, 0)
+                val event = ItemEvent(missingItem)
+
+                (missingItem to event)
+            } ?: throw RuntimeException("Unexpected error when updating item")
+
+        processCatalogEventAsync(catalogItemEvent)
+
         val orders = orderRepository.getOrdersWithItems(hostName, listOf(hostId))
-        transactionPort.executeInTransaction {
-            orders.forEach { order ->
-                val order = order.markMissing(hostId)
-                orderRepository.updateOrder(order)
+        orders.forEach { order ->
+            val (_, orderEvent) =
+                transactionPort.executeInTransaction {
+                    val returnOrder = order.markMissing(hostId)
+                    val updatedOrder = orderRepository.updateOrder(returnOrder)
+                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                    (updatedOrder to orderEvent)
+                } ?: (order to null)
+
+            if (orderEvent == null) {
+                logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
+                return@forEach
             }
+
+            logger.warn {
+                "Order line $hostId in ${order.hostOrderId} for ${order.hostName} was marked as missing"
+            }
+            processCatalogEventAsync(orderEvent)
         }
+        return missingItem
     }
 }
