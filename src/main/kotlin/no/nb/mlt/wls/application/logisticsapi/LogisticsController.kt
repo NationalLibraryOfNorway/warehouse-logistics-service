@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/logistics/v1")
+@RequestMapping("/hermes/logistics/v1")
 @Tag(name = "Logistics endpoints", description = """API for managing logistics within Hermes WLS""")
 class LogisticsController(
     private val getItems: GetItems,
