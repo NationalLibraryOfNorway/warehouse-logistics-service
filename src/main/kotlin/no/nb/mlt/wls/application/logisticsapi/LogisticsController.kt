@@ -68,7 +68,7 @@ class LogisticsController(
     suspend fun getOrderWithDetails(
         @RequestParam hostNames: List<HostName>?,
         @RequestParam hostId: String
-    ): ResponseEntity<Any> {
+    ): ResponseEntity<List<ApiDetailedOrder>> {
         val hostNames = hostNames ?: HostName.entries.toList()
         val orders = getOrders.getOrdersById(hostNames, hostId)
         val detailedOrders =
