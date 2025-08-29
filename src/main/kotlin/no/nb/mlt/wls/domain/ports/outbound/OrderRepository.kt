@@ -30,6 +30,11 @@ interface OrderRepository {
         orderItemIds: List<String>
     ): List<Order>
 
+    suspend fun getOrdersWithPickedItems(
+        hostName: HostName,
+        orderItemIds: List<String>
+    ): List<Order>
+
     suspend fun getAllOrdersWithHostId(
         hostNames: List<HostName>,
         hostOrderId: String

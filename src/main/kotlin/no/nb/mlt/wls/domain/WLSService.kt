@@ -38,6 +38,7 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -268,9 +269,7 @@ class WLSService(
         hostOrderId: String,
         status: Order.Status
     ): Order {
-        val order =
-            orderRepository.getOrder(hostName, hostOrderId)
-                ?: throw OrderNotFoundException("No order with hostName: $hostName and hostOrderId: $hostOrderId exists")
+        val order = getOrderOrThrow(hostName, hostOrderId)
 
         val (updatedOrder, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -374,7 +373,7 @@ class WLSService(
         hostName: HostName,
         returnedItems: List<String>
     ) {
-        val orders: List<Order> = orderRepository.getOrdersWithItems(hostName, returnedItems)
+        val orders: List<Order> = orderRepository.getOrdersWithPickedItems(hostName, returnedItems)
 
         orders.forEach { order ->
             val (returnedOrder, orderEvent) =
@@ -482,27 +481,52 @@ class WLSService(
             } ?: throw RuntimeException("Unexpected error when updating item")
 
         processCatalogEventAsync(catalogItemEvent)
+        markOrdersAsMissing(hostName, listOf(hostId))
 
-        val orders = orderRepository.getOrdersWithItems(hostName, listOf(hostId))
-        orders.forEach { order ->
-            val (_, orderEvent) =
-                transactionPort.executeInTransaction {
-                    val returnOrder = order.markMissing(listOf(hostId))
-                    val updatedOrder = orderRepository.updateOrder(returnOrder)
-                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                    (updatedOrder to orderEvent)
-                } ?: (order to null)
-
-            if (orderEvent == null) {
-                logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
-                return@forEach
-            }
-
-            logger.warn {
-                "Order line $hostId in ${order.hostOrderId} for ${order.hostName} was marked as missing"
-            }
-            processCatalogEventAsync(orderEvent)
-        }
         return missingItem
+    }
+
+    private suspend fun markOrdersAsMissing(
+        hostName: HostName,
+        hostIds: List<String>
+    ) {
+        val allOrders = orderRepository.getAllOrdersForHosts(HostName.entries.toList())
+        allOrders.forEach {
+            println(it)
+        }
+        val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
+        if (orders.isEmpty()) {
+            logger.info {
+                "No orders found for $hostName containing $hostIds"
+            }
+        }
+        orders.forEach { order ->
+            try {
+                val returnOrder = order.markMissing(hostIds)
+                val (_, orderEvent) =
+                    transactionPort.executeInTransaction {
+                        val updatedOrder = orderRepository.updateOrder(returnOrder)
+                        val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                        (updatedOrder to orderEvent)
+                    } ?: (order to null)
+
+                if (orderEvent == null) {
+                    logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
+                    return@forEach
+                }
+
+                logger.warn {
+                    "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
+                }
+                processCatalogEventAsync(orderEvent)
+            } catch (e: IllegalOrderStateException) {
+                logger.error {
+                    e.message
+                }
+                logger.debug {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
 }
