@@ -184,7 +184,7 @@ class LogisticsControllerTest(
     }
 
     @Test
-    fun `mark missing completes with status 200 OK and updates order`() {
+    fun `reportItemMissing completes with status 200 OK and updates order`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
@@ -202,7 +202,48 @@ class LogisticsControllerTest(
     }
 
     @Test
-    fun `mark missing does not update completed order when reporting missing`() {
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `reportItemMissing returns status 401 when called without authentication`() {
+        webTestClient
+            .mutateWith(csrf())
+            .put()
+            .uri(
+                "/item/{hostName}/{hostId}/report-missing",
+                testOrder.hostName,
+                testOrder.orderLine.first().hostId
+            ).accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+    }
+
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `reportItemMissing returns status 403 when called without authentication`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item")))
+            .put()
+            .uri(
+                "/item/{hostName}/{hostId}/report-missing",
+                testOrder.hostName,
+                testOrder.orderLine.first().hostId
+            ).accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+    }
+
+    @Test
+    fun `reportItemMissing does not update completed order when reporting missing`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
@@ -222,7 +263,7 @@ class LogisticsControllerTest(
     }
 
     @Test
-    fun `mark missing completes when reporting missing on returned order`() {
+    fun `reportItemMissing completes when reporting missing on returned order`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
@@ -242,7 +283,7 @@ class LogisticsControllerTest(
     }
 
     @Test
-    fun `mark missing does not update partially picked orders`() {
+    fun `reportItemMissing does not update partially picked orders`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
