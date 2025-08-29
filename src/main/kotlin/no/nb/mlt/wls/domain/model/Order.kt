@@ -118,11 +118,11 @@ data class Order(
         status: OrderItem.Status
     ): Order {
         if (isClosed()) {
-            throw IllegalOrderStateException("Order is already closed with status: $status")
+            throw IllegalOrderStateException("Order is already closed with status: ${this.status}")
         }
 
         if (isPicked() && status != OrderItem.Status.RETURNED) {
-            throw IllegalOrderStateException("Order is already complete with status: $status")
+            throw IllegalOrderStateException("Order is already complete with status: ${this.status}")
         }
 
         if (hasUnknownItems(itemIds.toSet())) {
