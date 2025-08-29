@@ -9,7 +9,6 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
-import no.nb.mlt.wls.domain.model.MISSING
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
@@ -474,10 +473,17 @@ class WLSService(
         val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Could not find item")
         val (missingItem, catalogItemEvent) =
             transactionPort.executeInTransaction {
-                val missingItem = itemRepository.updateLocationAndQuantity(item.hostId, item.hostName, MISSING, 0)
-                val event = ItemEvent(missingItem)
+                val missingItem = item.reportMissing()
+                val updatedMissingItem =
+                    itemRepository.updateLocationAndQuantity(
+                        missingItem.hostId,
+                        missingItem.hostName,
+                        missingItem.location,
+                        missingItem.quantity
+                    )
+                val event = ItemEvent(updatedMissingItem)
 
-                (missingItem to event)
+                (updatedMissingItem to event)
             } ?: throw RuntimeException("Unexpected error when updating item")
 
         processCatalogEventAsync(catalogItemEvent)

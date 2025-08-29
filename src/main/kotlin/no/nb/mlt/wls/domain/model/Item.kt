@@ -118,6 +118,17 @@ class Item(
         this.location = location ?: UNKNOWN_LOCATION
     }
 
+    /**
+     * Marks the location as missing.
+     * Use it to indicate that we do not know where the current whereabouts of the item is.
+     * Sets quantity to zero and location to [MISSING]
+     */
+    fun reportMissing(): Item {
+        this.quantity = 0
+        this.location = MISSING
+        return this
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Item) return false
