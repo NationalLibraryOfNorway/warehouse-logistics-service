@@ -1108,7 +1108,15 @@ class WLSServiceTest {
                 hostName: HostName,
                 orderItemIds: List<String>
             ): List<Order> {
-                TODO("Not yet implemented")
+                val o =
+                    orderList
+                        .filter { order ->
+                            order.orderLine.any { orderItem ->
+                                orderItemIds.contains(orderItem.hostId) &&
+                                    orderItem.status == Order.OrderItem.Status.PICKED
+                            }
+                        }
+                return o
             }
 
             override suspend fun getAllOrdersWithHostId(

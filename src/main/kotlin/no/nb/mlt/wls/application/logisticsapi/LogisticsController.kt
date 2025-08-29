@@ -71,6 +71,9 @@ class LogisticsController(
     ): ResponseEntity<List<ApiDetailedOrder>> {
         val hostNames = hostNames ?: HostName.entries.toList()
         val orders = getOrders.getOrdersById(hostNames, hostId)
+        if (orders.isEmpty()) {
+            return ResponseEntity.notFound().build()
+        }
         val detailedOrders =
             orders.map { order ->
                 val itemIds = order.orderLine.map { it.hostId }

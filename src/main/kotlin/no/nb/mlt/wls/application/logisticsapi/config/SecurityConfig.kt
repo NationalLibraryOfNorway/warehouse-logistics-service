@@ -26,9 +26,9 @@ class SecurityConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http {
-            securityMatcher(PathPatternParserServerWebExchangeMatcher("/logistics/**"))
+            securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes/logistics/**"))
             authorizeExchange {
-                authorize("/logistics/**", hasRole("logistics"))
+                authorize("/hermes/logistics/**", hasRole("logistics"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {

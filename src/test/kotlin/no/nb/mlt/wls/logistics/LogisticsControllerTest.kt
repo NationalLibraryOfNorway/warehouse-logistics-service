@@ -2,6 +2,7 @@ package no.nb.mlt.wls.logistics
 
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -118,7 +120,68 @@ class LogisticsControllerTest(
             .hasSize(2)
     }
 
-    // TODO - test error states for getOrderWithDetails
+    @Test
+    fun `getDetailedOrders returns status 404 when item can not be found`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostNames", listOf(HostName.TEMP_STORAGE))
+                    .queryParam("hostId", "AAAAA")
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getDetailedOrders returns status 401 when called without authentication`() {
+        webTestClient
+            .mutateWith(csrf())
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostId", testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+    }
+
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `getDetailedOrders returns status 403 when called without authentication`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostId", testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+    }
 
     @Test
     fun `mark missing completes with status 200 OK and updates order`() {
@@ -200,16 +263,43 @@ class LogisticsControllerTest(
 
     @Test
     fun `reportItemMissing completes when missing item exists in multiple orders`() {
-        webTestClient
-            .mutateWith(csrf())
-            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
-            .put()
-            .uri("/item/{hostName}/{hostId}/report-missing", HostName.AXIELL, "axiell-02")
-            .exchange()
-            .expectStatus()
-            .isOk
+        runTest {
+            val reportTestOrder =
+                createTestOrder(
+                    hostName = HostName.AXIELL,
+                    hostOrderId = "report-missing-test-order",
+                    orderLine =
+                        listOf(
+                            Order.OrderItem(partialPickedOrder.orderLine.first().hostId, Order.OrderItem.Status.NOT_STARTED),
+                            Order.OrderItem("ignored", Order.OrderItem.Status.NOT_STARTED),
+                            Order.OrderItem("ignored2", Order.OrderItem.Status.NOT_STARTED),
+                            Order.OrderItem("ignored3", Order.OrderItem.Status.NOT_STARTED)
+                        ).shuffled()
+                )
 
-        // TODO - Validate order payloads
+            mongoOrderRepository.insert(reportTestOrder.toMongoOrder()).awaitSingle()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+                .put()
+                .uri("/item/{hostName}/{hostId}/report-missing", HostName.AXIELL, "axiell-02")
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            // partial picked order would be invalid if anything has been marked missing
+            val order = orderRepositoryAdapter.getOrder(partialPickedOrder.hostName, partialPickedOrder.hostOrderId)
+            assertNotNull(order)
+            order.orderLine.forEach { line ->
+                assert(line.status != Order.OrderItem.Status.MISSING)
+            }
+
+            // the test order should only contain a single missing entry
+            val testOrder = orderRepositoryAdapter.getOrder(reportTestOrder.hostName, reportTestOrder.hostOrderId)
+            assertNotNull(testOrder)
+            assert(testOrder.orderLine.filter { it.status == Order.OrderItem.Status.MISSING }.size == 1)
+        }
     }
 
     // / Test Helpers
