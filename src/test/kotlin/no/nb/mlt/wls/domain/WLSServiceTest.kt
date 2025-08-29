@@ -1104,6 +1104,13 @@ class WLSServiceTest {
                 return o
             }
 
+            override suspend fun getOrdersWithPickedItems(
+                hostName: HostName,
+                orderItemIds: List<String>
+            ): List<Order> {
+                TODO("Not yet implemented")
+            }
+
             override suspend fun getAllOrdersWithHostId(
                 hostNames: List<HostName>,
                 hostOrderId: String

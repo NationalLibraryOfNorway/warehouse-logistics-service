@@ -3,13 +3,13 @@ package no.nb.mlt.wls.logistics
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.logisticsapi.ApiDetailedOrder
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
@@ -44,8 +45,7 @@ class LogisticsControllerTest(
     @Autowired val applicationContext: ApplicationContext,
     @Autowired val orderRepositoryAdapter: MongoOrderRepositoryAdapter,
     @Autowired val mongoItemRepository: ItemMongoRepository,
-    @Autowired val mongoOrderRepository: OrderMongoRepository,
-    @Autowired val mongoStorageEventRepository: MongoStorageEventRepository
+    @Autowired val mongoOrderRepository: OrderMongoRepository
 ) {
     private lateinit var webTestClient: WebTestClient
 
@@ -63,7 +63,7 @@ class LogisticsControllerTest(
     }
 
     @Test
-    fun `getDetailedOrders returns orders with same lines`() {
+    fun `getDetailedOrders returns single order with status 200 OK`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
@@ -71,8 +71,8 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.AXIELL, HostName.ASTA))
-                    .queryParam("hostId", "test-01")
+                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
             .exchange()
@@ -82,30 +82,167 @@ class LogisticsControllerTest(
             .hasSize(1)
     }
 
+    @Test
+    fun `getDetailedOrders can return orders with similar hostIds`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostNames", listOf(HostName.AXIELL, HostName.ASTA))
+                    .queryParam("hostId", testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList<ApiDetailedOrder>()
+            .hasSize(2)
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostId", testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList<ApiDetailedOrder>()
+            .hasSize(2)
+    }
+
+    // TODO - test error states for getOrderWithDetails
+
+    @Test
+    fun `mark missing completes with status 200 OK and updates order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .put()
+            .uri("/item/{hostName}/{hostId}/report-missing", testOrder.hostName, testOrder.orderLine.first().hostId)
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        runTest {
+            val order = orderRepositoryAdapter.getOrder(testOrder.hostName, testOrder.hostOrderId)
+            assertNotNull(order)
+            assert(order.orderLine.first().status == Order.OrderItem.Status.MISSING)
+        }
+    }
+
+    @Test
+    fun `mark missing does not update completed order when reporting missing`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .put()
+            .uri("/item/{hostName}/{hostId}/report-missing", completeOrder.hostName, completeOrder.orderLine.first().hostId)
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        runTest {
+            val order = orderRepositoryAdapter.getOrder(completeOrder.hostName, completeOrder.hostOrderId)
+            assertNotNull(order)
+            order.orderLine.forEach { line ->
+                assert(line.status != Order.OrderItem.Status.MISSING)
+            }
+        }
+    }
+
+    @Test
+    fun `mark missing completes when reporting missing on returned order`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .put()
+            .uri("/item/{hostName}/{hostId}/report-missing", HostName.ASTA, "asta-01")
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        runTest {
+            val order = orderRepositoryAdapter.getOrder(HostName.ASTA, "test-01")
+            assertNotNull(order)
+            order.orderLine.forEach { line ->
+                assert(line.status != Order.OrderItem.Status.MISSING)
+            }
+        }
+    }
+
+    @Test
+    fun `mark missing does not update partially picked orders`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .put()
+            .uri("/item/{hostName}/{hostId}/report-missing", partialPickedOrder.hostName, partialPickedOrder.orderLine.first().hostId)
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        runTest {
+            val order = orderRepositoryAdapter.getOrder(partialPickedOrder.hostName, partialPickedOrder.hostOrderId)
+            assertNotNull(order)
+            order.orderLine.forEach { line ->
+                assert(line.status != Order.OrderItem.Status.MISSING)
+            }
+        }
+    }
+
+    @Test
+    fun `reportItemMissing completes when missing item exists in multiple orders`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .put()
+            .uri("/item/{hostName}/{hostId}/report-missing", HostName.AXIELL, "axiell-02")
+            .exchange()
+            .expectStatus()
+            .isOk
+
+        // TODO - Validate order payloads
+    }
+
+    // / Test Helpers
+    val testOrder = createTestOrder(hostOrderId = "test-01")
+
+    val partialPickedOrder =
+        createTestOrder(
+            hostOrderId = "test-02",
+            status = Order.Status.IN_PROGRESS,
+            orderLine =
+                listOf(
+                    Order.OrderItem("axiell-02", Order.OrderItem.Status.PICKED),
+                    Order.OrderItem("axiell-03", Order.OrderItem.Status.NOT_STARTED)
+                )
+        )
+
+    val completeOrder =
+        createTestOrder(
+            hostOrderId = "test-03",
+            status = Order.Status.COMPLETED,
+            orderLine =
+                listOf(
+                    Order.OrderItem("axiell-04", Order.OrderItem.Status.PICKED),
+                    Order.OrderItem("axiell-05", Order.OrderItem.Status.PICKED)
+                )
+        )
+
     fun populateDb() {
-        val o1 = createTestOrder(hostOrderId = "test-01").toMongoOrder()
+        val o1 = testOrder.toMongoOrder()
         // in progress order
-        val o2 =
-            createTestOrder(
-                hostOrderId = "test-02",
-                status = Order.Status.IN_PROGRESS,
-                orderLine =
-                    listOf(
-                        Order.OrderItem("axiell-01", Order.OrderItem.Status.PICKED),
-                        Order.OrderItem("axiell-02", Order.OrderItem.Status.NOT_STARTED)
-                    )
-            ).toMongoOrder()
+        val o2 = partialPickedOrder.toMongoOrder()
         // complete order
-        val o3 =
-            createTestOrder(
-                hostOrderId = "test-03",
-                status = Order.Status.COMPLETED,
-                orderLine =
-                    listOf(
-                        Order.OrderItem("axiell-01", Order.OrderItem.Status.PICKED),
-                        Order.OrderItem("axiell-02", Order.OrderItem.Status.PICKED)
-                    )
-            ).toMongoOrder()
+        val o3 = completeOrder.toMongoOrder()
         // partially returned order
         val o4 =
             createTestOrder(
@@ -113,14 +250,14 @@ class LogisticsControllerTest(
                 status = Order.Status.COMPLETED,
                 orderLine =
                     listOf(
-                        Order.OrderItem("axiell-01", Order.OrderItem.Status.PICKED),
-                        Order.OrderItem("axiell-02", Order.OrderItem.Status.RETURNED)
+                        Order.OrderItem("axiell-06", Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("axiell-07", Order.OrderItem.Status.RETURNED)
                     )
             ).toMongoOrder()
         // fully returned order
         val o5 =
             createTestOrder(
-                hostOrderId = "test-05",
+                hostOrderId = "test-01",
                 hostName = HostName.ASTA,
                 status = Order.Status.RETURNED,
                 orderLine =

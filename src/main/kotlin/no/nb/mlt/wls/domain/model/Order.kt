@@ -62,7 +62,17 @@ data class Order(
      * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
      * @throws ValidationException If any of the specified item IDs do not exist in the order.
      */
-    fun markMissing(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.MISSING)
+    fun markMissing(itemIds: List<String>): Order {
+        val validLines =
+            this.orderLine
+                .filter { itemIds.contains(it.hostId) }
+                .filter { it.status == OrderItem.Status.NOT_STARTED }
+                .map { it.hostId }
+        if (validLines.isEmpty()) {
+            throw IllegalOrderStateException("The order lines for order $hostOrderId could not be marked as missing")
+        }
+        return this.setOrderLineStatus(validLines, OrderItem.Status.MISSING)
+    }
 
     /**
      * Marks the order as deleted by updating its status to `DELETED`.
