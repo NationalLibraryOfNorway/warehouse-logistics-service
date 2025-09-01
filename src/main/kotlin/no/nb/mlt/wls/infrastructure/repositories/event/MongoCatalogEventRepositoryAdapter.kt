@@ -27,8 +27,13 @@ class MongoCatalogEventRepositoryAdapter(
         mongoCatalogMessageRepository
             .save(MongoCatalogEvent(body = event))
             .map { it.body }
-            .doOnEach { logger.info { "Saved catalog event to catalog outbox: $it" } }
-            .timeout(timeoutConfig.mongo)
+            .doOnEach { signal ->
+                if (signal.isOnComplete) {
+                    logger.info {
+                        "Saved catalog event to catalog outbox: ${signal.get()}"
+                    }
+                }
+            }.timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {

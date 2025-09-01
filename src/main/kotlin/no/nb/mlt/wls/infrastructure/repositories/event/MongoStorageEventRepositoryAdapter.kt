@@ -27,8 +27,13 @@ class MongoStorageEventRepositoryAdapter(
         mongoStorageEventRepository
             .save(MongoStorageEvent(body = event))
             .map { it.body }
-            .doOnEach { logger.info { "Saved storage event to outbox: $it" } }
-            .timeout(timeoutConfig.mongo)
+            .doOnEach { signal ->
+                if (signal.isOnComplete) {
+                    logger.info {
+                        "Saved storage event to outbox: ${signal.get()}"
+                    }
+                }
+            }.timeout(timeoutConfig.mongo)
             .doOnError {
                 logger.error(it) {
                     if (it is TimeoutException) {
