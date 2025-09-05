@@ -151,7 +151,7 @@ class MongoOrderRepositoryAdapter(
         hostOrderId: String
     ): List<Order> =
         orderMongoRepository
-            .findAllByHostNameInAndHostOrderId(hostNames, hostOrderId)
+            .findAllByHostNameInAndHostOrderIdIgnoreCase(hostNames, hostOrderId)
             .map { it.toOrder() }
             .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
@@ -196,7 +196,7 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
 
     fun findAllByHostNameIn(hostnames: Collection<HostName>): Flux<MongoOrder>
 
-    fun findAllByHostNameInAndHostOrderId(
+    fun findAllByHostNameInAndHostOrderIdIgnoreCase(
         hostnames: Collection<HostName>,
         hostOrderId: String
     ): Flux<MongoOrder>
