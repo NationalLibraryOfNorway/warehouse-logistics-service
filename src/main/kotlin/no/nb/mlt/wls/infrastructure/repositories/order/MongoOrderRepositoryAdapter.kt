@@ -102,7 +102,7 @@ class MongoOrderRepositoryAdapter(
             }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
             .awaitSingleOrNull()
 
-        return getOrder(order.hostName, order.hostOrderId) ?: throw OrderNotFoundException("Order was not found after updating!")
+        return getOrder(order.hostName, order.hostOrderId) ?: throw OrderUpdateException("Order was not found after updating!")
     }
 
     override suspend fun createOrder(order: Order): Order =
@@ -121,12 +121,42 @@ class MongoOrderRepositoryAdapter(
         orderItemIds: List<String>
     ): List<Order> =
         orderMongoRepository
-            .findAllOrdersWithHostNameAndOrderItems(hostName, orderItemIds)
+            .findOrdersByHostNameAndHostIds(hostName, orderItemIds)
             .map { it.toOrder() }
             .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while bulk fetching orders in WLS database. HostName: $hostName, Items: $orderItemIds"
+                }
+            }.collectList()
+            .awaitSingle()
+
+    override suspend fun getOrdersWithPickedItems(
+        hostName: HostName,
+        orderItemIds: List<String>
+    ): List<Order> =
+        orderMongoRepository
+            .findPickedOrdersByHostNameAndHostIds(hostName, orderItemIds)
+            .map { it.toOrder() }
+            .timeout(timeoutConfig.mongo)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while bulk fetching orders in WLS database. HostName: $hostName, Items: $orderItemIds"
+                }
+            }.collectList()
+            .awaitSingle()
+
+    override suspend fun getAllOrdersWithHostId(
+        hostNames: List<HostName>,
+        hostOrderId: String
+    ): List<Order> =
+        orderMongoRepository
+            .findAllByHostNameInAndHostOrderIdIgnoreCase(hostNames, hostOrderId)
+            .map { it.toOrder() }
+            .timeout(timeoutConfig.mongo)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while bulk fetching orders in WLS database. HostNames: $hostNames, Order ID: $hostOrderId"
                 }
             }.collectList()
             .awaitSingle()
@@ -152,11 +182,22 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         callbackUrl: String
     ): Mono<Long>
 
+    @Query($$"{hostName: ?0, \"orderLine.hostId\": {$in: ?1}}")
+    fun findOrdersByHostNameAndHostIds(
+        hostName: HostName,
+        orderLine: List<String>
+    ): Flux<MongoOrder>
+
     @Query($$"{hostName: ?0, \"orderLine.hostId\": {$in: ?1}, \"orderLine.status\": \"PICKED\"}")
-    fun findAllOrdersWithHostNameAndOrderItems(
+    fun findPickedOrdersByHostNameAndHostIds(
         hostName: HostName,
         orderLine: List<String>
     ): Flux<MongoOrder>
 
     fun findAllByHostNameIn(hostnames: Collection<HostName>): Flux<MongoOrder>
+
+    fun findAllByHostNameInAndHostOrderIdIgnoreCase(
+        hostnames: Collection<HostName>,
+        hostOrderId: String
+    ): Flux<MongoOrder>
 }

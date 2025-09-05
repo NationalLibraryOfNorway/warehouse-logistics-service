@@ -15,6 +15,11 @@ import no.nb.mlt.wls.domain.model.Order
  * @see Order
  * @see HostName
  */
-fun interface GetOrders {
+interface GetOrders {
     suspend fun getAllOrders(hostnames: List<HostName>): List<Order>
+
+    suspend fun getOrdersById(
+        hostNames: List<HostName>,
+        hostOrderId: String
+    ): List<Order>
 }

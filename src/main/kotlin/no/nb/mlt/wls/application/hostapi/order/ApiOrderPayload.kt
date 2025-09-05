@@ -53,7 +53,7 @@ data class ApiOrderPayload(
         description = """Name of the host system which made the order.""",
         examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
     )
-    @field:NotNull(message = "The order's hostOrderId is required, and can not be blank")
+    @field:NotNull(message = "The order's host name is required, and can not be blank")
     val hostName: HostName,
     @field:Schema(
         description = """ID for the order, preferably the same ID as the one in the host system.""",
@@ -161,7 +161,7 @@ data class OrderLine(
     val hostId: String,
     @field:Schema(
         description = """Current status for the ordered item.""",
-        examples = ["NOT_STARTED", "PICKED", "RETURNED", "FAILED"],
+        examples = ["NOT_STARTED", "PICKED", "RETURNED", "MISSING", "FAILED"],
         accessMode = READ_ONLY
     )
     val status: Order.OrderItem.Status?

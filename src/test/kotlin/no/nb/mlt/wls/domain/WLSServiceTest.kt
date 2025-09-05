@@ -1096,13 +1096,30 @@ class WLSServiceTest {
             override suspend fun getOrdersWithItems(
                 hostName: HostName,
                 orderItemIds: List<String>
-            ): List<Order> {
-                val o =
-                    orderList.filter { order ->
-                        order.orderLine.any { orderItem -> orderItemIds.contains(orderItem.hostId) }
+            ): List<Order> =
+                orderList.filter { order ->
+                    order.orderLine.any { orderItem -> orderItemIds.contains(orderItem.hostId) }
+                }
+
+            override suspend fun getOrdersWithPickedItems(
+                hostName: HostName,
+                orderItemIds: List<String>
+            ): List<Order> =
+                orderList
+                    .filter { order ->
+                        order.orderLine.any { orderItem ->
+                            orderItemIds.contains(orderItem.hostId) &&
+                                orderItem.status == Order.OrderItem.Status.PICKED
+                        }
                     }
-                return o
-            }
+
+            override suspend fun getAllOrdersWithHostId(
+                hostNames: List<HostName>,
+                hostOrderId: String
+            ): List<Order> =
+                orderList
+                    .filter { hostNames.contains(it.hostName) }
+                    .filter { it.hostOrderId.lowercase() == hostOrderId.lowercase() }
         }
     }
 }
