@@ -216,14 +216,13 @@ data class DetailedOrderItem(
 )
 
 fun Order.toDetailedOrder(items: List<Item>): ApiDetailedOrder {
-    val detailedOrderItems = mutableListOf<DetailedOrderItem>()
-    items.forEach { item ->
-        this.orderLine.forEach { orderItem ->
-            if (orderItem.hostId == item.hostId) {
-                detailedOrderItems.add(orderItem.toDetailedOrderItem(item))
+    val itemsByHostId = items.associateBy { it.hostId }
+    val detailedOrderItems =
+        orderLine.mapNotNull { orderLine ->
+            itemsByHostId[orderLine.hostId]?.let {
+                orderLine.toDetailedOrderItem(it)
             }
         }
-    }
 
     return ApiDetailedOrder(
         hostName = this.hostName,
