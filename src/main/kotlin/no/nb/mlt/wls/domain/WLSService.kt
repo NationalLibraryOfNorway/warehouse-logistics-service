@@ -481,8 +481,7 @@ class WLSService(
                         missingItem.location,
                         missingItem.quantity
                     )
-                val event = ItemEvent(updatedMissingItem)
-
+                val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)
             } ?: throw RuntimeException("Unexpected error when updating item")
 
