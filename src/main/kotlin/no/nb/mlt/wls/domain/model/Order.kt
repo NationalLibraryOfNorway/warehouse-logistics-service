@@ -68,9 +68,7 @@ data class Order(
                 .filter { itemIds.contains(it.hostId) }
                 .filter { it.status == OrderItem.Status.NOT_STARTED }
                 .map { it.hostId }
-        if (validLines.isEmpty()) {
-            throw IllegalOrderStateException("The order lines for order $hostOrderId could not be marked as missing")
-        }
+
         return this.setOrderLineStatus(validLines, OrderItem.Status.MISSING)
     }
 
@@ -127,6 +125,8 @@ data class Order(
         itemIds: List<String>,
         status: OrderItem.Status
     ): Order {
+        if (itemIds.isEmpty()) return this
+
         if (isClosed()) {
             throw IllegalOrderStateException("Order is already closed with status: ${this.status}")
         }

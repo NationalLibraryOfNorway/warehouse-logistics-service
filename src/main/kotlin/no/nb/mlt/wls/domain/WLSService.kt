@@ -37,7 +37,6 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -481,8 +480,7 @@ class WLSService(
                         missingItem.location,
                         missingItem.quantity
                     )
-                val event = ItemEvent(updatedMissingItem)
-
+                val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)
             } ?: throw RuntimeException("Unexpected error when updating item")
 
@@ -496,28 +494,28 @@ class WLSService(
         hostName: HostName,
         hostIds: List<String>
     ) {
-        val allOrders = orderRepository.getAllOrdersForHosts(HostName.entries.toList())
-        allOrders.forEach {
-            println(it)
-        }
         val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
         if (orders.isEmpty()) {
             logger.info {
                 "No orders found for $hostName containing $hostIds"
             }
         }
-        orders.forEach { order ->
-            try {
-                val returnOrder = order.markMissing(hostIds)
+        orders
+            .mapNotNull {
+                val updatedOrder = it.markMissing(hostIds)
+                if (updatedOrder != it) updatedOrder else null
+            }.forEach { order ->
                 val (_, orderEvent) =
                     transactionPort.executeInTransaction {
-                        val updatedOrder = orderRepository.updateOrder(returnOrder)
+                        val updatedOrder = orderRepository.updateOrder(order)
                         val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                         (updatedOrder to orderEvent)
                     } ?: (order to null)
 
                 if (orderEvent == null) {
-                    logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
+                    logger.error {
+                        "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed"
+                    }
                     return@forEach
                 }
 
@@ -525,14 +523,6 @@ class WLSService(
                     "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
                 }
                 processCatalogEventAsync(orderEvent)
-            } catch (e: IllegalOrderStateException) {
-                logger.error {
-                    e.message
-                }
-                logger.debug {
-                    e.printStackTrace()
-                }
             }
-        }
     }
 }
