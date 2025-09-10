@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class OrderTest {
     @Test
@@ -219,6 +220,16 @@ class OrderTest {
         assertThat(updatedOrder.orderLine[1].status).isEqualTo(Order.OrderItem.Status.PICKED)
         assertThat(updatedOrder.orderLine[2].status).isEqualTo(Order.OrderItem.Status.MISSING)
         assertThat(updatedOrder.status).isEqualTo(Order.Status.COMPLETED)
+    }
+
+    @Test
+    fun `updating order lines with empty list is a no-op`() {
+        val order = createTestOrder()
+        assertDoesNotThrow {
+            order.markMissing(listOf())
+            order.returnItems(listOf())
+            order.pick(listOf())
+        }
     }
 
     private fun createPickedOrder() =
