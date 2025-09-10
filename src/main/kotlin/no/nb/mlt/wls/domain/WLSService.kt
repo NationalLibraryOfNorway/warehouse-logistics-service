@@ -37,7 +37,6 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor

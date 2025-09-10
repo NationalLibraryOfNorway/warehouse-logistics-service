@@ -3,10 +3,8 @@ package no.nb.mlt.wls.domain.model
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.springframework.data.mongodb.core.query.update
 
 class OrderTest {
     @Test
