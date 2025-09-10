@@ -495,28 +495,28 @@ class WLSService(
         hostName: HostName,
         hostIds: List<String>
     ) {
-        val allOrders = orderRepository.getAllOrdersForHosts(HostName.entries.toList())
-        allOrders.forEach {
-            println(it)
-        }
         val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
         if (orders.isEmpty()) {
             logger.info {
                 "No orders found for $hostName containing $hostIds"
             }
         }
-        orders.forEach { order ->
-            try {
-                val returnOrder = order.markMissing(hostIds)
+        orders
+            .mapNotNull {
+                val returnOrder = it.markMissing(hostIds)
+                if (returnOrder != it) returnOrder else null
+            }.forEach { order ->
                 val (_, orderEvent) =
                     transactionPort.executeInTransaction {
-                        val updatedOrder = orderRepository.updateOrder(returnOrder)
+                        val updatedOrder = orderRepository.updateOrder(order)
                         val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                         (updatedOrder to orderEvent)
                     } ?: (order to null)
 
                 if (orderEvent == null) {
-                    logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
+                    logger.error {
+                        "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed"
+                    }
                     return@forEach
                 }
 
@@ -524,14 +524,6 @@ class WLSService(
                     "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
                 }
                 processCatalogEventAsync(orderEvent)
-            } catch (e: IllegalOrderStateException) {
-                logger.error {
-                    e.message
-                }
-                logger.debug {
-                    e.printStackTrace()
-                }
             }
-        }
     }
 }

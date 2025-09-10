@@ -3,8 +3,10 @@ package no.nb.mlt.wls.domain.model
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
+import org.springframework.data.mongodb.core.query.update
 
 class OrderTest {
     @Test
@@ -179,6 +181,46 @@ class OrderTest {
         assertThrows(IllegalOrderStateException::class.java) {
             order.updateStatus(Order.Status.NOT_STARTED)
         }
+    }
+
+    @Test
+    fun `mark missing should not update order line for objects that are already processed`() {
+        val order =
+            createTestOrder(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem("item1", Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("item2", Order.OrderItem.Status.RETURNED),
+                        Order.OrderItem("item3", Order.OrderItem.Status.PICKED)
+                    )
+            )
+
+        val updatedOrder = order.markMissing(listOf("item2"))
+        assertThat(updatedOrder.orderLine[0].status).isEqualTo(Order.OrderItem.Status.PICKED)
+        assertThat(updatedOrder.orderLine[1].status).isEqualTo(Order.OrderItem.Status.RETURNED)
+        assertThat(updatedOrder.orderLine[2].status).isEqualTo(Order.OrderItem.Status.PICKED)
+        assertThat(updatedOrder.status).isEqualTo(order.status)
+    }
+
+    @Test
+    fun `mark missing should update order line for objects that are not yet processed`() {
+        val order =
+            createTestOrder(
+                status = Order.Status.IN_PROGRESS,
+                orderLine =
+                    listOf(
+                        Order.OrderItem("item1", Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem("item2", Order.OrderItem.Status.PICKED),
+                        Order.OrderItem("item3", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+
+        val updatedOrder = order.markMissing(listOf("item1", "item3"))
+        assertThat(updatedOrder.orderLine[0].status).isEqualTo(Order.OrderItem.Status.MISSING)
+        assertThat(updatedOrder.orderLine[1].status).isEqualTo(Order.OrderItem.Status.PICKED)
+        assertThat(updatedOrder.orderLine[2].status).isEqualTo(Order.OrderItem.Status.MISSING)
+        assertThat(updatedOrder.status).isEqualTo(Order.Status.COMPLETED)
     }
 
     private fun createPickedOrder() =
