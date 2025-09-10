@@ -55,6 +55,26 @@ data class Order(
     fun returnItems(itemIds: List<String>): Order = this.setOrderLineStatus(itemIds, OrderItem.Status.RETURNED)
 
     /**
+     * Updates the status of the specified order items to `MISSING`.
+     *
+     * @param itemIds The list of unique identifiers for the items to be marked as `MISSING`.
+     * @return The updated instance of the order with the affected item's statuses set to `MISSING`.
+     * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
+     * @throws ValidationException If any of the specified item IDs do not exist in the order.
+     */
+    fun markMissing(itemIds: List<String>): Order {
+        val validLines =
+            this.orderLine
+                .filter { itemIds.contains(it.hostId) }
+                .filter { it.status == OrderItem.Status.NOT_STARTED }
+                .map { it.hostId }
+        if (validLines.isEmpty()) {
+            throw IllegalOrderStateException("The order lines for order $hostOrderId could not be marked as missing")
+        }
+        return this.setOrderLineStatus(validLines, OrderItem.Status.MISSING)
+    }
+
+    /**
      * Marks the order as deleted by updating its status to `DELETED`.
      *
      * @return The updated instance of the order with its status set to `DELETED`.
@@ -108,11 +128,11 @@ data class Order(
         status: OrderItem.Status
     ): Order {
         if (isClosed()) {
-            throw IllegalOrderStateException("Order is already closed with status: $status")
+            throw IllegalOrderStateException("Order is already closed with status: ${this.status}")
         }
 
         if (isPicked() && status != OrderItem.Status.RETURNED) {
-            throw IllegalOrderStateException("Order is already complete with status: $status")
+            throw IllegalOrderStateException("Order is already complete with status: ${this.status}")
         }
 
         if (hasUnknownItems(itemIds.toSet())) {
@@ -201,13 +221,15 @@ data class Order(
          *
          * NOT_STARTED: Indicates that the order process has not begun for the item.
          * PICKED: Indicates that the item has been picked and is ready for further processing or delivery.
-         * FAILED: Indicates that an item could not be picked due to an error in the system, item missing, being damaged or cancelled.
+         * MISSING: Indicates that the item could not be picked due to it being missing.
+         * FAILED: Indicates that an item could not be picked due to an error in the system, being damaged or cancelled.
          * RETURNED: Indicates that the item has been returned to its original location or a different one.
          */
         enum class Status {
             NOT_STARTED,
             PICKED,
             FAILED,
+            MISSING,
             RETURNED
         }
 

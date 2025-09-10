@@ -31,11 +31,13 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -70,6 +72,7 @@ class WLSService(
     MoveItem,
     PickOrderItems,
     PickItems,
+    ReportItemAsMissing,
     StockCount,
     SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -265,9 +268,7 @@ class WLSService(
         hostOrderId: String,
         status: Order.Status
     ): Order {
-        val order =
-            orderRepository.getOrder(hostName, hostOrderId)
-                ?: throw OrderNotFoundException("No order with hostName: $hostName and hostOrderId: $hostOrderId exists")
+        val order = getOrderOrThrow(hostName, hostOrderId)
 
         val (updatedOrder, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -289,7 +290,7 @@ class WLSService(
 
     override suspend fun getAllItems(hostnames: List<HostName>): List<Item> = itemRepository.getAllItemsForHosts(hostnames)
 
-    private suspend fun getItemsByIds(
+    override suspend fun getItemsByIds(
         hostName: HostName,
         hostIds: List<String>
     ): List<Item> = itemRepository.getItemsByIds(hostName, hostIds)
@@ -300,6 +301,11 @@ class WLSService(
     ): Order? = orderRepository.getOrder(hostName, hostOrderId)
 
     override suspend fun getAllOrders(hostnames: List<HostName>): List<Order> = orderRepository.getAllOrdersForHosts(hostnames)
+
+    override suspend fun getOrdersById(
+        hostNames: List<HostName>,
+        hostOrderId: String
+    ): List<Order> = orderRepository.getAllOrdersWithHostId(hostNames, hostOrderId)
 
     override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
@@ -366,7 +372,7 @@ class WLSService(
         hostName: HostName,
         returnedItems: List<String>
     ) {
-        val orders: List<Order> = orderRepository.getOrdersWithItems(hostName, returnedItems)
+        val orders: List<Order> = orderRepository.getOrdersWithPickedItems(hostName, returnedItems)
 
         orders.forEach { order ->
             val (returnedOrder, orderEvent) =
@@ -456,6 +462,76 @@ class WLSService(
                 }
             } else {
                 logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
+            }
+        }
+    }
+
+    override suspend fun reportItemMissing(
+        hostName: HostName,
+        hostId: String
+    ): Item {
+        val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Could not find item")
+        val (missingItem, catalogItemEvent) =
+            transactionPort.executeInTransaction {
+                val missingItem = item.reportMissing()
+                val updatedMissingItem =
+                    itemRepository.updateLocationAndQuantity(
+                        missingItem.hostId,
+                        missingItem.hostName,
+                        missingItem.location,
+                        missingItem.quantity
+                    )
+                val event = ItemEvent(updatedMissingItem)
+
+                (updatedMissingItem to event)
+            } ?: throw RuntimeException("Unexpected error when updating item")
+
+        processCatalogEventAsync(catalogItemEvent)
+        markOrdersAsMissing(hostName, listOf(hostId))
+
+        return missingItem
+    }
+
+    private suspend fun markOrdersAsMissing(
+        hostName: HostName,
+        hostIds: List<String>
+    ) {
+        val allOrders = orderRepository.getAllOrdersForHosts(HostName.entries.toList())
+        allOrders.forEach {
+            println(it)
+        }
+        val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
+        if (orders.isEmpty()) {
+            logger.info {
+                "No orders found for $hostName containing $hostIds"
+            }
+        }
+        orders.forEach { order ->
+            try {
+                val returnOrder = order.markMissing(hostIds)
+                val (_, orderEvent) =
+                    transactionPort.executeInTransaction {
+                        val updatedOrder = orderRepository.updateOrder(returnOrder)
+                        val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                        (updatedOrder to orderEvent)
+                    } ?: (order to null)
+
+                if (orderEvent == null) {
+                    logger.error { "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed" }
+                    return@forEach
+                }
+
+                logger.warn {
+                    "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
+                }
+                processCatalogEventAsync(orderEvent)
+            } catch (e: IllegalOrderStateException) {
+                logger.error {
+                    e.message
+                }
+                logger.debug {
+                    e.printStackTrace()
+                }
             }
         }
     }
