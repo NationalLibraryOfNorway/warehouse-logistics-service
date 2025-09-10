@@ -502,8 +502,8 @@ class WLSService(
         }
         orders
             .mapNotNull {
-                val returnOrder = it.markMissing(hostIds)
-                if (returnOrder != it) returnOrder else null
+                val updatedOrder = it.markMissing(hostIds)
+                if (updatedOrder != it) updatedOrder else null
             }.forEach { order ->
                 val (_, orderEvent) =
                     transactionPort.executeInTransaction {
