@@ -90,6 +90,9 @@ kardex:
   path:
     base: http://localhost:8181/kardex/
 
+logistics:
+  enabled: true
+
 # Configures destination e-mails for receivers
 wls:
   order:
@@ -147,6 +150,9 @@ kardex:
   enabled: false
   path:
     base: http://localhost:8182/kardex
+
+logistics:
+  enabled: true
 
 # Configures destination e-mails for receivers
 wls:
@@ -213,6 +219,9 @@ kardex:
   enabled: ${KARDEX_ENABLED}
   path:
     base: ${KARDEX_BASE_URL}
+
+logistics:
+  enabled: ${LOGISTICS_ENABLED}
 
 # Secret for the signature on callbacks in stage environment
 callback:
@@ -283,6 +292,9 @@ kardex:
   enabled: ${KARDEX_ENABLED}
   path:
     base: ${KARDEX_BASE_URL}
+
+logistics:
+  enabled: ${LOGISTICS_ENABLED}
 
 # Secret for the signature on callbacks in prod environment
 callback:
