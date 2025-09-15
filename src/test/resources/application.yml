@@ -74,6 +74,9 @@ kardex:
   path:
     base: http://localhost:8182/kardex
 
+logistics:
+  enabled: true
+
 # Secret for the signature on callbacks for the local-dev profile
 callback:
   secret: superdupersecretkey
