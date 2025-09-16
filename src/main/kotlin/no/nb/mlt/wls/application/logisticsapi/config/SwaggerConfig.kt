@@ -4,9 +4,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
 import io.swagger.v3.oas.annotations.security.OAuthFlows
 import io.swagger.v3.oas.annotations.security.SecurityScheme
-import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
-import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
@@ -26,35 +24,27 @@ import org.springframework.context.annotation.Configuration
         )
 )
 class SwaggerConfig {
-    @Bean("logisticsOpenApi")
-    fun openApi(): OpenAPI =
-        OpenAPI()
-            .info(
-                Info()
-                    .title("Logistics updates port for Hermes WLS")
-                    .description(
-                        """
-                        Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
-                        Hermes facilitates communication between the NLN's storage systems and catalogues, serving as a master system.
-
-                        This submodule of Hermes provides additional endpoints for functions related to managing the logistics within the system.
-                        """.trimIndent()
-                    ).contact(
-                        Contact()
-                            .name("MLT team at the National Library of Norway")
-                            .email("mlt@nb.no")
-                            .url("https://www.nb.no")
-                    )
-            ).addSecurityItem(
-                SecurityRequirement().addList("clientCredentials")
-            )
-
     @Bean("logisticsApi")
     fun logisticsApi(): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("Logistics API")
             .displayName("Logistics port for Hermes WLS")
-            .pathsToMatch("/hermes/logistics/v1/**")
+            .addOpenApiCustomizer {
+                it.info.title = "Logistics updates port for Hermes WLS"
+                it.info.description =
+                    """
+                    Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
+                    Hermes facilitates communication between the NLN's storage systems and catalogues, serving as a master system.
+
+                    This submodule of Hermes provides additional endpoints for functions related to managing the logistics within the system.
+                    """.trimIndent()
+                it.info.contact =
+                    Contact()
+                        .name("MLT team at the National Library of Norway")
+                        .email("mlt@nb.no")
+                        .url("https://www.nb.no")
+                it.security = listOf((SecurityRequirement().addList("clientCredentials")))
+            }.pathsToMatch("/hermes/logistics/v1/**")
             .build()
 }
