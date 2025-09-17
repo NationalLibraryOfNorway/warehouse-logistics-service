@@ -85,7 +85,7 @@ class EmailAdapter(
         val receiver = order.contactEmail
         if (receiver.isNullOrBlank()) {
             logger.warn {
-                "No contact email is present for ${order.hostOrderId}, so the confirmation email can't be sent"
+                "Contact email is not present for order ${order.hostOrderId}, so the confirmation email can't be sent"
             }
             return null
         }
