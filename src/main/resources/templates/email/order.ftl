@@ -63,7 +63,7 @@
                         <div>
                             ${orderItem.qr}
                         </div>
-                        ${orderItem.item.hostId}
+                        <pre>${orderItem.item.hostId}</pre>
                     </td>
                     <td>${orderItem.item.location}</td>
                 </tr>

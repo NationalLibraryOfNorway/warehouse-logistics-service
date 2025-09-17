@@ -85,7 +85,7 @@ class EmailAdapter(
         val receiver = order.contactEmail
         if (receiver.isNullOrBlank()) {
             logger.warn {
-                "No contact email was present for ${order.hostOrderId}, so and email was not sent"
+                "Contact email is not present for order ${order.hostOrderId}, so the confirmation email can't be sent"
             }
             return null
         }
@@ -161,7 +161,7 @@ class EmailAdapter(
     ): MimeBodyPart {
         val imagePart = MimeBodyPart()
         imagePart.disposition = MimeBodyPart.INLINE
-        imagePart.contentID = "qr-$cid"
+        imagePart.contentID = "qr-${sanitizeID(cid)}"
         imagePart.dataHandler = BarcodeUtils.createImageDataHandler(image)
         return imagePart
     }
@@ -176,8 +176,10 @@ class EmailAdapter(
 
     private fun getQrHtmlString(cid: String): String =
         """
-            <img src="cid:qr-$cid" alt="qrcode of '$cid'"/></img>
+            <img src="cid:qr-${sanitizeID(cid)}" alt="qrcode of '$cid'"/></img>
         """
+
+    private fun sanitizeID(id: String): String = id.replace(Regex("[\\s<>\"'&]"), "_")
 
     data class EmailOrderItem(
         val item: Item,
