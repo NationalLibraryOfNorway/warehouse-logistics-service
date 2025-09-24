@@ -26,7 +26,7 @@ data class KardexMaterialUpdatePayload(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
-    val hostName: HostName,
+    val hostName: HostName?,
     @field:Schema(
         description = """The current quantity of the item."""
     )
@@ -44,7 +44,7 @@ data class KardexMaterialUpdatePayload(
 ) {
     fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload =
         UpdateItem.UpdateItemPayload(
-            hostName = hostName,
+            hostName = hostName ?: HostName.NONE,
             hostId = hostId,
             quantity = quantity.toInt(),
             location = location

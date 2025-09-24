@@ -37,6 +37,7 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -95,9 +96,7 @@ class WLSService(
     }
 
     override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
-        val item =
-            getItem(updateItemPayload.hostName, updateItemPayload.hostId)
-                ?: throw ItemNotFoundException("Item with id '${updateItemPayload.hostId}' does not exist for '${updateItemPayload.hostName}'")
+        val item = getItemOrThrow(updateItemPayload.hostName, updateItemPayload.hostId)
 
         val (updatedItem, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -122,9 +121,7 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
-        val item =
-            getItem(moveItemPayload.hostName, moveItemPayload.hostId)
-                ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
+        val item = getItemOrThrow(moveItemPayload.hostName, moveItemPayload.hostId)
 
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -332,6 +329,31 @@ class WLSService(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+    @Throws(ItemNotFoundException::class)
+    private suspend fun getItemOrThrow(
+        hostName: HostName,
+        hostId: String
+    ): Item {
+        val item = if (hostName == HostName.NONE) getItemById(hostId) else getItem(hostName, hostId)
+
+        return item
+            ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
+    }
+
+    private suspend fun getItemById(hostId: String): Item? {
+        val itemsById = itemRepository.getItemById(hostId)
+
+        if (itemsById.size > 1) {
+            logger.error { "Found multiple items with same Host ID: $hostId" }
+            itemsById.forEach {
+                logger.error { "Item: $it" }
+            }
+            throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
+        }
+
+        return itemsById.firstOrNull()
+    }
 
     private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {

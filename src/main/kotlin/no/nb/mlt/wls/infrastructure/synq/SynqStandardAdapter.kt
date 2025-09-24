@@ -53,7 +53,7 @@ class SynqStandardAdapter(
                 if (errorText.contains("Duplicate product")) {
                     // Log and modify error to an DuplicateItemException
                     logger.warn { "Trying to create a duplicate item in SynQ!" }
-                    Mono.error(SynqError.DuplicateItemException(error))
+                    Mono.error(SynqError.DuplicateProductException(error))
                 } else {
                     // Pass the error along with just simple logging
                     logger.error { "Some other error occurred! Text is as follows: $errorText" }
@@ -62,7 +62,7 @@ class SynqStandardAdapter(
             }.onErrorMap(WebClientResponseException::class.java) {
                 // Convert non-duplicate errors into server errors, only these will throw
                 createServerError(it)
-            }.onErrorComplete(SynqError.DuplicateItemException::class.java) // Treat duplicate errors as non-issues
+            }.onErrorComplete(SynqError.DuplicateProductException::class.java) // Treat duplicate errors as non-issues
             .awaitFirstOrNull()
     }
 

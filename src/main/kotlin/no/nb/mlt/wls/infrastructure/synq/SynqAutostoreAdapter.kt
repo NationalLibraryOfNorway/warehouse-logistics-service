@@ -45,12 +45,12 @@ class SynqAutostoreAdapter(
             }.onErrorResume(WebClientResponseException::class.java) { error ->
                 val errorText = error.getResponseBodyAs(SynqError::class.java)?.errorText
                 if (errorText != null && errorText.contains("Duplicate product")) {
-                    Mono.error(SynqError.DuplicateItemException(error))
+                    Mono.error(SynqError.DuplicateProductException(error))
                 } else {
                     Mono.error(error)
                 }
             }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
-            .onErrorComplete(SynqError.DuplicateItemException::class.java)
+            .onErrorComplete(SynqError.DuplicateProductException::class.java)
             .awaitSingle()
     }
 

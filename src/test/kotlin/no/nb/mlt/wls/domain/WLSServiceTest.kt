@@ -1003,6 +1003,8 @@ class WLSServiceTest {
                 hostId: String
             ): Item? = items.firstOrNull { it.hostName == hostName && it.hostId == hostId }
 
+            override suspend fun getItemById(hostId: String): List<Item> = items.filter { it.hostId == hostId }
+
             override suspend fun getItemsByIds(
                 hostName: HostName,
                 hostIds: List<String>

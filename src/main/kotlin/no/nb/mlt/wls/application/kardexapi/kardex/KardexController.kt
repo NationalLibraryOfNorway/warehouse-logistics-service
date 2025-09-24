@@ -27,8 +27,8 @@ class KardexController(
     suspend fun materialUpdate(
         @RequestBody @Valid payloads: List<KardexMaterialUpdatePayload>
     ): ResponseEntity<Unit> {
-        payloads.forEach { payload ->
-            updateItem.updateItem(payload.toUpdateItemPayload())
+        payloads.forEach { material ->
+            updateItem.updateItem(material.toUpdateItemPayload())
         }
 
         return ResponseEntity.ok().build()
@@ -38,10 +38,10 @@ class KardexController(
     suspend fun transaction(
         @RequestBody @Valid payloads: List<KardexTransactionPayload>
     ): ResponseEntity<Unit> {
-        payloads.forEach { payload ->
-            val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
-            updateItem.updateItem(UpdateItem.UpdateItemPayload(payload.hostName, payload.hostId, payload.quantity.toInt(), payload.location))
-            pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
+        payloads.forEach { order ->
+            val normalizedOrderId = normalizeOrderId(order.hostOrderId)
+            updateItem.updateItem(order.toUpdateItemPayload())
+            pickOrderItems.pickOrderItems(order.hostName, order.mapToOrderItems(), normalizedOrderId)
         }
 
         return ResponseEntity.ok().build()
