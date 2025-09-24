@@ -26,11 +26,15 @@ class MongoCatalogEventRepositoryAdapter(
     override suspend fun save(event: CatalogEvent): CatalogEvent =
         mongoCatalogMessageRepository
             .save(MongoCatalogEvent(body = event))
-            .map { it.body }
-            .doOnEach { signal ->
+            .map {
+                logger.info {
+                    "Processing storage event to outbox: ${it.body}"
+                }
+                it.body
+            }.doOnEach { signal ->
                 if (signal.isOnComplete) {
                     logger.info {
-                        "Saved catalog event to catalog outbox: ${signal.get()}"
+                        "Successfully saved catalog event to catalog outbox"
                     }
                 }
             }.timeout(timeoutConfig.mongo)

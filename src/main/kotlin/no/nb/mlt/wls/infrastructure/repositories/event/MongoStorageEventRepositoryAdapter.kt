@@ -26,11 +26,15 @@ class MongoStorageEventRepositoryAdapter(
     override suspend fun save(event: StorageEvent): StorageEvent =
         mongoStorageEventRepository
             .save(MongoStorageEvent(body = event))
-            .map { it.body }
-            .doOnEach { signal ->
+            .map {
+                logger.info {
+                    "Processing storage event to outbox: ${it.body}"
+                }
+                it.body
+            }.doOnEach { signal ->
                 if (signal.isOnComplete) {
                     logger.info {
-                        "Saved storage event to outbox: ${signal.get()}"
+                        "Successfully saved storage event to storage outbox"
                     }
                 }
             }.timeout(timeoutConfig.mongo)
