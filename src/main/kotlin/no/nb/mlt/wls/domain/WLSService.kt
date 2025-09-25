@@ -37,7 +37,6 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -291,6 +290,8 @@ class WLSService(
         hostIds: List<String>
     ): List<Item> = itemRepository.getItemsByIds(hostName, hostIds)
 
+    override suspend fun getItemsById(hostId: String): List<Item> = itemRepository.getItemsById(hostId)
+
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
@@ -335,29 +336,8 @@ class WLSService(
         hostName: HostName,
         hostId: String
     ): Item =
-        getByHostAndId(hostName, hostId)
-            ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
-
-    private suspend fun getByHostAndId(
-        hostName: HostName,
-        hostId: String
-    ) = if (hostName == HostName.NONE) {
-        getItemById(hostId)
-    } else {
         getItem(hostName, hostId)
-    }
-
-    private suspend fun getItemById(hostId: String): Item? {
-        val itemsById = itemRepository.getItemById(hostId)
-
-        if (itemsById.size > 1) {
-            logger.error { "Found multiple items with same Host ID: $hostId" }
-            logger.error { "Items: ${itemsById.joinToString(separator = "\n")}" }
-            throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
-        }
-
-        return itemsById.firstOrNull()
-    }
+            ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
 
     private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {

@@ -17,7 +17,7 @@ import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
       "motiveType": 0
     }"""
 )
-data class KardexMaterialUpdatePayload(
+data class KardexMaterialPayload(
     @field:Schema(
         description = """The main material ID of the item."""
     )
@@ -26,7 +26,7 @@ data class KardexMaterialUpdatePayload(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
-    val hostName: HostName?,
+    val hostName: HostName = HostName.NONE,
     @field:Schema(
         description = """The current quantity of the item."""
     )
@@ -43,7 +43,7 @@ data class KardexMaterialUpdatePayload(
 ) {
     fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload =
         UpdateItem.UpdateItemPayload(
-            hostName = hostName ?: HostName.NONE,
+            hostName = hostName,
             hostId = hostId,
             quantity = quantity.toInt(),
             location = location

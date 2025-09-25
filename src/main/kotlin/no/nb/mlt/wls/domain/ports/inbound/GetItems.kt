@@ -21,5 +21,7 @@ interface GetItems {
         hostIds: List<String>
     ): List<Item>
 
+    suspend fun getItemsById(hostId: String): List<Item>
+
     suspend fun getAllItems(hostnames: List<HostName>): List<Item>
 }

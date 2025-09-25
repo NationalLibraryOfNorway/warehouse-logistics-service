@@ -7,12 +7,13 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.kardexapi.kardex.KardexMaterialUpdatePayload
+import no.nb.mlt.wls.application.kardexapi.kardex.KardexMaterialPayload
 import no.nb.mlt.wls.application.kardexapi.kardex.KardexSyncMaterialPayload
 import no.nb.mlt.wls.application.kardexapi.kardex.KardexTransactionPayload
 import no.nb.mlt.wls.application.kardexapi.kardex.MotiveType
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -42,9 +43,9 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class KardexControllerTest(
-    @Autowired val itemRepository: ItemMongoRepository,
-    @Autowired val orderRepository: OrderMongoRepository,
-    @Autowired val applicationContext: ApplicationContext
+    @param:Autowired val itemRepository: ItemMongoRepository,
+    @param:Autowired val orderRepository: OrderMongoRepository,
+    @param:Autowired val applicationContext: ApplicationContext
 ) {
     private lateinit var webTestClient: WebTestClient
 
@@ -71,6 +72,25 @@ class KardexControllerTest(
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(listOf(materialUpdatePayload))
+                .exchange()
+                .expectStatus()
+                .isOk()
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.location == materialUpdatePayload.location)
+        }
+    }
+
+    @Test
+    fun `material update with payload without HostName updates item`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/material-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(materialUpdatePayload.copy(hostName = HostName.NONE)))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -125,6 +145,30 @@ class KardexControllerTest(
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(listOf(orderUpdatePayload))
+                .exchange()
+                .expectStatus()
+                .isOk()
+
+            val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, testOrder.hostOrderId).awaitSingle()
+            assert(order.status != testOrder.status)
+            assert(order.status == Order.Status.IN_PROGRESS)
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity != testItem1.quantity)
+        }
+    }
+
+    @Test
+    fun `order update with payload without HostName updates order`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(orderUpdatePayload.copy(hostName = HostName.NONE)))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -218,7 +262,7 @@ class KardexControllerTest(
     private val testOrder = createTestOrder()
 
     private val materialUpdatePayload =
-        KardexMaterialUpdatePayload(
+        KardexMaterialPayload(
             hostId = testItem1.hostId,
             hostName = testItem1.hostName,
             quantity = testItem1.quantity.toDouble(),

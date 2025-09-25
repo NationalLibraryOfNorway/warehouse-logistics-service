@@ -40,7 +40,7 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingleOrNull()
 
-    override suspend fun getItemById(hostId: String): List<Item> =
+    override suspend fun getItemsById(hostId: String): List<Item> =
         mongoRepo
             .findAllByHostId(hostId)
             .collectList()
