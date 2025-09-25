@@ -77,7 +77,7 @@ class KardexController(
 
         if (itemsById.size > 1) {
             logger.error { "Found multiple items with same Host ID: $hostId" }
-            logger.error { "Items: ${itemsById.joinToString(separator = "\n")}" }
+            logger.error { "Items: ${itemsById.joinToString{i -> "${i.hostName} ${i.hostId} ${i.description}"}}" }
             throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
         }
 
