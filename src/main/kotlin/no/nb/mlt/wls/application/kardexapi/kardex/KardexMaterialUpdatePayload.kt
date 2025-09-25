@@ -1,10 +1,9 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
-import kotlinx.coroutines.newSingleThreadContext
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 
 @Schema(
     description = "Payload with updates status for material in Kardex.",
