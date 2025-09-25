@@ -104,7 +104,7 @@ fun LoadUnit.getMappedHostName(): HostName? {
         "mavis" -> HostName.AXIELL // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
         "axiell" -> HostName.AXIELL
         "mellomlager" -> HostName.TEMP_STORAGE
-        else -> null // @Tom shouldn't this be HostName.NONE or at least a ValidationException?
+        else -> null // @Tom shouldn't this be HostName.UNKNOWN or at least a ValidationException?
     }
 }
 

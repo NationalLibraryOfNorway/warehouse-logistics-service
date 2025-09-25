@@ -72,5 +72,5 @@ fun toSynqHostname(hostName: HostName): String =
         HostName.MAVIS -> "Mavis"
         HostName.AXIELL -> "Mavis" // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
         HostName.TEMP_STORAGE -> "mellomlager"
-        HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.NONE is not supported")
+        HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.UNKNOWN is not supported")
     }
