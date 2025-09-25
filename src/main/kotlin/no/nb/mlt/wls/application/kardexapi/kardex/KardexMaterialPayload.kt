@@ -26,7 +26,7 @@ data class KardexMaterialPayload(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
-    val hostName: HostName = HostName.NONE,
+    val hostName: HostName = HostName.UNKNOWN,
     @field:Schema(
         description = """The current quantity of the item."""
     )

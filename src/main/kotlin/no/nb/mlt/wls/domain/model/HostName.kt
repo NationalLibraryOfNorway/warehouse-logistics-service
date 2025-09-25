@@ -11,7 +11,7 @@ enum class HostName {
     MAVIS,
     AXIELL,
     TEMP_STORAGE,
-    NONE;
+    UNKNOWN;
 
     companion object {
         /**

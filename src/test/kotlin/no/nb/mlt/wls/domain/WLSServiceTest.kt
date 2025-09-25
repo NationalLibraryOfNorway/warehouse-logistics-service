@@ -728,8 +728,8 @@ class WLSServiceTest {
             assertThat(axiellAstaAndAlma).hasSize(5)
             assertThat(axiellAstaAndAlma).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
 
-            val none = cut.getAllItems(listOf(HostName.NONE))
-            assertThat(none).isEmpty()
+            val unknown = cut.getAllItems(listOf(HostName.UNKNOWN))
+            assertThat(unknown).isEmpty()
         }
     }
 
@@ -767,8 +767,8 @@ class WLSServiceTest {
             assertThat(allOrders).hasSize(5)
             assertThat(allOrders).containsExactlyInAnyOrder(i1, i2, i3, i4, i5)
 
-            val none = cut.getAllOrders(listOf(HostName.NONE))
-            assertThat(none).isEmpty()
+            val unknown = cut.getAllOrders(listOf(HostName.UNKNOWN))
+            assertThat(unknown).isEmpty()
         }
     }
 

@@ -95,7 +95,7 @@ fun LoadUnit.getMappedUOM() =
 
 fun LoadUnit.getMappedHostName(): HostName? {
     if (hostName.isNullOrBlank()) {
-        return HostName.NONE
+        return HostName.UNKNOWN
     }
 
     return when (hostName.lowercase()) {

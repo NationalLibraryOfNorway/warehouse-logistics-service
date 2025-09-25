@@ -69,7 +69,7 @@ class KardexController(
         hostName: HostName,
         hostId: String
     ): HostName {
-        if (hostName != HostName.NONE) {
+        if (hostName != HostName.UNKNOWN) {
             return hostName
         }
 
