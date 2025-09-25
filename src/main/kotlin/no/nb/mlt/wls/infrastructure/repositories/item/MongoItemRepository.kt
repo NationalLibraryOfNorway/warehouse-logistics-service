@@ -59,6 +59,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findAllByHostNameAndHostIdIn(hostName, hostIds)
             .collectList()
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching multiple items for $hostName"
@@ -70,6 +71,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findAllByHostNameIn(hostnames)
             .collectList()
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching all items for $hostnames"
