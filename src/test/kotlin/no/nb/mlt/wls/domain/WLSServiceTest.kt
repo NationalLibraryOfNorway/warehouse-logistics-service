@@ -27,6 +27,7 @@ import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
@@ -156,6 +157,55 @@ class WLSServiceTest {
             coVerify(exactly = 1) { itemRepository.updateLocationAndQuantity(any(), any(), any(), any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemUpdatedEvent) }
+        }
+    }
+
+    @Test
+    fun `updateItem should change item's location and quantity by ID only`() {
+        val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1)
+        val expectedItem = createTestItem(hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = 0)
+        val updateItemPayload = UpdateItemPayload(HostName.NONE, expectedItem.hostId, expectedItem.quantity, expectedItem.location)
+        val itemUpdatedEvent = ItemEvent(expectedItem)
+
+        coEvery { itemRepository.getItemById(expectedItem.hostId) } answers { listOf(startingItem) }
+        coEvery {
+            itemRepository.updateLocationAndQuantity(
+                startingItem.hostId,
+                startingItem.hostName,
+                expectedItem.location,
+                expectedItem.quantity
+            )
+        } answers { expectedItem }
+        coEvery { catalogEventRepository.save(any()) } answers { itemUpdatedEvent }
+        coEvery { catalogEventProcessor.handleEvent(itemUpdatedEvent) } answers {}
+
+        runTest {
+            val updateItemResult = serviceAvecTrans.updateItem(updateItemPayload)
+
+            assertThat(updateItemResult).isEqualTo(expectedItem)
+            coVerify(exactly = 1) { itemRepository.updateLocationAndQuantity(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { catalogEventRepository.save(any()) }
+            coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemUpdatedEvent) }
+        }
+    }
+
+    @Test
+    fun `updateItem should throw duplicate exception when two items have same ID`() {
+        val item1 = createTestItem(hostName = HostName.NONE, hostId = "test", location = "SYNQ_WAREHOUSE", quantity = 1)
+        val item2 = createTestItem(hostName = HostName.NONE, hostId = "test", location = UNKNOWN_LOCATION, quantity = 0)
+        val updateItemPayload = UpdateItemPayload(item1.hostName, item1.hostId, item1.quantity, item1.location)
+
+        coEvery { itemRepository.getItemById(item1.hostId) } answers { listOf(item1, item2) }
+
+        runTest {
+            assertThrows<DuplicateItemException> {
+                serviceAvecTrans.updateItem(updateItemPayload)
+            }
+
+            coVerify(exactly = 1) { itemRepository.getItemById(item1.hostId) }
+            coVerify(exactly = 0) { itemRepository.updateLocationAndQuantity(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { catalogEventRepository.save(any()) }
+            coVerify(exactly = 0) { catalogEventProcessor.handleEvent(any()) }
         }
     }
 
