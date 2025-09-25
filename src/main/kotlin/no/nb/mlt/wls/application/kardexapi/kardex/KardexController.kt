@@ -28,6 +28,7 @@ class KardexController(
         @RequestBody @Valid payloads: List<KardexMaterialUpdatePayload>
     ): ResponseEntity<Unit> {
         payloads.forEach { material ->
+            material.validate()
             updateItem.updateItem(material.toUpdateItemPayload())
         }
 
