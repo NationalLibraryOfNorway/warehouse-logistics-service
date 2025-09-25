@@ -334,11 +334,17 @@ class WLSService(
     private suspend fun getItemOrThrow(
         hostName: HostName,
         hostId: String
-    ): Item {
-        val item = if (hostName == HostName.NONE) getItemById(hostId) else getItem(hostName, hostId)
-
-        return item
+    ): Item =
+        getByHostAndId(hostName, hostId)
             ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
+
+    private suspend fun getByHostAndId(
+        hostName: HostName,
+        hostId: String
+    ) = if (hostName == HostName.NONE) {
+        getItemById(hostId)
+    } else {
+        getItem(hostName, hostId)
     }
 
     private suspend fun getItemById(hostId: String): Item? {
@@ -346,9 +352,7 @@ class WLSService(
 
         if (itemsById.size > 1) {
             logger.error { "Found multiple items with same Host ID: $hostId" }
-            itemsById.forEach {
-                logger.error { "Item: $it" }
-            }
+            logger.error { "Items: ${itemsById.joinToString(separator = "\n")}" }
             throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
         }
 
