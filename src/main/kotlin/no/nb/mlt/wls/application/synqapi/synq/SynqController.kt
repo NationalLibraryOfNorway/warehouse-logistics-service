@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.security.InvalidParameterException
 
 private val logger = KotlinLogging.logger {}
 
@@ -331,40 +330,23 @@ class SynqController(
         logger.debug { "Reconciliation. loadUnits=${payload.loadUnit.size}" }
 
         val units =
-            payload.loadUnit
-                .map {
-                    val item =
-                        try {
-                            val mappedHostName = it.getMappedHostName()
-
-                            if (mappedHostName == null) {
-                                logger.warn { "unmapped hostName: ${it.hostName}, skipping: $it." }
-                                return@map null
-                            }
-
-                            SynchronizeItems.ItemToSynchronize(
-                                hostId = it.productId,
-                                hostName = mappedHostName,
-                                location = it.location,
-                                quantity = it.quantityOnHand.toInt(),
-                                itemCategory = it.getMappedCategory(),
-                                packaging = it.getMappedUOM(),
-                                currentPreferredEnvironment = it.mapCurrentPreferredEnvironment(),
-                                description = if (it.description.isNullOrBlank()) "-" else it.description
-                            )
-                        } catch (e: InvalidParameterException) {
-                            logger.error {
-                                "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}"
-                            }
-                            null
+            payload.loadUnit.mapNotNull {
+                val item =
+                    try {
+                        it.toItemToSynchronize()
+                    } catch (e: Exception) {
+                        logger.error {
+                            "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}"
                         }
-
-                    if (item != null) {
-                        logger.debug { "Synchronizing item: $item" }
+                        null
                     }
 
-                    item
-                }.filterNotNull()
+                if (item != null) {
+                    logger.debug { "Synchronizing item: $item" }
+                }
+
+                item
+            }
 
         logger.debug { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
 
