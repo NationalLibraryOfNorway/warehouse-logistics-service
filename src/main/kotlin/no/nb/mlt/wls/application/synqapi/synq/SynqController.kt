@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.security.InvalidParameterException
 
 private val logger = KotlinLogging.logger {}
 
@@ -334,7 +335,7 @@ class SynqController(
                 val item =
                     try {
                         it.toItemToSynchronize()
-                    } catch (e: Exception) {
+                    } catch (e: InvalidParameterException) {
                         logger.error {
                             "Error while synchronizing item (hostId: ${it.productId}, hostName: ${it.hostName}). Message: ${e.message}"
                         }
