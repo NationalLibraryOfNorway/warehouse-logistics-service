@@ -95,9 +95,7 @@ class WLSService(
     }
 
     override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
-        val item =
-            getItem(updateItemPayload.hostName, updateItemPayload.hostId)
-                ?: throw ItemNotFoundException("Item with id '${updateItemPayload.hostId}' does not exist for '${updateItemPayload.hostName}'")
+        val item = getItemOrThrow(updateItemPayload.hostName, updateItemPayload.hostId)
 
         val (updatedItem, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -122,9 +120,7 @@ class WLSService(
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
-        val item =
-            getItem(moveItemPayload.hostName, moveItemPayload.hostId)
-                ?: throw ItemNotFoundException("Item with id '${moveItemPayload.hostId}' does not exist for '${moveItemPayload.hostName}'")
+        val item = getItemOrThrow(moveItemPayload.hostName, moveItemPayload.hostId)
 
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
@@ -294,6 +290,8 @@ class WLSService(
         hostIds: List<String>
     ): List<Item> = itemRepository.getItemsByIds(hostName, hostIds)
 
+    override suspend fun getItemsById(hostId: String): List<Item> = itemRepository.getItemsById(hostId)
+
     override suspend fun getOrder(
         hostName: HostName,
         hostOrderId: String
@@ -332,6 +330,14 @@ class WLSService(
             hostName,
             hostOrderId
         ) ?: throw OrderNotFoundException("No order with hostOrderId: $hostOrderId and hostName: $hostName exists")
+
+    @Throws(ItemNotFoundException::class)
+    private suspend fun getItemOrThrow(
+        hostName: HostName,
+        hostId: String
+    ): Item =
+        getItem(hostName, hostId)
+            ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
 
     private fun processStorageEventAsync(storageEvent: StorageEvent) =
         coroutineContext.launch {

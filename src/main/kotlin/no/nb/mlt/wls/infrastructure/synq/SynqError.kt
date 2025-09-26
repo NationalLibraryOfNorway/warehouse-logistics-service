@@ -6,7 +6,7 @@ data class SynqError(
     val errorCode: Int,
     val errorText: String
 ) {
-    class DuplicateItemException(
+    class DuplicateProductException(
         override val cause: Throwable
     ) : ServerErrorException("Product already exists in SynQ", cause)
 

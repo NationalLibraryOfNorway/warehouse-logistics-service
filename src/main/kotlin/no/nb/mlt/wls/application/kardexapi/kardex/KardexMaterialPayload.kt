@@ -1,9 +1,9 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 
 @Schema(
     description = "Payload with updates status for material in Kardex.",
@@ -17,7 +17,7 @@ import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
       "motiveType": 0
     }"""
 )
-data class KardexMaterialUpdatePayload(
+data class KardexMaterialPayload(
     @field:Schema(
         description = """The main material ID of the item."""
     )
@@ -26,7 +26,7 @@ data class KardexMaterialUpdatePayload(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL"
     )
-    val hostName: HostName,
+    val hostName: HostName = HostName.UNKNOWN,
     @field:Schema(
         description = """The current quantity of the item."""
     )
@@ -34,7 +34,6 @@ data class KardexMaterialUpdatePayload(
     @field:Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
-    @field:NotBlank(message = "Order status update cannot have blank warehouse")
     val location: String,
     @field:Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
@@ -49,4 +48,10 @@ data class KardexMaterialUpdatePayload(
             quantity = quantity.toInt(),
             location = location
         )
+
+    fun validate() {
+        if (motiveType !in listOf(MotiveType.Deleted) && location.isBlank()) {
+            throw ValidationException("Location can not be blank for a regular payload")
+        }
+    }
 }

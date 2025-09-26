@@ -15,6 +15,8 @@ interface ItemRepository {
         hostId: String
     ): Item?
 
+    suspend fun getItemsById(hostId: String): List<Item>
+
     suspend fun getItemsByIds(
         hostName: HostName,
         hostIds: List<String>

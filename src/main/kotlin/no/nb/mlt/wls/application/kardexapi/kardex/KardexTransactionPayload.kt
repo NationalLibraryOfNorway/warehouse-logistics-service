@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 
 @Schema(
     description = "Payload used to handle transactions related to orders from Kardex.",
@@ -51,14 +52,12 @@ data class KardexTransactionPayload(
     val operator: String
 ) {
     fun mapToOrderItems(): List<String> = listOf(hostId)
-}
 
-enum class MotiveType {
-    NotSet,
-    StockUnavailable,
-    Shortage,
-    SpaceUnavailable,
-    SpaceFull,
-    Deleted,
-    Canceled
+    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload =
+        UpdateItem.UpdateItemPayload(
+            hostName = hostName,
+            hostId = hostId,
+            quantity = quantity.toInt(),
+            location = location
+        )
 }

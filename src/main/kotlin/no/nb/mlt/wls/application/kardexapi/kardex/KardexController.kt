@@ -3,9 +3,13 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,27 +25,33 @@ private val logger = KotlinLogging.logger {}
 class KardexController(
     private val updateItem: UpdateItem,
     private val pickOrderItems: PickOrderItems,
-    private val stockCount: StockCount
+    private val stockCount: StockCount,
+    private val getItems: GetItems
 ) {
     @PostMapping("material-update")
     suspend fun materialUpdate(
-        @RequestBody @Valid payloads: List<KardexMaterialUpdatePayload>
+        @RequestBody @Valid payloads: List<KardexMaterialPayload>
     ): ResponseEntity<Unit> {
-        payloads.forEach { payload ->
-            updateItem.updateItem(payload.toUpdateItemPayload())
+        payloads.forEach { material ->
+            material.validate()
+            val validMaterial = material.copy(hostName = getHostNameForItem(material.hostName, material.hostId))
+
+            updateItem.updateItem(validMaterial.toUpdateItemPayload())
         }
 
         return ResponseEntity.ok().build()
     }
 
     @PostMapping("order-update")
-    suspend fun transaction(
+    suspend fun transactionUpdate(
         @RequestBody @Valid payloads: List<KardexTransactionPayload>
     ): ResponseEntity<Unit> {
-        payloads.forEach { payload ->
-            val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
-            updateItem.updateItem(UpdateItem.UpdateItemPayload(payload.hostName, payload.hostId, payload.quantity.toInt(), payload.location))
-            pickOrderItems.pickOrderItems(payload.hostName, payload.mapToOrderItems(), normalizedOrderId)
+        payloads.forEach { order ->
+            val normalizedOrderId = normalizeOrderId(order.hostOrderId)
+            val validOrder = order.copy(hostName = getHostNameForItem(order.hostName, order.hostId))
+
+            updateItem.updateItem(validOrder.toUpdateItemPayload())
+            pickOrderItems.pickOrderItems(validOrder.hostName, validOrder.mapToOrderItems(), normalizedOrderId)
         }
 
         return ResponseEntity.ok().build()
@@ -53,6 +63,30 @@ class KardexController(
     ): ResponseEntity<Unit> {
         stockCount.countStock(payloads.toStockCountPayload())
         return ResponseEntity.ok().build()
+    }
+
+    private suspend fun getHostNameForItem(
+        hostName: HostName,
+        hostId: String
+    ): HostName {
+        if (hostName != HostName.UNKNOWN) {
+            return hostName
+        }
+
+        val itemsById = getItems.getItemsById(hostId)
+
+        if (itemsById.size > 1) {
+            logger.error { "Found multiple items with same Host ID: $hostId" }
+            logger.error { "Items: ${itemsById.joinToString { i -> "${i.hostName} ${i.hostId} ${i.description}" }}" }
+            throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
+        }
+
+        if (itemsById.isEmpty()) {
+            logger.error { "Item with id '$hostId' does not exist" }
+            throw ItemNotFoundException("Item with id '$hostId' does not exist")
+        }
+
+        return itemsById.first().hostName
     }
 }
 

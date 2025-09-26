@@ -36,9 +36,21 @@ class MongoItemRepositoryAdapter(
             .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
-                    "Timed out while fetching from WLS database. hostName: $hostName, hostId: $hostId"
+                    "Timed out while fetching item from WLS database. hostName: $hostName, hostId: $hostId"
                 }
             }.awaitSingleOrNull()
+
+    override suspend fun getItemsById(hostId: String): List<Item> =
+        mongoRepo
+            .findAllByHostId(hostId)
+            .collectList()
+            .timeout(timeoutConfig.mongo)
+            .doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while fetching item from WLS database. hostId: $hostId"
+                }
+            }.awaitSingle()
+            .map { it.toItem() }
 
     override suspend fun getItemsByIds(
         hostName: HostName,
@@ -47,6 +59,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findAllByHostNameAndHostIdIn(hostName, hostIds)
             .collectList()
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching multiple items for $hostName"
@@ -58,6 +71,7 @@ class MongoItemRepositoryAdapter(
         mongoRepo
             .findAllByHostNameIn(hostnames)
             .collectList()
+            .timeout(timeoutConfig.mongo)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
                     "Timed out while fetching all items for $hostnames"
@@ -154,6 +168,8 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         hostName: HostName,
         hostId: String
     ): Mono<MongoItem>
+
+    fun findAllByHostId(hostId: String): Flux<MongoItem>
 
     @Query(count = true, value = $$"{ '$or': ?0 }")
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
