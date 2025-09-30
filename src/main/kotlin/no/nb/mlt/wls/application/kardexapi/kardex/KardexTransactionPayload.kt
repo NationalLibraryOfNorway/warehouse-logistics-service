@@ -3,8 +3,6 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
-import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 
 @Schema(
     description = "Payload used to handle transactions related to orders from Kardex.",
@@ -29,35 +27,27 @@ data class KardexTransactionPayload(
         description = """Name of the host system which the material belongs to.""",
         example = "AXIELL, ASTA"
     )
-    val hostName: HostName,
+    override val hostName: String,
     @field:Schema(
         description = """The main material ID of the item."""
     )
     @field:NotBlank(message = "Item ID can not be blank")
-    val hostId: String,
+    override val hostId: String,
     @field:Schema(
         description = """The current quantity of the item."""
     )
     @field:PositiveOrZero(message = "Item quantity must be positive")
-    val quantity: Double,
+    override val quantity: Double,
     val motiveType: MotiveType,
     @field:Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
     @field:NotBlank(message = "Location can not be blank")
-    val location: String,
+    override val location: String,
     @field:Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
     )
     val operator: String
-) {
+) : KardexItemPayload {
     fun mapToOrderItems(): List<String> = listOf(hostId)
-
-    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload =
-        UpdateItem.UpdateItemPayload(
-            hostName = hostName,
-            hostId = hostId,
-            quantity = quantity.toInt(),
-            location = location
-        )
 }

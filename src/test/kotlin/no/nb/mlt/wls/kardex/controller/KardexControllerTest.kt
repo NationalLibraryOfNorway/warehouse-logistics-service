@@ -82,6 +82,25 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `material update with payload with UNKNOWN HostName updates item`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/material-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(materialUpdatePayload.copy(hostName = HostName.UNKNOWN.toString())))
+                .exchange()
+                .expectStatus()
+                .isOk()
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.location == materialUpdatePayload.location)
+        }
+    }
+
+    @Test
     fun `material update with payload without HostName updates item`() {
         runTest {
             webTestClient
@@ -90,7 +109,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/material-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(materialUpdatePayload.copy(hostName = HostName.UNKNOWN)))
+                .bodyValue(listOf(materialUpdatePayload.copy(hostName = "")))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -160,6 +179,30 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `order update with payload with UNKNOWN HostName updates order`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(orderUpdatePayload.copy(hostName = HostName.UNKNOWN.toString())))
+                .exchange()
+                .expectStatus()
+                .isOk()
+
+            val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, testOrder.hostOrderId).awaitSingle()
+            assert(order.status != testOrder.status)
+            assert(order.status == Order.Status.IN_PROGRESS)
+
+            val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
+            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity != testItem1.quantity)
+        }
+    }
+
+    @Test
     fun `order update with payload without HostName updates order`() {
         runTest {
             webTestClient
@@ -168,7 +211,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload.copy(hostName = HostName.UNKNOWN)))
+                .bodyValue(listOf(orderUpdatePayload.copy(hostName = "")))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -264,7 +307,7 @@ class KardexControllerTest(
     private val materialUpdatePayload =
         KardexMaterialPayload(
             hostId = testItem1.hostId,
-            hostName = testItem1.hostName,
+            hostName = testItem1.hostName.toString(),
             quantity = testItem1.quantity.toDouble(),
             location = testItem1.location,
             operator = "System",
@@ -274,7 +317,7 @@ class KardexControllerTest(
     private val orderUpdatePayload =
         KardexTransactionPayload(
             hostOrderId = testOrder.hostOrderId,
-            hostName = testOrder.hostName,
+            hostName = testOrder.hostName.toString(),
             hostId = testItem1.hostId,
             quantity = 0.0,
             motiveType = MotiveType.NotSet,
