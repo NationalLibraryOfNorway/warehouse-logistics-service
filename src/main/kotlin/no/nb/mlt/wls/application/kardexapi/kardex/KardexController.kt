@@ -74,7 +74,8 @@ class KardexController(
         val parsedHostName =
             try {
                 HostName.fromString(hostName)
-            } catch (_: IllegalArgumentException) {
+            } catch (e: IllegalArgumentException) {
+                logger.warn { "Invalid hostname '$hostName' provided, defaulting to UNKNOWN. Error: ${e.message}" }
                 HostName.UNKNOWN
             }
 

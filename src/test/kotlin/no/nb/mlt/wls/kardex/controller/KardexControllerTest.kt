@@ -101,7 +101,7 @@ class KardexControllerTest(
     }
 
     @Test
-    fun `material update with payload with without HostName updates item`() {
+    fun `material update with payload without HostName updates item`() {
         runTest {
             webTestClient
                 .mutateWith(csrf())
