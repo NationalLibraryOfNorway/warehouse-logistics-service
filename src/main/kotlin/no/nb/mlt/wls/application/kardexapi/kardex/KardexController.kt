@@ -34,7 +34,8 @@ class KardexController(
     ): ResponseEntity<Unit> {
         payloads.forEach { material ->
             material.validate()
-            val validMaterial = material.copy(hostName = getHostNameForItem(material.hostName, material.hostId))
+            val resolvedHostName = getHostNameForItem(material.hostName, material.hostId)
+            val validMaterial = material.copy(hostName = resolvedHostName.toString())
 
             updateItem.updateItem(validMaterial.toUpdateItemPayload())
         }
@@ -48,10 +49,11 @@ class KardexController(
     ): ResponseEntity<Unit> {
         payloads.forEach { order ->
             val normalizedOrderId = normalizeOrderId(order.hostOrderId)
-            val validOrder = order.copy(hostName = getHostNameForItem(order.hostName, order.hostId))
+            val resolvedHostName = getHostNameForItem(order.hostName, order.hostId)
+            val validOrder = order.copy(hostName = resolvedHostName.toString())
 
             updateItem.updateItem(validOrder.toUpdateItemPayload())
-            pickOrderItems.pickOrderItems(validOrder.hostName, validOrder.mapToOrderItems(), normalizedOrderId)
+            pickOrderItems.pickOrderItems(resolvedHostName, validOrder.mapToOrderItems(), normalizedOrderId)
         }
 
         return ResponseEntity.ok().build()
@@ -66,18 +68,25 @@ class KardexController(
     }
 
     private suspend fun getHostNameForItem(
-        hostName: HostName,
+        hostName: String,
         hostId: String
     ): HostName {
-        if (hostName != HostName.UNKNOWN) {
-            return hostName
+        val parsedHostName =
+            try {
+                HostName.fromString(hostName)
+            } catch (_: IllegalArgumentException) {
+                HostName.UNKNOWN
+            }
+
+        if (parsedHostName != HostName.UNKNOWN) {
+            return parsedHostName
         }
 
         val itemsById = getItems.getItemsById(hostId)
 
         if (itemsById.size > 1) {
             logger.error { "Found multiple items with same Host ID: $hostId" }
-            logger.error { "Items: ${itemsById.joinToString { i -> "${i.hostName} ${i.hostId} ${i.description}" }}" }
+            logger.error { "Items: ${itemsById.joinToString { i -> "${i.hostName} ${i.hostId} ${i.description}"}}" }
             throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
         }
 
@@ -88,13 +97,13 @@ class KardexController(
 
         return itemsById.first().hostName
     }
-}
 
-private fun normalizeOrderId(orderId: String): String {
-    val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
-    // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
-    if (orderIdWithoutPrefix == orderId) {
-        logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
+    private fun normalizeOrderId(orderId: String): String {
+        val orderIdWithoutPrefix = orderId.substringAfter(DELIMITER, orderId)
+        // Could ensure we filtered out a known HostName, but that feels like an overkill since delimiter is kinda unique.
+        if (orderIdWithoutPrefix == orderId) {
+            logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
+        }
+        return orderIdWithoutPrefix
     }
-    return orderIdWithoutPrefix
 }

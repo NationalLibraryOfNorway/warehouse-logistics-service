@@ -1,8 +1,7 @@
 package no.nb.mlt.wls.application.synqapi.synq
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import io.github.oshai.kotlinlogging.KLogger
-import io.github.oshai.kotlinlogging.KotlinLogging.logger
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -11,7 +10,7 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import java.security.InvalidParameterException
 
-private val logger: KLogger = logger {}
+private val logger = KotlinLogging.logger {}
 
 @Schema(
     description = """Payload for inventory reconciliation""",
