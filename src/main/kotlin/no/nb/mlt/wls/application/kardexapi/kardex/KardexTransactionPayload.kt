@@ -38,16 +38,18 @@ data class KardexTransactionPayload(
     )
     @field:PositiveOrZero(message = "Item quantity must be positive")
     override val quantity: Double,
-    val motiveType: MotiveType,
     @field:Schema(
         description = """Name of the warehouse where the order materials/items are located."""
     )
-    @field:NotBlank(message = "Location can not be blank")
     override val location: String,
     @field:Schema(
         description = """The name of the person who updated/operated on the Kardex system."""
     )
-    val operator: String
+    override val operator: String,
+    @field:Schema(
+        description = """Describes the motive for the update message, such as deletion."""
+    )
+    override val motiveType: MotiveType
 ) : KardexItemPayload {
     fun mapToOrderItems(): List<String> = listOf(hostId)
 }
