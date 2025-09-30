@@ -15,26 +15,26 @@ interface KardexItemPayload {
     val operator: String
     val motiveType: MotiveType
 
-    fun toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
-        val resolvedHostName =
-            try {
-                HostName.fromString(hostName)
-            } catch (e: IllegalArgumentException) {
-                logger.warn { "Invalid hostname '$hostName' provided, defaulting to UNKNOWN. Error: ${e.message}" }
-                HostName.UNKNOWN
-            }
-
-        return UpdateItem.UpdateItemPayload(
-            hostName = resolvedHostName,
-            hostId = hostId,
-            quantity = quantity.toInt(),
-            location = location
-        )
-    }
-
     fun validate() {
         if (motiveType !in listOf(MotiveType.Deleted) && location.isBlank()) {
             throw ValidationException("Location can not be blank for a regular payload")
         }
     }
+}
+
+fun KardexItemPayload.toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
+    val resolvedHostName =
+        try {
+            HostName.fromString(hostName)
+        } catch (e: IllegalArgumentException) {
+            logger.warn { "Invalid hostname '$hostName' provided, defaulting to UNKNOWN. Error: ${e.message}" }
+            HostName.UNKNOWN
+        }
+
+    return UpdateItem.UpdateItemPayload(
+        hostName = resolvedHostName,
+        hostId = hostId,
+        quantity = quantity.toInt(),
+        location = location
+    )
 }
