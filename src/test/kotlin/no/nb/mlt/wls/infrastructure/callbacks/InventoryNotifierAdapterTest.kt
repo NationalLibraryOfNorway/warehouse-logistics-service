@@ -10,6 +10,7 @@ import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.UnableToNotifyException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -18,6 +19,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ResolvableType
 import org.springframework.web.reactive.function.client.WebClient
@@ -171,6 +174,112 @@ class InventoryNotifierAdapterTest {
         val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
         val signature = Base64.getEncoder().encodeToString(expectedSignature)
         assertEquals(signature, sigHeader)
+    }
+
+    @Test
+    fun `should not retry on 4xx client error for item callback`() {
+        mockWebServer.enqueue(MockResponse().setResponseCode(404))
+
+        // Should complete without throwing exception (no retry)
+        assertDoesNotThrow {
+            inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+        }
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(itemCallbackPath, request.path)
+        assertEquals("POST", request.method)
+
+        // Verify only one request was made (no retry)
+        assertEquals(1, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `should not retry on 4xx client error for order callback`() {
+        mockWebServer.enqueue(MockResponse().setResponseCode(400))
+
+        assertDoesNotThrow {
+            inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+        }
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(orderCallbackPath, request.path)
+        assertEquals("POST", request.method)
+
+        assertEquals(1, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `should throw exception on 5xx server error for item callback to allow retry`() {
+        mockWebServer.enqueue(MockResponse().setResponseCode(500))
+
+        assertThrows<UnableToNotifyException> {
+            inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+        }
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(itemCallbackPath, request.path)
+        assertEquals("POST", request.method)
+    }
+
+    @Test
+    fun `should throw exception on 5xx server error for order callback to allow retry`() {
+        mockWebServer.enqueue(MockResponse().setResponseCode(503))
+
+        assertThrows<UnableToNotifyException> {
+            inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+        }
+
+        val request = mockWebServer.takeRequest()
+        assertEquals(orderCallbackPath, request.path)
+        assertEquals("POST", request.method)
+    }
+
+    @Test
+    fun `should not retry on various 4xx errors`() {
+        val clientErrorCodes = listOf(400, 401, 403, 404, 409, 422, 429)
+
+        clientErrorCodes.forEach { statusCode ->
+            mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
+
+            assertDoesNotThrow {
+                inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            }
+
+            mockWebServer.takeRequest() // Clear the request
+        }
+    }
+
+    @Test
+    fun `should propagate error on various 5xx errors`() {
+        val serverErrorCodes = listOf(500, 501, 502, 503, 504)
+
+        serverErrorCodes.forEach { statusCode ->
+            mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
+
+            assertThrows<UnableToNotifyException> {
+                inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            }
+
+            mockWebServer.takeRequest() // Clear the request
+        }
+    }
+
+    @Test
+    fun `should not retry on malformed callback URL for item`() {
+        val itemWithBadUrl = createTestItem(callbackUrl = "https://invalid-host-that-does-not-exist-69420.com/callback")
+
+        assertDoesNotThrow {
+            inventoryNotifierAdapter.itemChanged(itemWithBadUrl, timestamp, messageId)
+        }
+    }
+
+    @Test
+    fun `should not retry on malformed callback URL for order`() {
+        val orderWithBadUrl = testOrderWithCallback.copy(callbackUrl = "https://invalid-host-that-does-not-exist-66642.com/callback")
+
+        assertDoesNotThrow {
+            inventoryNotifierAdapter.orderChanged(orderWithBadUrl, timestamp, messageId)
+        }
     }
 
     private val itemCallbackPath = "/item-callback"
