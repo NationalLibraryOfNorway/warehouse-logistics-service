@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.Storage
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -19,7 +20,8 @@ data class MongoItem(
     val packaging: Packaging,
     val callbackUrl: String?,
     val location: String,
-    val quantity: Int
+    val quantity: Int,
+    val storage: Storage
 )
 
 fun Item.toMongoItem() =
@@ -32,7 +34,8 @@ fun Item.toMongoItem() =
         this.packaging,
         this.callbackUrl,
         this.location,
-        this.quantity
+        this.quantity,
+        this.storage
     )
 
 fun MongoItem.toItem() =
@@ -45,5 +48,6 @@ fun MongoItem.toItem() =
         this.packaging,
         this.callbackUrl,
         this.location,
-        this.quantity
+        this.quantity,
+        this.storage
     )
