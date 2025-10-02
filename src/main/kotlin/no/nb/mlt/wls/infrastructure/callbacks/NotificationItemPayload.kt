@@ -102,19 +102,6 @@ data class NotificationItemPayload(
     val messageId: String
 )
 
-fun NotificationItemPayload.toItem(): Item =
-    Item(
-        hostId = hostId,
-        hostName = hostName,
-        description = description,
-        itemCategory = itemCategory,
-        preferredEnvironment = preferredEnvironment,
-        packaging = packaging,
-        callbackUrl = callbackUrl,
-        location = location,
-        quantity = quantity
-    )
-
 fun Item.toNotificationItemPayload(
     eventTimestamp: Instant,
     messageId: String
