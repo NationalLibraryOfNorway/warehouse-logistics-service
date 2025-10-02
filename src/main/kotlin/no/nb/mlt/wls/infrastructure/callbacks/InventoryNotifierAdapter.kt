@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
@@ -74,15 +75,57 @@ class InventoryNotifierAdapter(
             .bodyToMono(Void::class.java)
             .timeout(timeoutConfig.inventory)
             .onErrorComplete { error ->
-                val callbackUrlIsMalformed = error.cause is DnsErrorCauseException || error.stackTraceToString().contains("Failed to resolve")
-                if (callbackUrlIsMalformed) {
-                    logger.error(error) { "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload" }
-                }
-                callbackUrlIsMalformed
+                shouldCompleteOnError(error, callbackUrl, payload)
             }.doOnError {
                 logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
             }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
             .block()
+    }
+
+    /**
+     * Determines if the error should complete the reactive chain (no retry) or propagate (allow retry).
+     * Returns true for errors that should not be retried (malformed URLs, 4xx errors).
+     * Returns false for errors that should follow normal retry flow (5xx errors, other errors).
+     */
+    private fun shouldCompleteOnError(
+        error: Throwable,
+        callbackUrl: String,
+        payload: String
+    ): Boolean {
+        // Check for malformed callback URL
+        val callbackUrlIsMalformed =
+            error.cause is DnsErrorCauseException ||
+                error.stackTraceToString().contains("Failed to resolve")
+        if (callbackUrlIsMalformed) {
+            logger.error(error) {
+                "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload"
+            }
+            return true
+        }
+
+        // Handle HTTP response errors
+        if (error is WebClientResponseException) {
+            // 4xx errors - client errors that should not be retried
+            if (error.statusCode.is4xxClientError) {
+                logger.error(error) {
+                    "Received 4xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
+                        "we will never retry sending this message: $payload"
+                }
+                return true
+            }
+
+            // 5xx errors - server errors, log and continue normal retry flow
+            if (error.statusCode.is5xxServerError) {
+                logger.error(error) {
+                    "Received 5xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
+                        "will continue with normal retry flow"
+                }
+                return false
+            }
+        }
+
+        // For all other errors, propagate them (don't complete)
+        return false
     }
 
     private fun generateSignature(
