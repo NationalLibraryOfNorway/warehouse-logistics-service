@@ -47,7 +47,8 @@ class Item(
     val packaging: Packaging,
     val callbackUrl: String?,
     location: String?,
-    quantity: Int = 0
+    quantity: Int = 0,
+    val storage: Storage
 ) {
     init {
         if (location == null && quantity != 0) {
