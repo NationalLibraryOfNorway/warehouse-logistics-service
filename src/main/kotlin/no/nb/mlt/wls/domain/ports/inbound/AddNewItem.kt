@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.Storage
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 
 /**
@@ -60,6 +61,7 @@ data class ItemMetadata(
         this.packaging,
         this.callbackUrl,
         location,
-        quantity
+        quantity,
+        Storage.UNKNOWN
     )
 }

@@ -14,6 +14,7 @@ import no.nb.mlt.wls.infrastructure.synq.SynqProductPayload
 import no.nb.mlt.wls.infrastructure.synq.toSynqCategory
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqPayload
+import no.nb.mlt.wls.toItem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.time.Instant

@@ -5,10 +5,8 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import org.hibernate.validator.constraints.URL
 
@@ -81,19 +79,6 @@ data class ApiCreateItemPayload(
     )
     val callbackUrl: String?
 ) {
-    fun toItem(): Item =
-        Item(
-            hostId = hostId,
-            hostName = hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl,
-            location = UNKNOWN_LOCATION,
-            quantity = 0
-        )
-
     fun toItemMetadata(): ItemMetadata =
         ItemMetadata(
             hostId = hostId,

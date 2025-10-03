@@ -11,6 +11,7 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.Storage
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -416,7 +417,8 @@ class WLSService(
                     packaging = syncItem.packaging,
                     callbackUrl = null,
                     location = syncItem.location,
-                    quantity = syncItem.quantity
+                    quantity = syncItem.quantity,
+                    storage = Storage.UNKNOWN
                 )
             )
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
