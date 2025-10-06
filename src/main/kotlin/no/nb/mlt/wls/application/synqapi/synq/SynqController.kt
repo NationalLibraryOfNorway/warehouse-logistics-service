@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
@@ -353,7 +352,7 @@ class SynqController(
         logger.debug { "Synchronizing ${units.size} of ${payload.loadUnit.size} items in message. Skipping ${payload.loadUnit.size - units.size}" }
 
         try {
-            synchronizeItems.synchronizeItems(units, AssociatedStorage.SYNQ)
+            synchronizeItems.synchronizeItems(units)
         } catch (e: Exception) {
             logger.error(e) { "Error while synchronizing items" }
         }

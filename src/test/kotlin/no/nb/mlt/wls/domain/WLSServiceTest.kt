@@ -815,7 +815,8 @@ class WLSServiceTest {
                     description = testItem1.description,
                     itemCategory = testItem1.itemCategory,
                     packaging = testItem1.packaging,
-                    currentPreferredEnvironment = testItem1.preferredEnvironment
+                    currentPreferredEnvironment = testItem1.preferredEnvironment,
+                    associatedStorage = testItem1.associatedStorage
                 ),
                 // This item should be created
                 SynchronizeItems.ItemToSynchronize(
@@ -826,12 +827,13 @@ class WLSServiceTest {
                     description = "Some description",
                     itemCategory = ItemCategory.PAPER,
                     packaging = Packaging.BOX,
-                    currentPreferredEnvironment = Environment.NONE
+                    currentPreferredEnvironment = Environment.NONE,
+                    associatedStorage = AssociatedStorage.SYNQ
                 )
             )
 
         runTest {
-            cut.synchronizeItems(itemsToSync, AssociatedStorage.SYNQ)
+            cut.synchronizeItems(itemsToSync)
 
             // Assert that quantity and location changed
             val updatedItem = itemRepository.getItem(testItem1.hostName, testItem1.hostId)
