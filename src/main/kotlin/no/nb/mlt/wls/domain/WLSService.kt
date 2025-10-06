@@ -106,7 +106,7 @@ class WLSService(
                         item.hostName,
                         updateItemPayload.quantity,
                         updateItemPayload.location,
-                        item.associatedStorage
+                        updateItemPayload.associatedStorage
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
