@@ -9,7 +9,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMovingException
-import no.nb.mlt.wls.infrastructure.synq.computeAssociatedStorage
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",

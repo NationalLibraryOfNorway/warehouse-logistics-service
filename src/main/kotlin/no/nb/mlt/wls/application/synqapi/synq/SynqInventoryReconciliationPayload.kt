@@ -8,7 +8,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
-import no.nb.mlt.wls.infrastructure.synq.computeAssociatedStorage
 import java.security.InvalidParameterException
 
 private val logger = KotlinLogging.logger {}

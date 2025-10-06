@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.infrastructure.synq
 
-import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 
@@ -23,10 +22,3 @@ fun createServerError(error: WebClientResponseException): StorageSystemException
         error
     )
 }
-
-/**
- * Computes the associated storage from the Synq-specific location.
- * Smelly code is inevitable...
- */
-fun computeAssociatedStorage(location: String): AssociatedStorage =
-    if (location.uppercase() == "AUTOSTORE_WAREHOUSE") AssociatedStorage.AUTOSTORE else AssociatedStorage.SYNQ

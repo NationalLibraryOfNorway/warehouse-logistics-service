@@ -49,7 +49,7 @@ class Item(
     val callbackUrl: String?,
     location: String?,
     quantity: Int = 0,
-    var associatedStorage: AssociatedStorage
+    associatedStorage: AssociatedStorage
 ) {
     init {
         if (location == null && quantity != 0) {
@@ -61,6 +61,9 @@ class Item(
         private set
 
     var quantity: Int = quantity
+        private set
+
+    var associatedStorage: AssociatedStorage = associatedStorage
         private set
 
     /**
