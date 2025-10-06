@@ -2,6 +2,7 @@ package no.nb.mlt.wls.domain.ports.inbound
 
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
@@ -32,5 +33,6 @@ data class MoveItemPayload(
     @field:Min(value = 0, message = "Quantity on hand must not be negative. It must be zero or higher")
     val quantity: Int,
     @field:NotBlank(message = "Location can not be blank")
-    val location: String
+    val location: String,
+    val associatedStorage: AssociatedStorage
 )

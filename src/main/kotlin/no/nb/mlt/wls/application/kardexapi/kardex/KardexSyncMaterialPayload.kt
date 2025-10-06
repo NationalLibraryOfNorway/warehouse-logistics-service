@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.StockCount
 
@@ -30,6 +31,7 @@ fun List<KardexSyncMaterialPayload>.toStockCountPayload(): List<StockCount.Count
             hostId = kardexPayload.hostId,
             hostName = HostName.fromString(kardexPayload.hostName),
             location = kardexPayload.location,
-            quantity = kardexPayload.quantity.toInt()
+            quantity = kardexPayload.quantity.toInt(),
+            associatedStorage = AssociatedStorage.KARDEX
         )
     }

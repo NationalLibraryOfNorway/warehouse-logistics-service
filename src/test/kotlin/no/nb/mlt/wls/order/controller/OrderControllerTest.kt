@@ -264,7 +264,7 @@ class OrderControllerTest(
     fun `Should not save order if outbox message fails to persist`() {
         runTest {
             coEvery { storageEventRepository.save(any()) } throws RuntimeException("Testing: Failed to save outbox message")
-            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.isInStorage(any()) } returns true
 
             webTestClient
                 .mutateWith(csrf())
@@ -286,7 +286,7 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with valid data deletes order`() =
         runTest {
-            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.isInStorage(any()) } returns true
             coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
             coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 
@@ -345,7 +345,7 @@ class OrderControllerTest(
     @Test
     fun `deleteOrder with blank hostOrderId returns 400`() =
         runTest {
-            coEvery { synqStandardAdapterMock.canHandleLocation(any()) } returns true
+            coEvery { synqStandardAdapterMock.isInStorage(any()) } returns true
             coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
             coJustRun { synqStandardAdapterMock.deleteOrder(any(), any()) }
 

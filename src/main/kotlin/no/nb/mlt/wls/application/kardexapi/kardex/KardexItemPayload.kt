@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
@@ -35,6 +36,7 @@ fun KardexItemPayload.toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
         hostName = resolvedHostName,
         hostId = hostId,
         quantity = quantity.toInt(),
-        location = location
+        location = location,
+        associatedStorage = AssociatedStorage.KARDEX
     )
 }

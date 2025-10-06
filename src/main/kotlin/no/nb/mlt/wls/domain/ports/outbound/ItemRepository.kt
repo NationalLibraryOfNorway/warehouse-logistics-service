@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
@@ -32,14 +33,16 @@ interface ItemRepository {
         hostName: HostName,
         hostId: String,
         quantity: Int,
-        location: String
+        location: String,
+        associatedStorage: AssociatedStorage
     ): Item
 
-    suspend fun updateLocationAndQuantity(
+    suspend fun updateItem(
         hostId: String,
         hostName: HostName,
         location: String,
-        quantity: Int
+        quantity: Int,
+        associatedStorage: AssociatedStorage
     ): Item
 
     data class ItemId(

@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 
 /**
@@ -32,6 +33,7 @@ fun interface StockCount {
         val hostId: String,
         val hostName: HostName,
         val location: String,
-        val quantity: Int
+        val quantity: Int,
+        val associatedStorage: AssociatedStorage
     )
 }

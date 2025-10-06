@@ -5,6 +5,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
@@ -179,7 +180,8 @@ data class Product(
             hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantity,
-            location = location
+            location = location,
+            associatedStorage = AssociatedStorage.SYNQ
         )
     }
 
@@ -188,7 +190,8 @@ data class Product(
             hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
-            location = location
+            location = location,
+            associatedStorage = AssociatedStorage.SYNQ
         )
 
     private fun getHostNameFromSynqTypes(): HostName {
