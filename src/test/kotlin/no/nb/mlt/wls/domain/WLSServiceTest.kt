@@ -939,6 +939,72 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `updateItem changes storage correctly when item is updated`() {
+        val storedItem = createTestItem(quantity = 0, location = UNKNOWN_LOCATION)
+        val expectedItem =
+            createTestItem(
+                location = testKardexUpdateItemPayload.location,
+                quantity = testKardexUpdateItemPayload.quantity,
+                associatedStorage = testKardexUpdateItemPayload.associatedStorage
+            )
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+        coEvery { orderRepository.getOrdersWithPickedItems(any(), any()) } returns listOf()
+
+        runTest {
+            cut.updateItem(testKardexUpdateItemPayload)
+
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+        }
+    }
+
+    @Test
+    fun `moveItem changes storage correctly when item is updated`() {
+        val storedItem = createTestItem(quantity = 0, location = UNKNOWN_LOCATION)
+        val expectedItem =
+            createTestItem(
+                location = testKardexMoveItemPayload.location,
+                quantity = testKardexMoveItemPayload.quantity,
+                associatedStorage = testKardexMoveItemPayload.associatedStorage
+            )
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+        coEvery { orderRepository.getOrdersWithPickedItems(any(), any()) } returns listOf()
+
+        runTest {
+            cut.moveItem(testMoveItemPayload)
+
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+        }
+    }
+
+    @Test
     fun `moveItem should mark order items as returned`() {
         val storedItem = createTestItem(quantity = 0)
         val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
@@ -992,6 +1058,15 @@ class WLSServiceTest {
             associatedStorage = AssociatedStorage.SYNQ
         )
 
+    private val testKardexMoveItemPayload =
+        MoveItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.KARDEX
+        )
+
     private val testUpdateItemPayload =
         UpdateItemPayload(
             hostName = testItem.hostName,
@@ -999,6 +1074,15 @@ class WLSServiceTest {
             quantity = 1,
             location = "KNOWN_LOCATION",
             associatedStorage = AssociatedStorage.SYNQ
+        )
+
+    private val testKardexUpdateItemPayload =
+        UpdateItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.KARDEX
         )
 
     private val createOrderDTO =
