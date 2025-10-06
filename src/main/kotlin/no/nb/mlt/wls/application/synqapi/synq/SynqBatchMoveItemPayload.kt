@@ -5,11 +5,11 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.PositiveOrZero
-import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMovingException
+import no.nb.mlt.wls.infrastructure.synq.computeAssociatedStorage
 
 @Schema(
     description = """Payload with Product/Item movement updates from the SynQ storage system.""",
@@ -181,7 +181,7 @@ data class Product(
             hostId = productId,
             quantity = quantity,
             location = location,
-            associatedStorage = AssociatedStorage.SYNQ
+            associatedStorage = computeAssociatedStorage(location)
         )
     }
 
@@ -191,7 +191,7 @@ data class Product(
             hostId = productId,
             quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
             location = location,
-            associatedStorage = AssociatedStorage.SYNQ
+            associatedStorage = computeAssociatedStorage(location)
         )
 
     private fun getHostNameFromSynqTypes(): HostName {

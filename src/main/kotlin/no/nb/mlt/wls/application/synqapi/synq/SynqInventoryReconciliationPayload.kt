@@ -8,6 +8,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
+import no.nb.mlt.wls.infrastructure.synq.computeAssociatedStorage
 import java.security.InvalidParameterException
 
 private val logger = KotlinLogging.logger {}
@@ -136,6 +137,7 @@ data class LoadUnit(
             itemCategory = getMappedCategory(),
             packaging = getMappedUOM(),
             currentPreferredEnvironment = mapCurrentPreferredEnvironment(),
-            description = if (description.isNullOrBlank()) "-" else description
+            description = if (description.isNullOrBlank()) "-" else description,
+            associatedStorage = computeAssociatedStorage(location ?: "")
         )
 }

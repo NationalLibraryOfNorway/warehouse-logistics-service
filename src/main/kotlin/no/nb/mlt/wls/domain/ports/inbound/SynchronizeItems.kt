@@ -7,10 +7,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 
 fun interface SynchronizeItems {
-    suspend fun synchronizeItems(
-        items: List<ItemToSynchronize>,
-        associatedStorage: AssociatedStorage
-    )
+    suspend fun synchronizeItems(items: List<ItemToSynchronize>)
 
     data class ItemToSynchronize(
         val hostId: String,
@@ -20,6 +17,7 @@ fun interface SynchronizeItems {
         val quantity: Int,
         val itemCategory: ItemCategory,
         val packaging: Packaging,
-        val currentPreferredEnvironment: Environment
+        val currentPreferredEnvironment: Environment,
+        val associatedStorage: AssociatedStorage
     )
 }

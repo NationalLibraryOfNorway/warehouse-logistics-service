@@ -308,10 +308,7 @@ class WLSService(
         hostOrderId: String
     ): List<Order> = orderRepository.getAllOrdersWithHostId(hostNames, hostOrderId)
 
-    override suspend fun synchronizeItems(
-        items: List<SynchronizeItems.ItemToSynchronize>,
-        associatedStorage: AssociatedStorage
-    ) {
+    override suspend fun synchronizeItems(items: List<SynchronizeItems.ItemToSynchronize>) {
         val syncItemsById = items.associateBy { (it.hostId to it.hostName) }
         items
             .groupBy { it.hostName }
@@ -322,8 +319,8 @@ class WLSService(
                     val existingIds = existingItems.map { it.hostId }
                     val missingIds = ids.toSet() - existingIds.toSet()
 
-                    missingIds.forEach { createMissingItems(it, hostName, syncItemsById, associatedStorage) }
-                    existingItems.forEach { updateItemsForSynchronization(it, syncItemsById, associatedStorage) }
+                    missingIds.forEach { createMissingItems(it, hostName, syncItemsById) }
+                    existingItems.forEach { updateItemsForSynchronization(it, syncItemsById) }
                 }
             }
     }
@@ -409,8 +406,7 @@ class WLSService(
     private suspend fun createMissingItems(
         missingId: String,
         hostName: HostName,
-        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>,
-        associatedStorage: AssociatedStorage
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
         val syncItem = syncItemsById[(missingId to hostName)]!!
         val createdItem =
@@ -425,7 +421,7 @@ class WLSService(
                     callbackUrl = null,
                     location = syncItem.location,
                     quantity = syncItem.quantity,
-                    associatedStorage = associatedStorage
+                    associatedStorage = syncItem.associatedStorage
                 )
             )
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
@@ -433,15 +429,14 @@ class WLSService(
 
     private suspend fun updateItemsForSynchronization(
         itemToUpdate: Item,
-        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>,
-        associatedStorage: AssociatedStorage
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
         val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
 
         val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
 
-        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, associatedStorage)
+        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
             itemRepository.updateItem(

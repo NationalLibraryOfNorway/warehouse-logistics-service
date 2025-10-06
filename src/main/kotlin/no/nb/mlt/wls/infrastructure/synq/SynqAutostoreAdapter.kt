@@ -111,7 +111,7 @@ class SynqAutostoreAdapter(
             .awaitSingle()
     }
 
-    override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.SYNQ
+    override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.AUTOSTORE
 
     // This adapter method is a no-op, since the item creation is handled by the standard SynQ adapter
     override fun canHandleItem(item: Item): Boolean = false
