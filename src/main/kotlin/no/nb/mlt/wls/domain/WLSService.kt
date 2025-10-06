@@ -104,8 +104,8 @@ class WLSService(
                     itemRepository.updateItem(
                         item.hostId,
                         item.hostName,
-                        updateItemPayload.location,
                         updateItemPayload.quantity,
+                        updateItemPayload.location,
                         item.associatedStorage
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
@@ -442,8 +442,8 @@ class WLSService(
             itemRepository.updateItem(
                 itemToUpdate.hostId,
                 itemToUpdate.hostName,
-                itemToUpdate.location,
                 itemToUpdate.quantity,
+                itemToUpdate.location,
                 itemToUpdate.associatedStorage
             )
             logger.info {
@@ -466,8 +466,8 @@ class WLSService(
                 itemRepository.updateItem(
                     updatedItem.hostId,
                     updatedItem.hostName,
-                    updatedItem.location,
                     updatedItem.quantity,
+                    updatedItem.location,
                     updatedItem.associatedStorage
                 )
                 logger.info {
@@ -495,8 +495,8 @@ class WLSService(
                     itemRepository.updateItem(
                         missingItem.hostId,
                         missingItem.hostName,
-                        missingItem.location,
                         missingItem.quantity,
+                        missingItem.location,
                         AssociatedStorage.UNKNOWN
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))

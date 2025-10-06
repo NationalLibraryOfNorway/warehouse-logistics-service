@@ -136,8 +136,8 @@ class MongoItemRepositoryAdapter(
     override suspend fun updateItem(
         hostId: String,
         hostName: HostName,
-        location: String,
         quantity: Int,
+        location: String,
         associatedStorage: AssociatedStorage
     ): Item {
         val itemsModified =

@@ -30,8 +30,8 @@ fun List<KardexSyncMaterialPayload>.toStockCountPayload(): List<StockCount.Count
         StockCount.CountStockDTO(
             hostId = kardexPayload.hostId,
             hostName = HostName.fromString(kardexPayload.hostName),
-            location = kardexPayload.location,
             quantity = kardexPayload.quantity.toInt(),
+            location = kardexPayload.location,
             associatedStorage = AssociatedStorage.KARDEX
         )
     }

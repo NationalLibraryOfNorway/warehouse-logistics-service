@@ -32,8 +32,8 @@ fun interface StockCount {
     data class CountStockDTO(
         val hostId: String,
         val hostName: HostName,
-        val location: String,
         val quantity: Int,
+        val location: String,
         val associatedStorage: AssociatedStorage
     )
 }

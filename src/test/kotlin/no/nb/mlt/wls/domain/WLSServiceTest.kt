@@ -155,8 +155,8 @@ class WLSServiceTest {
             itemRepository.updateItem(
                 startingItem.hostId,
                 startingItem.hostName,
-                expectedItem.location,
                 expectedItem.quantity,
+                expectedItem.location,
                 expectedItem.associatedStorage
             )
         } answers { expectedItem }
@@ -1058,13 +1058,13 @@ class WLSServiceTest {
                 quantity: Int,
                 location: String,
                 associatedStorage: AssociatedStorage
-            ): Item = updateItem(hostId, hostName, location, quantity, associatedStorage)
+            ): Item = updateItem(hostId, hostName, quantity, location, associatedStorage)
 
             override suspend fun updateItem(
                 hostId: String,
                 hostName: HostName,
-                location: String,
                 quantity: Int,
+                location: String,
                 associatedStorage: AssociatedStorage
             ): Item {
                 val item = itemList.first { it.hostName == hostName && it.hostId == hostId }
