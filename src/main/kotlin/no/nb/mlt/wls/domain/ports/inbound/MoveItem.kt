@@ -2,6 +2,7 @@ package no.nb.mlt.wls.domain.ports.inbound
 
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -34,5 +35,6 @@ data class MoveItemPayload(
     val quantity: Int,
     @field:NotBlank(message = "Location can not be blank")
     val location: String,
+    @field:NotNull(message = "Associated storage system can not be blank")
     val associatedStorage: AssociatedStorage
 )
