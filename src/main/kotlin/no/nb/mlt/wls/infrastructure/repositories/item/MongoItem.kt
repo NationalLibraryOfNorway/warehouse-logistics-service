@@ -1,11 +1,11 @@
 package no.nb.mlt.wls.infrastructure.repositories.item
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.Storage
 import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
@@ -21,7 +21,7 @@ data class MongoItem(
     val callbackUrl: String?,
     val location: String,
     val quantity: Int,
-    val storage: Storage
+    val associatedStorage: AssociatedStorage
 )
 
 fun Item.toMongoItem() =
@@ -35,7 +35,7 @@ fun Item.toMongoItem() =
         this.callbackUrl,
         this.location,
         this.quantity,
-        this.storage
+        this.associatedStorage
     )
 
 fun MongoItem.toItem() =
@@ -49,5 +49,5 @@ fun MongoItem.toItem() =
         this.callbackUrl,
         this.location,
         this.quantity,
-        this.storage
+        this.associatedStorage
     )

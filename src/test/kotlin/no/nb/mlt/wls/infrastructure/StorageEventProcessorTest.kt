@@ -6,6 +6,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
@@ -212,9 +213,8 @@ class StorageEventProcessorTest {
     private val happyStorageSystemFacadeMock =
         mockk<StorageSystemFacade> {
             coEvery { canHandleItem(any()) } returns true
-            coEvery { canHandleLocation("invalid-location") } returns false
-            coEvery { canHandleLocation("SYNQ_WAREHOUSE") } returns true
-            coEvery { canHandleLocation("WITH_LENDER") } returns true
+            coEvery { isInStorage(AssociatedStorage.UNKNOWN) } returns false
+            coEvery { isInStorage(AssociatedStorage.SYNQ) } returns true
             coEvery { deleteOrder(any(), any()) } returns Unit
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit

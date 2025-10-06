@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.kardex
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -99,7 +100,7 @@ class KardexAdapter(
             }.awaitSingle()
     }
 
-    override suspend fun canHandleLocation(location: String): Boolean = location == "NB Mo i Rana"
+    override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
 }

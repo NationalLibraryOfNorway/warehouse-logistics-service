@@ -37,6 +37,7 @@ const val MISSING = "MISSING"
  * @property callbackUrl An optional URL for callbacks related to the item.
  * @property location The current location of the item.
  * @property quantity The quantity of the item available in stock.
+ * @property associatedStorage The storage system the item was last seen in, which determines where orders are sent.
  */
 class Item(
     val hostId: String,
@@ -48,7 +49,7 @@ class Item(
     val callbackUrl: String?,
     location: String?,
     quantity: Int = 0,
-    val storage: Storage
+    val associatedStorage: AssociatedStorage
 ) {
     init {
         if (location == null && quantity != 0) {
