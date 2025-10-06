@@ -433,21 +433,23 @@ class WLSService(
 
     private suspend fun updateItemsForSynchronization(
         itemToUpdate: Item,
-        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
+        syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>,
+        associatedStorage: AssociatedStorage
     ) {
         val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
 
         val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
 
-        itemToUpdate.synchronizeQuantityAndLocation(syncItem.quantity, syncItem.location)
+        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            itemRepository.updateLocationAndQuantity(
+            itemRepository.updateItem(
                 itemToUpdate.hostId,
                 itemToUpdate.hostName,
                 itemToUpdate.location,
-                itemToUpdate.quantity
+                itemToUpdate.quantity,
+                itemToUpdate.associatedStorage
             )
             logger.info {
                 """

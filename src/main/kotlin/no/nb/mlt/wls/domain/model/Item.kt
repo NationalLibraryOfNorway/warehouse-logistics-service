@@ -49,7 +49,7 @@ class Item(
     val callbackUrl: String?,
     location: String?,
     quantity: Int = 0,
-    val associatedStorage: AssociatedStorage
+    var associatedStorage: AssociatedStorage
 ) {
     init {
         if (location == null && quantity != 0) {
@@ -102,15 +102,21 @@ class Item(
      * @throws ValidationException if the location is null and quantity is not zero.
      */
     @Throws(ValidationException::class)
-    fun synchronizeQuantityAndLocation(
+    fun synchronizeItem(
         quantity: Int,
-        location: String?
+        location: String?,
+        associatedStorage: AssociatedStorage
     ) {
         if (location == null && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
 
         this.quantity = quantity
+
+        // only override storage on sync if item is present
+        if (quantity > 0) {
+            this.associatedStorage = associatedStorage
+        }
 
         // do not override with lender location
         if (location == null && this.location == WITH_LENDER_LOCATION) {

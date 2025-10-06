@@ -1,12 +1,16 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 
 fun interface SynchronizeItems {
-    suspend fun synchronizeItems(items: List<ItemToSynchronize>)
+    suspend fun synchronizeItems(
+        items: List<ItemToSynchronize>,
+        associatedStorage: AssociatedStorage
+    )
 
     data class ItemToSynchronize(
         val hostId: String,
