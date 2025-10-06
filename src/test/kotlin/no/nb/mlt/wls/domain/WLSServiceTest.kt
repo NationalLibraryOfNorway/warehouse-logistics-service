@@ -831,7 +831,7 @@ class WLSServiceTest {
             )
 
         runTest {
-            cut.synchronizeItems(itemsToSync)
+            cut.synchronizeItems(itemsToSync, AssociatedStorage.SYNQ)
 
             // Assert that quantity and location changed
             val updatedItem = itemRepository.getItem(testItem1.hostName, testItem1.hostId)
