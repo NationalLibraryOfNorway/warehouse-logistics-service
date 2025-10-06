@@ -4,7 +4,7 @@ import no.nb.mlt.wls.domain.model.AssociatedStorage
 
 /**
  * Computes the associated storage from the Synq-specific location.
- * Smelly code is inevitable...
+ * Copilot complaining is inevitable...
  */
 fun computeAssociatedStorage(location: String): AssociatedStorage =
-    if (location.uppercase() == "AUTOSTORE_WAREHOUSE") AssociatedStorage.AUTOSTORE else AssociatedStorage.SYNQ
+    if (location.uppercase().contains("AUTOSTORE")) AssociatedStorage.AUTOSTORE else AssociatedStorage.SYNQ
