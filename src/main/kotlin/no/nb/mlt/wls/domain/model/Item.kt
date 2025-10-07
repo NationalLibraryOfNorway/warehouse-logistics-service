@@ -110,16 +110,15 @@ class Item(
         location: String?,
         associatedStorage: AssociatedStorage
     ) {
+        if (this.associatedStorage != associatedStorage && quantity == 0) {
+            // Ignore updates from other systems if the quantity is 0
+            return
+        }
         if (location == null && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
 
         this.quantity = quantity
-
-        // only override storage on sync if item is present
-        if (quantity > 0) {
-            this.associatedStorage = associatedStorage
-        }
 
         // do not override with lender location
         if (location == null && this.location == WITH_LENDER_LOCATION) {
