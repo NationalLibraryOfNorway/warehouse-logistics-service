@@ -42,6 +42,7 @@ import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertThrows
 
 class WLSServiceTest {
@@ -851,6 +852,49 @@ class WLSServiceTest {
             assertThat(createdItem).matches {
                 it?.quantity == 1 && it.location == "SYNQ_WAREHOUSE"
             }
+        }
+    }
+
+    @Test
+    fun `synchronizeItem should only update item when item exists within another storage system`() {
+        val testItemKardex = createTestItem(quantity = 1, location = "SOMEWHERE_IN_KARDEX", associatedStorage = AssociatedStorage.KARDEX)
+
+        // assume item is 'missing' from another storage system
+        val itemsToSync =
+            listOf(
+                SynchronizeItems.ItemToSynchronize(
+                    hostName = testItemKardex.hostName,
+                    hostId = testItemKardex.hostId,
+                    quantity = 0,
+                    location = "UNKNOWN",
+                    description = testItemKardex.description,
+                    itemCategory = testItemKardex.itemCategory,
+                    packaging = testItemKardex.packaging,
+                    currentPreferredEnvironment = testItemKardex.preferredEnvironment,
+                    associatedStorage = AssociatedStorage.SYNQ
+                )
+            )
+
+        val itemRepository = createInMemItemRepo(mutableListOf(testItemKardex))
+        val cut =
+            WLSService(
+                itemRepository,
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.synchronizeItems(itemsToSync)
+
+            val notUpdatedItem = cut.getItem(testItemKardex.hostName, testItemKardex.hostId)
+            assertNotNull(notUpdatedItem)
+            assert(testItemKardex == notUpdatedItem)
+            assert(notUpdatedItem.quantity != 0)
+            assert(notUpdatedItem.associatedStorage != AssociatedStorage.SYNQ)
         }
     }
 
