@@ -892,9 +892,9 @@ class WLSServiceTest {
 
             val notUpdatedItem = cut.getItem(testItemKardex.hostName, testItemKardex.hostId)
             assertNotNull(notUpdatedItem)
-            assert(testItemKardex == notUpdatedItem)
-            assert(notUpdatedItem.quantity != 0)
-            assert(notUpdatedItem.associatedStorage != AssociatedStorage.SYNQ)
+            assertThat(testItemKardex).isEqualTo(notUpdatedItem)
+            assertThat(notUpdatedItem.quantity).isNotZero
+            assertThat(notUpdatedItem.associatedStorage != AssociatedStorage.SYNQ)
         }
     }
 
@@ -1010,8 +1010,8 @@ class WLSServiceTest {
             cut.updateItem(testKardexUpdateItemPayload)
 
             val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
-            assert(item != null)
-            assert(item == expectedItem)
+            assertThat(item).isNotNull
+            assertThat(item).isEqualTo(expectedItem)
         }
     }
 
