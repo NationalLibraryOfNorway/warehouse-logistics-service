@@ -121,7 +121,7 @@ class StorageEventProcessorTest {
         }
 
     @Test
-    fun `Events get grouped and if one group fails, other gets processed`() =
+    fun `events get grouped and if one group fails, other gets processed`() =
         runTest {
             // Test data
             val createdOrder1 = createTestOrder(hostOrderId = "order1")

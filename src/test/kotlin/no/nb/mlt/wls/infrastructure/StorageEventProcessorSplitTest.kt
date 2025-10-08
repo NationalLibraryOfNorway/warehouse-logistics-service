@@ -36,7 +36,7 @@ class StorageEventProcessorSplitTest {
     }
 
     @Test
-    fun `CreateOrder splits orders correctly`() {
+    fun `CreateOrder splits orders by storage system`() {
         runTest {
             val event = OrderCreated(testOrder)
 
