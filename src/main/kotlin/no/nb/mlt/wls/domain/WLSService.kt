@@ -460,27 +460,43 @@ class WLSService(
         val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
         val currentItems = getItemsByIds(items.first().hostName, items.map { it.hostId })
 
-        currentItems.forEach { item ->
-            val updatedItem = updatedItemMap[item.hostId to item.hostName]
-            if (updatedItem != null) {
-                itemRepository.updateItem(
-                    updatedItem.hostId,
-                    updatedItem.hostName,
-                    updatedItem.quantity,
-                    updatedItem.location,
-                    updatedItem.associatedStorage
-                )
-                logger.info {
-                    """
-                    Updated stock of item ${updatedItem.hostName}_${updatedItem.hostId}:
-                    Updated quantity [${item.quantity} -> ${updatedItem.quantity}]
-                    Updated location [${item.location} -> ${updatedItem.location}]
-                    """.trimIndent()
-                }
+        currentItems.forEach { currentItem ->
+            val stockCountDTO = updatedItemMap[currentItem.hostId to currentItem.hostName]
+            if (stockCountDTO == null) {
+                logger.error { "Item ${currentItem.hostId} for ${currentItem.hostName} not found" }
             } else {
-                logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
+                // TODO - At this point consider refactoring this method to either go through
+                //  updateItemsForSynchronization, or through domain in a meaningful way
+                val oldQuantity = currentItem.quantity
+                val newQuantity = stockCountDTO.quantity
+
+                val oldLocation = currentItem.location
+                val newLocation = stockCountDTO.location
+
+                if (oldQuantity != newQuantity || oldLocation != newLocation) {
+                    transactionPort.executeInTransaction {
+                        val updatedItem =
+                            itemRepository.updateItem(
+                                stockCountDTO.hostId,
+                                stockCountDTO.hostName,
+                                stockCountDTO.quantity,
+                                stockCountDTO.location,
+                                stockCountDTO.associatedStorage
+                            )
+                        logger.info {
+                            """
+                            Updated stock of item item ${stockCountDTO.hostName}_${stockCountDTO.hostId}:
+                            Updated quantity [${currentItem.quantity} -> ${stockCountDTO.quantity}]
+                            Updated location [${currentItem.location} -> ${stockCountDTO.location}]
+                            """.trimIndent()
+                        }
+                        catalogEventRepository.save(ItemEvent(updatedItem))
+                    } ?: throw RuntimeException("Could not create item")
+                }
             }
         }
+        // Hint to the catalog outbox that it should start processing items
+        catalogEventProcessor.processOutbox()
     }
 
     override suspend fun reportItemMissing(
