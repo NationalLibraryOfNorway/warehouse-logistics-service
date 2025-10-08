@@ -11,6 +11,6 @@ class ItemTest {
         val testItem = createTestItem(quantity = 1, location = "SOMEWHERE_IN_KARDEX", associatedStorage = AssociatedStorage.KARDEX)
         testItem.synchronizeItem(0, "MISSING", AssociatedStorage.SYNQ)
         assertThat(testItem.associatedStorage).isNotEqualTo(AssociatedStorage.SYNQ)
-        assertThat(testItem.associatedStorage).isEqualTo(expectedItem)
+        assertThat(testItem).isEqualTo(expectedItem)
     }
 }
