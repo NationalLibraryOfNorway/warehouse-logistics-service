@@ -179,7 +179,8 @@ data class Product(
             hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantity,
-            location = location
+            location = location,
+            associatedStorage = computeAssociatedStorage(location)
         )
     }
 
@@ -188,7 +189,8 @@ data class Product(
             hostName = getHostNameFromSynqTypes(),
             hostId = productId,
             quantity = quantityOnHand ?: throw ItemMovingException("Quantity on hand must not be null"),
-            location = location
+            location = location,
+            associatedStorage = computeAssociatedStorage(location)
         )
 
     private fun getHostNameFromSynqTypes(): HostName {

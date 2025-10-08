@@ -1,9 +1,11 @@
 package no.nb.mlt.wls
 
+import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.order.ApiOrderPayload
 import no.nb.mlt.wls.application.synqapi.synq.AttributeValue
 import no.nb.mlt.wls.application.synqapi.synq.Position
 import no.nb.mlt.wls.application.synqapi.synq.Product
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -40,6 +42,20 @@ import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 // import no.nb.mlt.wls.createTestOrder
 
 // //////////////////////////////////////////////////////////////////////////////
+
+fun ApiItemPayload.toItem() =
+    Item(
+        hostId = hostId,
+        hostName = hostName,
+        description = description,
+        itemCategory = itemCategory,
+        preferredEnvironment = preferredEnvironment,
+        packaging = packaging,
+        callbackUrl = callbackUrl,
+        location = location,
+        quantity = quantity,
+        associatedStorage = AssociatedStorage.UNKNOWN
+    )
 
 fun ApiOrderPayload.toOrder() =
     Order(
@@ -138,8 +154,9 @@ fun createTestItem(
     packaging: Packaging = Packaging.NONE,
     callbackUrl: String? = "https://callback-wls.no/item",
     location: String = "SYNQ_WAREHOUSE",
-    quantity: Int = 1
-) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity)
+    quantity: Int = 1,
+    associatedStorage: AssociatedStorage = AssociatedStorage.SYNQ
+) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity, associatedStorage)
 
 fun createTestOrder(
     hostName: HostName = HostName.AXIELL,

@@ -85,19 +85,6 @@ data class ApiItemPayload(
     )
     val quantity: Int
 ) {
-    fun toItem(): Item =
-        Item(
-            hostId = hostId,
-            hostName = hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl,
-            location = location,
-            quantity = quantity
-        )
-
     @Throws(ValidationException::class)
     fun validate() {
         if (hostId.isBlank()) {

@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -16,6 +17,7 @@ fun interface SynchronizeItems {
         val quantity: Int,
         val itemCategory: ItemCategory,
         val packaging: Packaging,
-        val currentPreferredEnvironment: Environment
+        val currentPreferredEnvironment: Environment,
+        val associatedStorage: AssociatedStorage
     )
 }

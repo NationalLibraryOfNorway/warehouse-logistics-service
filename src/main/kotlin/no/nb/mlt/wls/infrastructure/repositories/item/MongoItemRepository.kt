@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.repositories.item
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
@@ -107,11 +108,12 @@ class MongoItemRepositoryAdapter(
         hostName: HostName,
         hostId: String,
         quantity: Int,
-        location: String
+        location: String,
+        associatedStorage: AssociatedStorage
     ): Item {
         val itemsModified =
             mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
+                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
                 .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
@@ -131,15 +133,16 @@ class MongoItemRepositoryAdapter(
         return getItem(hostName, hostId)!!
     }
 
-    override suspend fun updateLocationAndQuantity(
+    override suspend fun updateItem(
         hostId: String,
         hostName: HostName,
+        quantity: Int,
         location: String,
-        quantity: Int
+        associatedStorage: AssociatedStorage
     ): Item {
         val itemsModified =
             mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location)
+                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
                 .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
@@ -175,12 +178,13 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
 
     @Query("{hostName: ?0,hostId: ?1}")
-    @Update($$"{'$set':{quantity: ?2,location: ?3}}")
+    @Update($$"{'$set':{quantity: ?2,location: ?3,storage: ?4}}")
     fun findAndUpdateItemByHostNameAndHostId(
         hostName: HostName,
         hostId: String,
         quantity: Int,
-        location: String
+        location: String,
+        associatedStorage: AssociatedStorage
     ): Mono<Long>
 
     fun findAllByHostNameAndHostIdIn(

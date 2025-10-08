@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.synq
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -110,12 +111,7 @@ class SynqAutostoreAdapter(
             .awaitSingle()
     }
 
-    override suspend fun canHandleLocation(location: String): Boolean =
-        when (location.uppercase()) {
-            "SYNQ_AUTOSTORE" -> true
-            "AUTOSTORE_WAREHOUSE" -> true
-            else -> false
-        }
+    override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.AUTOSTORE
 
     // This adapter method is a no-op, since the item creation is handled by the standard SynQ adapter
     override fun canHandleItem(item: Item): Boolean = false

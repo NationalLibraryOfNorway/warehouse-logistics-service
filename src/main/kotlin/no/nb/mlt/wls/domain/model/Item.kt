@@ -37,6 +37,7 @@ const val MISSING = "MISSING"
  * @property callbackUrl An optional URL for callbacks related to the item.
  * @property location The current location of the item.
  * @property quantity The quantity of the item available in stock.
+ * @property associatedStorage The storage system the item was last seen in, which determines where orders are sent.
  */
 class Item(
     val hostId: String,
@@ -47,7 +48,8 @@ class Item(
     val packaging: Packaging,
     val callbackUrl: String?,
     location: String?,
-    quantity: Int = 0
+    quantity: Int = 0,
+    associatedStorage: AssociatedStorage
 ) {
     init {
         if (location == null && quantity != 0) {
@@ -59,6 +61,9 @@ class Item(
         private set
 
     var quantity: Int = quantity
+        private set
+
+    var associatedStorage: AssociatedStorage = associatedStorage
         private set
 
     /**
@@ -100,10 +105,15 @@ class Item(
      * @throws ValidationException if the location is null and quantity is not zero.
      */
     @Throws(ValidationException::class)
-    fun synchronizeQuantityAndLocation(
+    fun synchronizeItem(
         quantity: Int,
-        location: String?
+        location: String?,
+        associatedStorage: AssociatedStorage
     ) {
+        if (this.associatedStorage != associatedStorage && quantity == 0) {
+            // Ignore updates from other systems if the quantity is 0
+            return
+        }
         if (location == null && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }

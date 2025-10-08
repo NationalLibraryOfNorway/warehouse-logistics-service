@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -30,7 +31,7 @@ interface StorageSystemFacade {
         hostName: HostName
     )
 
-    suspend fun canHandleLocation(location: String): Boolean
+    fun isInStorage(location: AssociatedStorage): Boolean
 
     fun canHandleItem(item: Item): Boolean
 }

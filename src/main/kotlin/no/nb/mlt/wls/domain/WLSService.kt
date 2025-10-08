@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -100,11 +101,12 @@ class WLSService(
         val (updatedItem, catalogEvent) =
             transactionPort.executeInTransaction {
                 val updatedItem =
-                    itemRepository.updateLocationAndQuantity(
+                    itemRepository.updateItem(
                         item.hostId,
                         item.hostName,
+                        updateItemPayload.quantity,
                         updateItemPayload.location,
-                        updateItemPayload.quantity
+                        updateItemPayload.associatedStorage
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
@@ -129,7 +131,8 @@ class WLSService(
                         item.hostName,
                         item.hostId,
                         item.quantity + moveItemPayload.quantity,
-                        moveItemPayload.location
+                        moveItemPayload.location,
+                        moveItemPayload.associatedStorage
                     )
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
@@ -171,7 +174,8 @@ class WLSService(
                             item.hostName,
                             item.hostId,
                             pickedItem.quantity,
-                            pickedItem.location
+                            pickedItem.location,
+                            pickedItem.associatedStorage
                         )
 
                     catalogEventRepository.save(ItemEvent(movedItem))
@@ -416,7 +420,8 @@ class WLSService(
                     packaging = syncItem.packaging,
                     callbackUrl = null,
                     location = syncItem.location,
-                    quantity = syncItem.quantity
+                    quantity = syncItem.quantity,
+                    associatedStorage = syncItem.associatedStorage
                 )
             )
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
@@ -431,14 +436,15 @@ class WLSService(
         val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
 
-        itemToUpdate.synchronizeQuantityAndLocation(syncItem.quantity, syncItem.location)
+        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            itemRepository.updateLocationAndQuantity(
+            itemRepository.updateItem(
                 itemToUpdate.hostId,
                 itemToUpdate.hostName,
+                itemToUpdate.quantity,
                 itemToUpdate.location,
-                itemToUpdate.quantity
+                itemToUpdate.associatedStorage
             )
             logger.info {
                 """
@@ -457,10 +463,16 @@ class WLSService(
         currentItems.forEach { item ->
             val updatedItem = updatedItemMap[item.hostId to item.hostName]
             if (updatedItem != null) {
-                itemRepository.updateLocationAndQuantity(updatedItem.hostId, updatedItem.hostName, updatedItem.location, updatedItem.quantity)
+                itemRepository.updateItem(
+                    updatedItem.hostId,
+                    updatedItem.hostName,
+                    updatedItem.quantity,
+                    updatedItem.location,
+                    updatedItem.associatedStorage
+                )
                 logger.info {
                     """
-                    Updated stock of item item ${updatedItem.hostName}_${updatedItem.hostId}:
+                    Updated stock of item ${updatedItem.hostName}_${updatedItem.hostId}:
                     Updated quantity [${item.quantity} -> ${updatedItem.quantity}]
                     Updated location [${item.location} -> ${updatedItem.location}]
                     """.trimIndent()
@@ -480,11 +492,12 @@ class WLSService(
             transactionPort.executeInTransaction {
                 val missingItem = item.reportMissing()
                 val updatedMissingItem =
-                    itemRepository.updateLocationAndQuantity(
+                    itemRepository.updateItem(
                         missingItem.hostId,
                         missingItem.hostName,
+                        missingItem.quantity,
                         missingItem.location,
-                        missingItem.quantity
+                        AssociatedStorage.UNKNOWN
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)

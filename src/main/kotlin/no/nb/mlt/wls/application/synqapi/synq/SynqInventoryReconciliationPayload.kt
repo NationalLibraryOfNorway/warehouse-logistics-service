@@ -136,6 +136,7 @@ data class LoadUnit(
             itemCategory = getMappedCategory(),
             packaging = getMappedUOM(),
             currentPreferredEnvironment = mapCurrentPreferredEnvironment(),
-            description = if (description.isNullOrBlank()) "-" else description
+            description = if (description.isNullOrBlank()) "-" else description,
+            associatedStorage = computeAssociatedStorage(location ?: "")
         )
 }

@@ -8,6 +8,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -41,6 +42,7 @@ import no.nb.mlt.wls.toItemMetadata
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertThrows
 
 class WLSServiceTest {
@@ -132,18 +134,31 @@ class WLSServiceTest {
     fun `updateItem should change item's location and quantity`() {
         val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1)
         val expectedItem =
-            createTestItem(hostName = startingItem.hostName, hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = 0)
+            createTestItem(
+                hostName = startingItem.hostName,
+                hostId = startingItem.hostId,
+                location = WITH_LENDER_LOCATION,
+                associatedStorage = AssociatedStorage.SYNQ,
+                quantity = 0
+            )
         val updateItemPayload =
-            UpdateItemPayload(expectedItem.hostName, expectedItem.hostId, expectedItem.quantity, expectedItem.location)
+            UpdateItemPayload(
+                expectedItem.hostName,
+                expectedItem.hostId,
+                expectedItem.quantity,
+                expectedItem.location,
+                expectedItem.associatedStorage
+            )
         val itemUpdatedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
         coEvery {
-            itemRepository.updateLocationAndQuantity(
+            itemRepository.updateItem(
                 startingItem.hostId,
                 startingItem.hostName,
+                expectedItem.quantity,
                 expectedItem.location,
-                expectedItem.quantity
+                expectedItem.associatedStorage
             )
         } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemUpdatedEvent }
@@ -153,7 +168,7 @@ class WLSServiceTest {
             val updateItemResult = serviceAvecTrans.updateItem(updateItemPayload)
 
             assertThat(updateItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { itemRepository.updateLocationAndQuantity(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.updateItem(any(), any(), any(), any(), any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemUpdatedEvent) }
         }
@@ -165,7 +180,7 @@ class WLSServiceTest {
         val expectedItem =
             createTestItem(hostName = startingItem.hostName, hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = -1)
         val moveItemPayload =
-            MoveItemPayload(expectedItem.hostName, expectedItem.hostId, expectedItem.quantity, expectedItem.location)
+            MoveItemPayload(expectedItem.hostName, expectedItem.hostId, expectedItem.quantity, expectedItem.location, expectedItem.associatedStorage)
         val itemMovedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
@@ -174,7 +189,8 @@ class WLSServiceTest {
                 startingItem.hostName,
                 startingItem.hostId,
                 startingItem.quantity + expectedItem.quantity,
-                expectedItem.location
+                expectedItem.location,
+                expectedItem.associatedStorage
             )
         } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemMovedEvent }
@@ -184,7 +200,7 @@ class WLSServiceTest {
             val moveItemResult = serviceAvecTrans.moveItem(moveItemPayload)
 
             assertThat(moveItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemMovedEvent) }
         }
@@ -200,7 +216,7 @@ class WLSServiceTest {
             }
 
             coVerify(exactly = 1) { itemRepository.getItem(any(), any()) }
-            coVerify(exactly = 0) { itemRepository.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 0) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
         }
     }
 
@@ -217,7 +233,8 @@ class WLSServiceTest {
                 expectedItem.hostName,
                 expectedItem.hostId,
                 expectedItem.quantity,
-                expectedItem.location
+                expectedItem.location,
+                expectedItem.associatedStorage
             )
         } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemPickedEvent }
@@ -228,7 +245,7 @@ class WLSServiceTest {
 
             coVerify(exactly = 1) { itemRepository.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { itemRepository.getItemsByIds(any(), any()) }
-            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemPickedEvent) }
         }
@@ -799,7 +816,8 @@ class WLSServiceTest {
                     description = testItem1.description,
                     itemCategory = testItem1.itemCategory,
                     packaging = testItem1.packaging,
-                    currentPreferredEnvironment = testItem1.preferredEnvironment
+                    currentPreferredEnvironment = testItem1.preferredEnvironment,
+                    associatedStorage = testItem1.associatedStorage
                 ),
                 // This item should be created
                 SynchronizeItems.ItemToSynchronize(
@@ -810,7 +828,8 @@ class WLSServiceTest {
                     description = "Some description",
                     itemCategory = ItemCategory.PAPER,
                     packaging = Packaging.BOX,
-                    currentPreferredEnvironment = Environment.NONE
+                    currentPreferredEnvironment = Environment.NONE,
+                    associatedStorage = AssociatedStorage.SYNQ
                 )
             )
 
@@ -833,6 +852,49 @@ class WLSServiceTest {
             assertThat(createdItem).matches {
                 it?.quantity == 1 && it.location == "SYNQ_WAREHOUSE"
             }
+        }
+    }
+
+    @Test
+    fun `synchronizeItem should only update item when item exists within another storage system`() {
+        val testItemKardex = createTestItem(quantity = 1, location = "SOMEWHERE_IN_KARDEX", associatedStorage = AssociatedStorage.KARDEX)
+
+        // assume item is 'missing' from another storage system
+        val itemsToSync =
+            listOf(
+                SynchronizeItems.ItemToSynchronize(
+                    hostName = testItemKardex.hostName,
+                    hostId = testItemKardex.hostId,
+                    quantity = 0,
+                    location = "UNKNOWN",
+                    description = testItemKardex.description,
+                    itemCategory = testItemKardex.itemCategory,
+                    packaging = testItemKardex.packaging,
+                    currentPreferredEnvironment = testItemKardex.preferredEnvironment,
+                    associatedStorage = AssociatedStorage.SYNQ
+                )
+            )
+
+        val itemRepository = createInMemItemRepo(mutableListOf(testItemKardex))
+        val cut =
+            WLSService(
+                itemRepository,
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        runTest {
+            cut.synchronizeItems(itemsToSync)
+
+            val notUpdatedItem = cut.getItem(testItemKardex.hostName, testItemKardex.hostId)
+            assertNotNull(notUpdatedItem)
+            assertThat(testItemKardex).isEqualTo(notUpdatedItem)
+            assertThat(notUpdatedItem.quantity).isNotZero
+            assertThat(notUpdatedItem.associatedStorage != AssociatedStorage.SYNQ)
         }
     }
 
@@ -921,6 +983,72 @@ class WLSServiceTest {
     }
 
     @Test
+    fun `updateItem changes storage correctly when item is updated`() {
+        val storedItem = createTestItem(quantity = 0, location = UNKNOWN_LOCATION)
+        val expectedItem =
+            createTestItem(
+                location = testKardexUpdateItemPayload.location,
+                quantity = testKardexUpdateItemPayload.quantity,
+                associatedStorage = testKardexUpdateItemPayload.associatedStorage
+            )
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+        coEvery { orderRepository.getOrdersWithPickedItems(any(), any()) } returns listOf()
+
+        runTest {
+            cut.updateItem(testKardexUpdateItemPayload)
+
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assertThat(item).isNotNull
+            assertThat(item).isEqualTo(expectedItem)
+        }
+    }
+
+    @Test
+    fun `moveItem changes storage correctly when item is updated`() {
+        val storedItem = createTestItem(quantity = 0, location = UNKNOWN_LOCATION)
+        val expectedItem =
+            createTestItem(
+                location = testKardexMoveItemPayload.location,
+                quantity = testKardexMoveItemPayload.quantity,
+                associatedStorage = testKardexMoveItemPayload.associatedStorage
+            )
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                orderRepository,
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+        coEvery { orderRepository.getOrdersWithPickedItems(any(), any()) } returns listOf()
+
+        runTest {
+            cut.moveItem(testMoveItemPayload)
+
+            val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
+            assert(item != null)
+            assert(item == expectedItem)
+        }
+    }
+
+    @Test
     fun `moveItem should mark order items as returned`() {
         val storedItem = createTestItem(quantity = 0)
         val expectedItem = createTestItem(location = testMoveItemPayload.location, quantity = testMoveItemPayload.quantity)
@@ -970,7 +1098,17 @@ class WLSServiceTest {
             hostName = testItem.hostName,
             hostId = testItem.hostId,
             quantity = 1,
-            location = "KNOWN_LOCATION"
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.SYNQ
+        )
+
+    private val testKardexMoveItemPayload =
+        MoveItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.KARDEX
         )
 
     private val testUpdateItemPayload =
@@ -978,7 +1116,17 @@ class WLSServiceTest {
             hostName = testItem.hostName,
             hostId = testItem.hostId,
             quantity = 1,
-            location = "KNOWN_LOCATION"
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.SYNQ
+        )
+
+    private val testKardexUpdateItemPayload =
+        UpdateItemPayload(
+            hostName = testItem.hostName,
+            hostId = testItem.hostId,
+            quantity = 1,
+            location = "KNOWN_LOCATION",
+            associatedStorage = AssociatedStorage.KARDEX
         )
 
     private val createOrderDTO =
@@ -1036,14 +1184,16 @@ class WLSServiceTest {
                 hostName: HostName,
                 hostId: String,
                 quantity: Int,
-                location: String
-            ): Item = updateLocationAndQuantity(hostId, hostName, location, quantity)
+                location: String,
+                associatedStorage: AssociatedStorage
+            ): Item = updateItem(hostId, hostName, quantity, location, associatedStorage)
 
-            override suspend fun updateLocationAndQuantity(
+            override suspend fun updateItem(
                 hostId: String,
                 hostName: HostName,
+                quantity: Int,
                 location: String,
-                quantity: Int
+                associatedStorage: AssociatedStorage
             ): Item {
                 val item = itemList.first { it.hostName == hostName && it.hostId == hostId }
                 val index = itemList.indexOf(item)
@@ -1057,7 +1207,8 @@ class WLSServiceTest {
                         item.packaging,
                         item.callbackUrl,
                         location,
-                        quantity
+                        quantity,
+                        associatedStorage
                     )
                 itemList[index] = updatedItem
 

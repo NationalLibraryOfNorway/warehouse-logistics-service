@@ -149,7 +149,7 @@ class StorageEventProcessorAdapter(
 
     private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
         items.groupBy { item ->
-            storageSystems.firstOrNull { it.canHandleLocation(item.location) }
+            storageSystems.firstOrNull { it.isInStorage(item.associatedStorage) }
         }
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }

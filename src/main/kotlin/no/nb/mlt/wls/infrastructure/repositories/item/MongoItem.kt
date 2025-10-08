@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.infrastructure.repositories.item
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -19,7 +20,8 @@ data class MongoItem(
     val packaging: Packaging,
     val callbackUrl: String?,
     val location: String,
-    val quantity: Int
+    val quantity: Int,
+    val associatedStorage: AssociatedStorage
 )
 
 fun Item.toMongoItem() =
@@ -32,7 +34,8 @@ fun Item.toMongoItem() =
         this.packaging,
         this.callbackUrl,
         this.location,
-        this.quantity
+        this.quantity,
+        this.associatedStorage
     )
 
 fun MongoItem.toItem() =
@@ -45,5 +48,6 @@ fun MongoItem.toItem() =
         this.packaging,
         this.callbackUrl,
         this.location,
-        this.quantity
+        this.quantity,
+        this.associatedStorage
     )

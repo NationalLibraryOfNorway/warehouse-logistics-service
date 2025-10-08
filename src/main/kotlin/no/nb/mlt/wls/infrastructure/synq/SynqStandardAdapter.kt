@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.synq
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -134,11 +135,7 @@ class SynqStandardAdapter(
             .awaitSingle()
     }
 
-    override suspend fun canHandleLocation(location: String): Boolean =
-        when (location.uppercase()) {
-            "SYNQ_WAREHOUSE" -> true
-            else -> false
-        }
+    override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.SYNQ
 
     override fun canHandleItem(item: Item): Boolean {
         if (item.preferredEnvironment == Environment.FRAGILE) return false
