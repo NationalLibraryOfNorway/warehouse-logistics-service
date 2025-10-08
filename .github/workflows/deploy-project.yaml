@@ -264,6 +264,7 @@ jobs:
     needs: publish-image
     if: github.ref == 'refs/heads/main'
     runs-on: self-hosted-linux
+    environment: stage
     steps:
       - name: Generate token for mlt-argo repository
         uses: actions/create-github-app-token@v2
