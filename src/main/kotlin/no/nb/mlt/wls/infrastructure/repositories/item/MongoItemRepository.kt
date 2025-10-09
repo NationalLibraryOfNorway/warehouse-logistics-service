@@ -178,7 +178,7 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
     fun countItemsMatchingIds(ids: List<ItemId>): Mono<Long>
 
     @Query("{hostName: ?0,hostId: ?1}")
-    @Update($$"{'$set':{quantity: ?2,location: ?3,storage: ?4}}")
+    @Update($$"{'$set':{quantity: ?2,location: ?3,associatedStorage: ?4}}")
     fun findAndUpdateItemByHostNameAndHostId(
         hostName: HostName,
         hostId: String,
