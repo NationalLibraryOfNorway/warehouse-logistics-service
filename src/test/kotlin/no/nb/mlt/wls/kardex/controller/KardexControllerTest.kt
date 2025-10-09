@@ -20,6 +20,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -281,7 +282,7 @@ class KardexControllerTest(
     fun `stock sync for missing item completes without creating item`() {
         runTest {
             val nonExistingItem = "non-existing"
-            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNull()
 
             webTestClient
                 .mutateWith(csrf())
@@ -294,7 +295,7 @@ class KardexControllerTest(
                 .expectStatus()
                 .isOk()
 
-            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNull()
         }
     }
 

@@ -833,6 +833,9 @@ class WLSServiceTest {
                 )
             )
 
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
         runTest {
             cut.synchronizeItems(itemsToSync)
 
