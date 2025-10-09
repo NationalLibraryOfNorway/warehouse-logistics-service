@@ -439,20 +439,24 @@ class WLSService(
         itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            itemRepository.updateItem(
-                itemToUpdate.hostId,
-                itemToUpdate.hostName,
-                itemToUpdate.quantity,
-                itemToUpdate.location,
-                itemToUpdate.associatedStorage
-            )
-            logger.info {
-                """
-                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
-                """.trimIndent()
-            }
+            transactionPort.executeInTransaction {
+                val updatedItem =
+                    itemRepository.updateItem(
+                        itemToUpdate.hostId,
+                        itemToUpdate.hostName,
+                        itemToUpdate.quantity,
+                        itemToUpdate.location,
+                        itemToUpdate.associatedStorage
+                    )
+                logger.info {
+                    """
+                    Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                    Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                    Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                    """.trimIndent()
+                }
+                catalogEventRepository.save(ItemEvent(updatedItem))
+            } ?: throw RuntimeException("Failed saving catalog event for item: $syncItem")
         }
     }
 
@@ -465,8 +469,6 @@ class WLSService(
             if (stockCountDTO == null) {
                 logger.error { "Item ${currentItem.hostId} for ${currentItem.hostName} not found" }
             } else {
-                // TODO - At this point consider refactoring this method to either go through
-                //  updateItemsForSynchronization, or through domain in a meaningful way
                 val oldQuantity = currentItem.quantity
                 val newQuantity = stockCountDTO.quantity
 
