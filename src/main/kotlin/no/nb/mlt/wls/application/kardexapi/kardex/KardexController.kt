@@ -6,7 +6,7 @@ import jakarta.validation.Valid
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.StockCount
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
@@ -24,8 +24,8 @@ private val logger = KotlinLogging.logger {}
 @Tag(name = "Kardex", description = "API for receiving material and order updates from Kardex in Hermes WLS")
 class KardexController(
     private val updateItem: UpdateItem,
+    private val synchronizeItems: SynchronizeItems,
     private val pickOrderItems: PickOrderItems,
-    private val stockCount: StockCount,
     private val getItems: GetItems
 ) {
     @PostMapping("material-update")
@@ -45,15 +45,15 @@ class KardexController(
 
     @PostMapping("order-update")
     suspend fun transactionUpdate(
-        @RequestBody @Valid payloads: List<KardexTransactionPayload>
+        @RequestBody @Valid transactionPayloads: List<KardexTransactionPayload>
     ): ResponseEntity<Unit> {
-        payloads.forEach { order ->
-            val normalizedOrderId = normalizeOrderId(order.hostOrderId)
-            val resolvedHostName = getHostNameForItem(order.hostName, order.hostId)
-            val validOrder = order.copy(hostName = resolvedHostName.toString())
+        transactionPayloads.forEach { payload ->
+            val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
+            val resolvedHostName = getHostNameForItem(payload.hostName, payload.hostId)
+            val validPayload = payload.copy(hostName = resolvedHostName.toString())
 
-            updateItem.updateItem(validOrder.toUpdateItemPayload())
-            pickOrderItems.pickOrderItems(resolvedHostName, validOrder.mapToOrderItems(), normalizedOrderId)
+            updateItem.updateItem(validPayload.toUpdateItemPayload())
+            pickOrderItems.pickOrderItems(resolvedHostName, validPayload.mapToOrderItems(), normalizedOrderId)
         }
 
         return ResponseEntity.ok().build()
@@ -63,7 +63,7 @@ class KardexController(
     suspend fun syncMaterialStock(
         @RequestBody @Valid payloads: List<KardexSyncMaterialPayload>
     ): ResponseEntity<Unit> {
-        stockCount.countStock(payloads.toStockCountPayload())
+        synchronizeItems.synchronizeItems(payloads.toSyncPayloads())
         return ResponseEntity.ok().build()
     }
 
