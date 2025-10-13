@@ -33,7 +33,6 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
-import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
@@ -73,7 +72,6 @@ class WLSService(
     PickOrderItems,
     PickItems,
     ReportItemAsMissing,
-    StockCount,
     SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -458,47 +456,6 @@ class WLSService(
                 catalogEventRepository.save(ItemEvent(updatedItem))
             } ?: throw RuntimeException("Failed saving catalog event for item: $syncItem")
         }
-    }
-
-    override suspend fun countStock(items: List<StockCount.CountStockDTO>) {
-        val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
-        val currentItems = getItemsByIds(items.first().hostName, items.map { it.hostId })
-
-        currentItems.forEach { currentItem ->
-            val stockCountDTO = updatedItemMap[currentItem.hostId to currentItem.hostName]
-            if (stockCountDTO == null) {
-                logger.error { "Item ${currentItem.hostId} for ${currentItem.hostName} not found" }
-            } else {
-                val oldQuantity = currentItem.quantity
-                val newQuantity = stockCountDTO.quantity
-
-                val oldLocation = currentItem.location
-                val newLocation = stockCountDTO.location
-
-                if (oldQuantity != newQuantity || oldLocation != newLocation) {
-                    transactionPort.executeInTransaction {
-                        val updatedItem =
-                            itemRepository.updateItem(
-                                stockCountDTO.hostId,
-                                stockCountDTO.hostName,
-                                stockCountDTO.quantity,
-                                stockCountDTO.location,
-                                stockCountDTO.associatedStorage
-                            )
-                        logger.info {
-                            """
-                            Updated stock of item ${stockCountDTO.hostName}_${stockCountDTO.hostId}:
-                            Updated quantity [${currentItem.quantity} -> ${stockCountDTO.quantity}]
-                            Updated location [${currentItem.location} -> ${stockCountDTO.location}]
-                            """.trimIndent()
-                        }
-                        catalogEventRepository.save(ItemEvent(updatedItem))
-                    } ?: throw RuntimeException("Could not create item")
-                }
-            }
-        }
-        // Hint to the catalog outbox that it should start processing items
-        catalogEventProcessor.processOutbox()
     }
 
     override suspend fun reportItemMissing(
