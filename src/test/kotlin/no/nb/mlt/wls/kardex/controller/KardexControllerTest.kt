@@ -279,9 +279,10 @@ class KardexControllerTest(
     }
 
     @Test
-    fun `stock sync for missing item completes without creating item`() {
+    fun `stock sync for missing item completes and creates items`() {
         runTest {
             val nonExistingItem = "non-existing"
+            val nonExistingItem2 = "non-existing2"
             assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNull()
 
             webTestClient
@@ -290,12 +291,13 @@ class KardexControllerTest(
                 .post()
                 .uri("/stock-sync")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(stockSyncPayload.copy(hostId = nonExistingItem)))
+                .bodyValue(listOf(stockSyncPayload.copy(hostId = nonExistingItem), stockSyncPayload.copy(hostId = nonExistingItem2)))
                 .exchange()
                 .expectStatus()
                 .isOk()
 
-            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNull()
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNotNull()
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNotNull()
         }
     }
 
@@ -331,7 +333,8 @@ class KardexControllerTest(
             hostId = testItem1.hostId,
             hostName = testItem1.hostName.toString(),
             quantity = 1.0,
-            location = testItem1.location
+            location = testItem1.location,
+            description = testItem1.description
         )
 
     fun populateDb() {
