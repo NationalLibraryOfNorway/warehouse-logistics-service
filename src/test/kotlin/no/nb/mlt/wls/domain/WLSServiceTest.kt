@@ -1087,6 +1087,47 @@ class WLSServiceTest {
         }
     }
 
+    @Test
+    fun `moveItem should not generate events when order items are unchanged`() {
+        val storedItem = createTestItem(quantity = 0)
+        val expectedOrder =
+            testOrder.copy(
+                status = Order.Status.COMPLETED,
+                orderLine =
+                    listOf(
+                        Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.RETURNED),
+                        Order.OrderItem(hostId = "ignored", Order.OrderItem.Status.PICKED)
+                    )
+            )
+
+        val cut =
+            WLSService(
+                createInMemItemRepo(mutableListOf(storedItem)),
+                createInMemOrderRepo(mutableListOf(expectedOrder)),
+                catalogEventRepository,
+                storageEventRepository,
+                transactionPortExecutor,
+                catalogEventProcessor,
+                storageEventProcessor
+            )
+
+        coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
+        coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
+
+        runTest {
+            cut.moveItem(testMoveItemPayload)
+
+            val item = cut.getItem(testItem.hostName, testItem.hostId)
+            assertThat(item).isNotNull
+            val order = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assertThat(order).isNotNull.isEqualTo(expectedOrder)
+
+            coVerify(exactly = 0) {
+                catalogEventRepository.save(OrderEvent(expectedOrder))
+            }
+        }
+    }
+
     //
     // Test Helpers
     //
