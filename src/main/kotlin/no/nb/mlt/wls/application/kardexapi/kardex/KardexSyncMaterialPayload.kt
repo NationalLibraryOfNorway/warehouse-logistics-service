@@ -25,10 +25,13 @@ data class KardexSyncMaterialPayload(
     @field:Schema(
         description = """Name of the warehouse where the materials is located."""
     )
-    val location: String
+    val location: String,
+    @field:Schema(
+        description = """Description of the material."""
+    )
+    val description: String
 )
 
-// TODO - Is this metadata good enough?
 fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.ItemToSynchronize> =
     this.map { kardexPayload ->
         SynchronizeItems.ItemToSynchronize(
@@ -37,7 +40,7 @@ fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.Item
             quantity = kardexPayload.quantity.toInt(),
             location = kardexPayload.location,
             associatedStorage = AssociatedStorage.KARDEX,
-            description = "",
+            description = kardexPayload.description,
             itemCategory = ItemCategory.UNKNOWN,
             packaging = Packaging.UNKNOWN,
             currentPreferredEnvironment = Environment.NONE
