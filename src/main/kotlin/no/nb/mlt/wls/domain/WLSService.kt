@@ -487,7 +487,7 @@ class WLSService(
                             )
                         logger.info {
                             """
-                            Updated stock of item item ${stockCountDTO.hostName}_${stockCountDTO.hostId}:
+                            Updated stock of item ${stockCountDTO.hostName}_${stockCountDTO.hostId}:
                             Updated quantity [${currentItem.quantity} -> ${stockCountDTO.quantity}]
                             Updated location [${currentItem.location} -> ${stockCountDTO.location}]
                             """.trimIndent()
