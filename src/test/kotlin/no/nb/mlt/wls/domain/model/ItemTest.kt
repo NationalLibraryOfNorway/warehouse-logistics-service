@@ -13,4 +13,14 @@ class ItemTest {
         assertThat(testItem.associatedStorage).isNotEqualTo(AssociatedStorage.SYNQ)
         assertThat(testItem).isEqualTo(expectedItem)
     }
+
+    @Test
+    fun `synchronizing item should update if new quantity is bigger than zero`() {
+        val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
+        testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
+
+        assertThat(testItem.associatedStorage).isEqualTo(AssociatedStorage.SYNQ)
+        assertThat(testItem.location).isEqualTo("SYNQ_WAREHOUSE")
+        assertThat(testItem.quantity).isEqualTo(1)
+    }
 }
