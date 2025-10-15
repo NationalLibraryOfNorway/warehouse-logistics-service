@@ -2,8 +2,11 @@ package no.nb.mlt.wls.application.kardexapi.kardex
 
 import io.swagger.v3.oas.annotations.media.Schema
 import no.nb.mlt.wls.domain.model.AssociatedStorage
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
-import no.nb.mlt.wls.domain.ports.inbound.StockCount
+import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 
 data class KardexSyncMaterialPayload(
     @field:Schema(
@@ -22,16 +25,24 @@ data class KardexSyncMaterialPayload(
     @field:Schema(
         description = """Name of the warehouse where the materials is located."""
     )
-    val location: String
+    val location: String,
+    @field:Schema(
+        description = """Description of the material."""
+    )
+    val description: String
 )
 
-fun List<KardexSyncMaterialPayload>.toStockCountPayload(): List<StockCount.CountStockDTO> =
+fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.ItemToSynchronize> =
     this.map { kardexPayload ->
-        StockCount.CountStockDTO(
+        SynchronizeItems.ItemToSynchronize(
             hostId = kardexPayload.hostId,
             hostName = HostName.fromString(kardexPayload.hostName),
             quantity = kardexPayload.quantity.toInt(),
             location = kardexPayload.location,
-            associatedStorage = AssociatedStorage.KARDEX
+            associatedStorage = AssociatedStorage.KARDEX,
+            description = kardexPayload.description,
+            itemCategory = ItemCategory.UNKNOWN,
+            packaging = Packaging.UNKNOWN,
+            currentPreferredEnvironment = Environment.NONE
         )
     }

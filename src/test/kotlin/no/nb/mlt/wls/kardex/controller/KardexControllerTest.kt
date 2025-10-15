@@ -20,6 +20,7 @@ import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -278,10 +279,11 @@ class KardexControllerTest(
     }
 
     @Test
-    fun `stock sync for missing item completes without creating item`() {
+    fun `stock sync for missing item completes and creates items`() {
         runTest {
             val nonExistingItem = "non-existing"
-            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+            val nonExistingItem2 = "non-existing2"
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNull()
 
             webTestClient
                 .mutateWith(csrf())
@@ -289,12 +291,13 @@ class KardexControllerTest(
                 .post()
                 .uri("/stock-sync")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(stockSyncPayload.copy(hostId = nonExistingItem)))
+                .bodyValue(listOf(stockSyncPayload.copy(hostId = nonExistingItem), stockSyncPayload.copy(hostId = nonExistingItem2)))
                 .exchange()
                 .expectStatus()
                 .isOk()
 
-            assert(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull() == null)
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNotNull()
+            assertThat(itemRepository.findByHostNameAndHostId(testItem1.hostName, nonExistingItem).awaitSingleOrNull()).isNotNull()
         }
     }
 
@@ -330,7 +333,8 @@ class KardexControllerTest(
             hostId = testItem1.hostId,
             hostName = testItem1.hostName.toString(),
             quantity = 1.0,
-            location = testItem1.location
+            location = testItem1.location,
+            description = testItem1.description
         )
 
     fun populateDb() {

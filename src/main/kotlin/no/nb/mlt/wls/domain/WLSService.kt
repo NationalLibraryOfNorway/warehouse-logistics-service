@@ -33,7 +33,6 @@ import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
-import no.nb.mlt.wls.domain.ports.inbound.StockCount
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
@@ -73,7 +72,6 @@ class WLSService(
     PickOrderItems,
     PickItems,
     ReportItemAsMissing,
-    StockCount,
     SynchronizeItems {
     private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -439,47 +437,24 @@ class WLSService(
         itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            itemRepository.updateItem(
-                itemToUpdate.hostId,
-                itemToUpdate.hostName,
-                itemToUpdate.quantity,
-                itemToUpdate.location,
-                itemToUpdate.associatedStorage
-            )
-            logger.info {
-                """
-                Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
-                """.trimIndent()
-            }
-        }
-    }
-
-    override suspend fun countStock(items: List<StockCount.CountStockDTO>) {
-        val updatedItemMap = items.associateBy { (it.hostId to it.hostName) }
-        val currentItems = getItemsByIds(items.first().hostName, items.map { it.hostId })
-
-        currentItems.forEach { item ->
-            val updatedItem = updatedItemMap[item.hostId to item.hostName]
-            if (updatedItem != null) {
-                itemRepository.updateItem(
-                    updatedItem.hostId,
-                    updatedItem.hostName,
-                    updatedItem.quantity,
-                    updatedItem.location,
-                    updatedItem.associatedStorage
-                )
+            transactionPort.executeInTransaction {
+                val updatedItem =
+                    itemRepository.updateItem(
+                        itemToUpdate.hostId,
+                        itemToUpdate.hostName,
+                        itemToUpdate.quantity,
+                        itemToUpdate.location,
+                        itemToUpdate.associatedStorage
+                    )
                 logger.info {
                     """
-                    Updated stock of item ${updatedItem.hostName}_${updatedItem.hostId}:
-                    Updated quantity [${item.quantity} -> ${updatedItem.quantity}]
-                    Updated location [${item.location} -> ${updatedItem.location}]
+                    Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                    Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                    Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
                     """.trimIndent()
                 }
-            } else {
-                logger.trace { "Item ${item.hostId} for ${item.hostName} not found" }
-            }
+                catalogEventRepository.save(ItemEvent(updatedItem))
+            } ?: throw RuntimeException("Failed saving catalog event for item: $syncItem")
         }
     }
 
