@@ -16,14 +16,15 @@ private val logger = KotlinLogging.logger {}
     description = """Payload for inventory reconciliation""",
     example = """
     {
-        "warehouse" : "Sikringsmagasin_2",
         "loadUnit" : [
             {
                 "productId" : "mlt-12345",
                 "productOwner" : "NB",
                 "quantityOnHand" : 1.0,
                 "hostName" : "Axiell",
-                "confidentalProduct" : false
+                "confidentalProduct" : false,
+                "productCategory" : "Papir",
+                "uom" : "OBJ",
             }
         ]
     }"""

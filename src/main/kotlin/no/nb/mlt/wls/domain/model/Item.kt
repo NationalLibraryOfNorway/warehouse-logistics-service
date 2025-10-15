@@ -126,6 +126,7 @@ class Item(
         }
 
         this.location = location ?: UNKNOWN_LOCATION
+        this.associatedStorage = associatedStorage
     }
 
     /**
