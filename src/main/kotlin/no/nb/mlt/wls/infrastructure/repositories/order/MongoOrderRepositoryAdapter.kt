@@ -188,7 +188,7 @@ interface OrderMongoRepository : ReactiveMongoRepository<MongoOrder, String> {
         orderLine: List<String>
     ): Flux<MongoOrder>
 
-    @Query($$"{hostName: ?0, \"orderLine.hostId\": {$in: ?1}, \"orderLine.status\": \"PICKED\"}")
+    @Query($$"""{hostName: ?0, orderLine: {$elemMatch: {hostId: {$in: ?1}, status: "PICKED"}}}""")
     fun findPickedOrdersByHostNameAndHostIds(
         hostName: HostName,
         orderLine: List<String>
