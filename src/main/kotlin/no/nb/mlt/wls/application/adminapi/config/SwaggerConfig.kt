@@ -32,6 +32,5 @@ class SwaggerConfig {
             .pathsToMatch("/hermes-admin/**")
             .addOpenApiCustomizer {
                 it.security = listOf((SecurityRequirement().addList("clientCredentials")))
-            }
-            .build()
+            }.build()
 }
