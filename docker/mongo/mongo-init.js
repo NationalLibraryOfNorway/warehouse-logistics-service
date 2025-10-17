@@ -27,6 +27,7 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         "callbackUrl": "https://callback-wls.no/item",
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
+        "associatedStorage": "SYNQ",
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
     db.items.insertOne({
@@ -39,6 +40,7 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         "callbackUrl": "https://callback-wls.no/item",
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
+        "associatedStorage": "SYNQ",
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
 

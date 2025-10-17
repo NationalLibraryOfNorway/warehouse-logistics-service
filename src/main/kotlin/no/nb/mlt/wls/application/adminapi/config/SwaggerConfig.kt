@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
 import io.swagger.v3.oas.annotations.security.OAuthFlow
 import io.swagger.v3.oas.annotations.security.OAuthFlows
 import io.swagger.v3.oas.annotations.security.SecurityScheme
+import io.swagger.v3.oas.models.security.SecurityRequirement
 import org.springdoc.core.models.GroupedOpenApi
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -23,11 +24,13 @@ import org.springframework.context.annotation.Configuration
 )
 class SwaggerConfig {
     @Bean("adminApi")
-    fun synqApi(): GroupedOpenApi =
+    fun adminApi(): GroupedOpenApi =
         GroupedOpenApi
             .builder()
             .group("Admin API")
             .displayName("Admin API")
             .pathsToMatch("/hermes-admin/**")
-            .build()
+            .addOpenApiCustomizer {
+                it.security = listOf((SecurityRequirement().addList("clientCredentials")))
+            }.build()
 }
