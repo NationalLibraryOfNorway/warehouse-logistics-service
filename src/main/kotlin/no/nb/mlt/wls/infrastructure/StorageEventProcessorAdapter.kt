@@ -128,15 +128,12 @@ class StorageEventProcessorAdapter(
                             Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED)
                         }
                 )
-
             storageSystemFacade?.createOrder(orderCopy)
+            // Verify that this does not infinitely send emails if outbox fails processing
+            sendOrderHandlerEmail(order = orderCopy, items = itemList)
             logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
-            try {
-                createAndSendEmails(order = orderCopy, items = itemList)
-            } catch (e: Exception) {
-                logger.error(e) { "Error while sending email for created order, but continuing processing." }
-            }
         }
+        emailNotifier.sendOrderConfirmation(order = createdOrder)
     }
 
     private suspend fun handleOrderDeleted(event: OrderDeleted) {
@@ -154,12 +151,16 @@ class StorageEventProcessorAdapter(
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
 
-    private suspend fun createAndSendEmails(
+    private suspend fun sendOrderHandlerEmail(
         order: Order,
         items: List<Item>
     ) {
-        if (items.isNotEmpty()) {
-            emailNotifier.orderCreated(order, items)
+        try {
+            if (items.isNotEmpty()) {
+                emailNotifier.sendOrderHandlerMessage(order, items)
+            }
+        } catch (e: Exception) {
+            logger.error(e) { "Error while sending email for created order, but continuing processing." }
         }
     }
 }

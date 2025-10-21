@@ -26,18 +26,21 @@ class EmailAdapter(
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun orderCreated(
-        order: Order,
-        orderItems: List<Item>
-    ) {
+    override suspend fun sendOrderConfirmation(order: Order) {
         logger.info {
-            "Sending emails for order ${order.hostOrderId}"
+            "Sending order confirmation for order ${order.hostOrderId}"
         }
         sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
             "Failed to send order confirmation emails"
         )
+    }
+
+    override suspend fun sendOrderHandlerMessage(order: Order, orderItems: List<Item>) {
+        logger.info {
+            "Sending email to order handler for order ${order.hostOrderId}"
+        }
         sendEmail(
             createOrderHandlerEmail(order, orderItems),
             "Email sent to order handlers",
