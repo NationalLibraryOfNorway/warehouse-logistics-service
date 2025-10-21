@@ -116,9 +116,6 @@ class StorageEventProcessorAdapter(
                 createdOrder.orderLine.map { it.hostId }
             )
 
-        // used for sending emails once all storages received their orders
-        val orderItemsList = mutableListOf<List<Item>>()
-
         mapItemsOnAssociatedStorage(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
                 logger.warn { "Could not find a storage system to handle items: $itemList" }
@@ -133,10 +130,9 @@ class StorageEventProcessorAdapter(
                 )
 
             storageSystemFacade?.createOrder(orderCopy)
-            orderItemsList.add(itemList)
             logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
         }
-        createAndSendEmails(order = createdOrder, orderItems = orderItemsList)
+        createAndSendEmails(order = createdOrder, items = items)
     }
 
     private suspend fun handleOrderDeleted(event: OrderDeleted) {
@@ -156,12 +152,10 @@ class StorageEventProcessorAdapter(
 
     private suspend fun createAndSendEmails(
         order: Order,
-        orderItems: List<List<Item>>
+        items: List<Item>
     ) {
-        orderItems.forEach { items ->
-            if (items.isNotEmpty()) {
-                emailNotifier.orderCreated(order, items)
-            }
+        if (items.isNotEmpty()) {
+            emailNotifier.orderCreated(order, items)
         }
     }
 }
