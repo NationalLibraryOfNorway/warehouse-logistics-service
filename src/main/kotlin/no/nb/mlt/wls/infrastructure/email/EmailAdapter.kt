@@ -125,7 +125,7 @@ class EmailAdapter(
     ): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
-                "Emails being sent to storage system is disabled"
+                "Emails being sent to storage handlers is disabled"
             }
             return null
         }
