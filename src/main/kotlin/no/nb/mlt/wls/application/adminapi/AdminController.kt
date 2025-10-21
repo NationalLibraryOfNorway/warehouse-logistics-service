@@ -60,7 +60,6 @@ class AdminController(
         @PathVariable("hostOrderId")
         hostOrderId: String
     ): ResponseEntity<Unit> {
-        // TODO - Put in WLSService, or put somewhere nicer?
         val order = getOrder.getOrder(hostName, hostOrderId) ?: return ResponseEntity.notFound().build()
         val items =
             getItems.getItemsByIds(
