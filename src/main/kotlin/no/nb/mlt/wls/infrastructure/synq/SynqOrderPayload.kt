@@ -27,7 +27,7 @@ data class SynqOrderPayload(
     val shippingAddress: ShippingAddress,
     val automaticAllocationAllowed: Boolean = false,
     val shortAllocationAllowed: Boolean = false,
-    val shortReleasingAllowed: Boolean = false,
+    val shortReleasingAllowed: Boolean = false
 ) {
     data class OrderLine(
         @Min(1)
