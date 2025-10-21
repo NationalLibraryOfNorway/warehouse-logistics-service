@@ -116,7 +116,7 @@ class StorageEventProcessorAdapter(
                 createdOrder.orderLine.map { it.hostId }
             )
 
-        // used for sending emails once all storages have successfully been mapped
+        // used for sending emails once all storages received their orders
         val orderItemsList = mutableListOf<List<Item>>()
 
         mapItemsOnAssociatedStorage(items).forEach { (storageSystemFacade, itemList) ->

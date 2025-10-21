@@ -103,7 +103,13 @@ class EmailAdapter(
             )
 
         // Email Metadata
-        setMailMetadata(helper, htmlBody, "Bestillingsbekreftelse fra WLS - ${order.hostOrderId}", senderEmail, receiver)
+        setMailMetadata(
+            helper = helper,
+            htmlBody = htmlBody,
+            subject = "Bestillingsbekreftelse fra WLS - ${order.hostOrderId}",
+            from = senderEmail,
+            to = receiver
+        )
         return helper.mimeMessage
     }
 
