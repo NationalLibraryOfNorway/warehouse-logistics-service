@@ -103,11 +103,13 @@ class EmailAdapter(
             )
 
         // Email Metadata
-        helper.setText(htmlBody, true)
-        helper.setSubject("Bestillingsbekreftelse fra WLS - ${order.hostOrderId}")
-        helper.setFrom(senderEmail)
-        helper.setTo(receiver)
-
+        setMailMetadata(
+            helper = helper,
+            htmlBody = htmlBody,
+            subject = "Bestillingsbekreftelse fra WLS - ${order.hostOrderId}",
+            from = senderEmail,
+            to = receiver
+        )
         return helper.mimeMessage
     }
 
@@ -142,10 +144,13 @@ class EmailAdapter(
                     "orderType" to translateOrderType(order.orderType)
                 )
             )
-        helper.setText(htmlBody, true)
-        helper.setSubject("Ny bestilling fra ${order.hostName} - ${order.hostOrderId}")
-        helper.setFrom(order.contactEmail?.ifBlank { null } ?: senderEmail)
-        helper.setTo(storageEmail)
+        setMailMetadata(
+            helper = helper,
+            htmlBody = htmlBody,
+            subject = "Ny bestilling fra ${order.hostName} - ${order.hostOrderId}",
+            from = order.contactEmail?.ifBlank { null },
+            to = storageEmail
+        )
         // QR-Code image handling for order ID and order items
         val orderIdQrImage = BarcodeUtils.createQrImage(order.hostOrderId, scale = 3, border = 4)
         helper.rootMimeMultipart.addBodyPart(createImagePart(orderIdQrImage, order.hostOrderId))
@@ -153,6 +158,19 @@ class EmailAdapter(
             helper.rootMimeMultipart.addBodyPart(createImagePart(orderItem.image, orderItem.item.hostId))
         }
         return helper.mimeMessage
+    }
+
+    private fun setMailMetadata(
+        helper: MimeMessageHelper,
+        htmlBody: String,
+        subject: String,
+        from: String?,
+        to: String
+    ) {
+        helper.setText(htmlBody, true)
+        helper.setSubject(subject)
+        helper.setFrom(from ?: senderEmail)
+        helper.setTo(to)
     }
 
     private fun createImagePart(
