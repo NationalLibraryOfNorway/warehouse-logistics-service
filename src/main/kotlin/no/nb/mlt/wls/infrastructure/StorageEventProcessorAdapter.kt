@@ -116,7 +116,7 @@ class StorageEventProcessorAdapter(
                 createdOrder.orderLine.map { it.hostId }
             )
 
-        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
+        mapItemsOnAssociatedStorage(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
                 logger.warn { "Could not find a storage system to handle items: $itemList" }
             }
@@ -147,7 +147,7 @@ class StorageEventProcessorAdapter(
         }
     }
 
-    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
+    private suspend fun mapItemsOnAssociatedStorage(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
         items.groupBy { item ->
             storageSystems.firstOrNull { it.isInStorage(item.associatedStorage) }
         }
