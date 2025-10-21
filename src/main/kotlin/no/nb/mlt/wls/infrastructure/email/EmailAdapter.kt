@@ -37,7 +37,10 @@ class EmailAdapter(
         )
     }
 
-    override suspend fun sendOrderHandlerMessage(order: Order, orderItems: List<Item>) {
+    override suspend fun sendOrderHandlerMessage(
+        order: Order,
+        orderItems: List<Item>
+    ) {
         logger.info {
             "Sending email to order handler for order ${order.hostOrderId}"
         }
@@ -157,7 +160,13 @@ class EmailAdapter(
         return helper.mimeMessage
     }
 
-    private fun setMailMetadata(helper: MimeMessageHelper, htmlBody: String, subject: String, from: String?, to: String) {
+    private fun setMailMetadata(
+        helper: MimeMessageHelper,
+        htmlBody: String,
+        subject: String,
+        from: String?,
+        to: String
+    ) {
         helper.setText(htmlBody, true)
         helper.setSubject(subject)
         helper.setFrom(from ?: senderEmail)
