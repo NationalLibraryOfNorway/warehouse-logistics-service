@@ -154,7 +154,13 @@ class EmailAdapter(
         return helper.mimeMessage
     }
 
-    private fun setMailMetadata(helper: MimeMessageHelper, htmlBody: String, subject: String, from: String?, to: String) {
+    private fun setMailMetadata(
+        helper: MimeMessageHelper,
+        htmlBody: String,
+        subject: String,
+        from: String?,
+        to: String
+    ) {
         helper.setText(htmlBody, true)
         helper.setSubject(subject)
         helper.setFrom(from ?: senderEmail)

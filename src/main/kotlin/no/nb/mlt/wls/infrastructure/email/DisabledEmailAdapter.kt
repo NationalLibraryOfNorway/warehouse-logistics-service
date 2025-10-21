@@ -8,11 +8,7 @@ import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 private val logger = KotlinLogging.logger {}
 
 class DisabledEmailAdapter : EmailNotifier {
-    override suspend fun sendOrderConfirmation(order: Order) {
-        logger.warn { "Sending emails for orders is disabled" }
-    }
-
-    override suspend fun sendOrderHandlerMessage(
+    override suspend fun orderCreated(
         order: Order,
         orderItems: List<Item>
     ) {

@@ -67,7 +67,7 @@ class AdminController(
                 hostName,
                 order.orderLine.map { it.hostId }
             )
-        emailNotifier.sendOrderHandlerMessage(order, items)
+        emailNotifier.orderCreated(order, items)
         return ResponseEntity.ok().build()
     }
 }

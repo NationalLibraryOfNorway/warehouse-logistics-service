@@ -226,16 +226,12 @@ class StorageEventProcessorTest {
             var orderCreatedCount = 0
             var order: Order? = null
 
-            override suspend fun sendOrderConfirmation(order: Order) {
-                orderCreatedCount++
-                this.order = order
-            }
-
-            override suspend fun sendOrderHandlerMessage(
+            override suspend fun orderCreated(
                 order: Order,
                 orderItems: List<Item>
             ) {
-                // no-op
+                orderCreatedCount++
+                this.order = order
             }
         }
 
