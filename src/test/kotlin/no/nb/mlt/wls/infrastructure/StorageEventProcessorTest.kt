@@ -52,7 +52,7 @@ class StorageEventProcessorTest {
         }
 
     @Test
-    fun `OrderCreated event should send an email when successful`() =
+    fun `OrderCreated event should send emails when successful`() =
         runTest {
             val event = OrderCreated(testOrder)
 
@@ -226,12 +226,16 @@ class StorageEventProcessorTest {
             var orderCreatedCount = 0
             var order: Order? = null
 
-            override suspend fun orderCreated(
+            override suspend fun sendOrderConfirmation(order: Order) {
+                orderCreatedCount++
+                this.order = order
+            }
+
+            override suspend fun sendOrderHandlerMessage(
                 order: Order,
                 orderItems: List<Item>
             ) {
-                orderCreatedCount++
-                this.order = order
+                // no-op
             }
         }
 
