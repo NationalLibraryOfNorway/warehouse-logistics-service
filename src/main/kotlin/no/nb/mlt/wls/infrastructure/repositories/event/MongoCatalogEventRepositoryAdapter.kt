@@ -28,7 +28,7 @@ class MongoCatalogEventRepositoryAdapter(
             .save(MongoCatalogEvent(body = event))
             .map {
                 logger.info {
-                    "Processing storage event to outbox: ${it.body}"
+                    "Processing catalog event to outbox: ${it.body}"
                 }
                 it.body
             }.doOnEach { signal ->
