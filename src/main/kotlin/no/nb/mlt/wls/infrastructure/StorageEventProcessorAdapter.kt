@@ -116,7 +116,7 @@ class StorageEventProcessorAdapter(
                 createdOrder.orderLine.map { it.hostId }
             )
 
-        mapItemsOnLocation(items).forEach { (storageSystemFacade, itemList) ->
+        mapItemsOnAssociatedStorage(items).forEach { (storageSystemFacade, itemList) ->
             if (storageSystemFacade == null) {
                 logger.warn { "Could not find a storage system to handle items: $itemList" }
             }
@@ -131,12 +131,8 @@ class StorageEventProcessorAdapter(
 
             storageSystemFacade?.createOrder(orderCopy)
             logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
-            try {
-                createAndSendEmails(order = orderCopy, items = itemList)
-            } catch (e: Exception) {
-                logger.error(e) { "Error while sending email for created order, but continuing processing." }
-            }
         }
+        createAndSendEmails(order = createdOrder, items = items)
     }
 
     private suspend fun handleOrderDeleted(event: OrderDeleted) {
@@ -147,7 +143,7 @@ class StorageEventProcessorAdapter(
         }
     }
 
-    private suspend fun mapItemsOnLocation(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
+    private suspend fun mapItemsOnAssociatedStorage(items: List<Item>): Map<StorageSystemFacade?, List<Item>> =
         items.groupBy { item ->
             storageSystems.firstOrNull { it.isInStorage(item.associatedStorage) }
         }

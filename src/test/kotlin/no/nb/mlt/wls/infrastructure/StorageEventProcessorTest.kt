@@ -52,7 +52,7 @@ class StorageEventProcessorTest {
         }
 
     @Test
-    fun `OrderCreated event should send an email when successful`() =
+    fun `OrderCreated event should send emails when successful`() =
         runTest {
             val event = OrderCreated(testOrder)
 
