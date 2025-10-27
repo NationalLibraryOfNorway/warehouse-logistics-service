@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -79,7 +80,12 @@ class LogisticsController(
         @RequestParam hostId: String
     ): ResponseEntity<List<ApiDetailedOrder>> {
         val hostNames = hostNames ?: HostName.entries.toList()
-        val orders = getOrders.getOrdersById(hostNames, hostId)
+        val normalizedOrderKey = normalizeOrderId(hostId)
+        val orders = if (normalizedOrderKey != null) {
+            getOrders.getOrdersById(listOf(normalizedOrderKey.first), normalizedOrderKey.second)
+        } else {
+            getOrders.getOrdersById(hostNames, hostId)
+        }
         if (orders.isEmpty()) {
             return ResponseEntity.notFound().build()
         }
@@ -152,5 +158,18 @@ class LogisticsController(
     ): ResponseEntity<ApiItemPayload> {
         val item = reportItemMissing.reportItemMissing(hostName, hostId)
         return ResponseEntity.ok(item.toApiPayload())
+    }
+
+    fun normalizeOrderId(orderId: String): Pair<HostName, String>? {
+        // i.e. split AXIELL-SD-mlt-123 into [AXIELL-SD, mlt-123]
+        val fragments = orderId.split(DELIMITER)
+        if (fragments.size != 2) {
+            return null
+        }
+        // remove storage indicator from hostName, E.G. AXIELL-SD into AXIELL
+        val potentialHost = fragments.first().substringBefore("-")
+        val hostName = HostName.fromString(potentialHost)
+        val orderId = fragments[1]
+        return hostName to orderId
     }
 }
