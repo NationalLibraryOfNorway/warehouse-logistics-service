@@ -23,7 +23,7 @@
             <dt>Bestiller:</dt>
             <dd>${order.contactPerson}</dd>
             <dt>Melding fra bestiller:</dt>
-            <dd>${order.note}</dd>
+            <dd><#if order.note??>${order.note}</#if></dd>
             <dt>Referansenummer:</dt>
             <dd>${order.hostOrderId}</dd>
         </dl>
