@@ -11,6 +11,7 @@ import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -75,6 +76,45 @@ class LogisticsControllerTest(
                     .path("/order")
                     .queryParam("hostNames", listOf(HostName.AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList<ApiDetailedOrder>()
+            .hasSize(1)
+    }
+
+    @Test
+    fun `getDetailedOrders returns single order with storage-specific order id`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
+                    .build()
+            }.accept(MediaType.APPLICATION_JSON)
+            .exchange()
+            .expectStatus()
+            .isOk
+            .expectBodyList<ApiDetailedOrder>()
+            .hasSize(1)
+    }
+
+    @Test
+    fun `getDetailedOrders returns single order with storage-specific order id despite list of host names`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
+            .get()
+            .uri { builder ->
+                builder
+                    .path("/order")
+                    .queryParam("hostNames", HostName.entries)
+                    .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
             .exchange()
