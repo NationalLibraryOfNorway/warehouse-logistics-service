@@ -198,7 +198,7 @@ jobs:
 
       # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
       - name: Download the JAR File
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: packaged-project
 
