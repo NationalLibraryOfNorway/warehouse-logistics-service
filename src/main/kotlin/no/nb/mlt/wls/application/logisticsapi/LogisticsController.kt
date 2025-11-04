@@ -161,8 +161,8 @@ class LogisticsController(
         return ResponseEntity.ok(item.toApiPayload())
     }
 
-    fun normalizeOrderId(orderId: String): Pair<HostName, String>? {
-        // i.e. split AXIELL-SD-mlt-123 into [AXIELL-SD, mlt-123]
+    private fun normalizeOrderId(orderId: String): Pair<HostName, String>? {
+        // i.e. split AXIELL-SD---mlt-123 into [AXIELL-SD, mlt-123]
         val fragments = orderId.split(DELIMITER)
         if (fragments.size != 2) {
             return null
