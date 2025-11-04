@@ -81,12 +81,12 @@ class LogisticsController(
     ): ResponseEntity<List<ApiDetailedOrder>> {
         val hostNames = hostNames ?: HostName.entries.toList()
         val normalizedOrderKey = normalizeOrderId(hostId)
+
         val orders =
-            if (normalizedOrderKey != null) {
-                getOrders.getOrdersById(listOf(normalizedOrderKey.first), normalizedOrderKey.second)
-            } else {
-                getOrders.getOrdersById(hostNames, hostId)
-            }
+            normalizedOrderKey?.let {
+                getOrders.getOrdersById(listOf(it.first), it.second)
+            } ?: getOrders.getOrdersById(hostNames, hostId)
+
         if (orders.isEmpty()) {
             return ResponseEntity.notFound().build()
         }
