@@ -241,16 +241,19 @@ class WLSService(
             return
         }
 
-        val catalogEvent =
+        val (_, catalogEvent) =
             transactionPort.executeInTransaction {
                 if (orderRepository.updateOrder(pickedOrder)) {
-                    catalogEventRepository.save(OrderEvent(pickedOrder))
+                    val event = catalogEventRepository.save(OrderEvent(pickedOrder))
+                    (pickedOrder to event)
                 } else {
-                    null
+                    (pickedOrder to null)
                 }
             } ?: throw RuntimeException("Could not pick order items")
 
-        processCatalogEventAsync(catalogEvent)
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+        }
     }
 
     override suspend fun deleteOrder(
@@ -284,11 +287,13 @@ class WLSService(
                     val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to catalogEvent)
                 } else {
-                    null
+                    (updatedOrder to null)
                 }
             } ?: throw RuntimeException("Could not update order status")
 
-        processCatalogEventAsync(catalogEvent)
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+        }
 
         return result
     }
