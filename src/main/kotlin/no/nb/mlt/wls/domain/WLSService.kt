@@ -237,7 +237,7 @@ class WLSService(
         val order = getOrderOrThrow(hostName, orderId)
         val pickedOrder = order.pick(pickedItemIds)
         if (order == pickedOrder) {
-            logger.warn { "Tried picking same items twice from order $orderId for $hostName" }
+            logger.warn { "Order was unchanged after picking items $pickedItemIds from $order" }
             return
         }
 
@@ -278,7 +278,7 @@ class WLSService(
         val order = getOrderOrThrow(hostName, hostOrderId)
         val updatedOrder = order.updateStatus(status)
         if (order == updatedOrder) {
-            logger.info { "Order $hostOrderId for $hostName was not updated" }
+            logger.info { "Tried to update order $hostOrderId for $hostName with same status as it was before" }
             return order
         }
         val (result, catalogEvent) =
