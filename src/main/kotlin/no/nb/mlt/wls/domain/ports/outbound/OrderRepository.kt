@@ -23,7 +23,7 @@ interface OrderRepository {
 
     /**
      * Updates the given order.
-     * @return `true` if the order was successfully updated, `false` if no order was found to update.
+     * @return `true` if the order was successfully updated, `false` if no order was updated/found.
      * @throws RepositoryException throws if more than one order was updated.
      */
     suspend fun updateOrder(order: Order): Boolean
