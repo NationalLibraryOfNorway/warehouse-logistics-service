@@ -235,12 +235,17 @@ class WLSService(
         orderId: String
     ) {
         val order = getOrderOrThrow(hostName, orderId)
+        val pickedOrder = order.pick(pickedItemIds)
+        if (order == pickedOrder) {
+            logger.warn { "Tried picking same items twice from order $orderId for $hostName" }
+            return
+        }
 
         val catalogEvent =
             transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pick(pickedItemIds))
-
-                catalogEventRepository.save(OrderEvent(pickedOrder))
+                if (orderRepository.updateOrder(pickedOrder)) {
+                    catalogEventRepository.save(OrderEvent(pickedOrder))
+                } else null
             } ?: throw RuntimeException("Could not pick order items")
 
         processCatalogEventAsync(catalogEvent)
@@ -266,18 +271,22 @@ class WLSService(
         status: Order.Status
     ): Order {
         val order = getOrderOrThrow(hostName, hostOrderId)
-
-        val (updatedOrder, catalogEvent) =
+        val updatedOrder = order.updateStatus(status)
+        if (order == updatedOrder) {
+            logger.info { "Order $hostOrderId for $hostName was not updated" }
+            return order
+        }
+        val (result, catalogEvent) =
             transactionPort.executeInTransaction {
-                val updatedOrder = orderRepository.updateOrder(order.updateStatus(status))
-                val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-
-                (updatedOrder to catalogEvent)
+                if (orderRepository.updateOrder(updatedOrder)) {
+                    val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                    (updatedOrder to catalogEvent)
+                } else null
             } ?: throw RuntimeException("Could not update order status")
 
         processCatalogEventAsync(catalogEvent)
 
-        return updatedOrder
+        return result
     }
 
     override suspend fun getItem(
@@ -385,9 +394,10 @@ class WLSService(
             val (returnedOrder, orderEvent) =
                 transactionPort.executeInTransaction {
                     val returnOrder = order.returnItems(returnedItems)
-                    val updatedOrder = orderRepository.updateOrder(returnOrder)
-                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                    (updatedOrder to orderEvent)
+                    if (orderRepository.updateOrder(returnOrder)) {
+                        val orderEvent = catalogEventRepository.save(OrderEvent(returnOrder))
+                        (returnOrder to orderEvent)
+                    } else null
                 } ?: (order to null)
 
             if (orderEvent == null) {
@@ -498,23 +508,23 @@ class WLSService(
             .mapNotNull {
                 val updatedOrder = it.markMissing(hostIds)
                 if (updatedOrder != it) updatedOrder else null
-            }.forEach { order ->
-                val (_, orderEvent) =
+            }.forEach { missingOrder ->
+                val orderEvent =
                     transactionPort.executeInTransaction {
-                        val updatedOrder = orderRepository.updateOrder(order)
-                        val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                        (updatedOrder to orderEvent)
-                    } ?: (order to null)
+                        if (orderRepository.updateOrder(missingOrder)) {
+                            catalogEventRepository.save(OrderEvent(missingOrder))
+                        } else null
+                    }
 
                 if (orderEvent == null) {
                     logger.error {
-                        "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed"
+                        "Failed to properly mark order: ${missingOrder.hostOrderId} in host: ${missingOrder.hostName} as missing, transaction failed"
                     }
                     return@forEach
                 }
 
                 logger.warn {
-                    "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
+                    "Order line(s) $hostIds in ${missingOrder.hostOrderId} for ${missingOrder.hostName} was marked as missing"
                 }
                 processCatalogEventAsync(orderEvent)
             }

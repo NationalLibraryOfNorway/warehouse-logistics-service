@@ -79,8 +79,8 @@ class MongoOrderRepositoryAdapter(
         if (modified == 0L) throw OrderNotFoundException("Order ${order.hostOrderId} for ${order.hostName} was not found for deletion")
     }
 
-    override suspend fun updateOrder(order: Order): Order {
-        orderMongoRepository
+    override suspend fun updateOrder(order: Order): Boolean {
+        val ordersModified = orderMongoRepository
             .findAndUpdateByHostNameAndHostOrderId(
                 order.hostName,
                 order.hostOrderId,
@@ -100,9 +100,21 @@ class MongoOrderRepositoryAdapter(
                     }
                 }
             }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
-            .awaitSingleOrNull()
+            .awaitSingle()
 
-        return getOrder(order.hostName, order.hostOrderId) ?: throw OrderUpdateException("Order was not found after updating!")
+        when (ordersModified) {
+            0L -> {
+                logger.warn { "Order was not updated. $order" }
+                return false
+            }
+            1L -> {
+                logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was updated." }
+                return true
+            }
+            // REVIEW - Throw more meaningful exception here?
+            else -> throw RuntimeException("Mongo repository is in an invalid state, and did not throw an exception $ordersModified orders were modified")
+        }
+
     }
 
     override suspend fun createOrder(order: Order): Order =
