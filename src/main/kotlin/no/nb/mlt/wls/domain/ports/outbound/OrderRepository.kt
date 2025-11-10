@@ -22,8 +22,9 @@ interface OrderRepository {
     suspend fun deleteOrder(order: Order)
 
     /**
-     * @return whether the update successfully updated any order.
-     * Should fail if order was not found, or if more than one order was updated.
+     * Updates the given order.
+     * @return `true` if the order was successfully updated, `false` if no order was found to update.
+     * @throws RepositoryException throws if more than one order was updated.
      */
     suspend fun updateOrder(order: Order): Boolean
 

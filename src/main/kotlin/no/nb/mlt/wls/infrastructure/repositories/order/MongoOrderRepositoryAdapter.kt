@@ -112,9 +112,8 @@ class MongoOrderRepositoryAdapter(
                 logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was updated." }
                 return true
             }
-            // REVIEW - Throw more meaningful exception here?
-            else -> throw RuntimeException(
-                "Mongo repository is in an invalid state, and did not throw an exception $ordersModified orders were modified"
+            else -> throw RepositoryException(
+                "MongoOrderRepository modified too many orders. Modified $ordersModified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
             )
         }
     }
