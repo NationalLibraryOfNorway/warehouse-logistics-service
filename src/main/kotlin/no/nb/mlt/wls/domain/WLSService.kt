@@ -245,7 +245,9 @@ class WLSService(
             transactionPort.executeInTransaction {
                 if (orderRepository.updateOrder(pickedOrder)) {
                     catalogEventRepository.save(OrderEvent(pickedOrder))
-                } else null
+                } else {
+                    null
+                }
             } ?: throw RuntimeException("Could not pick order items")
 
         processCatalogEventAsync(catalogEvent)
@@ -281,7 +283,9 @@ class WLSService(
                 if (orderRepository.updateOrder(updatedOrder)) {
                     val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
                     (updatedOrder to catalogEvent)
-                } else null
+                } else {
+                    null
+                }
             } ?: throw RuntimeException("Could not update order status")
 
         processCatalogEventAsync(catalogEvent)
@@ -397,7 +401,9 @@ class WLSService(
                     if (orderRepository.updateOrder(returnOrder)) {
                         val orderEvent = catalogEventRepository.save(OrderEvent(returnOrder))
                         (returnOrder to orderEvent)
-                    } else null
+                    } else {
+                        null
+                    }
                 } ?: (order to null)
 
             if (orderEvent == null) {
@@ -513,7 +519,9 @@ class WLSService(
                     transactionPort.executeInTransaction {
                         if (orderRepository.updateOrder(missingOrder)) {
                             catalogEventRepository.save(OrderEvent(missingOrder))
-                        } else null
+                        } else {
+                            null
+                        }
                     }
 
                 if (orderEvent == null) {

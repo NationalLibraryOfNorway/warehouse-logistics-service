@@ -80,27 +80,28 @@ class MongoOrderRepositoryAdapter(
     }
 
     override suspend fun updateOrder(order: Order): Boolean {
-        val ordersModified = orderMongoRepository
-            .findAndUpdateByHostNameAndHostOrderId(
-                order.hostName,
-                order.hostOrderId,
-                order.status,
-                order.orderLine,
-                order.orderType,
-                order.contactPerson,
-                order.address,
-                order.callbackUrl
-            ).timeout(timeoutConfig.mongo)
-            .doOnError {
-                logger.error(it) {
-                    if (it is TimeoutException) {
-                        "Timed out while updating order. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
-                    } else {
-                        "Error while updating order"
+        val ordersModified =
+            orderMongoRepository
+                .findAndUpdateByHostNameAndHostOrderId(
+                    order.hostName,
+                    order.hostOrderId,
+                    order.status,
+                    order.orderLine,
+                    order.orderType,
+                    order.contactPerson,
+                    order.address,
+                    order.callbackUrl
+                ).timeout(timeoutConfig.mongo)
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while updating order. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
+                        } else {
+                            "Error while updating order"
+                        }
                     }
-                }
-            }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
-            .awaitSingle()
+                }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
+                .awaitSingle()
 
         when (ordersModified) {
             0L -> {
@@ -112,9 +113,10 @@ class MongoOrderRepositoryAdapter(
                 return true
             }
             // REVIEW - Throw more meaningful exception here?
-            else -> throw RuntimeException("Mongo repository is in an invalid state, and did not throw an exception $ordersModified orders were modified")
+            else -> throw RuntimeException(
+                "Mongo repository is in an invalid state, and did not throw an exception $ordersModified orders were modified"
+            )
         }
-
     }
 
     override suspend fun createOrder(order: Order): Order =
