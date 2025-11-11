@@ -87,7 +87,7 @@ class WLSService(
                 val event = storageEventRepository.save(ItemCreated(createdItem))
 
                 (createdItem to event)
-            } ?: throw RuntimeException("Could not create item")
+            }
 
         processStorageEventAsync(storageEvent)
         return createdItem
@@ -109,7 +109,7 @@ class WLSService(
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
                 (updatedItem to event)
-            } ?: throw RuntimeException("Could not update item")
+            }
 
         processCatalogEventAsync(catalogEvent)
 
@@ -135,7 +135,7 @@ class WLSService(
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)
-            } ?: throw RuntimeException("Could not move item")
+            }
 
         processCatalogEventAsync(catalogEvent)
 
@@ -177,7 +177,7 @@ class WLSService(
                         )
 
                     catalogEventRepository.save(ItemEvent(movedItem))
-                } ?: throw RuntimeException("Could not move item")
+                }
 
             processCatalogEventAsync(catalogEvent)
         }
@@ -222,7 +222,7 @@ class WLSService(
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
                 (createdOrder to storageEvent)
-            } ?: throw RuntimeException("Could not create order")
+            }
 
         processStorageEventAsync(storageEvent)
 
@@ -249,7 +249,7 @@ class WLSService(
                 } else {
                     (pickedOrder to null)
                 }
-            } ?: throw RuntimeException("Could not pick order items")
+            }
 
         if (catalogEvent != null) {
             processCatalogEventAsync(catalogEvent)
@@ -265,7 +265,7 @@ class WLSService(
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(deletedOrder)
                 storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
-            } ?: throw RuntimeException("Could not delete order")
+            }
 
         processStorageEventAsync(storageEvent)
     }
@@ -289,7 +289,7 @@ class WLSService(
                 } else {
                     (updatedOrder to null)
                 }
-            } ?: throw RuntimeException("Could not update order status")
+            }
 
         if (catalogEvent != null) {
             processCatalogEventAsync(catalogEvent)
@@ -475,7 +475,7 @@ class WLSService(
                     """.trimIndent()
                 }
                 catalogEventRepository.save(ItemEvent(updatedItem))
-            } ?: throw RuntimeException("Failed saving catalog event for item: $syncItem")
+            }
         }
     }
 
@@ -497,7 +497,7 @@ class WLSService(
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)
-            } ?: throw RuntimeException("Unexpected error when updating item")
+            }
 
         processCatalogEventAsync(catalogItemEvent)
         markOrdersAsMissing(hostName, listOf(hostId))
