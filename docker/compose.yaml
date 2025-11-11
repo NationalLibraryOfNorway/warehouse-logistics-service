@@ -2,7 +2,7 @@
 services:
     # Set up a local mongo instance for local development
   mongo-db:
-    image: mongo:4.4.22 # Same as the version in the prod env
+    image: mongo:8.2
     hostname: mongo-db
     restart: unless-stopped
     entrypoint: >
