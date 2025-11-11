@@ -1316,7 +1316,7 @@ class WLSServiceTest {
             ): List<Order> =
                 orderList
                     .filter { hostNames.contains(it.hostName) }
-                    .filter { it.hostOrderId.lowercase() == hostOrderId.lowercase() }
+                    .filter { it.hostOrderId.equals(hostOrderId, ignoreCase = true) }
         }
     }
 }
