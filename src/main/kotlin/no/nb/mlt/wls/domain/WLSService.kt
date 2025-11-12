@@ -87,7 +87,7 @@ class WLSService(
                 val event = storageEventRepository.save(ItemCreated(createdItem))
 
                 (createdItem to event)
-            } ?: throw RuntimeException("Could not create item")
+            }
 
         processStorageEventAsync(storageEvent)
         return createdItem
@@ -109,7 +109,7 @@ class WLSService(
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
                 (updatedItem to event)
-            } ?: throw RuntimeException("Could not update item")
+            }
 
         processCatalogEventAsync(catalogEvent)
 
@@ -135,7 +135,7 @@ class WLSService(
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)
-            } ?: throw RuntimeException("Could not move item")
+            }
 
         processCatalogEventAsync(catalogEvent)
 
@@ -177,7 +177,7 @@ class WLSService(
                         )
 
                     catalogEventRepository.save(ItemEvent(movedItem))
-                } ?: throw RuntimeException("Could not move item")
+                }
 
             processCatalogEventAsync(catalogEvent)
         }
@@ -222,7 +222,7 @@ class WLSService(
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
                 (createdOrder to storageEvent)
-            } ?: throw RuntimeException("Could not create order")
+            }
 
         processStorageEventAsync(storageEvent)
 
@@ -235,15 +235,25 @@ class WLSService(
         orderId: String
     ) {
         val order = getOrderOrThrow(hostName, orderId)
+        val pickedOrder = order.pick(pickedItemIds)
+        if (order == pickedOrder) {
+            logger.warn { "Order was unchanged after picking items $pickedItemIds from $order" }
+            return
+        }
 
-        val catalogEvent =
+        val (_, catalogEvent) =
             transactionPort.executeInTransaction {
-                val pickedOrder = orderRepository.updateOrder(order.pick(pickedItemIds))
+                if (orderRepository.updateOrder(pickedOrder)) {
+                    val event = catalogEventRepository.save(OrderEvent(pickedOrder))
+                    (pickedOrder to event)
+                } else {
+                    (pickedOrder to null)
+                }
+            }
 
-                catalogEventRepository.save(OrderEvent(pickedOrder))
-            } ?: throw RuntimeException("Could not pick order items")
-
-        processCatalogEventAsync(catalogEvent)
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+        }
     }
 
     override suspend fun deleteOrder(
@@ -255,7 +265,7 @@ class WLSService(
             transactionPort.executeInTransaction {
                 orderRepository.deleteOrder(deletedOrder)
                 storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
-            } ?: throw RuntimeException("Could not delete order")
+            }
 
         processStorageEventAsync(storageEvent)
     }
@@ -266,18 +276,26 @@ class WLSService(
         status: Order.Status
     ): Order {
         val order = getOrderOrThrow(hostName, hostOrderId)
-
-        val (updatedOrder, catalogEvent) =
+        val updatedOrder = order.updateStatus(status)
+        if (order == updatedOrder) {
+            logger.info { "Tried to update order $hostOrderId for $hostName with same status as it was before" }
+            return order
+        }
+        val (result, catalogEvent) =
             transactionPort.executeInTransaction {
-                val updatedOrder = orderRepository.updateOrder(order.updateStatus(status))
-                val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                if (orderRepository.updateOrder(updatedOrder)) {
+                    val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
+                    (updatedOrder to catalogEvent)
+                } else {
+                    (updatedOrder to null)
+                }
+            }
 
-                (updatedOrder to catalogEvent)
-            } ?: throw RuntimeException("Could not update order status")
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+        }
 
-        processCatalogEventAsync(catalogEvent)
-
-        return updatedOrder
+        return result
     }
 
     override suspend fun getItem(
@@ -385,9 +403,12 @@ class WLSService(
             val (returnedOrder, orderEvent) =
                 transactionPort.executeInTransaction {
                     val returnOrder = order.returnItems(returnedItems)
-                    val updatedOrder = orderRepository.updateOrder(returnOrder)
-                    val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                    (updatedOrder to orderEvent)
+                    if (orderRepository.updateOrder(returnOrder)) {
+                        val orderEvent = catalogEventRepository.save(OrderEvent(returnOrder))
+                        (returnOrder to orderEvent)
+                    } else {
+                        null
+                    }
                 } ?: (order to null)
 
             if (orderEvent == null) {
@@ -454,7 +475,7 @@ class WLSService(
                     """.trimIndent()
                 }
                 catalogEventRepository.save(ItemEvent(updatedItem))
-            } ?: throw RuntimeException("Failed saving catalog event for item: $syncItem")
+            }
         }
     }
 
@@ -476,7 +497,7 @@ class WLSService(
                     )
                 val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)
-            } ?: throw RuntimeException("Unexpected error when updating item")
+            }
 
         processCatalogEventAsync(catalogItemEvent)
         markOrdersAsMissing(hostName, listOf(hostId))
@@ -498,23 +519,25 @@ class WLSService(
             .mapNotNull {
                 val updatedOrder = it.markMissing(hostIds)
                 if (updatedOrder != it) updatedOrder else null
-            }.forEach { order ->
-                val (_, orderEvent) =
+            }.forEach { missingOrder ->
+                val orderEvent =
                     transactionPort.executeInTransaction {
-                        val updatedOrder = orderRepository.updateOrder(order)
-                        val orderEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                        (updatedOrder to orderEvent)
-                    } ?: (order to null)
+                        if (orderRepository.updateOrder(missingOrder)) {
+                            catalogEventRepository.save(OrderEvent(missingOrder))
+                        } else {
+                            null
+                        }
+                    }
 
                 if (orderEvent == null) {
                     logger.error {
-                        "Failed to properly mark order: ${order.hostOrderId} in host: ${order.hostName} as missing, transaction failed"
+                        "Failed to properly mark order: ${missingOrder.hostOrderId} in host: ${missingOrder.hostName} as missing, transaction failed"
                     }
                     return@forEach
                 }
 
                 logger.warn {
-                    "Order line(s) $hostIds in ${order.hostOrderId} for ${order.hostName} was marked as missing"
+                    "Order line(s) $hostIds in ${missingOrder.hostOrderId} for ${missingOrder.hostName} was marked as missing"
                 }
                 processCatalogEventAsync(orderEvent)
             }

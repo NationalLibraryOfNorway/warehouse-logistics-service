@@ -350,7 +350,7 @@ class WLSServiceTest {
         val orderItemsPickedEvent = OrderEvent(expectedOrder)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
-        coEvery { orderRepository.updateOrder(expectedOrder) } answers { expectedOrder }
+        coEvery { orderRepository.updateOrder(expectedOrder) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { orderItemsPickedEvent }
         coEvery { catalogEventProcessor.handleEvent(orderItemsPickedEvent) } answers {}
 
@@ -417,7 +417,7 @@ class WLSServiceTest {
         val orderStatusUpdatedEvent = OrderEvent(completedOrder)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
-        coEvery { orderRepository.updateOrder(completedOrder) } answers { completedOrder }
+        coEvery { orderRepository.updateOrder(completedOrder) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { orderStatusUpdatedEvent }
         coEvery { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) } answers { }
 
@@ -1276,12 +1276,12 @@ class WLSServiceTest {
                 orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
             }
 
-            override suspend fun updateOrder(order: Order): Order {
+            override suspend fun updateOrder(order: Order): Boolean {
                 val originalOrder =
                     orderList.find { it.hostName == order.hostName && it.hostOrderId == order.hostOrderId }
-                        ?: throw OrderNotFoundException("order not found")
+                        ?: return false
                 orderList.remove(originalOrder)
-                if (orderList.add(order)) return order
+                if (orderList.add(order)) return true
                 throw RuntimeException()
             }
 
@@ -1316,7 +1316,7 @@ class WLSServiceTest {
             ): List<Order> =
                 orderList
                     .filter { hostNames.contains(it.hostName) }
-                    .filter { it.hostOrderId.lowercase() == hostOrderId.lowercase() }
+                    .filter { it.hostOrderId.equals(hostOrderId, ignoreCase = true) }
         }
     }
 }

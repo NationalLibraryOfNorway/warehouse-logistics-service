@@ -79,30 +79,43 @@ class MongoOrderRepositoryAdapter(
         if (modified == 0L) throw OrderNotFoundException("Order ${order.hostOrderId} for ${order.hostName} was not found for deletion")
     }
 
-    override suspend fun updateOrder(order: Order): Order {
-        orderMongoRepository
-            .findAndUpdateByHostNameAndHostOrderId(
-                order.hostName,
-                order.hostOrderId,
-                order.status,
-                order.orderLine,
-                order.orderType,
-                order.contactPerson,
-                order.address,
-                order.callbackUrl
-            ).timeout(timeoutConfig.mongo)
-            .doOnError {
-                logger.error(it) {
-                    if (it is TimeoutException) {
-                        "Timed out while updating order. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
-                    } else {
-                        "Error while updating order"
+    override suspend fun updateOrder(order: Order): Boolean {
+        val ordersModified =
+            orderMongoRepository
+                .findAndUpdateByHostNameAndHostOrderId(
+                    order.hostName,
+                    order.hostOrderId,
+                    order.status,
+                    order.orderLine,
+                    order.orderType,
+                    order.contactPerson,
+                    order.address,
+                    order.callbackUrl
+                ).timeout(timeoutConfig.mongo)
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while updating order. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
+                        } else {
+                            "Error while updating order"
+                        }
                     }
-                }
-            }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
-            .awaitSingleOrNull()
+                }.onErrorMap { OrderUpdateException(it.message ?: "Could not update order", it) }
+                .awaitSingle()
 
-        return getOrder(order.hostName, order.hostOrderId) ?: throw OrderUpdateException("Order was not found after updating!")
+        when (ordersModified) {
+            0L -> {
+                logger.warn { "Order was not updated. $order" }
+                return false
+            }
+            1L -> {
+                logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was updated." }
+                return true
+            }
+            else -> throw RepositoryException(
+                "MongoOrderRepository modified too many orders. Modified $ordersModified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
+            )
+        }
     }
 
     override suspend fun createOrder(order: Order): Order =
