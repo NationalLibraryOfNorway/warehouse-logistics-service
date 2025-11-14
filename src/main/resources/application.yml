@@ -133,9 +133,7 @@ spring:
   # Set the database settings for the local-dev profile
   data:
     mongodb:
-      username: bruker
-      password: drossap
-      database: wls
+      uri: mongodb://bruker:drossap@localhost:27017/wls
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:
@@ -194,10 +192,7 @@ spring:
   # Set the database settings for the stage profile
   data:
     mongodb:
-      username: ${MONGODB_USERNAME}
-      password: ${MONGODB_PASSWORD}
-      database: ${MONGODB_DATABASE}
-      host: ${MONGODB_URL}
+      uri: ${MONGODB_URI}
 
   mail:
     host: ${EMAIL_SERVER}
@@ -267,10 +262,7 @@ spring:
   # Set the database settings for the prod profile
   data:
     mongodb:
-      username: ${MONGODB_USERNAME}
-      password: ${MONGODB_PASSWORD}
-      database: ${MONGODB_DATABASE}
-      host: ${MONGODB_URL}
+      uri: ${MONGODB_URI}
 
   mail:
     host: ${EMAIL_SERVER}

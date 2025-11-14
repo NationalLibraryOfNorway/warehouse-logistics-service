@@ -7,5 +7,5 @@ package no.nb.mlt.wls.domain.ports.outbound
  * a given action within a transactional boundary, supporting rollbacks in case of a failure.
  */
 interface TransactionPort {
-    suspend fun <T> executeInTransaction(action: suspend () -> T): T?
+    suspend fun <T> executeInTransaction(action: suspend () -> T): T
 }

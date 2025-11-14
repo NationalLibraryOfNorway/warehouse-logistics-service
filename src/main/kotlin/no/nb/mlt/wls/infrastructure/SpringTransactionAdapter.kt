@@ -9,7 +9,7 @@ import org.springframework.transaction.reactive.executeAndAwait
 class SpringTransactionAdapter(
     private val transactionalOperator: TransactionalOperator
 ) : TransactionPort {
-    override suspend fun <T> executeInTransaction(action: suspend () -> T): T? =
+    override suspend fun <T> executeInTransaction(action: suspend () -> T): T =
         transactionalOperator.executeAndAwait {
             action()
         }

@@ -21,7 +21,12 @@ interface OrderRepository {
     @Throws(OrderNotFoundException::class)
     suspend fun deleteOrder(order: Order)
 
-    suspend fun updateOrder(order: Order): Order
+    /**
+     * Updates the given order.
+     * @return `true` if the order was successfully updated, `false` if no order was updated/found.
+     * @throws RepositoryException if more than one order was updated.
+     */
+    suspend fun updateOrder(order: Order): Boolean
 
     suspend fun createOrder(order: Order): Order
 
