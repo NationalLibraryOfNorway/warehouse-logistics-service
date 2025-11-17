@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.logisticsapi
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
@@ -31,6 +33,8 @@ class LogisticsController(
     private val getOrders: GetOrders,
     private val reportItemMissing: ReportItemAsMissing
 ) {
+    private val logger = KotlinLogging.logger {}
+
     @Operation(
         summary = "Retrieves detailed order from the storage system",
         description = """Endpoint for receiving detailed order and item information from our system.
@@ -172,5 +176,14 @@ class LogisticsController(
         val hostName = HostName.fromString(potentialHost)
         val orderId = fragments[1]
         return hostName to orderId
+    }
+
+    @GetMapping("/item")
+    suspend fun getItems(
+        @RequestParam hostId: String
+    ): ResponseEntity<List<ApiItem>> {
+        logger.debug { "Getting items for $hostId" }
+        val items = getItems.getItemsById(hostId).map(Item::toApiItem)
+        return ResponseEntity.ok(items)
     }
 }
