@@ -2,6 +2,7 @@ package no.nb.mlt.wls.application.logisticsapi
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -178,12 +179,74 @@ class LogisticsController(
         return hostName to orderId
     }
 
+    @Operation(
+        summary = "Retrieves items by their host ID",
+        description = """Endpoint for retrieving items based on their host ID.
+            This is useful for fetching item details when only the host ID is known.
+            If multiple items share the same host ID, all matching items will be returned.
+        """
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """A list of items matching the provided host ID.""",
+            content = [
+                Content(
+                    schema =
+                        Schema(
+                            implementation = ApiItem::class
+                        )
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized to get items.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request, or the caller is not authorized to update the item.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """No items with given "hostId" found.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
+        )
+    )
     @GetMapping("/item")
     suspend fun getItems(
+        @Parameter(
+            description = """The item ID from the host system.""",
+            example = "mlt-12345",
+            required = true,
+            allowEmptyValue = false
+        )
         @RequestParam hostId: String
     ): ResponseEntity<List<ApiItem>> {
         logger.debug { "Getting items for $hostId" }
         val items = getItems.getItemsById(hostId).map(Item::toApiItem)
+
+        if (items.isEmpty()) {
+            return ResponseEntity.notFound().build()
+        }
+
         return ResponseEntity.ok(items)
     }
 }
