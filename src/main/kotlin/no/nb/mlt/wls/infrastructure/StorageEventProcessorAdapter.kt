@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
@@ -43,6 +44,7 @@ class StorageEventProcessorAdapter(
             outboxMessages.groupBy {
                 when (it) {
                     is ItemCreated -> it.createdItem.hostId
+                    is ItemEdited -> it.editedItem.editedItem.hostId
                     is OrderCreated -> it.createdOrder.hostOrderId
                     is OrderDeleted -> it.hostOrderId
                 }
@@ -73,6 +75,7 @@ class StorageEventProcessorAdapter(
         try {
             when (event) {
                 is ItemCreated -> handleItemCreated(event)
+                is ItemEdited -> handleItemEdited(event)
                 is OrderCreated -> handleOrderCreated(event)
                 is OrderDeleted -> handleOrderDeleted(event)
             }
@@ -103,6 +106,31 @@ class StorageEventProcessorAdapter(
             it.createItem(item)
             logger.info { "Created item [$item] in storage system: $it" }
         }
+    }
+
+    private suspend fun handleItemEdited(event: ItemEdited) {
+        logger.trace { "Processing ItemEdited: $event" }
+
+        val item = event.editedItem.editedItem
+        val oldItem = event.editedItem.oldItem
+        val newStorageCandidates = findValidStorageCandidates(item)
+        val oldStorageCandidates = findValidStorageCandidates(oldItem)
+
+        if (newStorageCandidates.isEmpty()) {
+            logger.warn { "Updated item [$item] does not have a storage system that can handle it" }
+            return
+        }
+
+        // find unique old storages
+        // remove info
+        // find shared storages
+        // update the info
+        // fin unique new storages
+        // create info
+
+        logger.info { "Item was edited from $oldItem to $item, it's storage candidates changed from $oldStorageCandidates to $newStorageCandidates" }
+        logger.info { "So far there is no handling of changes besides this log message" }
+        logger.error { "No handling of item edits has been implemented yet, item $item will not be updated in any storage system" }
     }
 
     private suspend fun handleOrderCreated(event: OrderCreated) {

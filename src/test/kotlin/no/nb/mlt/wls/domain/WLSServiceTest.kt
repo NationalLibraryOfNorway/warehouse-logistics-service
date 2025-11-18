@@ -1219,6 +1219,12 @@ class WLSServiceTest {
                 return item
             }
 
+            override suspend fun editItem(item: Item): Item {
+                items.replaceAll { if (it.hostId == item.hostId && it.hostName == item.hostName) item else it }
+
+                return item
+            }
+
             override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean =
                 ids.all { id ->
                     itemList.any { it.hostId == id.hostId && it.hostName == id.hostName }

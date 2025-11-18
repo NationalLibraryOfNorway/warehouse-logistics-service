@@ -129,6 +129,26 @@ class Item(
         this.associatedStorage = associatedStorage
     }
 
+    fun edit(
+        description: String,
+        itemCategory: ItemCategory,
+        preferredEnvironment: Environment,
+        packaging: Packaging,
+        callbackUrl: String?
+    ): Item =
+        Item(
+            hostId = this.hostId,
+            hostName = this.hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = if (callbackUrl.isNullOrBlank()) this.callbackUrl else callbackUrl,
+            location = this.location,
+            quantity = this.quantity,
+            associatedStorage = this.associatedStorage
+        )
+
     /**
      * Marks the location as missing.
      * Use it to indicate that we do not know where the current whereabouts of the item is.

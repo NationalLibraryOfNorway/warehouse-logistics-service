@@ -4,11 +4,15 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.AssociatedStorage
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMetadataUpdateException
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMovingException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.data.mongodb.repository.Query
@@ -91,6 +95,36 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
+    override suspend fun editItem(item: Item): Item {
+        val itemsEdited =
+            mongoRepo
+                .findAndUpdateItemMetadataByHostNameAndHostId(
+                    item.hostName,
+                    item.hostId,
+                    item.description,
+                    item.itemCategory,
+                    item.preferredEnvironment,
+                    item.packaging,
+                    item.callbackUrl
+                ).timeout(timeoutConfig.mongo)
+                .doOnError {
+                    logger.error(it) {
+                        if (it is TimeoutException) {
+                            "Timed out while updating item metadata. Item: $item"
+                        } else {
+                            "Error while updating item metadata. Item: $item"
+                        }
+                    }
+                }.onErrorMap { ItemMetadataUpdateException(it.message ?: "Item metadata could not be updated", it) }
+                .awaitSingle()
+
+        if (itemsEdited == 0L) {
+            throw ItemNotFoundException("Item was not found. Item: $item")
+        }
+
+        return getItem(item.hostName, item.hostId)!!
+    }
+
     override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean =
         mongoRepo
             .countItemsMatchingIds(ids)
@@ -120,7 +154,7 @@ class MongoItemRepositoryAdapter(
                         if (it is TimeoutException) {
                             "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
                         } else {
-                            "Error while updating item"
+                            "Error while updating item. Host ID: $hostId, Host: $hostName"
                         }
                     }
                 }.onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
@@ -185,6 +219,18 @@ interface ItemMongoRepository : ReactiveMongoRepository<MongoItem, String> {
         quantity: Int,
         location: String,
         associatedStorage: AssociatedStorage
+    ): Mono<Long>
+
+    @Query("{hostName: ?0,hostId: ?1}")
+    @Update($$"{'$set':{description: ?2,itemCategory: ?3,preferredEnvironment: ?4,packaging: ?5,callbackUrl: ?6}}")
+    fun findAndUpdateItemMetadataByHostNameAndHostId(
+        hostName: HostName,
+        hostId: String,
+        description: String,
+        itemCategory: ItemCategory,
+        preferredEnvironment: Environment,
+        packaging: Packaging,
+        callbackUrl: String?
     ): Mono<Long>
 
     fun findAllByHostNameAndHostIdIn(
