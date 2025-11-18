@@ -49,12 +49,6 @@ data class ApiItem(
     )
     val packaging: Packaging,
     @field:Schema(
-        description = """This URL will be used for POSTing item updates to the host system.
-            For example when item moves or changes quantity in storage.""",
-        example = "http://callback-wls.no/item"
-    )
-    val callbackUrl: String?,
-    @field:Schema(
         description = """Last known storage location of the item.
             Can be used for tracking item movement through storage systems.""",
         examples = ["UNKNOWN", "WITH_LENDER", "SYNQ_WAREHOUSE", "AUTOSTORE", "KARDEX"]
@@ -76,7 +70,6 @@ fun Item.toApiItem(): ApiItem =
         itemCategory = this.itemCategory,
         preferredEnvironment = this.preferredEnvironment,
         packaging = this.packaging,
-        callbackUrl = this.callbackUrl,
         location = this.location,
         quantity = this.quantity
     )

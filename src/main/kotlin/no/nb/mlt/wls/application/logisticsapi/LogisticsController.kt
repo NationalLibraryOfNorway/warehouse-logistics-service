@@ -240,7 +240,6 @@ class LogisticsController(
         )
         @RequestParam hostId: String
     ): ResponseEntity<List<ApiItem>> {
-        logger.debug { "Getting items for $hostId" }
         val items = getItems.getItemsById(hostId).map(Item::toApiItem)
 
         if (items.isEmpty()) {
