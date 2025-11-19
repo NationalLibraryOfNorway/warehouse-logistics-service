@@ -10,12 +10,12 @@ import no.nb.mlt.wls.domain.model.Packaging
  *
  * This port accepts an [Item] instance and new metadata which will replace the old metadata
  * and returns an updated [Item]. It is designed to allow for the editing of items in the system, in cases
- * where the item's metadata was wrong, or we got info about item after an order was made. The second use case
+ * where the item's metadata was wrong. The second use case
  * exists because if we get an order with items we don't know, we will create a mostly empty [Item] with only
- * the ID and host name set. This function lets catalogs update such items.
+ * the ID and host name set.
  *
- * The implementing function is expected to perform transformations between [ItemEditMetadata]
- * and [Item], along with any associated business logic such as validation, saving, or initialization
+ * The implementing function is expected to orchestrate transformations between [ItemEditMetadata]
+ * and [Item], and perform or delegate associated business logic such as validation, saving, or initialization
  * of the item's state in the storage system.
  *
  * @see ItemEditMetadata
