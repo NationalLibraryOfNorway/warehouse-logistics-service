@@ -20,6 +20,7 @@ import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
+import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -50,8 +51,10 @@ class WLSServiceTest {
     private val orderRepository = mockk<OrderRepository>()
     private val catalogEventRepository = mockk<EventRepository<CatalogEvent>>()
     private val storageEventRepository = mockk<EventRepository<StorageEvent>>()
+    private val emailEventRepository = mockk<EventRepository<EmailEvent>>()
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
+    private val emailEventProcessor = mockk<EventProcessor<EmailEvent>>()
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val transactionPortMock = mockk<TransactionPort>()
     private val transactionPortExecutor =
@@ -72,6 +75,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortMock,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -83,6 +87,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -559,6 +564,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -588,6 +594,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -643,6 +650,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -694,6 +702,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -727,6 +736,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -766,6 +776,7 @@ class WLSServiceTest {
                 orderRepo,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -802,6 +813,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -885,6 +897,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -929,6 +942,7 @@ class WLSServiceTest {
                 createInMemOrderRepo(mutableListOf(testOrder)),
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -964,6 +978,7 @@ class WLSServiceTest {
                 createInMemOrderRepo(mutableListOf(testOrder)),
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -1000,6 +1015,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -1033,6 +1049,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -1066,6 +1083,7 @@ class WLSServiceTest {
                 createInMemOrderRepo(mutableListOf(testOrder)),
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -1106,6 +1124,7 @@ class WLSServiceTest {
                 createInMemOrderRepo(mutableListOf(expectedOrder)),
                 catalogEventRepository,
                 storageEventRepository,
+                emailEventRepository,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor

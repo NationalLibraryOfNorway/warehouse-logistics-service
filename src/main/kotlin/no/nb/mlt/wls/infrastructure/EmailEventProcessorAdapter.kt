@@ -2,12 +2,16 @@ package no.nb.mlt.wls.infrastructure
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
+import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
+import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
 import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
+import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}
 
+@Service
 class EmailEventProcessorAdapter(
     val emailEventRepository: EventRepository<EmailEvent>,
     val emailNotifier: EmailNotifier
@@ -29,7 +33,9 @@ class EmailEventProcessorAdapter(
     }
 
     override suspend fun handleEvent(event: EmailEvent) {
-        TODO("Implement handling order confirmations")
-        TODO("Implement handling order handler emails")
+        when (event) {
+            is OrderConfirmationMail -> emailNotifier.sendOrderConfirmation(event.order)
+            is OrderHandlerMail -> emailNotifier.sendOrderHandlerMail(event.order, event.orderItems)
+        }
     }
 }

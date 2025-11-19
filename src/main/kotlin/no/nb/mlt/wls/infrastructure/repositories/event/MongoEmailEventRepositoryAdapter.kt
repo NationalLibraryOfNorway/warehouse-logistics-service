@@ -1,0 +1,124 @@
+package no.nb.mlt.wls.infrastructure.repositories.event
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactor.awaitSingle
+import no.nb.mlt.wls.domain.model.events.email.EmailEvent
+import no.nb.mlt.wls.domain.ports.outbound.EventRepository
+import no.nb.mlt.wls.domain.ports.outbound.RepositoryException
+import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
+import org.springframework.data.mongodb.repository.Query
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository
+import org.springframework.data.mongodb.repository.Update
+import org.springframework.stereotype.Repository
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import java.time.Instant
+import java.util.concurrent.TimeoutException
+
+private val logger = KotlinLogging.logger {}
+
+@Repository
+class MongoEmailEventRepositoryAdapter(
+    private val mongoEmailEventRepository: MongoEmailEventRepository,
+    private val timeoutConfig: TimeoutProperties
+) : EventRepository<EmailEvent> {
+    override suspend fun save(event: EmailEvent): EmailEvent {
+        return mongoEmailEventRepository
+            .save(MongoEmailEvent(body = event))
+            .map {
+                logger.info {
+                    "Processing email event to outbox: ${it.body}"
+                }
+                it.body
+            }.doOnEach { signal ->
+                if (signal.isOnComplete) {
+                    logger.info {
+                        "Successfully saved email event to email outbox"
+                    }
+                }
+            }.timeout(timeoutConfig.mongo)
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while saving event to email outbox. Event: $event"
+                    } else {
+                        "Error while saving event to email outbox. Event: $event"
+                    }
+                }
+            }.onErrorMap { RepositoryException("Could not save event to email outbox", it) }
+            .awaitSingle()
+    }
+
+    override suspend fun getAll(): List<EmailEvent> {
+        return mongoEmailEventRepository
+            .findAll()
+            .sort { e1, e2 -> e1.createdTimestamp.compareTo(e2.createdTimestamp) }
+            .map { it.body }
+            .collectList()
+            .timeout(timeoutConfig.mongo)
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while fetching events from email outbox"
+                    } else {
+                        "Error while fetching events from email outbox"
+                    }
+                }
+            }.onErrorMap { RepositoryException("Could not fetch event from email outbox", it) }
+            .awaitSingle()
+    }
+
+    override suspend fun getUnprocessedSortedByCreatedTime(): List<EmailEvent> {
+        return mongoEmailEventRepository
+            .findAllByProcessedTimestampIsNull()
+            .sort { e1, e2 -> e1.createdTimestamp.compareTo(e2.createdTimestamp) }
+            .map { it.body }
+            .collectList()
+            .timeout(timeoutConfig.mongo)
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while fetching unprocessed events from email outbox"
+                    } else {
+                        "Error while fetching unprocessed events from email outbox"
+                    }
+                }
+            }.onErrorMap { RepositoryException("Could not fetch unprocessed events from email outbox", it) }
+            .awaitSingle()
+    }
+
+    override suspend fun markAsProcessed(event: EmailEvent): EmailEvent {
+        val updatedRecordCount = mongoEmailEventRepository
+            .findAndUpdateProcessedTimestampById(event.id, Instant.now())
+            .timeout(timeoutConfig.mongo)
+            .doOnError {
+                logger.error(it) {
+                    if (it is TimeoutException) {
+                        "Timed out while marking event as processed in email outbox. Event: $event"
+                    } else {
+                        "Error while marking event as processed in email outbox. Event: $event"
+                    }
+                }
+            }.onErrorMap { RepositoryException("Could not mark event as processed in email outbox", it) }
+            .awaitSingle()
+
+
+        if (updatedRecordCount != 0L) {
+            return event
+        } else {
+            throw RepositoryException("No event found to update it as processed in email outbox. Event: $event")
+        }
+    }
+}
+
+@Repository
+interface MongoEmailEventRepository : ReactiveMongoRepository<MongoEmailEvent, String> {
+    fun findAllByProcessedTimestampIsNull(): Flux<MongoEmailEvent>
+
+    @Query("{_id: ?0}")
+    @Update($$"{'$set':{processedTimestamp: ?1}}")
+    fun findAndUpdateProcessedTimestampById(
+        id: String,
+        processedTimestamp: Instant
+    ): Mono<Long>
+}

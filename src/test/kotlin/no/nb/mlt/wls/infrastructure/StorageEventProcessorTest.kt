@@ -35,7 +35,6 @@ class StorageEventProcessorTest {
                 storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(happyStorageSystemFacadeMock),
                 itemRepository = itemRepoMock,
-                emailNotifier = emailNotifierMock,
                 happyStatisticsServiceMock
             )
     }
@@ -226,12 +225,20 @@ class StorageEventProcessorTest {
             var orderCreatedCount = 0
             var order: Order? = null
 
-            override suspend fun orderCreated(
+            override suspend fun sendOrderConfirmation(order: Order) {
+                // no-op
+            }
+
+            override suspend fun sendOrderHandlerMail(
                 order: Order,
-                orderItems: List<Item>
+                items: List<Item>
             ) {
-                orderCreatedCount++
+                orderCreatedCount++;
                 this.order = order
+            }
+
+            override suspend fun orderCompleted(order: Order) {
+                TODO("Not yet implemented")
             }
         }
 

@@ -16,7 +16,7 @@ import java.awt.image.BufferedImage
 
 private val logger = KotlinLogging.logger {}
 
-class EmailAdapter(
+class JavaMailNotifier(
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
 ) : EmailNotifier {
@@ -26,23 +26,27 @@ class EmailAdapter(
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun orderCreated(
-        order: Order,
-        orderItems: List<Item>
-    ) {
-        logger.info {
-            "Sending emails for order ${order.hostOrderId}"
-        }
+    override suspend fun sendOrderConfirmation(order: Order) {
         sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
-            "Failed to send order confirmation emails"
+            "Failed to send order confirmation email"
         )
+    }
+
+    override suspend fun sendOrderHandlerMail(
+        order: Order,
+        items: List<Item>
+    ) {
         sendEmail(
-            createOrderHandlerEmail(order, orderItems),
+            createOrderHandlerEmail(order, items),
             "Email sent to order handlers",
             "Failed to send orders"
         )
+    }
+
+    override suspend fun orderCompleted(order: Order) {
+        TODO("Not yet implemented")
     }
 
     /**
