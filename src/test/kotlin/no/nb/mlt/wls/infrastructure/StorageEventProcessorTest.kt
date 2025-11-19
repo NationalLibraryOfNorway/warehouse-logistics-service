@@ -7,13 +7,10 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.AssociatedStorage
-import no.nb.mlt.wls.domain.model.Item
-import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
@@ -51,16 +48,6 @@ class StorageEventProcessorTest {
         }
 
     @Test
-    fun `OrderCreated event should send emails when successful`() =
-        runTest {
-            val event = OrderCreated(testOrder)
-
-            cut.handleEvent(event)
-
-            assertThat(emailNotifierMock.orderCreatedCount).isEqualTo(1)
-        }
-
-    @Test
     fun `OrderCreated event should not be marked as processed or send email if anything fails`() =
         runTest {
             val errorMessage = "Some exception when sending to storage system"
@@ -71,7 +58,6 @@ class StorageEventProcessorTest {
             }
 
             assertThat(storageMessageRepoMock.processed).hasSize(0)
-            assertThat(emailNotifierMock.orderCreatedCount).isEqualTo(0)
         }
 
     @Test
@@ -217,29 +203,6 @@ class StorageEventProcessorTest {
             coEvery { deleteOrder(any(), any()) } returns Unit
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
-        }
-
-    // ... and he's got a friend, a big old email notifier mock...
-    private val emailNotifierMock =
-        object : EmailNotifier {
-            var orderCreatedCount = 0
-            var order: Order? = null
-
-            override suspend fun sendOrderConfirmation(order: Order) {
-                // no-op
-            }
-
-            override suspend fun sendOrderHandlerMail(
-                order: Order,
-                items: List<Item>
-            ) {
-                orderCreatedCount++;
-                this.order = order
-            }
-
-            override suspend fun orderCompleted(order: Order) {
-                TODO("Not yet implemented")
-            }
         }
 
     // ... and this itemRepoMock over here will be our little secret
