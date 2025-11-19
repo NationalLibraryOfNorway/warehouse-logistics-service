@@ -63,7 +63,7 @@ class WLSService(
     private val emailEventRepository: EventRepository<EmailEvent>,
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
-    private val storageEventProcessor: EventProcessor<StorageEvent>,
+    private val storageEventProcessor: EventProcessor<StorageEvent>
 ) : AddNewItem,
     CreateOrder,
     DeleteOrder,

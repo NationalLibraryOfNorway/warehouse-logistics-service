@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class AdminController(
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>,
-    private val emailEventProcessor: EventProcessor<EmailEvent>,
+    private val emailEventProcessor: EventProcessor<EmailEvent>
 ) {
     @PostMapping("/process-all-outboxes")
     suspend fun processOutboxEvents() {

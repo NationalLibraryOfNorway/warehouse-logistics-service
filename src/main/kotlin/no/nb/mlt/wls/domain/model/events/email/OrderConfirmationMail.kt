@@ -5,7 +5,7 @@ import java.util.UUID
 
 data class OrderConfirmationMail(
     val order: Order,
-    override val id: String = UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString()
 ) : EmailEvent {
     override val body: Any
         get() = order

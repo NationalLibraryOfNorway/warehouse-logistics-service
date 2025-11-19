@@ -7,7 +7,7 @@ import java.util.UUID
 data class OrderHandlerMail(
     val order: Order,
     val orderItems: List<Item>,
-    override val id: String = UUID.randomUUID().toString(),
+    override val id: String = UUID.randomUUID().toString()
 ) : EmailEvent {
     override val body: Any
         get() = (order to orderItems)

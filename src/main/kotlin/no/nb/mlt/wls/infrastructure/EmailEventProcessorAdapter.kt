@@ -15,7 +15,7 @@ private val logger = KotlinLogging.logger {}
 class EmailEventProcessorAdapter(
     val emailEventRepository: EventRepository<EmailEvent>,
     val emailNotifier: EmailNotifier
-): EventProcessor<EmailEvent> {
+) : EventProcessor<EmailEvent> {
     override suspend fun processOutbox() {
         logger.trace { "Processing email event outbox" }
 
