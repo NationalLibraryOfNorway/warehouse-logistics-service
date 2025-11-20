@@ -121,7 +121,6 @@ class StorageEventProcessorAdapter(
             return
         }
 
-
         logger.info { "Item was edited from $oldItem to $item, it's storage candidates changed from $oldStorageCandidates to $newStorageCandidates" }
         logger.info { "So far there is no handling of changes besides this log message" }
         logger.error { "No handling of item edits has been implemented yet, item $item will not be updated in any storage system" }

@@ -8,11 +8,10 @@ import no.nb.mlt.wls.domain.model.Packaging
 /**
  * A port for editing items in the system.
  *
- * This port accepts an [Item] instance and new metadata which will replace the old metadata
- * and returns an updated [Item]. It is designed to allow for the editing of items in the system, in cases
- * where the item's metadata was wrong. The second use case
- * exists because if we get an order with items we don't know, we will create a mostly empty [Item] with only
- * the ID and host name set.
+ * This port accepts an [Item] instance and new metadata which will replace the old metadata and returns an updated [Item].
+ * It is designed to allow for the editing of items in the system, in cases where the item's metadata was wrong.
+ * The second use case exists because if we get an order with items we don't know, we will create a mostly empty [Item]
+ * with only the ID and host name set.
  *
  * The implementing function is expected to orchestrate transformations between [ItemEditMetadata]
  * and [Item], and perform or delegate associated business logic such as validation, saving, or initialization
