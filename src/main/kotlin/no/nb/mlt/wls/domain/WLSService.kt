@@ -114,17 +114,26 @@ class WLSService(
                     )
 
                 val editedItem = itemRepository.editItem(changedItem)
-                val event =
-                    storageEventRepository.save(
-                        ItemEdited(
-                            EditedItemInfo(editedItem = editedItem, oldItem = item)
-                        )
-                    )
 
-                (editedItem to event)
+                if (editedItem.equalsExactly(item)) {
+                    logger.info { "Item was not changed: $editedItem" }
+                    (editedItem to null)
+                } else {
+                    val event =
+                        storageEventRepository.save(
+                            ItemEdited(
+                                EditedItemInfo(editedItem = editedItem, oldItem = item)
+                            )
+                        )
+
+                    (editedItem to event)
+                }
             }
 
-        processStorageEventAsync(storageEvent)
+        if (storageEvent != null) {
+            processStorageEventAsync(storageEvent)
+        }
+
         return editedItem
     }
 

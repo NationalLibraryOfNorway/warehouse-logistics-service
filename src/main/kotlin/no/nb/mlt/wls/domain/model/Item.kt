@@ -167,6 +167,15 @@ class Item(
         return other.hostId == hostId && other.hostName == hostName
     }
 
+    fun equalsExactly(other: Item): Boolean {
+        if (other != this) return false
+
+        return other.description == description && other.itemCategory == itemCategory &&
+            other.preferredEnvironment == preferredEnvironment && other.packaging == packaging &&
+            other.callbackUrl == callbackUrl && other.location == location && other.quantity == quantity &&
+            other.associatedStorage == associatedStorage
+    }
+
     override fun hashCode(): Int {
         var result = hostId.hashCode()
         result = 31 * result + hostName.hashCode()

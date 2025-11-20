@@ -23,4 +23,78 @@ class ItemTest {
         assertThat(testItem.location).isEqualTo("SYNQ_WAREHOUSE")
         assertThat(testItem.quantity).isEqualTo(1)
     }
+
+    @Test
+    fun `editing item with same data returns same item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = item.description,
+                itemCategory = item.itemCategory,
+                preferredEnvironment = item.preferredEnvironment,
+                packaging = item.packaging,
+                callbackUrl = item.callbackUrl
+            )
+        assertThat(editedItem.hostId).isEqualTo(item.hostId)
+        assertThat(editedItem.hostName).isEqualTo(item.hostName)
+        assertThat(editedItem.description).isEqualTo(item.description)
+        assertThat(editedItem.itemCategory).isEqualTo(item.itemCategory)
+        assertThat(editedItem.preferredEnvironment).isEqualTo(item.preferredEnvironment)
+        assertThat(editedItem.packaging).isEqualTo(item.packaging)
+        assertThat(editedItem.callbackUrl).isEqualTo(item.callbackUrl)
+        assertThat(editedItem.location).isEqualTo(item.location)
+        assertThat(editedItem.quantity).isEqualTo(item.quantity)
+        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
+    }
+
+    @Test
+    fun `editing item with partially new data returns edited item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = "new description",
+                itemCategory = item.itemCategory,
+                preferredEnvironment = item.preferredEnvironment,
+                packaging = item.packaging,
+                callbackUrl = item.callbackUrl
+            )
+
+        assertThat(editedItem.hostId).isEqualTo(item.hostId)
+        assertThat(editedItem.hostName).isEqualTo(item.hostName)
+        assertThat(editedItem.description).isEqualTo("new description")
+        assertThat(editedItem.itemCategory).isEqualTo(item.itemCategory)
+        assertThat(editedItem.preferredEnvironment).isEqualTo(item.preferredEnvironment)
+        assertThat(editedItem.packaging).isEqualTo(item.packaging)
+        assertThat(editedItem.callbackUrl).isEqualTo(item.callbackUrl)
+        assertThat(editedItem.location).isEqualTo(item.location)
+        assertThat(editedItem.quantity).isEqualTo(item.quantity)
+        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
+    }
+
+    @Test
+    fun `editing item with wholly new data returns edited item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = "new description",
+                itemCategory = ItemCategory.FILM,
+                preferredEnvironment = Environment.FREEZE,
+                packaging = Packaging.BOX,
+                callbackUrl = "https://callback-wls.no/v2/item"
+            )
+
+        assertThat(editedItem.hostId).isEqualTo(item.hostId)
+        assertThat(editedItem.hostName).isEqualTo(item.hostName)
+        assertThat(editedItem.description).isEqualTo("new description")
+        assertThat(editedItem.itemCategory).isEqualTo(ItemCategory.FILM)
+        assertThat(editedItem.preferredEnvironment).isEqualTo(Environment.FREEZE)
+        assertThat(editedItem.packaging).isEqualTo(Packaging.BOX)
+        assertThat(editedItem.callbackUrl).isEqualTo("https://callback-wls.no/v2/item")
+        assertThat(editedItem.location).isEqualTo(item.location)
+        assertThat(editedItem.quantity).isEqualTo(item.quantity)
+        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
+    }
 }
