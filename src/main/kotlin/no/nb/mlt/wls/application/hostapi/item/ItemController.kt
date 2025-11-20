@@ -255,6 +255,13 @@ class ItemController(
             .body(item.toApiPayload())
     }
 
+    @Operation(
+        summary = "Update item metadata in Hermes",
+        description = """Update metadata about the item in Hermes WLS and appropriate storage systems.
+        This endpoint allows updating item's description, category, environment, packaging, and callback URL.
+        In cases where only some fields should be updated, the others must be included in their original state.
+        For example if you only want to update description, you still have to include category, environment, and the others."""
+    )
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
