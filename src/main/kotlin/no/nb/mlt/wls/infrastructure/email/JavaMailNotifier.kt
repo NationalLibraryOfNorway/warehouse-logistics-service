@@ -26,24 +26,22 @@ class JavaMailNotifier(
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun sendOrderConfirmation(order: Order): Boolean {
-        return sendEmail(
+    override suspend fun sendOrderConfirmation(order: Order): Boolean =
+        sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
             "Failed to send order confirmation email"
         )
-    }
 
     override suspend fun sendOrderHandlerMail(
         order: Order,
         items: List<Item>
-    ): Boolean {
-        return sendEmail(
+    ): Boolean =
+        sendEmail(
             createOrderHandlerEmail(order, items),
             "Email sent to order handlers",
             "Failed to send orders"
         )
-    }
 
     override suspend fun orderCompleted(order: Order): Boolean {
         logger.warn { "not yet implemented" }
