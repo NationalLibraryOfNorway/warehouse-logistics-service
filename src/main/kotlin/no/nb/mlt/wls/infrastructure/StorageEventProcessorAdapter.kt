@@ -125,7 +125,7 @@ class StorageEventProcessorAdapter(
         // remove info
         // find shared storages
         // update the info
-        // fin unique new storages
+        // find unique new storages
         // create info
 
         logger.info { "Item was edited from $oldItem to $item, it's storage candidates changed from $oldStorageCandidates to $newStorageCandidates" }
