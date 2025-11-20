@@ -12,13 +12,9 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.events.Event
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
-import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
-import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -60,7 +56,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val storageEventRepository: EventRepository<StorageEvent>,
-    private val emailEventRepository: EventRepository<EmailEvent>,
+    private val emailService: EmailService,
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
@@ -227,19 +223,14 @@ class WLSService(
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
-                // TODO - Separate service entirely, and/or handled asynchronously?
-                if (createdOrder.contactEmail != null) {
-                    emailEventRepository.save(OrderConfirmationMail(createdOrder))
-                } else {
-                    logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
-                }
+                // TODO - Test if items in email are correct
                 val items = existingItems.plus(missingItems)
-                emailEventRepository.save(OrderHandlerMail(createdOrder, items))
+                emailService.createOrderConfirmation(createdOrder)
+                emailService.createOrderHandlerEmail(createdOrder, items)
                 (createdOrder to storageEvent)
             }
 
         processStorageEventAsync(storageEvent)
-
         return createdOrder
     }
 

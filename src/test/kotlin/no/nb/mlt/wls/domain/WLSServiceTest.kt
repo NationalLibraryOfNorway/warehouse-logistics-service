@@ -20,8 +20,6 @@ import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
-import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -52,10 +50,9 @@ class WLSServiceTest {
     private val orderRepository = mockk<OrderRepository>()
     private val catalogEventRepository = mockk<EventRepository<CatalogEvent>>()
     private val storageEventRepository = mockk<EventRepository<StorageEvent>>()
-    private val emailEventRepository = mockk<EventRepository<EmailEvent>>()
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
-    private val emailEventProcessor = mockk<EventProcessor<EmailEvent>>()
+    private val emailServiceMock = mockk<EmailService>()
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val transactionPortMock = mockk<TransactionPort>()
     private val transactionPortExecutor =
@@ -76,7 +73,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortMock,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -88,7 +85,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -282,8 +279,8 @@ class WLSServiceTest {
         coEvery { orderRepository.createOrder(createOrderDTO.toOrder()) } answers { testOrder }
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers {}
+        coEvery { emailServiceMock.createOrderHandlerEmail(any(), any()) } answers {}
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -334,8 +331,8 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } returnsMany (listOf(itemCreatedEvent, orderCreatedEvent))
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers {}
+        coEvery { emailServiceMock.createOrderHandlerEmail(any(), any()) } answers {}
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -570,8 +567,8 @@ class WLSServiceTest {
         coEvery { orderRepository.createOrder(testOrder) } answers { testOrder }
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers {}
+        coEvery { emailServiceMock.createOrderHandlerEmail(any(), any()) } answers {}
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -592,7 +589,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -603,8 +600,8 @@ class WLSServiceTest {
         coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
         coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers {}
+        coEvery { emailServiceMock.createOrderHandlerEmail(any(), any()) } answers {}
 
         runTest {
             cut.createOrder(createOrderDTO)
@@ -693,7 +690,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -727,7 +724,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -767,7 +764,7 @@ class WLSServiceTest {
                 orderRepo,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -939,7 +936,7 @@ class WLSServiceTest {
                 createInMemOrderRepo(mutableListOf(testOrder)),
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -994,17 +991,7 @@ class WLSServiceTest {
                 quantity = testKardexMoveItemPayload.quantity,
                 associatedStorage = testKardexMoveItemPayload.associatedStorage
             )
-        val cut =
-            WLSService(
-                createInMemItemRepo(mutableListOf(storedItem)),
-                orderRepository,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val cut = createCut(createInMemItemRepo(mutableListOf(storedItem)), orderRepository)
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -1281,7 +1268,7 @@ class WLSServiceTest {
             orderRepository = orderRepo?: orderRepository,
             catalogEventRepository = catalogEventRepository,
             storageEventRepository = storageEventRepository,
-            emailEventRepository = emailEventRepository,
+            emailService = emailServiceMock,
             transactionPort = transactionPortExecutor,
             catalogEventProcessor = catalogEventProcessor,
             storageEventProcessor = storageEventProcessor
