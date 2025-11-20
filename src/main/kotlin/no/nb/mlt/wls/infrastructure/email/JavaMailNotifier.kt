@@ -26,8 +26,8 @@ class JavaMailNotifier(
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun sendOrderConfirmation(order: Order) {
-        sendEmail(
+    override suspend fun sendOrderConfirmation(order: Order): Boolean {
+        return sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
             "Failed to send order confirmation email"
@@ -37,16 +37,17 @@ class JavaMailNotifier(
     override suspend fun sendOrderHandlerMail(
         order: Order,
         items: List<Item>
-    ) {
-        sendEmail(
+    ): Boolean {
+        return sendEmail(
             createOrderHandlerEmail(order, items),
             "Email sent to order handlers",
             "Failed to send orders"
         )
     }
 
-    override suspend fun orderCompleted(order: Order) {
+    override suspend fun orderCompleted(order: Order): Boolean {
         logger.warn { "not yet implemented" }
+        return true
     }
 
     /**
@@ -56,7 +57,7 @@ class JavaMailNotifier(
         email: MimeMessage?,
         successInfo: String,
         errorInfo: String
-    ) {
+    ): Boolean {
         if (email == null) {
             logger.error {
                 errorInfo
@@ -64,13 +65,14 @@ class JavaMailNotifier(
             logger.error {
                 "Cannot send email because message is null"
             }
-            return
+            return false
         }
         try {
             emailSender.send(email)
             logger.info {
                 successInfo
             }
+            return true
         } catch (e: MailException) {
             logger.error {
                 errorInfo + ": ${e.message}"
@@ -78,10 +80,12 @@ class JavaMailNotifier(
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
+            return false
         } catch (e: Exception) {
             logger.error(e) {
                 "Unexpected exception while sending email: ${e.message}"
             }
+            return false
         }
     }
 

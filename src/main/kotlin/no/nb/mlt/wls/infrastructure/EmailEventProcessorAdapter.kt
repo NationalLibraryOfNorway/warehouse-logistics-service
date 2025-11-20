@@ -33,9 +33,12 @@ class EmailEventProcessorAdapter(
     }
 
     override suspend fun handleEvent(event: EmailEvent) {
-        when (event) {
+        val isSuccessful = when (event) {
             is OrderConfirmationMail -> emailNotifier.sendOrderConfirmation(event.order)
             is OrderHandlerMail -> emailNotifier.sendOrderHandlerMail(event.order, event.orderItems)
+        }
+        if (isSuccessful) {
+            emailEventRepository.markAsProcessed(event)
         }
     }
 }
