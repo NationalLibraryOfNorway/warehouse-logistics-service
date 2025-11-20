@@ -227,7 +227,6 @@ class WLSService(
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
-                // TODO - Separate service entirely, and/or handled asynchronously?
                 if (createdOrder.contactEmail != null) {
                     emailEventRepository.save(OrderConfirmationMail(createdOrder))
                 } else {

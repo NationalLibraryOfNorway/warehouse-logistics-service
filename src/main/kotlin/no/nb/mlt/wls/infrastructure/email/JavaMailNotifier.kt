@@ -46,7 +46,7 @@ class JavaMailNotifier(
     }
 
     override suspend fun orderCompleted(order: Order) {
-        TODO("Not yet implemented")
+       logger.warn { "not yet implemented" }
     }
 
     /**
