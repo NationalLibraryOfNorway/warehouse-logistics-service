@@ -907,6 +907,10 @@ class WLSServiceTest {
                         Order.OrderItem("untouchedItem", Order.OrderItem.Status.NOT_STARTED)
                     )
             )
+
+        val itemRepository = createInMemItemRepo(mutableListOf(storedItem))
+        val orderRepository = createInMemOrderRepo(mutableListOf(testOrder))
+
         val cut = createCut(itemRepository, orderRepository)
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
