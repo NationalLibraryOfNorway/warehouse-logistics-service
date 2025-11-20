@@ -1279,10 +1279,13 @@ class WLSServiceTest {
         }
     }
 
-    fun createCut(itemRepo: ItemRepository?, orderRepo: OrderRepository?): WLSService {
-        return WLSService(
-            itemRepository = itemRepo?: itemRepository,
-            orderRepository = orderRepo?: orderRepository,
+    fun createCut(
+        itemRepo: ItemRepository?,
+        orderRepo: OrderRepository?
+    ): WLSService =
+        WLSService(
+            itemRepository = itemRepo ?: itemRepository,
+            orderRepository = orderRepo ?: orderRepository,
             catalogEventRepository = catalogEventRepository,
             storageEventRepository = storageEventRepository,
             emailEventRepository = emailEventRepository,
@@ -1290,5 +1293,4 @@ class WLSServiceTest {
             catalogEventProcessor = catalogEventProcessor,
             storageEventProcessor = storageEventProcessor
         )
-    }
 }
