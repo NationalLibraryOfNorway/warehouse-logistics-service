@@ -122,7 +122,8 @@ class MongoItemRepositoryAdapter(
             throw ItemNotFoundException("Item was not found. Item: $item")
         }
 
-        return getItem(item.hostName, item.hostId)!!
+        return getItem(item.hostName, item.hostId)
+            ?: throw ItemNotFoundException("Item was not found after update. Item: $item")
     }
 
     override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean =
