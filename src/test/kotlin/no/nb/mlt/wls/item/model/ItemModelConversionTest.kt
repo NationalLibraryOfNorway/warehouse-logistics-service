@@ -79,11 +79,11 @@ class ItemModelConversionTest {
     @Test
     fun `API edit payload converts to item edit metadata`() {
         val editItemMetadata = testEditItemPayload.toItemEditMetadata()
-        assertThat(editItemMetadata.description).isEqualTo(testItem.description)
-        assertThat(editItemMetadata.itemCategory).isEqualTo(testItem.itemCategory)
-        assertThat(editItemMetadata.preferredEnvironment).isEqualTo(testItem.preferredEnvironment)
-        assertThat(editItemMetadata.packaging).isEqualTo(testItem.packaging)
-        assertThat(editItemMetadata.callbackUrl).isEqualTo(testItem.callbackUrl)
+        assertThat(editItemMetadata.description).isEqualTo(testEditItemPayload.description)
+        assertThat(editItemMetadata.itemCategory).isEqualTo(testEditItemPayload.itemCategory)
+        assertThat(editItemMetadata.preferredEnvironment).isEqualTo(testEditItemPayload.preferredEnvironment)
+        assertThat(editItemMetadata.packaging).isEqualTo(testEditItemPayload.packaging)
+        assertThat(editItemMetadata.callbackUrl).isEqualTo(testEditItemPayload.callbackUrl)
     }
 
     private val testItem = createTestItem()
