@@ -15,7 +15,7 @@ import no.nb.mlt.wls.domain.model.events.Event
  * anything changes in the system, you are able to reproduce the original email.
  *
  * The email events also contain the following properties:
- * - An unique identifier inherited from the [Event] interface
+ * - A unique identifier inherited from the [Event] interface
  * - A body representing the contents of the email (e.g. an order, or an order with its [no.nb.mlt.wls.domain.model.Item]s)
  */
 sealed interface EmailEvent : Event
