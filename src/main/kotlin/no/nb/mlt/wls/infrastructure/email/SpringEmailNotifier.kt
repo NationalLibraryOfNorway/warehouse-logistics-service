@@ -33,9 +33,7 @@ class SpringEmailNotifier(
             "Failed to send order confirmation email"
         )
 
-    override suspend fun orderPickup(
-        orderEmail: OrderEmail
-    ): Boolean =
+    override suspend fun orderPickup(orderEmail: OrderEmail): Boolean =
         sendEmail(
             createOrderPickupMail(orderEmail),
             "Sent order pickup email to order handlers",
@@ -124,9 +122,7 @@ class SpringEmailNotifier(
             Order.Type.DIGITIZATION -> "Digitalisering"
         }
 
-    private fun createOrderPickupMail(
-        order: OrderEmail
-    ): MimeMessage? {
+    private fun createOrderPickupMail(order: OrderEmail): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
                 "Sending order pickup mail to storage handlers is disabled"

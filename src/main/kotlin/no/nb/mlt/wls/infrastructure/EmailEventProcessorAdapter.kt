@@ -4,9 +4,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
-import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
+import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}

@@ -13,9 +13,7 @@ class DisabledEmailNotifier : UserNotifier {
         return true
     }
 
-    override suspend fun orderPickup(
-        orderEmail: OrderEmail
-    ): Boolean {
+    override suspend fun orderPickup(orderEmail: OrderEmail): Boolean {
         logger.warn { "Sending emails for orders is disabled" }
         return true
     }

@@ -233,21 +233,26 @@ class WLSService(
                     logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
                 }
                 val items = existingItems.plus(missingItems)
-                emailEventRepository.save(OrderPickupMail(OrderEmail(
-                    hostName = createdOrder.hostName,
-                    hostOrderId = createdOrder.hostOrderId,
-                    orderType = createdOrder.orderType,
-                    contactPerson = createdOrder.contactPerson,
-                    contactEmail = createdOrder.contactEmail,
-                    note = createdOrder.note,
-                    orderLines = items.map { item ->
-                        OrderEmail.OrderLine(
-                            hostId = item.hostId,
-                            description = item.description,
-                            location = item.location
+                emailEventRepository.save(
+                    OrderPickupMail(
+                        OrderEmail(
+                            hostName = createdOrder.hostName,
+                            hostOrderId = createdOrder.hostOrderId,
+                            orderType = createdOrder.orderType,
+                            contactPerson = createdOrder.contactPerson,
+                            contactEmail = createdOrder.contactEmail,
+                            note = createdOrder.note,
+                            orderLines =
+                                items.map { item ->
+                                    OrderEmail.OrderLine(
+                                        hostId = item.hostId,
+                                        description = item.description,
+                                        location = item.location
+                                    )
+                                }
                         )
-                    },
-                )))
+                    )
+                )
                 (createdOrder to storageEvent)
             }
 
