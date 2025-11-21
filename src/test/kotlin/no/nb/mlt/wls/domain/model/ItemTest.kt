@@ -23,4 +23,58 @@ class ItemTest {
         assertThat(testItem.location).isEqualTo("SYNQ_WAREHOUSE")
         assertThat(testItem.quantity).isEqualTo(1)
     }
+
+    @Test
+    fun `editing item with same data returns same item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = item.description,
+                itemCategory = item.itemCategory,
+                preferredEnvironment = item.preferredEnvironment,
+                packaging = item.packaging,
+                callbackUrl = item.callbackUrl
+            )
+
+        assertThat(editedItem.equalsExactly(item)).isTrue()
+    }
+
+    @Test
+    fun `editing item with partially new data returns edited item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = "new description",
+                itemCategory = item.itemCategory,
+                preferredEnvironment = item.preferredEnvironment,
+                packaging = item.packaging,
+                callbackUrl = item.callbackUrl
+            )
+
+        assertThat(editedItem.equalsExactly(item)).isFalse()
+        assertThat(editedItem.description).isEqualTo("new description")
+    }
+
+    @Test
+    fun `editing item with wholly new data returns edited item`() {
+        val item = createTestItem()
+
+        val editedItem =
+            item.edit(
+                description = "new description",
+                itemCategory = ItemCategory.FILM,
+                preferredEnvironment = Environment.FREEZE,
+                packaging = Packaging.BOX,
+                callbackUrl = "https://callback-wls.no/v2/item"
+            )
+
+        assertThat(editedItem.equalsExactly(item)).isFalse()
+        assertThat(editedItem.description).isEqualTo("new description")
+        assertThat(editedItem.itemCategory).isEqualTo(ItemCategory.FILM)
+        assertThat(editedItem.preferredEnvironment).isEqualTo(Environment.FREEZE)
+        assertThat(editedItem.packaging).isEqualTo(Packaging.BOX)
+        assertThat(editedItem.callbackUrl).isEqualTo("https://callback-wls.no/v2/item")
+    }
 }

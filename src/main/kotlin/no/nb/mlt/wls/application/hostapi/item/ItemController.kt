@@ -16,6 +16,7 @@ import no.nb.mlt.wls.application.hostapi.ErrorMessage
 import no.nb.mlt.wls.application.hostapi.config.checkIfAuthorized
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.EditItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.infrastructure.callbacks.NotificationItemPayload
 import org.springframework.http.HttpStatus
@@ -25,6 +26,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -35,88 +37,9 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 @Tag(name = "Item Controller", description = """API for creating items in Hermes WLS""")
 class ItemController(
     private val getItem: GetItem,
-    private val addNewItem: AddNewItem
+    private val addNewItem: AddNewItem,
+    private val editItem: EditItem
 ) {
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = """Information about the item with given "hostname" and "hostId"""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ApiItemPayload::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "400",
-            description = """Some fields in your request are invalid.
-                The error message contains information about the invalid fields.""",
-            content = [
-                Content(
-                    mediaType = "application/json",
-                    schema = Schema(implementation = ErrorMessage::class)
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "401",
-            description = """Client sending the request is not authorized to request item info, or this item does not belong to them.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Unauthorized")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "403",
-            description = """A valid "Authorization" header is missing from the request.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Forbidden")
-                )
-            ]
-        ),
-        ApiResponse(
-            responseCode = "404",
-            description = """The item with given "hostname" and "hostId" does not exist in the system.""",
-            content = [
-                Content(
-                    mediaType = "string",
-                    schema = Schema(implementation = String::class, example = "Not Found")
-                )
-            ]
-        )
-    )
-    @GetMapping("/item/{hostName}/{hostId}")
-    suspend fun getItem(
-        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @Parameter(
-            description = """Name of the host system which owns the item.""",
-            required = true,
-            allowEmptyValue = false,
-            example = "AXIELL"
-        )
-        @PathVariable("hostName") hostName: HostName,
-        @Parameter(
-            description = """ID of the item which you wish to retrieve.""",
-            required = true,
-            allowEmptyValue = false,
-            example = "mlt-12345"
-        )
-        @PathVariable("hostId") hostId: String
-    ): ResponseEntity<ApiItemPayload> {
-        jwt.checkIfAuthorized(hostName)
-
-        val item = getItem.getItem(hostName, hostId) ?: return ResponseEntity.notFound().build()
-
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(item.toApiPayload())
-    }
-
     @Operation(
         summary = "Register an item in Hermes",
         description = """Register data about the item in Hermes WLS and appropriate storage systems.
@@ -243,5 +166,182 @@ class ItemController(
         return ResponseEntity
             .status(HttpStatus.CREATED)
             .body(itemCreated.toApiPayload())
+    }
+
+    @Operation(
+        summary = "Retrieve info about an item from Hermes",
+        description = """Retrieve data about the item that Hermes WLS has registered.
+            We try our best to have the most up-to-date information about an item.
+            This is not always possible as we are limited by what storage systems provide us.
+            Especially in case of items stored in manual storages we might not always have correct info on hand."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Information about the item with given "hostname" and "hostId"""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiItemPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Some fields in your request are invalid.
+                The error message contains information about the invalid fields.""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized to request item info, or this item does not belong to them.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """The item with given "hostname" and "hostId" does not exist in the system.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
+        )
+    )
+    @GetMapping("/item/{hostName}/{hostId}")
+    suspend fun getItem(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @Parameter(
+            description = """Name of the host system which owns the item.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "AXIELL"
+        )
+        @PathVariable("hostName") hostName: HostName,
+        @Parameter(
+            description = """ID of the item which you wish to retrieve.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "mlt-12345"
+        )
+        @PathVariable("hostId") hostId: String
+    ): ResponseEntity<ApiItemPayload> {
+        jwt.checkIfAuthorized(hostName)
+
+        val item = getItem.getItem(hostName, hostId) ?: return ResponseEntity.notFound().build()
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(item.toApiPayload())
+    }
+
+    @Operation(
+        summary = "Update item metadata in Hermes",
+        description = """Update metadata about the item in Hermes WLS and appropriate storage systems.
+        This endpoint allows updating item's description, category, environment, packaging, and callback URL.
+        In cases where only some fields should be updated, the others must be included in their original state.
+        For example if you only want to update description, you still have to include category, environment, and the others."""
+    )
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = """Updated information about the item with given "hostname" and "hostId"""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiItemPayload::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "400",
+            description = """Some fields in your request are invalid.
+                The error message contains information about the invalid fields.""",
+            content = [
+                Content(
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ErrorMessage::class)
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "401",
+            description = """Client sending the request is not authorized to edit item info, or this item does not belong to them.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Unauthorized")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "403",
+            description = """A valid "Authorization" header is missing from the request.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Forbidden")
+                )
+            ]
+        ),
+        ApiResponse(
+            responseCode = "404",
+            description = """The item with given "hostname" and "hostId" does not exist in the system.""",
+            content = [
+                Content(
+                    mediaType = "string",
+                    schema = Schema(implementation = String::class, example = "Not Found")
+                )
+            ]
+        )
+    )
+    @PutMapping("/item/{hostName}/{hostId}")
+    suspend fun updateItem(
+        @AuthenticationPrincipal jwt: JwtAuthenticationToken,
+        @Parameter(
+            description = """Name of the host system which owns the item.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "AXIELL"
+        )
+        @PathVariable("hostName") hostName: HostName,
+        @Parameter(
+            description = """ID of the item which you wish to update.""",
+            required = true,
+            allowEmptyValue = false,
+            example = "mlt-12345"
+        )
+        @PathVariable("hostId") hostId: String,
+        @RequestBody @Valid payload: ApiEditItemPayload
+    ): ResponseEntity<ApiItemPayload> {
+        jwt.checkIfAuthorized(hostName)
+
+        val item = getItem.getItem(hostName, hostId) ?: return ResponseEntity.notFound().build()
+
+        val editedItem = editItem.editItem(item, payload.toItemEditMetadata())
+
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(editedItem.toApiPayload())
     }
 }

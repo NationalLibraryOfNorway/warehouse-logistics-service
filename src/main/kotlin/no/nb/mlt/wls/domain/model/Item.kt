@@ -129,6 +129,26 @@ class Item(
         this.associatedStorage = associatedStorage
     }
 
+    fun edit(
+        description: String,
+        itemCategory: ItemCategory,
+        preferredEnvironment: Environment,
+        packaging: Packaging,
+        callbackUrl: String?
+    ): Item =
+        Item(
+            hostId = this.hostId,
+            hostName = this.hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = if (callbackUrl.isNullOrBlank()) this.callbackUrl else callbackUrl,
+            location = this.location,
+            quantity = this.quantity,
+            associatedStorage = this.associatedStorage
+        )
+
     /**
      * Marks the location as missing.
      * Use it to indicate that we do not know where the current whereabouts of the item is.
@@ -145,6 +165,21 @@ class Item(
         if (other !is Item) return false
 
         return other.hostId == hostId && other.hostName == hostName
+    }
+
+    fun equalsExactly(other: Item): Boolean {
+        if (this === other) return true
+
+        return other.hostId == hostId &&
+            other.hostName == hostName &&
+            other.description == description &&
+            other.itemCategory == itemCategory &&
+            other.preferredEnvironment == preferredEnvironment &&
+            other.packaging == packaging &&
+            other.callbackUrl == callbackUrl &&
+            other.location == location &&
+            other.quantity == quantity &&
+            other.associatedStorage == associatedStorage
     }
 
     override fun hashCode(): Int {

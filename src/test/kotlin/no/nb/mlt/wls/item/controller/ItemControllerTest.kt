@@ -8,10 +8,14 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
+import no.nb.mlt.wls.application.hostapi.item.ApiEditItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
+import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
@@ -45,8 +49,8 @@ import org.springframework.test.web.reactive.server.expectBody
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class ItemControllerTest(
-    @Autowired val applicationContext: ApplicationContext,
-    @Autowired val repository: ItemMongoRepository
+    @param:Autowired val applicationContext: ApplicationContext,
+    @param:Autowired val repository: ItemMongoRepository
 ) {
     @MockkBean
     private lateinit var synqStandardAdapterMock: SynqStandardAdapter
@@ -69,7 +73,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `getItem returns the order`() {
+    fun `getItem returns the item`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -87,7 +91,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `getItem when order doesn't exist returns 404`() {
+    fun `getItem when item doesn't exist returns 404`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -220,6 +224,77 @@ class ItemControllerTest(
     }
 
     @Test
+    fun `updateItem with valid payload updates item`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .uri("/{hostName}/{hostId}", testItem.hostName, "axiell-01")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testItemEditPayload)
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            val item = repository.findByHostNameAndHostId(testItem.hostName, "axiell-01").awaitSingle()
+
+            assertThat(item)
+                .isNotNull
+                .extracting("description", "itemCategory", "packaging", "preferredEnvironment", "callbackUrl", "location", "quantity")
+                .containsExactly(
+                    testItemEditPayload.description,
+                    testItemEditPayload.itemCategory,
+                    testItemEditPayload.packaging,
+                    testItemEditPayload.preferredEnvironment,
+                    testItemEditPayload.callbackUrl,
+                    testItem.location,
+                    testItem.quantity
+                )
+        }
+
+    @Test
+    fun `updateItem with invalid fields returns 400`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .put()
+            .uri("/{hostName}/{hostId}", testItem.hostName, "axiell-01")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemEditPayload.copy(description = ""))
+            .exchange()
+            .expectStatus()
+            .isBadRequest
+    }
+
+    @Test
+    fun `updateItem without user returns 401`() {
+        webTestClient
+            .mutateWith(csrf())
+            .put()
+            .uri("/{hostName}/{hostId}", testItem.hostName, "axiell-01")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemEditPayload)
+            .exchange()
+            .expectStatus()
+            .isUnauthorized
+    }
+
+    @Test
+    fun `updateItem when item doesn't exist returns 404`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+            .put()
+            .uri("/{hostName}/{hostId}", testItem.hostName, "unknown-id")
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemEditPayload)
+            .exchange()
+            .expectStatus()
+            .isNotFound
+    }
+
+    @Test
     @EnabledIfSystemProperty(
         named = "spring.profiles.active",
         matches = "local-dev",
@@ -275,9 +350,48 @@ class ItemControllerTest(
             .isForbidden
     }
 
+    @Test
+    @EnabledIfSystemProperty(
+        named = "spring.profiles.active",
+        matches = "local-dev",
+        disabledReason = "Only local-dev has properly configured keycloak & JWT"
+    )
+    fun `updateItem with unauthorized user returns 403`() {
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
+            .put()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemEditPayload)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+
+        webTestClient
+            .mutateWith(csrf())
+            .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_order"), SimpleGrantedAuthority(clientRole)))
+            .put()
+            .uri("/{hostName}/{hostId}", testItem.hostName, testItem.hostId)
+            .accept(MediaType.APPLICATION_JSON)
+            .bodyValue(testItemEditPayload)
+            .exchange()
+            .expectStatus()
+            .isForbidden
+    }
+
     private val testItem = createTestItem()
 
     private val testItemPayload = testItem.toApiPayload()
+
+    private val testItemEditPayload =
+        ApiEditItemPayload(
+            description = "Edited description",
+            itemCategory = ItemCategory.FILM,
+            packaging = Packaging.BOX,
+            preferredEnvironment = Environment.FREEZE,
+            callbackUrl = "https://callback-wls.no/v2/item"
+        )
 
     private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
 

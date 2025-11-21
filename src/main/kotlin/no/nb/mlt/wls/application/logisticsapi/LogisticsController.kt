@@ -51,10 +51,8 @@ class LogisticsController(
             description = """Information about orders with the given "hostName"s and "hostOrderId"s with their associated item details.""",
             content = [
                 Content(
-                    schema =
-                        Schema(
-                            implementation = ApiDetailedOrder::class
-                        )
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiDetailedOrder::class)
                 )
             ]
         ),
@@ -119,10 +117,8 @@ class LogisticsController(
             description = """Item was successfully marked as missing, and relevant orders were updated.""",
             content = [
                 Content(
-                    schema =
-                        Schema(
-                            implementation = ApiItemPayload::class
-                        )
+                    mediaType = "application/json",
+                    schema = Schema(implementation = ApiItemPayload::class)
                 )
             ]
         ),
