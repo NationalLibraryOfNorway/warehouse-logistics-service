@@ -21,7 +21,7 @@ import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -283,7 +283,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -335,7 +335,7 @@ class WLSServiceTest {
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -571,7 +571,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -604,7 +604,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderHandlerMail(testOrder, testOrderItems)) } answers { OrderHandlerMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
 
         runTest {
             cut.createOrder(createOrderDTO)

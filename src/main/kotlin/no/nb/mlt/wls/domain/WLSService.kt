@@ -12,13 +12,12 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.events.Event
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
-import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -233,7 +232,7 @@ class WLSService(
                     logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
                 }
                 val items = existingItems.plus(missingItems)
-                emailEventRepository.save(OrderHandlerMail(createdOrder, items))
+                emailEventRepository.save(OrderPickupMail(createdOrder, items))
                 (createdOrder to storageEvent)
             }
 
