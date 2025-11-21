@@ -170,9 +170,16 @@ class Item(
     fun equalsExactly(other: Item): Boolean {
         if (this === other) return true
 
-        return other.hostId == hostId && other.hostName == hostName && other.description == description && other.itemCategory == itemCategory &&
-            other.preferredEnvironment == preferredEnvironment && other.packaging == packaging && other.callbackUrl == callbackUrl &&
-            other.location == location && other.quantity == quantity && other.associatedStorage == associatedStorage
+        return other.hostId == hostId &&
+            other.hostName == hostName &&
+            other.description == description &&
+            other.itemCategory == itemCategory &&
+            other.preferredEnvironment == preferredEnvironment &&
+            other.packaging == packaging &&
+            other.callbackUrl == callbackUrl &&
+            other.location == location &&
+            other.quantity == quantity &&
+            other.associatedStorage == associatedStorage
     }
 
     override fun hashCode(): Int {

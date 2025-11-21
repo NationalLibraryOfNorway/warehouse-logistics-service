@@ -121,9 +121,22 @@ class StorageEventProcessorAdapter(
             return
         }
 
-        logger.info { "Item was edited from $oldItem to $item, it's storage candidates changed from $oldStorageCandidates to $newStorageCandidates" }
-        logger.info { "So far there is no handling of changes besides this log message" }
-        logger.error { "No handling of item edits has been implemented yet, item $item will not be updated in any storage system" }
+        logger.error {
+            """
+            !!!
+                Item edit handling not yet implemented.
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+                No updates will be propagated to storage systems.
+            !!!
+            """.trimIndent()
+        }
     }
 
     private suspend fun handleOrderCreated(event: OrderCreated) {

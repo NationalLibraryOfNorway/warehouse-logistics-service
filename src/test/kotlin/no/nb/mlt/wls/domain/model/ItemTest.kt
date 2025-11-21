@@ -36,16 +36,8 @@ class ItemTest {
                 packaging = item.packaging,
                 callbackUrl = item.callbackUrl
             )
-        assertThat(editedItem.hostId).isEqualTo(item.hostId)
-        assertThat(editedItem.hostName).isEqualTo(item.hostName)
-        assertThat(editedItem.description).isEqualTo(item.description)
-        assertThat(editedItem.itemCategory).isEqualTo(item.itemCategory)
-        assertThat(editedItem.preferredEnvironment).isEqualTo(item.preferredEnvironment)
-        assertThat(editedItem.packaging).isEqualTo(item.packaging)
-        assertThat(editedItem.callbackUrl).isEqualTo(item.callbackUrl)
-        assertThat(editedItem.location).isEqualTo(item.location)
-        assertThat(editedItem.quantity).isEqualTo(item.quantity)
-        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
+
+        assertThat(editedItem.equalsExactly(item)).isTrue()
     }
 
     @Test
@@ -61,16 +53,8 @@ class ItemTest {
                 callbackUrl = item.callbackUrl
             )
 
-        assertThat(editedItem.hostId).isEqualTo(item.hostId)
-        assertThat(editedItem.hostName).isEqualTo(item.hostName)
+        assertThat(editedItem.equalsExactly(item)).isFalse()
         assertThat(editedItem.description).isEqualTo("new description")
-        assertThat(editedItem.itemCategory).isEqualTo(item.itemCategory)
-        assertThat(editedItem.preferredEnvironment).isEqualTo(item.preferredEnvironment)
-        assertThat(editedItem.packaging).isEqualTo(item.packaging)
-        assertThat(editedItem.callbackUrl).isEqualTo(item.callbackUrl)
-        assertThat(editedItem.location).isEqualTo(item.location)
-        assertThat(editedItem.quantity).isEqualTo(item.quantity)
-        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
     }
 
     @Test
@@ -86,15 +70,11 @@ class ItemTest {
                 callbackUrl = "https://callback-wls.no/v2/item"
             )
 
-        assertThat(editedItem.hostId).isEqualTo(item.hostId)
-        assertThat(editedItem.hostName).isEqualTo(item.hostName)
+        assertThat(editedItem.equalsExactly(item)).isFalse()
         assertThat(editedItem.description).isEqualTo("new description")
         assertThat(editedItem.itemCategory).isEqualTo(ItemCategory.FILM)
         assertThat(editedItem.preferredEnvironment).isEqualTo(Environment.FREEZE)
         assertThat(editedItem.packaging).isEqualTo(Packaging.BOX)
         assertThat(editedItem.callbackUrl).isEqualTo("https://callback-wls.no/v2/item")
-        assertThat(editedItem.location).isEqualTo(item.location)
-        assertThat(editedItem.quantity).isEqualTo(item.quantity)
-        assertThat(editedItem.associatedStorage).isEqualTo(item.associatedStorage)
     }
 }
