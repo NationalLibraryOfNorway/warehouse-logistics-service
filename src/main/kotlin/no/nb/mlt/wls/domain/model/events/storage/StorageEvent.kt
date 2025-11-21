@@ -13,7 +13,6 @@ import no.nb.mlt.wls.domain.model.events.Event
  * Every [StorageEvent] has the following properties:
  * - A unique identifier inherited from the [Event] interface.
  * - A body representing the domain entity related to the event (e.g., an item or an order).
- * - A timestamp denoting when the event occurred.
  *
  * Each event might also include event-type-specific info.
  */
