@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.infrastructure.config
 
-import no.nb.mlt.wls.infrastructure.email.DisabledEmailAdapter
-import no.nb.mlt.wls.infrastructure.email.EmailAdapter
+import no.nb.mlt.wls.infrastructure.email.DisabledEmailNotifier
+import no.nb.mlt.wls.infrastructure.email.SpringEmailNotifier
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -14,14 +14,14 @@ import org.springframework.web.reactive.result.view.freemarker.FreeMarkerViewRes
 class EmailConfig {
     @ConditionalOnProperty("spring.mail.host")
     @Bean
-    fun emailAdapter(
+    fun mailNotifier(
         emailSender: JavaMailSender,
         freeMarkerConfigurer: FreeMarkerConfigurer
-    ) = EmailAdapter(emailSender, freeMarkerConfigurer)
+    ) = SpringEmailNotifier(emailSender, freeMarkerConfigurer)
 
-    @ConditionalOnMissingBean(EmailAdapter::class)
+    @ConditionalOnMissingBean(SpringEmailNotifier::class)
     @Bean
-    fun disabledEmailAdapter() = DisabledEmailAdapter()
+    fun disabledEmailAdapter() = DisabledEmailNotifier()
 
     @Bean
     fun freemarkerViewResolver(): FreeMarkerViewResolver {
