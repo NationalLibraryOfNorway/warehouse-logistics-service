@@ -3,8 +3,8 @@ package no.nb.mlt.wls.infrastructure.email
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.OrderEmail
 import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
@@ -34,13 +34,12 @@ class SpringEmailNotifier(
         )
 
     override suspend fun orderPickup(
-        order: Order,
-        items: List<Item>
+        orderEmail: OrderEmail
     ): Boolean =
         sendEmail(
-            createOrderHandlerEmail(order, items),
-            "Email sent to order handlers",
-            "Failed to send orders"
+            createOrderPickupMail(orderEmail),
+            "Sent order pickup email to order handlers",
+            "Failed to send pickup order email"
         )
 
     override suspend fun orderCompleted(order: Order): Boolean {
@@ -91,7 +90,7 @@ class SpringEmailNotifier(
         val receiver = order.contactEmail
         if (receiver.isNullOrBlank()) {
             logger.warn {
-                "Contact email is not present for order ${order.hostOrderId}, so the confirmation email can't be sent"
+                "Contact email is not present for order ${order.hostOrderId}, so the order confirmation email can't be sent"
             }
             return null
         }
@@ -125,13 +124,12 @@ class SpringEmailNotifier(
             Order.Type.DIGITIZATION -> "Digitalisering"
         }
 
-    private fun createOrderHandlerEmail(
-        order: Order,
-        orderItems: List<Item>
+    private fun createOrderPickupMail(
+        order: OrderEmail
     ): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
-                "Emails being sent to storage handlers is disabled"
+                "Sending order pickup mail to storage handlers is disabled"
             }
             return null
         }
@@ -139,7 +137,7 @@ class SpringEmailNotifier(
         val helper = MimeMessageHelper(mail, true)
         val type = "order.ftl"
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
-        val emailOrderItems = computeItemsWithQrCodes(orderItems)
+        val emailOrderItems = computeItemsWithQrCodes(order)
         val htmlBody =
             FreeMarkerTemplateUtils.processTemplateIntoString(
                 template,
@@ -190,9 +188,9 @@ class SpringEmailNotifier(
         return imagePart
     }
 
-    private fun computeItemsWithQrCodes(items: List<Item>): List<EmailOrderItem> {
+    private fun computeItemsWithQrCodes(orderEmail: OrderEmail): List<EmailOrderItem> {
         val list = mutableListOf<EmailOrderItem>()
-        for (item in items) {
+        for (item in orderEmail.orderLines) {
             list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), BarcodeUtils.createQrImage(item.hostId)))
         }
         return list
@@ -206,7 +204,7 @@ class SpringEmailNotifier(
     private fun sanitizeID(id: String): String = id.replace(Regex("[\\s<>\"'&]"), "_")
 
     data class EmailOrderItem(
-        val item: Item,
+        val item: OrderEmail.OrderLine,
         val qr: String,
         val image: BufferedImage
     )
