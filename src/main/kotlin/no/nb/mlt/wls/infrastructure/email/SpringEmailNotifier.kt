@@ -5,7 +5,7 @@ import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
+import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
@@ -16,24 +16,24 @@ import java.awt.image.BufferedImage
 
 private val logger = KotlinLogging.logger {}
 
-class JavaMailNotifier(
+class SpringEmailNotifier(
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
-) : EmailNotifier {
+) : UserNotifier {
     @Value($$"${wls.order.sender.email}")
     val senderEmail: String = ""
 
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun sendOrderConfirmation(order: Order): Boolean =
+    override suspend fun orderConfirmation(order: Order): Boolean =
         sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
             "Failed to send order confirmation email"
         )
 
-    override suspend fun sendOrderHandlerMail(
+    override suspend fun orderPickup(
         order: Order,
         items: List<Item>
     ): Boolean =

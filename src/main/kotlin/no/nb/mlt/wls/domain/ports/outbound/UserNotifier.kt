@@ -4,14 +4,14 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 
 /**
- * Represents an email notification system for managing events related to orders.
+ * Represents a notification system for managing events related to orders and items.
  * Booleans on the methods return true if the email was sent without any exceptions or errors.
  * Returns false otherwise.
  */
-interface EmailNotifier {
-    suspend fun sendOrderConfirmation(order: Order): Boolean
+interface UserNotifier {
+    suspend fun orderConfirmation(order: Order): Boolean
 
-    suspend fun sendOrderHandlerMail(
+    suspend fun orderPickup(
         order: Order,
         items: List<Item>
     ): Boolean

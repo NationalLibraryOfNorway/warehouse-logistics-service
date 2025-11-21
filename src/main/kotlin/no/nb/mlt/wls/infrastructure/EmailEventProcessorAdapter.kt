@@ -4,7 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderHandlerMail
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
+import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import org.springframework.stereotype.Service
@@ -14,7 +14,7 @@ private val logger = KotlinLogging.logger {}
 @Service
 class EmailEventProcessorAdapter(
     val emailEventRepository: EventRepository<EmailEvent>,
-    val emailNotifier: EmailNotifier
+    val userNotifier: UserNotifier
 ) : EventProcessor<EmailEvent> {
     override suspend fun processOutbox() {
         logger.trace { "Processing email event outbox" }
@@ -35,8 +35,8 @@ class EmailEventProcessorAdapter(
     override suspend fun handleEvent(event: EmailEvent) {
         val isSuccessful =
             when (event) {
-                is OrderConfirmationMail -> emailNotifier.sendOrderConfirmation(event.order)
-                is OrderHandlerMail -> emailNotifier.sendOrderHandlerMail(event.order, event.orderItems)
+                is OrderConfirmationMail -> userNotifier.orderConfirmation(event.order)
+                is OrderHandlerMail -> userNotifier.orderPickup(event.order, event.orderItems)
             }
         if (isSuccessful) {
             emailEventRepository.markAsProcessed(event)
