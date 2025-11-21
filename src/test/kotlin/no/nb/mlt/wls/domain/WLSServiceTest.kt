@@ -55,7 +55,6 @@ class WLSServiceTest {
     private val emailEventRepository = mockk<EventRepository<EmailEvent>>()
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
-    private val emailEventProcessor = mockk<EventProcessor<EmailEvent>>()
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
     private val transactionPortMock = mockk<TransactionPort>()
     private val transactionPortExecutor =
@@ -283,7 +282,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -335,7 +334,7 @@ class WLSServiceTest {
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -571,7 +570,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -604,7 +603,7 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(testOrder, testOrderItems)) } answers { OrderPickupMail(firstArg(), secondArg()) }
+        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             cut.createOrder(createOrderDTO)
