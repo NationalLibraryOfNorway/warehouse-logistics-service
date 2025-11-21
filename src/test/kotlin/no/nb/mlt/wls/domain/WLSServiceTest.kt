@@ -282,7 +282,6 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -334,7 +333,6 @@ class WLSServiceTest {
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -570,7 +568,6 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -603,7 +600,6 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(OrderPickupMail(any())) } answers { firstArg() }
 
         runTest {
             cut.createOrder(createOrderDTO)
