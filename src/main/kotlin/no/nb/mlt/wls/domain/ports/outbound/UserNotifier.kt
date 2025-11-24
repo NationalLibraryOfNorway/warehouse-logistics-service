@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.OrderEmail
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 
 /**
  * Represents a notification system for managing events related to orders and items.
@@ -11,7 +11,7 @@ import no.nb.mlt.wls.domain.model.OrderEmail
 interface UserNotifier {
     suspend fun orderConfirmation(order: Order): Boolean
 
-    suspend fun orderPickup(orderEmail: OrderEmail): Boolean
+    suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData): Boolean
 
     suspend fun orderCompleted(order: Order): Boolean
 }

@@ -36,7 +36,7 @@ class EmailEventProcessorAdapter(
         val isSuccessful =
             when (event) {
                 is OrderConfirmationMail -> userNotifier.orderConfirmation(event.order)
-                is OrderPickupMail -> userNotifier.orderPickup(event.orderEmail)
+                is OrderPickupMail -> userNotifier.orderPickup(event.orderPickupData)
             }
         if (isSuccessful) {
             emailEventRepository.markAsProcessed(event)

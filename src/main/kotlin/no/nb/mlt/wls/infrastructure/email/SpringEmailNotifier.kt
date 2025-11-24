@@ -4,7 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.model.OrderEmail
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
@@ -33,9 +33,9 @@ class SpringEmailNotifier(
             "Failed to send order confirmation email"
         )
 
-    override suspend fun orderPickup(orderEmail: OrderEmail): Boolean =
+    override suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData): Boolean =
         sendEmail(
-            createOrderPickupMail(orderEmail),
+            createOrderPickupMail(orderPickupData),
             "Sent order pickup email to order handlers",
             "Failed to send pickup order email"
         )
@@ -122,7 +122,7 @@ class SpringEmailNotifier(
             Order.Type.DIGITIZATION -> "Digitalisering"
         }
 
-    private fun createOrderPickupMail(order: OrderEmail): MimeMessage? {
+    private fun createOrderPickupMail(order: OrderPickupMail.OrderPickupData): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
                 "Sending order pickup mail to storage handlers is disabled"
@@ -184,9 +184,9 @@ class SpringEmailNotifier(
         return imagePart
     }
 
-    private fun computeItemsWithQrCodes(orderEmail: OrderEmail): List<EmailOrderItem> {
+    private fun computeItemsWithQrCodes(orderPickupData: OrderPickupMail.OrderPickupData): List<EmailOrderItem> {
         val list = mutableListOf<EmailOrderItem>()
-        for (item in orderEmail.orderLines) {
+        for (item in orderPickupData.orderLines) {
             list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), BarcodeUtils.createQrImage(item.hostId)))
         }
         return list
@@ -200,7 +200,7 @@ class SpringEmailNotifier(
     private fun sanitizeID(id: String): String = id.replace(Regex("[\\s<>\"'&]"), "_")
 
     data class EmailOrderItem(
-        val item: OrderEmail.OrderLine,
+        val item: OrderPickupMail.OrderPickupData.OrderLine,
         val qr: String,
         val image: BufferedImage
     )
