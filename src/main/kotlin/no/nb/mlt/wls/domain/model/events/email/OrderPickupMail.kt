@@ -1,7 +1,10 @@
 package no.nb.mlt.wls.domain.model.events.email
 
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail.OrderPickupData
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail.OrderPickupData.OrderLine
 import java.util.*
 
 data class OrderPickupMail(
@@ -27,3 +30,24 @@ data class OrderPickupMail(
         )
     }
 }
+
+fun createOrderPickupData(
+    order: Order,
+    items: List<Item>
+): OrderPickupData =
+    OrderPickupData(
+        hostName = order.hostName,
+        hostOrderId = order.hostOrderId,
+        orderType = order.orderType,
+        contactPerson = order.contactPerson,
+        contactEmail = order.contactEmail,
+        note = order.note,
+        orderLines =
+            items.map { item ->
+                OrderLine(
+                    hostId = item.hostId,
+                    description = item.description,
+                    location = item.location
+                )
+            }
+    )

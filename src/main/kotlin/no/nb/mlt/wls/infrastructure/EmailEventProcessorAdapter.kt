@@ -28,7 +28,11 @@ class EmailEventProcessorAdapter(
 
         logger.trace { "Processing ${outboxMessages.size} emails in outbox" }
         outboxMessages.forEach { event ->
-            handleEvent(event)
+            try {
+                handleEvent(event)
+            } catch (ex: Exception) {
+                logger.error(ex) { "Failed to process email event: ${event.id}" }
+            }
         }
     }
 

@@ -18,6 +18,7 @@ import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
+import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
@@ -233,24 +234,7 @@ class WLSService(
                 }
                 val items = existingItems.plus(missingItems)
                 emailEventRepository.save(
-                    OrderPickupMail(
-                        OrderPickupMail.OrderPickupData(
-                            hostName = createdOrder.hostName,
-                            hostOrderId = createdOrder.hostOrderId,
-                            orderType = createdOrder.orderType,
-                            contactPerson = createdOrder.contactPerson,
-                            contactEmail = createdOrder.contactEmail,
-                            note = createdOrder.note,
-                            orderLines =
-                                items.map { item ->
-                                    OrderPickupMail.OrderPickupData.OrderLine(
-                                        hostId = item.hostId,
-                                        description = item.description,
-                                        location = item.location
-                                    )
-                                }
-                        )
-                    )
+                    OrderPickupMail(createOrderPickupData(createdOrder, items))
                 )
                 (createdOrder to storageEvent)
             }
