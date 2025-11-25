@@ -502,7 +502,7 @@ class WLSService(
         itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            transactionPort.executeInTransaction {
+            val event = transactionPort.executeInTransaction {
                 val updatedItem =
                     itemRepository.updateItem(
                         itemToUpdate.hostId,
@@ -520,6 +520,7 @@ class WLSService(
                 }
                 catalogEventRepository.save(ItemEvent(updatedItem))
             }
+            processCatalogEventAsync(event)
         }
     }
 
