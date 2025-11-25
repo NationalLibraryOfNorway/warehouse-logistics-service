@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
@@ -43,6 +44,7 @@ class StorageEventProcessorAdapter(
             outboxMessages.groupBy {
                 when (it) {
                     is ItemCreated -> it.createdItem.hostId
+                    is ItemEdited -> it.editInfo.editedItem.hostId
                     is OrderCreated -> it.createdOrder.hostOrderId
                     is OrderDeleted -> it.hostOrderId
                 }
@@ -73,6 +75,7 @@ class StorageEventProcessorAdapter(
         try {
             when (event) {
                 is ItemCreated -> handleItemCreated(event)
+                is ItemEdited -> handleItemEdited(event)
                 is OrderCreated -> handleOrderCreated(event)
                 is OrderDeleted -> handleOrderDeleted(event)
             }
@@ -102,6 +105,37 @@ class StorageEventProcessorAdapter(
         storageCandidates.forEach {
             it.createItem(item)
             logger.info { "Created item [$item] in storage system: $it" }
+        }
+    }
+
+    private suspend fun handleItemEdited(event: ItemEdited) {
+        logger.trace { "Processing ItemEdited: $event" }
+
+        val item = event.editInfo.editedItem
+        val oldItem = event.editInfo.oldItem
+        val newStorageCandidates = findValidStorageCandidates(item)
+        val oldStorageCandidates = findValidStorageCandidates(oldItem)
+
+        if (newStorageCandidates.isEmpty()) {
+            logger.warn { "Updated item [$item] does not have a storage system that can handle it" }
+            return
+        }
+
+        logger.error {
+            """
+            !!!
+                Item edit handling not yet implemented.
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+                No updates will be propagated to storage systems.
+            !!!
+            """.trimIndent()
         }
     }
 
