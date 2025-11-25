@@ -44,7 +44,7 @@ class StorageEventProcessorAdapter(
             outboxMessages.groupBy {
                 when (it) {
                     is ItemCreated -> it.createdItem.hostId
-                    is ItemEdited -> it.editedItem.editedItem.hostId
+                    is ItemEdited -> it.editInfo.editedItem.hostId
                     is OrderCreated -> it.createdOrder.hostOrderId
                     is OrderDeleted -> it.hostOrderId
                 }
@@ -111,8 +111,8 @@ class StorageEventProcessorAdapter(
     private suspend fun handleItemEdited(event: ItemEdited) {
         logger.trace { "Processing ItemEdited: $event" }
 
-        val item = event.editedItem.editedItem
-        val oldItem = event.editedItem.oldItem
+        val item = event.editInfo.editedItem
+        val oldItem = event.editInfo.oldItem
         val newStorageCandidates = findValidStorageCandidates(item)
         val oldStorageCandidates = findValidStorageCandidates(oldItem)
 

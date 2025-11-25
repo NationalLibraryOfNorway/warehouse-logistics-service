@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.model.events.Event
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
@@ -20,6 +21,7 @@ class KafkaStatisticsService(
         val statisticsEvent =
             when (event) {
                 is ItemCreated -> event.toStatisticsEvent()
+                is ItemEdited -> event.toStatisticsEvent()
                 is ItemEvent -> event.toStatisticsEvent()
                 is OrderCreated -> event.toStatisticsEvent()
                 is OrderEvent -> event.toStatisticsEvent()

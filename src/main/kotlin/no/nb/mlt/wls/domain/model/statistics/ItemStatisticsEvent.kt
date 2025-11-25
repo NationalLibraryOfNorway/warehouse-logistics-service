@@ -8,7 +8,7 @@ data class ItemStatisticsEvent(
     val itemId: String,
     override val eventType: String,
     override val details: Map<String, Any>,
-    @JsonSerialize(using = ToStringSerializer::class)
+    @field:JsonSerialize(using = ToStringSerializer::class)
     override val timestamp: Instant = Instant.now()
 ) : StatisticsEvent {
     override val id: String
