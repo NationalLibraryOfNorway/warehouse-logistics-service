@@ -63,11 +63,12 @@ class EmailEventProcessorTest {
             }
         }
 
-    private val happyUserNotifierMock: UserNotifier = mockk {
-        coEvery { orderPickup(any()) } answers { true }
-        coEvery { orderConfirmation(any()) } answers { true }
-        coEvery { orderCompleted(any()) } answers { true }
-    }
+    private val happyUserNotifierMock: UserNotifier =
+        mockk {
+            coEvery { orderPickup(any()) } answers { true }
+            coEvery { orderConfirmation(any()) } answers { true }
+            coEvery { orderCompleted(any()) } answers { true }
+        }
 
     private val order = createTestOrder()
 
