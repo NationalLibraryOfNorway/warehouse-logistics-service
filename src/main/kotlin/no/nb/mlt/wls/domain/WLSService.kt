@@ -19,7 +19,9 @@ import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
+import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
@@ -27,10 +29,12 @@ import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
+import no.nb.mlt.wls.domain.ports.inbound.EditItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItem
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
+import no.nb.mlt.wls.domain.ports.inbound.ItemEditMetadata
 import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
@@ -71,6 +75,7 @@ class WLSService(
     GetOrders,
     GetItem,
     GetItems,
+    EditItem,
     UpdateItem,
     UpdateOrderStatus,
     MoveItem,
@@ -96,6 +101,45 @@ class WLSService(
 
         processStorageEventAsync(storageEvent)
         return createdItem
+    }
+
+    override suspend fun editItem(
+        item: Item,
+        newMetadata: ItemEditMetadata
+    ): Item {
+        val (editedItem, storageEvent) =
+            transactionPort.executeInTransaction {
+                val changedItem =
+                    item.edit(
+                        description = newMetadata.description,
+                        itemCategory = newMetadata.itemCategory,
+                        preferredEnvironment = newMetadata.preferredEnvironment,
+                        packaging = newMetadata.packaging,
+                        callbackUrl = newMetadata.callbackUrl
+                    )
+
+                val editedItem = itemRepository.editItem(changedItem)
+
+                if (editedItem.equalsExactly(item)) {
+                    logger.info { "Item was not changed: $editedItem" }
+                    (editedItem to null)
+                } else {
+                    val event =
+                        storageEventRepository.save(
+                            ItemEdited(
+                                EditedItemInfo(editedItem = editedItem, oldItem = item)
+                            )
+                        )
+
+                    (editedItem to event)
+                }
+            }
+
+        if (storageEvent != null) {
+            processStorageEventAsync(storageEvent)
+        }
+
+        return editedItem
     }
 
     override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
@@ -473,24 +517,26 @@ class WLSService(
         itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            transactionPort.executeInTransaction {
-                val updatedItem =
-                    itemRepository.updateItem(
-                        itemToUpdate.hostId,
-                        itemToUpdate.hostName,
-                        itemToUpdate.quantity,
-                        itemToUpdate.location,
-                        itemToUpdate.associatedStorage
-                    )
-                logger.info {
-                    """
-                    Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                    Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                    Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
-                    """.trimIndent()
+            val event =
+                transactionPort.executeInTransaction {
+                    val updatedItem =
+                        itemRepository.updateItem(
+                            itemToUpdate.hostId,
+                            itemToUpdate.hostName,
+                            itemToUpdate.quantity,
+                            itemToUpdate.location,
+                            itemToUpdate.associatedStorage
+                        )
+                    logger.info {
+                        """
+                        Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                        Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                        Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                        """.trimIndent()
+                    }
+                    catalogEventRepository.save(ItemEvent(updatedItem))
                 }
-                catalogEventRepository.save(ItemEvent(updatedItem))
-            }
+            processCatalogEventAsync(event)
         }
     }
 

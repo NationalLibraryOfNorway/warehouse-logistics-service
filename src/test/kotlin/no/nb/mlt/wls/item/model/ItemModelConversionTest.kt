@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.item.model
 
+import no.nb.mlt.wls.application.hostapi.item.ApiEditItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
@@ -75,6 +76,16 @@ class ItemModelConversionTest {
         assertThat(item.quantity).isEqualTo(testItem.quantity)
     }
 
+    @Test
+    fun `API edit payload converts to item edit metadata`() {
+        val editItemMetadata = testEditItemPayload.toItemEditMetadata()
+        assertThat(editItemMetadata.description).isEqualTo(testEditItemPayload.description)
+        assertThat(editItemMetadata.itemCategory).isEqualTo(testEditItemPayload.itemCategory)
+        assertThat(editItemMetadata.preferredEnvironment).isEqualTo(testEditItemPayload.preferredEnvironment)
+        assertThat(editItemMetadata.packaging).isEqualTo(testEditItemPayload.packaging)
+        assertThat(editItemMetadata.callbackUrl).isEqualTo(testEditItemPayload.callbackUrl)
+    }
+
     private val testItem = createTestItem()
 
     private val testItemPayload =
@@ -115,5 +126,14 @@ class ItemModelConversionTest {
             quantity = 1,
             eventTimestamp = Instant.now(),
             messageId = UUID.randomUUID().toString()
+        )
+
+    private val testEditItemPayload =
+        ApiEditItemPayload(
+            description = "description",
+            itemCategory = ItemCategory.PAPER,
+            preferredEnvironment = Environment.NONE,
+            packaging = Packaging.NONE,
+            callbackUrl = "https://callback-wls.no/item"
         )
 }

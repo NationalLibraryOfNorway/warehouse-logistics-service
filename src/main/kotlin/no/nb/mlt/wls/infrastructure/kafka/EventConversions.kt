@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.kafka
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.statistics.ItemStatisticsEvent
@@ -35,6 +36,21 @@ fun ItemCreated.toStatisticsEvent(): ItemStatisticsEvent =
                 "preferredEnvironment" to createdItem.preferredEnvironment,
                 "location" to createdItem.location,
                 "quantity" to createdItem.quantity
+            )
+    )
+
+fun ItemEdited.toStatisticsEvent(): ItemStatisticsEvent =
+    ItemStatisticsEvent(
+        itemId = editInfo.editedItem.hostId,
+        eventType = "ItemEdit",
+        details =
+            mapOf(
+                "host" to editInfo.editedItem.hostName,
+                "description" to editInfo.editedItem.description,
+                "category" to editInfo.editedItem.itemCategory,
+                "preferredEnvironment" to editInfo.editedItem.preferredEnvironment,
+                "location" to editInfo.editedItem.location,
+                "quantity" to editInfo.editedItem.quantity
             )
     )
 

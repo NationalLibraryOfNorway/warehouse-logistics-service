@@ -22,11 +22,14 @@ import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
+import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
+import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
+import no.nb.mlt.wls.domain.ports.inbound.ItemEditMetadata
 import no.nb.mlt.wls.domain.ports.inbound.MoveItemPayload
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem.UpdateItemPayload
@@ -131,6 +134,66 @@ class WLSServiceTest {
 
             assertThat(addItemResult).isEqualTo(expectedItem)
             coVerify(exactly = 0) { itemRepository.createItem(any()) }
+            coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    @Test
+    fun `editItem should edit and return edited item`() {
+        val oldItem = createTestItem()
+        val editMetadata =
+            ItemEditMetadata(
+                description = "Edited description",
+                itemCategory = ItemCategory.FILM,
+                preferredEnvironment = Environment.FREEZE,
+                packaging = Packaging.BOX,
+                callbackUrl = "https://callback-wls.no/v2/item"
+            )
+        val editedItem =
+            createTestItem(
+                description = editMetadata.description,
+                itemCategory = editMetadata.itemCategory,
+                preferredEnvironment = editMetadata.preferredEnvironment,
+                packaging = editMetadata.packaging,
+                callbackUrl = editMetadata.callbackUrl
+            )
+        val itemEditedEvent = ItemEdited(EditedItemInfo(editedItem = editedItem, oldItem = oldItem))
+
+        coEvery { itemRepository.getItem(oldItem.hostName, oldItem.hostId) } answers { oldItem }
+        coEvery { itemRepository.editItem(editedItem) } answers { editedItem }
+        coEvery { storageEventRepository.save(any()) } answers { itemEditedEvent }
+        coEvery { storageEventProcessor.handleEvent(itemEditedEvent) } answers {}
+
+        runTest {
+            val editItemResult = serviceAvecTrans.editItem(oldItem, editMetadata)
+
+            assertThat(editItemResult).isEqualTo(editedItem)
+            coVerify(exactly = 1) { itemRepository.editItem(editedItem) }
+            coVerify(exactly = 1) { storageEventRepository.save(any()) }
+            coVerify(exactly = 1) { storageEventProcessor.handleEvent(itemEditedEvent) }
+        }
+    }
+
+    @Test
+    fun `editItem should not create an event if edited and old are same`() {
+        val expectedItem = createTestItem()
+        val editMetadata =
+            ItemEditMetadata(
+                description = expectedItem.description,
+                itemCategory = expectedItem.itemCategory,
+                preferredEnvironment = expectedItem.preferredEnvironment,
+                packaging = expectedItem.packaging,
+                callbackUrl = expectedItem.callbackUrl
+            )
+
+        coEvery { itemRepository.getItem(expectedItem.hostName, expectedItem.hostId) } answers { expectedItem }
+        coEvery { itemRepository.editItem(expectedItem) } answers { expectedItem }
+
+        runTest {
+            val editItemResult = serviceAvecTrans.editItem(expectedItem, editMetadata)
+
+            assertThat(editItemResult).isEqualTo(expectedItem)
+            coVerify(exactly = 1) { itemRepository.editItem(any()) }
             coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
@@ -1169,6 +1232,12 @@ class WLSServiceTest {
                 } else {
                     itemList[existingIndex] = item
                 }
+
+                return item
+            }
+
+            override suspend fun editItem(item: Item): Item {
+                items.replaceAll { if (it.hostId == item.hostId && it.hostName == item.hostName) item else it }
 
                 return item
             }
