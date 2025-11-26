@@ -134,9 +134,8 @@ class ItemControllerTest(
     @Test
     fun `createItem with valid payload creates item`() =
         runTest {
-            coEvery {
-                synqStandardAdapterMock.createItem(any())
-            }.answers { }
+            coEvery { synqStandardAdapterMock.createItem(any()) }.answers { }
+            coEvery { synqStandardAdapterMock.canHandleItem(any()) }.answers { true }
 
             webTestClient
                 .mutateWith(csrf())
