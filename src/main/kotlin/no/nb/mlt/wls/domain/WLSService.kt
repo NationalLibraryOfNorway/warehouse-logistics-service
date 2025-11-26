@@ -502,24 +502,26 @@ class WLSService(
         itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
 
         if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
-            transactionPort.executeInTransaction {
-                val updatedItem =
-                    itemRepository.updateItem(
-                        itemToUpdate.hostId,
-                        itemToUpdate.hostName,
-                        itemToUpdate.quantity,
-                        itemToUpdate.location,
-                        itemToUpdate.associatedStorage
-                    )
-                logger.info {
-                    """
-                    Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                    Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                    Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
-                    """.trimIndent()
+            val event =
+                transactionPort.executeInTransaction {
+                    val updatedItem =
+                        itemRepository.updateItem(
+                            itemToUpdate.hostId,
+                            itemToUpdate.hostName,
+                            itemToUpdate.quantity,
+                            itemToUpdate.location,
+                            itemToUpdate.associatedStorage
+                        )
+                    logger.info {
+                        """
+                        Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
+                        Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
+                        Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                        """.trimIndent()
+                    }
+                    catalogEventRepository.save(ItemEvent(updatedItem))
                 }
-                catalogEventRepository.save(ItemEvent(updatedItem))
-            }
+            processCatalogEventAsync(event)
         }
     }
 
