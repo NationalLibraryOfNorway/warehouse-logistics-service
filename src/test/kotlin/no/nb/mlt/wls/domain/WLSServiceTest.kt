@@ -103,11 +103,16 @@ class WLSServiceTest {
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
-        val expectedItem = createTestItem()
+        val expectedItem =
+            createTestItem(
+                location = UNKNOWN_LOCATION,
+                associatedStorage = AssociatedStorage.UNKNOWN,
+                quantity = 0
+            )
         val itemCreatedEvent = ItemCreated(expectedItem)
 
         coEvery { itemRepository.getItem(expectedItem.hostName, expectedItem.hostId) } answers { null }
-        coEvery { itemRepository.createItem(expectedItem) } answers { expectedItem }
+        coEvery { itemRepository.createItem(any()) } answers { firstArg() }
         coEvery { storageEventRepository.save(any()) } answers { itemCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(itemCreatedEvent) } answers {}
 
@@ -394,7 +399,7 @@ class WLSServiceTest {
         // Needed for creating missing item
         coEvery { storageEventRepository.save(any()) } returnsMany (listOf(itemCreatedEvent, orderCreatedEvent))
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
-        coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
+        coEvery { itemRepository.createItem(any()) } answers { firstArg() }
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
 
         runTest {
@@ -1073,11 +1078,12 @@ class WLSServiceTest {
         coEvery { orderRepository.getOrdersWithPickedItems(any(), any()) } returns listOf()
 
         runTest {
-            cut.moveItem(testMoveItemPayload)
+            cut.moveItem(testKardexMoveItemPayload)
 
             val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
-            assert(item != null)
-            assert(item == expectedItem)
+            assertThat(item).isNotNull
+            assertThat(item!!.isSameItem(expectedItem)).isTrue
+            assertThat(item.associatedStorage).isEqualTo(expectedItem.associatedStorage)
         }
     }
 
