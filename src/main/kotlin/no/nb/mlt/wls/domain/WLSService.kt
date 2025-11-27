@@ -509,29 +509,29 @@ class WLSService(
         itemToUpdate: Item,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
+        val itemToSynchronize = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
 
         val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
 
-        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
+        val syncedItem = itemToUpdate.synchronizeItem(itemToSynchronize.quantity, itemToSynchronize.location, itemToSynchronize.associatedStorage)
 
-        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
+        if (oldQuantity != syncedItem.quantity || oldLocation != syncedItem.location) {
             val event =
                 transactionPort.executeInTransaction {
                     val updatedItem =
                         itemRepository.updateItem(
-                            itemToUpdate.hostId,
-                            itemToUpdate.hostName,
-                            itemToUpdate.quantity,
-                            itemToUpdate.location,
-                            itemToUpdate.associatedStorage
+                            syncedItem.hostId,
+                            syncedItem.hostName,
+                            syncedItem.quantity,
+                            syncedItem.location,
+                            syncedItem.associatedStorage
                         )
                     logger.info {
                         """
-                        Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                        Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                        Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                        Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
+                        Synchronizing quantity [$oldQuantity -> ${syncedItem.quantity}]
+                        Synchronizing location [$oldLocation -> ${syncedItem.location}]
                         """.trimIndent()
                     }
                     catalogEventRepository.save(ItemEvent(updatedItem))
