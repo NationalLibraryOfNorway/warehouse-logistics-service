@@ -123,7 +123,7 @@ data class Item(
 
         return this.copy(
             quantity = quantity,
-            location = location?: UNKNOWN_LOCATION,
+            location = location ?: UNKNOWN_LOCATION,
             associatedStorage = associatedStorage
         )
     }
@@ -153,9 +153,7 @@ data class Item(
      * Use it to indicate that we do not know where the current whereabouts of the item is.
      * Sets quantity to zero and location to [MISSING]
      */
-    fun reportMissing(): Item {
-        return this.copy(quantity = 0, location = MISSING)
-    }
+    fun reportMissing(): Item = this.copy(quantity = 0, location = MISSING)
 
     fun isSameItem(other: Any?): Boolean {
         if (this === other) return true

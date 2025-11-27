@@ -498,7 +498,7 @@ class WLSService(
                     preferredEnvironment = syncItem.currentPreferredEnvironment,
                     packaging = syncItem.packaging,
                     callbackUrl = null,
-                    location = syncItem.location?: UNKNOWN_LOCATION,
+                    location = syncItem.location ?: UNKNOWN_LOCATION,
                     quantity = syncItem.quantity,
                     associatedStorage = syncItem.associatedStorage
                 )

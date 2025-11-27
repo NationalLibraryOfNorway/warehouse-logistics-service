@@ -103,11 +103,12 @@ class WLSServiceTest {
 
     @Test
     fun `addItem should save and return new item when it does not exists`() {
-        val expectedItem = createTestItem(
-            location = UNKNOWN_LOCATION,
-            associatedStorage = AssociatedStorage.UNKNOWN,
-            quantity = 0
-        )
+        val expectedItem =
+            createTestItem(
+                location = UNKNOWN_LOCATION,
+                associatedStorage = AssociatedStorage.UNKNOWN,
+                quantity = 0
+            )
         val itemCreatedEvent = ItemCreated(expectedItem)
 
         coEvery { itemRepository.getItem(expectedItem.hostName, expectedItem.hostId) } answers { null }
