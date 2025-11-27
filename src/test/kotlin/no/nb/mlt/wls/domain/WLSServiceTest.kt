@@ -20,8 +20,6 @@ import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
-import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
@@ -55,7 +53,7 @@ class WLSServiceTest {
     private val orderRepository = mockk<OrderRepository>()
     private val catalogEventRepository = mockk<EventRepository<CatalogEvent>>()
     private val storageEventRepository = mockk<EventRepository<StorageEvent>>()
-    private val emailEventRepository = mockk<EventRepository<EmailEvent>>()
+    private val emailServiceMock = mockk<EmailService>()
     private val catalogEventProcessor = mockk<EventProcessor<CatalogEvent>>()
     private val storageEventProcessor = mockk<EventProcessor<StorageEvent>>()
     private val storageSystemRepoMock = mockk<StorageSystemFacade>()
@@ -78,7 +76,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortMock,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -90,7 +88,7 @@ class WLSServiceTest {
                 orderRepository,
                 catalogEventRepository,
                 storageEventRepository,
-                emailEventRepository,
+                emailServiceMock,
                 transactionPortExecutor,
                 catalogEventProcessor,
                 storageEventProcessor
@@ -344,7 +342,8 @@ class WLSServiceTest {
         coEvery { orderRepository.createOrder(createOrderDTO.toOrder()) } answers { testOrder }
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
+        coEvery { emailServiceMock.createOrderPickup(any(), any()) } answers { }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers { }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -395,7 +394,8 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } returnsMany (listOf(itemCreatedEvent, orderCreatedEvent))
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(missingItem) } answers { missingItem }
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
+        coEvery { emailServiceMock.createOrderPickup(any(), any()) } answers { }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers { }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
@@ -630,7 +630,8 @@ class WLSServiceTest {
         coEvery { orderRepository.createOrder(testOrder) } answers { testOrder }
         coEvery { storageEventRepository.save(any()) } answers { orderCreatedEvent }
         coEvery { storageEventProcessor.handleEvent(orderCreatedEvent) } answers {}
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
+        coEvery { emailServiceMock.createOrderPickup(any(), any()) } answers { }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers { }
 
         runTest {
             val createOrderResult = cut.createOrder(createOrderDTO)
@@ -645,24 +646,15 @@ class WLSServiceTest {
     @Test
     fun `createOrder should create items with unknown properties if they do not exist`() {
         val itemRepository = createInMemItemRepo(mutableListOf(testOrderItems[0]))
-        val cut =
-            WLSService(
-                itemRepository,
-                orderRepository,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val cut = createCut(itemRepo = itemRepository)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { null }
         coEvery { orderRepository.createOrder(testOrder) } answers { testOrder }
         coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
         coEvery { storageEventRepository.save(any()) } answers { OrderCreated(testOrder) }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
+        coEvery { emailServiceMock.createOrderPickup(any(), any()) } answers { }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers { }
 
         runTest {
             cut.createOrder(createOrderDTO)
@@ -744,19 +736,9 @@ class WLSServiceTest {
                     )
             )
         val pickedOrder = order.pick(itemsToPick)
-        val orderRepository = createInMemOrderRepo(mutableListOf(order))
-        val cut =
-            WLSService(
-                createInMemItemRepo(mutableListOf(item1, item2)),
-                orderRepository,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
-
+        val itemRepo = createInMemItemRepo(mutableListOf(item1, item2))
+        val orderRepo = createInMemOrderRepo(mutableListOf(order))
+        val cut = createCut(itemRepo = itemRepo, orderRepo = orderRepo)
         coEvery { catalogEventRepository.save(any()) } answers { ItemEvent(pickedItem) }
         coEvery { catalogEventProcessor.handleEvent(any()) } answers { }
         coEvery { storageEventProcessor.handleEvent(any()) } answers { }
@@ -764,10 +746,11 @@ class WLSServiceTest {
         runTest {
             cut.pickOrderItems(HostName.AXIELL, listOf(item1.hostId), order.hostOrderId)
 
-            val orderFromRepo = orderRepository.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
-            assert(orderFromRepo != null)
-            assert(orderFromRepo == expectedOrder)
-            assert(pickedOrder == expectedOrder)
+            val orderFromRepo = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
+            assertThat(orderFromRepo)
+                .isNotNull
+                .isEqualTo(expectedOrder)
+            assertThat(pickedOrder).isEqualTo(expectedOrder)
         }
     }
 
@@ -779,17 +762,7 @@ class WLSServiceTest {
         val i4 = createTestItem(hostName = HostName.ASTA, hostId = "asta-02")
         val i5 = createTestItem(hostName = HostName.ALMA, hostId = "alma-01")
         val itemRepo = createInMemItemRepo(mutableListOf(i1, i2, i3, i4, i5))
-        val cut =
-            WLSService(
-                itemRepo,
-                orderRepository,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val cut = createCut(itemRepo)
 
         runTest {
             val axiell = cut.getAllItems(listOf(HostName.AXIELL))
@@ -819,17 +792,7 @@ class WLSServiceTest {
 
         val orderRepo = createInMemOrderRepo(mutableListOf(i1, i2, i3, i4, i5))
 
-        val cut =
-            WLSService(
-                itemRepository,
-                orderRepo,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val cut = createCut(orderRepo = orderRepo)
 
         runTest {
             val axiell = cut.getAllOrders(listOf(HostName.AXIELL))
@@ -995,17 +958,9 @@ class WLSServiceTest {
             testOrder.copy(status = Order.Status.COMPLETED, orderLine = listOf(Order.OrderItem(storedItem.hostId, Order.OrderItem.Status.PICKED)))
         val expectedOrder =
             testOrder.copy(status = Order.Status.RETURNED, orderLine = listOf(Order.OrderItem(expectedItem.hostId, Order.OrderItem.Status.RETURNED)))
-        val cut =
-            WLSService(
-                createInMemItemRepo(mutableListOf(storedItem)),
-                createInMemOrderRepo(mutableListOf(testOrder)),
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val itemRepo = createInMemItemRepo(mutableListOf(storedItem))
+        val orderRepo = createInMemOrderRepo(mutableListOf(testOrder))
+        val cut = createCut(itemRepo, orderRepo)
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -1032,7 +987,7 @@ class WLSServiceTest {
                 quantity = testKardexUpdateItemPayload.quantity,
                 associatedStorage = testKardexUpdateItemPayload.associatedStorage
             )
-        val cut = createCut(createInMemItemRepo(mutableListOf(storedItem)), null)
+        val cut = createCut(itemRepo = createInMemItemRepo(mutableListOf(storedItem)))
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -1056,17 +1011,7 @@ class WLSServiceTest {
                 quantity = testKardexMoveItemPayload.quantity,
                 associatedStorage = testKardexMoveItemPayload.associatedStorage
             )
-        val cut =
-            WLSService(
-                createInMemItemRepo(mutableListOf(storedItem)),
-                orderRepository,
-                catalogEventRepository,
-                storageEventRepository,
-                emailEventRepository,
-                transactionPortExecutor,
-                catalogEventProcessor,
-                storageEventProcessor
-            )
+        val cut = createCut(itemRepo = createInMemItemRepo(mutableListOf(storedItem)))
 
         coEvery { catalogEventRepository.save(any()) } returnsArgument (0)
         coEvery { catalogEventProcessor.handleEvent(any()) } answers {}
@@ -1329,7 +1274,7 @@ class WLSServiceTest {
                     .filter { order ->
                         order.orderLine.any { orderItem ->
                             orderItemIds.contains(orderItem.hostId) &&
-                                orderItem.status == Order.OrderItem.Status.PICKED
+                                    orderItem.status == Order.OrderItem.Status.PICKED
                         }
                     }
 
@@ -1344,15 +1289,15 @@ class WLSServiceTest {
     }
 
     fun createCut(
-        itemRepo: ItemRepository?,
-        orderRepo: OrderRepository?
+        itemRepo: ItemRepository = itemRepository,
+        orderRepo: OrderRepository = orderRepository
     ): WLSService =
         WLSService(
-            itemRepository = itemRepo ?: itemRepository,
-            orderRepository = orderRepo ?: orderRepository,
+            itemRepository = itemRepo,
+            orderRepository = orderRepo,
             catalogEventRepository = catalogEventRepository,
             storageEventRepository = storageEventRepository,
-            emailEventRepository = emailEventRepository,
+            emailService = emailServiceMock,
             transactionPort = transactionPortExecutor,
             catalogEventProcessor = catalogEventProcessor,
             storageEventProcessor = storageEventProcessor
