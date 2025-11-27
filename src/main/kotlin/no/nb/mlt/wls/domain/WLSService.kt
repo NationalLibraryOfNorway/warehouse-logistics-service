@@ -12,6 +12,7 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -497,7 +498,7 @@ class WLSService(
                     preferredEnvironment = syncItem.currentPreferredEnvironment,
                     packaging = syncItem.packaging,
                     callbackUrl = null,
-                    location = syncItem.location,
+                    location = syncItem.location?: UNKNOWN_LOCATION,
                     quantity = syncItem.quantity,
                     associatedStorage = syncItem.associatedStorage
                 )
