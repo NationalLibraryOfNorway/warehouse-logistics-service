@@ -47,24 +47,18 @@ class Item(
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
-    location: String?,
-    quantity: Int = 0,
-    associatedStorage: AssociatedStorage
+    val location: String = UNKNOWN_LOCATION,
+    val quantity: Int = 0,
+    val associatedStorage: AssociatedStorage
 ) {
     init {
-        if (location == null && quantity != 0) {
+        if (location.isBlank()) {
+            throw ValidationException("Location can not be blank")
+        }
+        if (location == UNKNOWN_LOCATION && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
     }
-
-    var location: String = location ?: UNKNOWN_LOCATION
-        private set
-
-    var quantity: Int = quantity
-        private set
-
-    var associatedStorage: AssociatedStorage = associatedStorage
-        private set
 
     /**
      * Picks a specified amount of items from the stock.
@@ -77,6 +71,7 @@ class Item(
      */
     fun pick(amountPicked: Int): Item {
         val itemsInStockQuantity = quantity
+        var location = this.location
 
         // In the case of over-picking, log it and set the quantity to zero.
         // This is done in the hope that on return the database recovers
@@ -87,12 +82,15 @@ class Item(
             }
         }
 
-        quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
+        val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
         if (quantity == 0) {
             location = WITH_LENDER_LOCATION
         }
 
-        return this
+        return this.copy(
+            quantity = quantity,
+            location = location
+        )
     }
 
     /**
@@ -109,24 +107,25 @@ class Item(
         quantity: Int,
         location: String?,
         associatedStorage: AssociatedStorage
-    ) {
+    ): Item {
         if (this.associatedStorage != associatedStorage && quantity == 0) {
             // Ignore updates from other systems if the quantity is 0
-            return
+            return this
         }
         if (location == null && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
 
-        this.quantity = quantity
-
         // do not override with lender location
         if (location == null && this.location == WITH_LENDER_LOCATION) {
-            return
+            return this
         }
 
-        this.location = location ?: UNKNOWN_LOCATION
-        this.associatedStorage = associatedStorage
+        return this.copy(
+            quantity = quantity,
+            location = location?: UNKNOWN_LOCATION,
+            associatedStorage = associatedStorage
+        )
     }
 
     fun edit(
@@ -155,9 +154,31 @@ class Item(
      * Sets quantity to zero and location to [MISSING]
      */
     fun reportMissing(): Item {
-        this.quantity = 0
-        this.location = MISSING
-        return this
+        return this.copy(quantity = 0, location = MISSING)
+    }
+
+    fun copy(
+        description: String = this.description,
+        itemCategory: ItemCategory = this.itemCategory,
+        preferredEnvironment: Environment = this.preferredEnvironment,
+        packaging: Packaging = this.packaging,
+        callbackUrl: String? = this.callbackUrl,
+        location: String = this.location,
+        quantity: Int = this.quantity,
+        associatedStorage: AssociatedStorage = this.associatedStorage
+    ): Item {
+        return Item(
+            hostId = this.hostId,
+            hostName = this.hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = callbackUrl,
+            location = location,
+            quantity = quantity,
+            associatedStorage = associatedStorage
+        )
     }
 
     override fun equals(other: Any?): Boolean {
