@@ -25,16 +25,21 @@ class EmailService(
             logger.warn { "No order email available for ${order.contactPerson} in order ${order.hostOrderId}" }
             return
         }
-        val event = transactionPort.executeInTransaction {
-            emailEventRepository.save(OrderConfirmationMail(order))
-        }
+        val event =
+            transactionPort.executeInTransaction {
+                emailEventRepository.save(OrderConfirmationMail(order))
+            }
         emailEventProcessor.handleEvent(event)
     }
 
-    suspend fun createOrderPickup(order: Order, orderItems: List<Item>) {
-        val event = transactionPort.executeInTransaction {
-            emailEventRepository.save(OrderPickupMail(createOrderPickupData(order, orderItems)))
-        }
+    suspend fun createOrderPickup(
+        order: Order,
+        orderItems: List<Item>
+    ) {
+        val event =
+            transactionPort.executeInTransaction {
+                emailEventRepository.save(OrderPickupMail(createOrderPickupData(order, orderItems)))
+            }
         emailEventProcessor.handleEvent(event)
     }
 }

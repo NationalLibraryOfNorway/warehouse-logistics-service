@@ -1274,7 +1274,7 @@ class WLSServiceTest {
                     .filter { order ->
                         order.orderLine.any { orderItem ->
                             orderItemIds.contains(orderItem.hostId) &&
-                                    orderItem.status == Order.OrderItem.Status.PICKED
+                                orderItem.status == Order.OrderItem.Status.PICKED
                         }
                     }
 
