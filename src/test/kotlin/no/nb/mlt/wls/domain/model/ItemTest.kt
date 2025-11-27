@@ -15,23 +15,23 @@ class ItemTest {
     }
 
     @Test
-    fun `items are equal despite having different contents`() {
+    fun `items are not equal when having different contents`() {
         val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
         val syncItem = testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
         val updatedItem = testItem.pick(1)
 
-        assertThat(syncItem).isEqualTo(testItem)
-        assertThat(updatedItem).isEqualTo(testItem)
+        assertThat(syncItem).isNotEqualTo(testItem)
+        assertThat(updatedItem).isNotEqualTo(testItem)
     }
 
     @Test
-    fun `items are not equal when using deep equality check`() {
+    fun `items host or host id does not change despite different contents`() {
         val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
         val syncItem = testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
         val updatedItem = testItem.pick(1)
 
-        assertThat(testItem.equalsExactly(syncItem)).isFalse
-        assertThat(testItem.equalsExactly(updatedItem)).isFalse
+        assertThat(testItem.isSameItem(syncItem)).isTrue
+        assertThat(testItem.isSameItem(updatedItem)).isTrue
     }
 
     @Test
@@ -60,7 +60,7 @@ class ItemTest {
                 callbackUrl = item.callbackUrl
             )
 
-        assertThat(editedItem.equalsExactly(item)).isTrue()
+        assertThat(editedItem).isEqualTo(item)
     }
 
     @Test
@@ -76,7 +76,7 @@ class ItemTest {
                 callbackUrl = item.callbackUrl
             )
 
-        assertThat(editedItem.equalsExactly(item)).isFalse()
+        assertThat(editedItem).isNotEqualTo(item)
         assertThat(editedItem.description).isEqualTo("new description")
     }
 
@@ -93,7 +93,8 @@ class ItemTest {
                 callbackUrl = "https://callback-wls.no/v2/item"
             )
 
-        assertThat(editedItem.equalsExactly(item)).isFalse()
+        assertThat(editedItem).isNotEqualTo(item)
+        assertThat(editedItem.isSameItem(item)).isTrue
         assertThat(editedItem.description).isEqualTo("new description")
         assertThat(editedItem.itemCategory).isEqualTo(ItemCategory.FILM)
         assertThat(editedItem.preferredEnvironment).isEqualTo(Environment.FREEZE)
