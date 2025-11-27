@@ -3,9 +3,9 @@ package no.nb.mlt.wls.infrastructure.email
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.mail.internet.MimeBodyPart
 import jakarta.mail.internet.MimeMessage
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
+import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
 import org.springframework.mail.javamail.JavaMailSender
@@ -16,33 +16,33 @@ import java.awt.image.BufferedImage
 
 private val logger = KotlinLogging.logger {}
 
-class EmailAdapter(
+class SpringEmailNotifier(
     private val emailSender: JavaMailSender,
     private val freeMarkerConfigurer: FreeMarkerConfigurer
-) : EmailNotifier {
+) : UserNotifier {
     @Value($$"${wls.order.sender.email}")
     val senderEmail: String = ""
 
     @Value($$"${wls.order.handler.email}")
     val storageEmail: String = ""
 
-    override suspend fun orderCreated(
-        order: Order,
-        orderItems: List<Item>
-    ) {
-        logger.info {
-            "Sending emails for order ${order.hostOrderId}"
-        }
+    override suspend fun orderConfirmation(order: Order): Boolean =
         sendEmail(
             createOrderConfirmationEmail(order),
             "Email sent to host",
-            "Failed to send order confirmation emails"
+            "Failed to send order confirmation email"
         )
+
+    override suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData): Boolean =
         sendEmail(
-            createOrderHandlerEmail(order, orderItems),
-            "Email sent to order handlers",
-            "Failed to send orders"
+            createOrderPickupMail(orderPickupData),
+            "Sent order pickup email to order handlers",
+            "Failed to send pickup order email"
         )
+
+    override suspend fun orderCompleted(order: Order): Boolean {
+        logger.warn { "not yet implemented" }
+        return true
     }
 
     /**
@@ -52,7 +52,7 @@ class EmailAdapter(
         email: MimeMessage?,
         successInfo: String,
         errorInfo: String
-    ) {
+    ): Boolean {
         if (email == null) {
             logger.error {
                 errorInfo
@@ -60,13 +60,14 @@ class EmailAdapter(
             logger.error {
                 "Cannot send email because message is null"
             }
-            return
+            return false
         }
         try {
             emailSender.send(email)
             logger.info {
                 successInfo
             }
+            return true
         } catch (e: MailException) {
             logger.error {
                 errorInfo + ": ${e.message}"
@@ -74,10 +75,12 @@ class EmailAdapter(
             if (logger.isDebugEnabled()) {
                 e.printStackTrace()
             }
+            return false
         } catch (e: Exception) {
             logger.error(e) {
                 "Unexpected exception while sending email: ${e.message}"
             }
+            return false
         }
     }
 
@@ -85,7 +88,7 @@ class EmailAdapter(
         val receiver = order.contactEmail
         if (receiver.isNullOrBlank()) {
             logger.warn {
-                "Contact email is not present for order ${order.hostOrderId}, so the confirmation email can't be sent"
+                "Contact email is not present for order ${order.hostOrderId}, so the order confirmation email can't be sent"
             }
             return null
         }
@@ -119,13 +122,10 @@ class EmailAdapter(
             Order.Type.DIGITIZATION -> "Digitalisering"
         }
 
-    private fun createOrderHandlerEmail(
-        order: Order,
-        orderItems: List<Item>
-    ): MimeMessage? {
+    private fun createOrderPickupMail(order: OrderPickupMail.OrderPickupData): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
-                "Emails being sent to storage handlers is disabled"
+                "Sending order pickup mail to storage handlers is disabled"
             }
             return null
         }
@@ -133,7 +133,7 @@ class EmailAdapter(
         val helper = MimeMessageHelper(mail, true)
         val type = "order.ftl"
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
-        val emailOrderItems = computeItemsWithQrCodes(orderItems)
+        val emailOrderItems = computeItemsWithQrCodes(order)
         val htmlBody =
             FreeMarkerTemplateUtils.processTemplateIntoString(
                 template,
@@ -184,9 +184,9 @@ class EmailAdapter(
         return imagePart
     }
 
-    private fun computeItemsWithQrCodes(items: List<Item>): List<EmailOrderItem> {
+    private fun computeItemsWithQrCodes(orderPickupData: OrderPickupMail.OrderPickupData): List<EmailOrderItem> {
         val list = mutableListOf<EmailOrderItem>()
-        for (item in items) {
+        for (item in orderPickupData.orderLines) {
             list.add(EmailOrderItem(item, getQrHtmlString(item.hostId), BarcodeUtils.createQrImage(item.hostId)))
         }
         return list
@@ -200,7 +200,7 @@ class EmailAdapter(
     private fun sanitizeID(id: String): String = id.replace(Regex("[\\s<>\"'&]"), "_")
 
     data class EmailOrderItem(
-        val item: Item,
+        val item: OrderPickupMail.OrderPickupData.OrderLine,
         val qr: String,
         val image: BufferedImage
     )

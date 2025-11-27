@@ -15,6 +15,10 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
+import no.nb.mlt.wls.domain.model.events.email.EmailEvent
+import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
+import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
+import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
 import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
@@ -60,6 +64,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val storageEventRepository: EventRepository<StorageEvent>,
+    private val emailEventRepository: EventRepository<EmailEvent>,
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
@@ -237,7 +242,7 @@ class WLSService(
 
         val itemIds = orderDTO.orderLine.map { it.hostId }
         val existingItems = itemRepository.getItemsByIds(orderDTO.hostName, itemIds)
-
+        val missingItems = mutableListOf<Item>()
         // Create missing items
         itemIds
             .filter {
@@ -258,6 +263,7 @@ class WLSService(
                         )
                     )
                 logger.info { "Created unknown item: $createdItem, from order: ${orderDTO.hostOrderId}" }
+                missingItems.addLast(createdItem)
             }
 
         val (createdOrder, storageEvent) =
@@ -265,6 +271,15 @@ class WLSService(
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
 
+                if (createdOrder.contactEmail != null) {
+                    emailEventRepository.save(OrderConfirmationMail(createdOrder))
+                } else {
+                    logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
+                }
+                val items = existingItems.plus(missingItems)
+                emailEventRepository.save(
+                    OrderPickupMail(createOrderPickupData(createdOrder, items))
+                )
                 (createdOrder to storageEvent)
             }
 

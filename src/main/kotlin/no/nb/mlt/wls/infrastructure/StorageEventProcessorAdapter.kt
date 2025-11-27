@@ -8,7 +8,6 @@ import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
@@ -24,7 +23,6 @@ class StorageEventProcessorAdapter(
     private val storageEventRepository: EventRepository<StorageEvent>,
     private val storageSystems: List<StorageSystemFacade>,
     private val itemRepository: ItemRepository,
-    private val emailNotifier: EmailNotifier,
     private val statisticsService: StatisticsService
 ) : EventProcessor<StorageEvent> {
     override suspend fun processOutbox() {
@@ -166,7 +164,6 @@ class StorageEventProcessorAdapter(
             storageSystemFacade?.createOrder(orderCopy)
             logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
         }
-        createAndSendEmails(order = createdOrder, items = items)
     }
 
     private suspend fun handleOrderDeleted(event: OrderDeleted) {
@@ -183,13 +180,4 @@ class StorageEventProcessorAdapter(
         }
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
-
-    private suspend fun createAndSendEmails(
-        order: Order,
-        items: List<Item>
-    ) {
-        if (items.isNotEmpty()) {
-            emailNotifier.orderCreated(order, items)
-        }
-    }
 }

@@ -7,11 +7,9 @@ import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.AssociatedStorage
-import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
-import no.nb.mlt.wls.domain.ports.outbound.EmailNotifier
 import no.nb.mlt.wls.domain.ports.outbound.EventRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
@@ -30,7 +28,6 @@ class StorageEventProcessorSplitTest {
                 storageEventRepository = storageMessageRepoMock,
                 storageSystems = listOf(synqStorageSystemFacadeMock, kardexStorageSystemFacadeMock),
                 itemRepository = itemRepoMock,
-                emailNotifier = emailNotifierMock,
                 happyStatisticsServiceMock
             )
     }
@@ -102,21 +99,6 @@ class StorageEventProcessorSplitTest {
             coEvery { deleteOrder(any(), any()) } returns Unit
             coEvery { createOrder(any()) } returns Unit
             coEvery { createItem(any()) } returns Unit
-        }
-
-    // ... and she's got a friend, a big old email notifier mock...
-    private val emailNotifierMock =
-        object : EmailNotifier {
-            var orderCreatedCount = 0
-            var order: Order? = null
-
-            override suspend fun orderCreated(
-                order: Order,
-                orderItems: List<Item>
-            ) {
-                orderCreatedCount++
-                this.order = order
-            }
         }
 
     // ... and this itemRepoMock over here will be our little secret
