@@ -39,7 +39,7 @@ const val MISSING = "MISSING"
  * @property quantity The quantity of the item available in stock.
  * @property associatedStorage The storage system the item was last seen in, which determines where orders are sent.
  */
-class Item(
+data class Item(
     val hostId: String,
     val hostName: HostName,
     val description: String,
@@ -157,56 +157,11 @@ class Item(
         return this.copy(quantity = 0, location = MISSING)
     }
 
-    fun copy(
-        description: String = this.description,
-        itemCategory: ItemCategory = this.itemCategory,
-        preferredEnvironment: Environment = this.preferredEnvironment,
-        packaging: Packaging = this.packaging,
-        callbackUrl: String? = this.callbackUrl,
-        location: String = this.location,
-        quantity: Int = this.quantity,
-        associatedStorage: AssociatedStorage = this.associatedStorage
-    ): Item {
-        return Item(
-            hostId = this.hostId,
-            hostName = this.hostName,
-            description = description,
-            itemCategory = itemCategory,
-            preferredEnvironment = preferredEnvironment,
-            packaging = packaging,
-            callbackUrl = callbackUrl,
-            location = location,
-            quantity = quantity,
-            associatedStorage = associatedStorage
-        )
-    }
-
-    override fun equals(other: Any?): Boolean {
+    fun isSameItem(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Item) return false
 
         return other.hostId == hostId && other.hostName == hostName
-    }
-
-    fun equalsExactly(other: Item): Boolean {
-        if (this === other) return true
-
-        return other.hostId == hostId &&
-            other.hostName == hostName &&
-            other.description == description &&
-            other.itemCategory == itemCategory &&
-            other.preferredEnvironment == preferredEnvironment &&
-            other.packaging == packaging &&
-            other.callbackUrl == callbackUrl &&
-            other.location == location &&
-            other.quantity == quantity &&
-            other.associatedStorage == associatedStorage
-    }
-
-    override fun hashCode(): Int {
-        var result = hostId.hashCode()
-        result = 31 * result + hostName.hashCode()
-        return result
     }
 
     override fun toString(): String =

@@ -121,7 +121,7 @@ class WLSService(
 
                 val editedItem = itemRepository.editItem(changedItem)
 
-                if (editedItem.equalsExactly(item)) {
+                if (editedItem == item) {
                     logger.info { "Item was not changed: $editedItem" }
                     (editedItem to null)
                 } else {
