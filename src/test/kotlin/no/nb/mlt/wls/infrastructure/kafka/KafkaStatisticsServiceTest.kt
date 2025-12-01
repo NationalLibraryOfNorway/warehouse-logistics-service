@@ -18,19 +18,19 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import reactor.core.publisher.Mono
-import reactor.kafka.sender.SenderResult
+import org.springframework.kafka.support.SendResult
+import java.util.concurrent.CompletableFuture
 
 class KafkaStatisticsServiceTest {
     private lateinit var statisticsProducer: StatisticsProducer
     private lateinit var kafkaStatisticsService: KafkaStatisticsService
-    private val mockSenderResult = mockk<SenderResult<Void>>()
+    private val mockSenderResult = mockk<SendResult<String, Any>>()
 
     @BeforeEach
     fun setUp() {
         statisticsProducer =
             mockk {
-                every { sendStatisticsMessage(any(), any()) } returns Mono.just(mockSenderResult)
+                every { sendStatisticsMessage(any(), any()) } returns CompletableFuture.completedFuture(mockSenderResult)
             }
         kafkaStatisticsService = KafkaStatisticsService(statisticsProducer)
     }
@@ -130,7 +130,7 @@ class KafkaStatisticsServiceTest {
             val event = OrderEvent(testOrder)
             val error = RuntimeException("Kafka connection error")
 
-            every { statisticsProducer.sendStatisticsMessage(any(), any()) } returns Mono.error(error)
+            every { statisticsProducer.sendStatisticsMessage(any(), any()) } throws error
 
             assertDoesNotThrow { kafkaStatisticsService.recordStatisticsEvent(event) }
             verify { statisticsProducer.sendStatisticsMessage(any(), any()) }

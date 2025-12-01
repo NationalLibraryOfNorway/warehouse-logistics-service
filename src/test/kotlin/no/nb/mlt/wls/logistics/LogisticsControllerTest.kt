@@ -25,7 +25,7 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.context.ApplicationContext
@@ -74,7 +74,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -113,7 +113,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", HostName.entries)
+                    .queryParam("hostNames", HostName.getAll())
                     .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -133,7 +133,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.AXIELL, HostName.ASTA))
+                    .queryParam("hostNames", arrayOf(HostName.AXIELL, HostName.ASTA))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -169,7 +169,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.TEMP_STORAGE))
+                    .queryParam("hostNames", arrayOf(HostName.TEMP_STORAGE))
                     .queryParam("hostId", "AAAAA")
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -191,7 +191,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -214,7 +214,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", listOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
