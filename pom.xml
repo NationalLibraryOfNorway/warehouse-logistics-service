@@ -77,7 +77,7 @@
 
   <properties>
     <java.version>21</java.version>
-    <mockk.version>4.0.2</mockk.version>
+    <mockk.version>5.0.1</mockk.version>
     <openapi.version>3.0.0</openapi.version>
     <spotless.version>3.1.0</spotless.version>
     <spring.cloud.version>2025.1.0</spring.cloud.version>
