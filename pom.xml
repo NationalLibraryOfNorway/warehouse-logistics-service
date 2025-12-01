@@ -80,7 +80,7 @@
     <mockk.version>4.0.2</mockk.version>
     <openapi.version>2.8.13</openapi.version>
     <spotless.version>3.0.0</spotless.version>
-    <spring.cloud.version>2025.0.0</spring.cloud.version>
+    <spring.cloud.version>2025.1.0</spring.cloud.version>
     <testcontainers.version>1.21.3</testcontainers.version>
     <archunit.junit5.version>1.4.1</archunit.junit5.version>
     <commons.validator.version>1.10.0</commons.validator.version>
