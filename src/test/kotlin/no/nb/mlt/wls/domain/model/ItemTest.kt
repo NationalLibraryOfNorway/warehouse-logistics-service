@@ -16,12 +16,14 @@ class ItemTest {
 
     @Test
     fun `items are not equal when having different contents`() {
-        val testItem = createTestItem(quantity = 1, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
+        val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
         val syncItem = testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
-        val updatedItem = testItem.pick(1)
+        val kardexItem = syncItem.copy(location = "SOMEWHERE_IN_KARDEX", associatedStorage = AssociatedStorage.KARDEX)
+        val updatedItem = kardexItem.pick(1)
 
         assertThat(syncItem).isNotEqualTo(testItem)
         assertThat(updatedItem).isNotEqualTo(testItem)
+        assertThat(kardexItem).isNotEqualTo(testItem)
     }
 
     @Test
