@@ -203,6 +203,8 @@ spring:
           connectiontimeout: "8000"
           timeout: "5000"
           writetimeout: "8000"
+  mongodb:
+    uri: ${MONGODB_URI}
 
 # Set base path to SynQ API in stage environment
 synq:
@@ -260,10 +262,6 @@ spring:
           audiences: ${KEYCLOAK_TOKEN_AUD}
 
   # Set the database settings for the prod profile
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}
-
   mail:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
@@ -273,6 +271,8 @@ spring:
           connectiontimeout: "8000"
           timeout: "5000"
           writetimeout: "8000"
+  mongodb:
+    uri: ${MONGODB_URI}
 
 # Set base path to SynQ API in prod environment
 synq:
