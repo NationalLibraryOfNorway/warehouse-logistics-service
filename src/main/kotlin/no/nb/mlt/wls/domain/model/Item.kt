@@ -155,14 +155,5 @@ data class Item(
      */
     fun reportMissing(): Item = this.copy(quantity = 0, location = MISSING)
 
-    fun isSameItem(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Item) return false
-
-        return other.hostId == hostId && other.hostName == hostName
-    }
-
-    override fun toString(): String =
-        "Item(hostId='$hostId', hostName=$hostName, description='$description', itemCategory=$itemCategory, preferredEnvironment=" +
-            "$preferredEnvironment, packaging=$packaging, callbackUrl=$callbackUrl, location='$location', quantity=$quantity)"
+    fun isSameItem(other: Item): Boolean = other.hostId == hostId && other.hostName == hostName
 }

@@ -16,7 +16,7 @@ class ItemTest {
 
     @Test
     fun `items are not equal when having different contents`() {
-        val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
+        val testItem = createTestItem(quantity = 1, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
         val syncItem = testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
         val updatedItem = testItem.pick(1)
 
@@ -25,7 +25,7 @@ class ItemTest {
     }
 
     @Test
-    fun `items host or host id does not change despite different contents`() {
+    fun `isSameItem returns true for items with same host and hostId despite different contents`() {
         val testItem = createTestItem(quantity = 0, location = "UNKNOWN", associatedStorage = AssociatedStorage.UNKNOWN)
         val syncItem = testItem.synchronizeItem(1, "SYNQ_WAREHOUSE", AssociatedStorage.SYNQ)
         val updatedItem = testItem.pick(1)
