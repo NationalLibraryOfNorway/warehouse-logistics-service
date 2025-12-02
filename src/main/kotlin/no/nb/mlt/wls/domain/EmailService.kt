@@ -49,7 +49,7 @@ class EmailService(
         processEmailEvent(event)
     }
 
-    private suspend fun processEmailEvent(event: EmailEvent) {
+    private suspend fun processEmailEventAsync(event: EmailEvent) {
         coroutineContext.launch {
             try {
                 emailEventProcessor.handleEvent(event)
