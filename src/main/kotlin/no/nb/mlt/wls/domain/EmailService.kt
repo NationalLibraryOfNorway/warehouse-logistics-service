@@ -22,7 +22,7 @@ class EmailService(
 ) {
     suspend fun createOrderConfirmation(order: Order) {
         if (order.contactEmail == null) {
-            logger.warn { "No order email available for ${order.contactPerson} in order ${order.hostOrderId}" }
+            logger.warn { "No contact email provided for ${order.contactPerson} in order ${order.hostOrderId}." }
             return
         }
         val event =
