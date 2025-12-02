@@ -30,9 +30,5 @@ enum class HostName {
             if (potentialHost == "MELLOMLAGER") return TEMP_STORAGE
             return HostName.valueOf(potentialHost)
         }
-
-        fun getAll(): Array<HostName> {
-            return arrayOf(ALMA, ASTA, MAVIS, AXIELL, TEMP_STORAGE)
-        }
     }
 }

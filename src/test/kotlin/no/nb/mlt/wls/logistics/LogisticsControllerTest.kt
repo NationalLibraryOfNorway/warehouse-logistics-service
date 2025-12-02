@@ -9,7 +9,12 @@ import no.nb.mlt.wls.EnableTestcontainers
 import no.nb.mlt.wls.application.logisticsapi.ApiDetailedOrder
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
-import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.HostName.ALMA
+import no.nb.mlt.wls.domain.model.HostName.ASTA
+import no.nb.mlt.wls.domain.model.HostName.AXIELL
+import no.nb.mlt.wls.domain.model.HostName.MAVIS
+import no.nb.mlt.wls.domain.model.HostName.TEMP_STORAGE
+import no.nb.mlt.wls.domain.model.HostName.UNKNOWN
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
@@ -25,9 +30,9 @@ import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.context.ApplicationContext
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories
 import org.springframework.http.MediaType
@@ -45,10 +50,10 @@ import org.springframework.test.web.reactive.server.expectBodyList
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class LogisticsControllerTest(
-    @Autowired val applicationContext: ApplicationContext,
-    @Autowired val orderRepositoryAdapter: MongoOrderRepositoryAdapter,
-    @Autowired val mongoItemRepository: ItemMongoRepository,
-    @Autowired val mongoOrderRepository: OrderMongoRepository
+    @param:Autowired val applicationContext: ApplicationContext,
+    @param:Autowired val orderRepositoryAdapter: MongoOrderRepositoryAdapter,
+    @param:Autowired val mongoItemRepository: ItemMongoRepository,
+    @param:Autowired val mongoOrderRepository: OrderMongoRepository
 ) {
     private lateinit var webTestClient: WebTestClient
 
@@ -74,7 +79,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -113,7 +118,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", HostName.getAll())
+                    .queryParam("hostNames", arrayOf(ALMA, ASTA, MAVIS, AXIELL, TEMP_STORAGE, UNKNOWN))
                     .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -133,7 +138,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(HostName.AXIELL, HostName.ASTA))
+                    .queryParam("hostNames", arrayOf(AXIELL, ASTA))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -169,7 +174,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(HostName.TEMP_STORAGE))
+                    .queryParam("hostNames", arrayOf(TEMP_STORAGE))
                     .queryParam("hostId", "AAAAA")
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -191,7 +196,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -214,7 +219,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(HostName.AXIELL))
+                    .queryParam("hostNames", arrayOf(AXIELL))
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -308,13 +313,13 @@ class LogisticsControllerTest(
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
             .put()
-            .uri("/item/{hostName}/{hostId}/report-missing", HostName.ASTA, "asta-01")
+            .uri("/item/{hostName}/{hostId}/report-missing", ASTA, "asta-01")
             .exchange()
             .expectStatus()
             .isOk
 
         runTest {
-            val order = orderRepositoryAdapter.getOrder(HostName.ASTA, "test-01")
+            val order = orderRepositoryAdapter.getOrder(ASTA, "test-01")
             assertNotNull(order)
             order.orderLine.forEach { line ->
                 assert(line.status != Order.OrderItem.Status.MISSING)
@@ -347,7 +352,7 @@ class LogisticsControllerTest(
         runTest {
             val reportTestOrder =
                 createTestOrder(
-                    hostName = HostName.AXIELL,
+                    hostName = AXIELL,
                     hostOrderId = "report-missing-test-order",
                     orderLine =
                         listOf(
@@ -364,7 +369,7 @@ class LogisticsControllerTest(
                 .mutateWith(csrf())
                 .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_logistics")))
                 .put()
-                .uri("/item/{hostName}/{hostId}/report-missing", HostName.AXIELL, "axiell-02")
+                .uri("/item/{hostName}/{hostId}/report-missing", AXIELL, "axiell-02")
                 .exchange()
                 .expectStatus()
                 .isOk
@@ -429,7 +434,7 @@ class LogisticsControllerTest(
         val o5 =
             createTestOrder(
                 hostOrderId = "test-01",
-                hostName = HostName.ASTA,
+                hostName = ASTA,
                 status = Order.Status.RETURNED,
                 orderLine =
                     listOf(
