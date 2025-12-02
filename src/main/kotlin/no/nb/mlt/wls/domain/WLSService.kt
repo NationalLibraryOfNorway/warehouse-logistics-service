@@ -16,10 +16,6 @@ import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
-import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
-import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
-import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
 import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
@@ -65,7 +61,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val storageEventRepository: EventRepository<StorageEvent>,
-    private val emailEventRepository: EventRepository<EmailEvent>,
+    private val emailService: EmailService,
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
@@ -271,18 +267,12 @@ class WLSService(
             transactionPort.executeInTransaction {
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
-
-                if (createdOrder.contactEmail != null) {
-                    emailEventRepository.save(OrderConfirmationMail(createdOrder))
-                } else {
-                    logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
-                }
-                val items = existingItems.plus(missingItems)
-                emailEventRepository.save(
-                    OrderPickupMail(createOrderPickupData(createdOrder, items))
-                )
                 (createdOrder to storageEvent)
             }
+        val items = existingItems.plus(missingItems)
+
+        emailService.createOrderConfirmation(createdOrder)
+        emailService.createOrderPickup(createdOrder, items)
 
         processStorageEventAsync(storageEvent)
 

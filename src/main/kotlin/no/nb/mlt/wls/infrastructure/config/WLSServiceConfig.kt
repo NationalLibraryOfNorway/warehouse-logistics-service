@@ -1,12 +1,12 @@
 package no.nb.mlt.wls.infrastructure.config
 
+import no.nb.mlt.wls.domain.EmailService
 import no.nb.mlt.wls.domain.WLSService
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
 import no.nb.mlt.wls.domain.ports.outbound.TransactionPort
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoCatalogEventRepositoryAdapter
-import no.nb.mlt.wls.infrastructure.repositories.event.MongoEmailEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.event.MongoStorageEventRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.item.MongoItemRepositoryAdapter
 import no.nb.mlt.wls.infrastructure.repositories.order.MongoOrderRepositoryAdapter
@@ -21,7 +21,7 @@ class WLSServiceConfig {
         orderMongoAdapter: MongoOrderRepositoryAdapter,
         catalogEventMongoAdapter: MongoCatalogEventRepositoryAdapter,
         storageEventMongoAdapter: MongoStorageEventRepositoryAdapter,
-        emailEventMongoAdapter: MongoEmailEventRepositoryAdapter,
+        emailService: EmailService,
         transactionPort: TransactionPort,
         catalogEventProcessor: EventProcessor<CatalogEvent>,
         storageEventProcessor: EventProcessor<StorageEvent>
@@ -30,7 +30,7 @@ class WLSServiceConfig {
         orderMongoAdapter,
         catalogEventMongoAdapter,
         storageEventMongoAdapter,
-        emailEventMongoAdapter,
+        emailService,
         transactionPort,
         catalogEventProcessor,
         storageEventProcessor
