@@ -17,9 +17,9 @@ import java.time.LocalDateTime
 data class SynqOrderPayload(
     val orderId: String,
     val orderType: SynqOrderType,
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @field:JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     val dispatchDate: LocalDateTime,
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @field:JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
     val orderDate: LocalDateTime,
     val priority: Int,
     val owner: SynqOwner,
@@ -30,7 +30,7 @@ data class SynqOrderPayload(
     val shortReleasingAllowed: Boolean = false
 ) {
     data class OrderLine(
-        @Min(1)
+        @field:Min(1)
         val orderLineNumber: Int,
         val productId: String,
         val quantityOrdered: Double
@@ -54,21 +54,21 @@ data class ShippingAddress(
         // SynQ does not have a field where we can put owner/contact person for the order, as such this field will be used for order's contact person
         val contactPerson: String,
         // This will contain address.recipient, as contactPerson is used for something else, explained above ^
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine1: String? = null,
         // This will contain address.addressLine1, as ...
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine2: String? = null,
         // ...addressLine2...
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val addressLine3: String? = null,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val city: String? = null,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val state: String? = null,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val country: String? = null,
-        @JsonInclude(JsonInclude.Include.NON_NULL)
+        @field:JsonInclude(JsonInclude.Include.NON_NULL)
         val postalCode: String? = null
     )
 }

@@ -71,15 +71,9 @@ fun toSynqCategory(
 fun toSynqHostname(hostName: HostName): String =
     when (hostName) {
         HostName.ALMA -> "Alma"
-
         HostName.ASTA -> "Asta"
-
         HostName.MAVIS -> "Axiell"
-
         HostName.AXIELL -> "Axiell"
-
-        // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
         HostName.TEMP_STORAGE -> "mellomlager"
-
         HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.UNKNOWN is not supported")
     }
