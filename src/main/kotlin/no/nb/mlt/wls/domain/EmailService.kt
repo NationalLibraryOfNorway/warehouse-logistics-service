@@ -35,7 +35,7 @@ class EmailService(
             transactionPort.executeInTransaction {
                 emailEventRepository.save(OrderConfirmationMail(order))
             }
-        processEmailEvent(event)
+        processEmailEventAsync(event)
     }
 
     suspend fun createOrderPickup(
@@ -46,7 +46,7 @@ class EmailService(
             transactionPort.executeInTransaction {
                 emailEventRepository.save(OrderPickupMail(createOrderPickupData(order, orderItems)))
             }
-        processEmailEvent(event)
+        processEmailEventAsync(event)
     }
 
     private suspend fun processEmailEventAsync(event: EmailEvent) {
