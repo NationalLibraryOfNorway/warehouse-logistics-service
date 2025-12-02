@@ -24,6 +24,7 @@ class ItemTest {
         assertThat(syncItem).isNotEqualTo(testItem)
         assertThat(updatedItem).isNotEqualTo(testItem)
         assertThat(kardexItem).isNotEqualTo(testItem)
+        assertThat(kardexItem).isNotEqualTo(syncItem)
     }
 
     @Test
