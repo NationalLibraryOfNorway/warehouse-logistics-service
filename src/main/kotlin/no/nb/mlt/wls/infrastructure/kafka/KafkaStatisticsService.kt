@@ -39,6 +39,5 @@ class KafkaStatisticsService(
             .doOnError { logger.error(it) { "Error while sending statistics event: $statisticsEvent" } }
             .onErrorComplete() // Error logged, do we need to do something else here?
             .block()
-
     }
 }
