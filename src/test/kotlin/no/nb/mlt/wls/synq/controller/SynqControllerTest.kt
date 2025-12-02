@@ -56,9 +56,9 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class SynqControllerTest(
-    @field:Autowired val itemRepository: ItemMongoRepository,
-    @field:Autowired val orderRepository: OrderMongoRepository,
-    @field:Autowired val applicationContext: ApplicationContext
+    @param:Autowired val itemRepository: ItemMongoRepository,
+    @param:Autowired val orderRepository: OrderMongoRepository,
+    @param:Autowired val applicationContext: ApplicationContext
 ) {
     @MockkBean
     private lateinit var inventoryNotifierAdapterMock: InventoryNotifierAdapter
