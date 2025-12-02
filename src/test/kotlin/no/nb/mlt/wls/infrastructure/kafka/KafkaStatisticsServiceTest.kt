@@ -130,7 +130,7 @@ class KafkaStatisticsServiceTest {
             val event = OrderEvent(testOrder)
             val error = RuntimeException("Kafka connection error")
 
-            every { statisticsProducer.sendStatisticsMessage(any(), any()) } throws error
+            every { statisticsProducer.sendStatisticsMessage(any(), any()) } returns CompletableFuture.failedFuture(error)
 
             assertDoesNotThrow { kafkaStatisticsService.recordStatisticsEvent(event) }
             verify { statisticsProducer.sendStatisticsMessage(any(), any()) }

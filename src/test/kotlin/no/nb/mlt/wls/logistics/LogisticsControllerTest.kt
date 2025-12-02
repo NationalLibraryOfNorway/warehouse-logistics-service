@@ -79,7 +79,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(AXIELL))
+                    .queryParam("hostNames", AXIELL)
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -118,7 +118,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(ALMA, ASTA, MAVIS, AXIELL, TEMP_STORAGE, UNKNOWN))
+                    .queryParam("hostNames", ALMA, ASTA, MAVIS, AXIELL, TEMP_STORAGE, UNKNOWN)
                     .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -138,7 +138,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(AXIELL, ASTA))
+                    .queryParam("hostNames", AXIELL, ASTA)
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -174,7 +174,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(TEMP_STORAGE))
+                    .queryParam("hostNames", TEMP_STORAGE)
                     .queryParam("hostId", "AAAAA")
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
