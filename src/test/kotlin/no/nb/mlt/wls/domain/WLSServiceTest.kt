@@ -399,7 +399,8 @@ class WLSServiceTest {
         coEvery { storageEventRepository.save(any()) } returnsMany (listOf(itemCreatedEvent, orderCreatedEvent))
         coEvery { itemRepository.getItem(missingItem.hostName, missingItem.hostId) } answers { null }
         coEvery { itemRepository.createItem(any()) } answers { firstArg() }
-        coEvery { emailEventRepository.save(any()) } answers { firstArg() }
+        coEvery { emailServiceMock.createOrderPickup(any(), any()) } answers { }
+        coEvery { emailServiceMock.createOrderConfirmation(any()) } answers { }
 
         runTest {
             val createOrderResult = serviceAvecTrans.createOrder(createOrderDTO)
