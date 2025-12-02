@@ -267,12 +267,12 @@ class WLSService(
             transactionPort.executeInTransaction {
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
-                val items = existingItems.plus(missingItems)
-
-                emailService.createOrderConfirmation(createdOrder)
-                emailService.createOrderPickup(createdOrder, items)
                 (createdOrder to storageEvent)
             }
+        val items = existingItems.plus(missingItems)
+
+        emailService.createOrderConfirmation(createdOrder)
+        emailService.createOrderPickup(createdOrder, items)
 
         processStorageEventAsync(storageEvent)
 

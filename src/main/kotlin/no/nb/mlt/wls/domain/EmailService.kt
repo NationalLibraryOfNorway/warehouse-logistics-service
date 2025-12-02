@@ -1,6 +1,10 @@
 package no.nb.mlt.wls.domain
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
@@ -20,6 +24,8 @@ class EmailService(
     private val emailEventProcessor: EventProcessor<EmailEvent>,
     private val transactionPort: TransactionPort
 ) {
+    private val coroutineContext = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     suspend fun createOrderConfirmation(order: Order) {
         if (order.contactEmail == null) {
             logger.warn { "No contact email provided for ${order.contactPerson} in order ${order.hostOrderId}." }
@@ -29,7 +35,7 @@ class EmailService(
             transactionPort.executeInTransaction {
                 emailEventRepository.save(OrderConfirmationMail(order))
             }
-        emailEventProcessor.handleEvent(event)
+        processEmailEvent(event)
     }
 
     suspend fun createOrderPickup(
@@ -40,6 +46,18 @@ class EmailService(
             transactionPort.executeInTransaction {
                 emailEventRepository.save(OrderPickupMail(createOrderPickupData(order, orderItems)))
             }
-        emailEventProcessor.handleEvent(event)
+        processEmailEvent(event)
+    }
+
+    private suspend fun processEmailEvent(event: EmailEvent) {
+        coroutineContext.launch {
+            try {
+                emailEventProcessor.handleEvent(event)
+            } catch (e: Exception) {
+                logger.error(e) {
+                    "Error processing email event $event"
+                }
+            }
+        }
     }
 }
