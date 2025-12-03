@@ -129,7 +129,7 @@ class SynqStandardAdapter(
                 if (it is TimeoutException) {
                     logger.error { "Timed out while deleting order '$orderId' for $hostName in SynQ" }
                 } else {
-                    logger.error(it) { "Error while  deleting order '$orderId' for $hostName in SynQ" }
+                    logger.error(it) { "Error while deleting order '$orderId' for $hostName in SynQ" }
                 }
             }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .awaitSingle()

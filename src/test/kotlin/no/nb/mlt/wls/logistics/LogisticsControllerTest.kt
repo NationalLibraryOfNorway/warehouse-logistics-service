@@ -45,10 +45,10 @@ import org.springframework.test.web.reactive.server.expectBodyList
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class LogisticsControllerTest(
-    @Autowired val applicationContext: ApplicationContext,
-    @Autowired val orderRepositoryAdapter: MongoOrderRepositoryAdapter,
-    @Autowired val mongoItemRepository: ItemMongoRepository,
-    @Autowired val mongoOrderRepository: OrderMongoRepository
+    @param:Autowired val applicationContext: ApplicationContext,
+    @param:Autowired val orderRepositoryAdapter: MongoOrderRepositoryAdapter,
+    @param:Autowired val mongoItemRepository: ItemMongoRepository,
+    @param:Autowired val mongoOrderRepository: OrderMongoRepository
 ) {
     private lateinit var webTestClient: WebTestClient
 

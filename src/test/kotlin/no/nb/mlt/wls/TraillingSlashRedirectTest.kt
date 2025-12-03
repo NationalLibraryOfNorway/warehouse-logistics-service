@@ -32,8 +32,8 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class TraillingSlashRedirectTest(
-    @Autowired val applicationContext: ApplicationContext,
-    @Autowired val repository: ItemMongoRepository
+    @param:Autowired val applicationContext: ApplicationContext,
+    @param:Autowired val repository: ItemMongoRepository
 ) {
     private lateinit var webTestClient: WebTestClient
 
