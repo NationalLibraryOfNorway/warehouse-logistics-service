@@ -6,9 +6,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ObjectMapperConfig {
-
     @Bean
-    fun objectMapper(): ObjectMapper {
-       return ObjectMapper()
-    }
+    fun objectMapper(): ObjectMapper = ObjectMapper()
 }

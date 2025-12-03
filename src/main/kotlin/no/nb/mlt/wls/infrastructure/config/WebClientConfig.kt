@@ -17,9 +17,7 @@ class WebClientConfig {
 
     @Bean("proxyWebClient")
     @Order(Ordered.LOWEST_PRECEDENCE)
-    fun proxyWebClient(
-        proxyConfig: ProxyConfig
-    ): WebClient {
+    fun proxyWebClient(proxyConfig: ProxyConfig): WebClient {
         val httpClient =
             HttpClient.create().proxy {
                 it
@@ -29,7 +27,8 @@ class WebClientConfig {
                     .nonProxyHosts(proxyConfig.nonProxyHosts)
             }
 
-        return WebClient.builder()
+        return WebClient
+            .builder()
             .clientConnector(ReactorClientHttpConnector(httpClient))
             .build()
     }
