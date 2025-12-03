@@ -49,21 +49,12 @@ fun toSynqCategory(
 
     return when (category) {
         ItemCategory.FILM -> "Film"
-
         ItemCategory.PHOTO -> "Fotografi"
-
-        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd"
-
-        // Need to double-check with Espen if we actually need/want this
+        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd" // Need to double-check with Espen if we actually need/want this
         ItemCategory.PAPER -> "Papir"
-
-        ItemCategory.DISC -> "Plate"
-
-        // Need to double-check with Espen if we actually need/want this
+        ItemCategory.DISC -> "Plate" // Need to double-check with Espen if we actually need/want this
         ItemCategory.BULK_ITEMS -> "Sekkepost"
-
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
-
         else -> throw IllegalArgumentException("Illegal item category for SynQ: $category")
     }
 }
