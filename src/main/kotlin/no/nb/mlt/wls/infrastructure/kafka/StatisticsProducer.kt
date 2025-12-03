@@ -26,5 +26,5 @@ class StatisticsProducer(
         topic: String,
         key: String,
         message: Any
-    ): CompletableFuture<SendResult<String, Any>> = kafkaTemplate.send(ProducerRecord(topic, key, message))
+    ): CompletableFuture<SendResult<String, Any>> = kafkaTemplate.send(topic, key, message)
 }
