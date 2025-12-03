@@ -75,28 +75,27 @@ data class LoadUnit(
 ) {
     @JsonIgnore
     fun getMappedCategory(): ItemCategory {
+        // Double check which one of those can be deleted
+
         if (productCategory.startsWith("arkiv", ignoreCase = true)) return ItemCategory.PAPER
 
         return when (productCategory.lowercase()) {
             "systemtest", "helsemateriale", "aviser", "book", "issue", "papir" -> ItemCategory.PAPER
             "film_frys", "film" -> ItemCategory.FILM
             "fotografi", "fotografi_frys" -> ItemCategory.PHOTO
-            "abm" -> ItemCategory.EQUIPMENT
             "sekkepost" -> ItemCategory.BULK_ITEMS
             "plate" -> ItemCategory.DISC
-            "gjenstand" -> ItemCategory.EQUIPMENT
             "magnetbånd" -> ItemCategory.MAGNETIC_TAPE
-
             else -> throw InvalidParameterException("Unknown category: $productCategory")
         }
     }
 
     @JsonIgnore
     fun getMappedUOM() =
-        when (uom) {
-            "ABOX" -> Packaging.ABOX
-            "ESK" -> Packaging.BOX
-            "OBJ" -> Packaging.NONE
+        when (uom.lowercase()) {
+            "abox" -> Packaging.ABOX
+            "esk" -> Packaging.BOX
+            "obj" -> Packaging.NONE
             else -> throw InvalidParameterException("Unknown UOM: $uom")
         }
 
@@ -107,10 +106,11 @@ data class LoadUnit(
             return HostName.UNKNOWN
         }
 
+        // Mavis here can be deleted, right?
         return when (hostName.lowercase()) {
             "alma" -> HostName.ALMA
             "asta" -> HostName.ASTA
-            "mavis" -> HostName.AXIELL // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
+            "mavis" -> HostName.AXIELL
             "axiell" -> HostName.AXIELL
             "mellomlager" -> HostName.TEMP_STORAGE
             else -> throw InvalidParameterException("Unknown Host Name: $hostName for item: $this")

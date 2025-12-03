@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.infrastructure.synq
 
-import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
@@ -36,7 +35,7 @@ fun Item.toSynqPayload() =
         owner = toSynqOwner(hostName),
         barcode = SynqProductPayload.Barcode(hostId),
         description = description,
-        productCategory = toSynqCategory(toSynqOwner(hostName), itemCategory, preferredEnvironment),
+        productCategory = toSynqCategory(toSynqOwner(hostName), itemCategory),
         productUom = SynqProductPayload.ProductUom(packaging.toSynqPackaging()),
         confidential = false,
         hostName = toSynqHostname(hostName)
@@ -44,24 +43,19 @@ fun Item.toSynqPayload() =
 
 fun toSynqCategory(
     owner: SynqOwner,
-    category: ItemCategory,
-    environment: Environment
+    category: ItemCategory
 ): String {
     if (owner == SynqOwner.AV) return "Arkivmateriale"
 
-    if (environment == Environment.FREEZE) {
-        if (category == ItemCategory.FILM) return "Film_Frys"
-        if (category == ItemCategory.PHOTO) return "Fotografi_Frys"
-    }
     return when (category) {
         ItemCategory.FILM -> "Film"
         ItemCategory.PHOTO -> "Fotografi"
-        ItemCategory.EQUIPMENT -> "Gjenstand"
-        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd"
+        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd" // Need to double-check with Espen if we actually need/want this
         ItemCategory.PAPER -> "Papir"
-        ItemCategory.DISC -> "Plate"
+        ItemCategory.DISC -> "Plate" // Need to double-check with Espen if we actually need/want this
         ItemCategory.BULK_ITEMS -> "Sekkepost"
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
+        else -> throw IllegalArgumentException("Illegal item category for SynQ: $category")
     }
 }
 
@@ -69,8 +63,8 @@ fun toSynqHostname(hostName: HostName): String =
     when (hostName) {
         HostName.ALMA -> "Alma"
         HostName.ASTA -> "Asta"
-        HostName.MAVIS -> "Mavis"
-        HostName.AXIELL -> "Mavis" // This needs to be changed when we have fixed SynQ to use Axiell instead of Mavis
-        HostName.TEMP_STORAGE -> "mellomlager"
+        HostName.MAVIS -> "Axiell"
+        HostName.AXIELL -> "Axiell"
+        HostName.TEMP_STORAGE -> "Mellomlager"
         HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.UNKNOWN is not supported")
     }
