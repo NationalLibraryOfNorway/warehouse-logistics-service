@@ -39,7 +39,7 @@ const val MISSING = "MISSING"
  * @property quantity The quantity of the item available in stock.
  * @property associatedStorage The storage system the item was last seen in, which determines where orders are sent.
  */
-class Item(
+data class Item(
     val hostId: String,
     val hostName: HostName,
     val description: String,
@@ -47,24 +47,18 @@ class Item(
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
-    location: String?,
-    quantity: Int = 0,
-    associatedStorage: AssociatedStorage
+    val location: String = UNKNOWN_LOCATION,
+    val quantity: Int = 0,
+    val associatedStorage: AssociatedStorage
 ) {
     init {
-        if (location == null && quantity != 0) {
+        if (location.isBlank()) {
+            throw ValidationException("Location can not be blank")
+        }
+        if (location == UNKNOWN_LOCATION && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
     }
-
-    var location: String = location ?: UNKNOWN_LOCATION
-        private set
-
-    var quantity: Int = quantity
-        private set
-
-    var associatedStorage: AssociatedStorage = associatedStorage
-        private set
 
     /**
      * Picks a specified amount of items from the stock.
@@ -77,6 +71,7 @@ class Item(
      */
     fun pick(amountPicked: Int): Item {
         val itemsInStockQuantity = quantity
+        var location = this.location
 
         // In the case of over-picking, log it and set the quantity to zero.
         // This is done in the hope that on return the database recovers
@@ -87,12 +82,15 @@ class Item(
             }
         }
 
-        quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
+        val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
         if (quantity == 0) {
             location = WITH_LENDER_LOCATION
         }
 
-        return this
+        return this.copy(
+            quantity = quantity,
+            location = location
+        )
     }
 
     /**
@@ -109,24 +107,25 @@ class Item(
         quantity: Int,
         location: String?,
         associatedStorage: AssociatedStorage
-    ) {
+    ): Item {
         if (this.associatedStorage != associatedStorage && quantity == 0) {
             // Ignore updates from other systems if the quantity is 0
-            return
+            return this
         }
         if (location == null && quantity != 0) {
             throw ValidationException("Location must be set when quantity is not zero")
         }
 
-        this.quantity = quantity
-
         // do not override with lender location
         if (location == null && this.location == WITH_LENDER_LOCATION) {
-            return
+            return this
         }
 
-        this.location = location ?: UNKNOWN_LOCATION
-        this.associatedStorage = associatedStorage
+        return this.copy(
+            quantity = quantity,
+            location = location ?: UNKNOWN_LOCATION,
+            associatedStorage = associatedStorage
+        )
     }
 
     fun edit(
@@ -154,41 +153,7 @@ class Item(
      * Use it to indicate that we do not know where the current whereabouts of the item is.
      * Sets quantity to zero and location to [MISSING]
      */
-    fun reportMissing(): Item {
-        this.quantity = 0
-        this.location = MISSING
-        return this
-    }
+    fun reportMissing(): Item = this.copy(quantity = 0, location = MISSING)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Item) return false
-
-        return other.hostId == hostId && other.hostName == hostName
-    }
-
-    fun equalsExactly(other: Item): Boolean {
-        if (this === other) return true
-
-        return other.hostId == hostId &&
-            other.hostName == hostName &&
-            other.description == description &&
-            other.itemCategory == itemCategory &&
-            other.preferredEnvironment == preferredEnvironment &&
-            other.packaging == packaging &&
-            other.callbackUrl == callbackUrl &&
-            other.location == location &&
-            other.quantity == quantity &&
-            other.associatedStorage == associatedStorage
-    }
-
-    override fun hashCode(): Int {
-        var result = hostId.hashCode()
-        result = 31 * result + hostName.hashCode()
-        return result
-    }
-
-    override fun toString(): String =
-        "Item(hostId='$hostId', hostName=$hostName, description='$description', itemCategory=$itemCategory, preferredEnvironment=" +
-            "$preferredEnvironment, packaging=$packaging, callbackUrl=$callbackUrl, location='$location', quantity=$quantity)"
+    fun isSameItem(other: Item): Boolean = other.hostId == hostId && other.hostName == hostName
 }

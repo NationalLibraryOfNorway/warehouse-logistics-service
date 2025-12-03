@@ -12,13 +12,10 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
-import no.nb.mlt.wls.domain.model.events.email.EmailEvent
-import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
-import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
-import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
 import no.nb.mlt.wls.domain.model.events.storage.EditedItemInfo
 import no.nb.mlt.wls.domain.model.events.storage.ItemCreated
 import no.nb.mlt.wls.domain.model.events.storage.ItemEdited
@@ -64,7 +61,7 @@ class WLSService(
     private val orderRepository: OrderRepository,
     private val catalogEventRepository: EventRepository<CatalogEvent>,
     private val storageEventRepository: EventRepository<StorageEvent>,
-    private val emailEventRepository: EventRepository<EmailEvent>,
+    private val emailService: EmailService,
     private val transactionPort: TransactionPort,
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
     private val storageEventProcessor: EventProcessor<StorageEvent>
@@ -120,7 +117,7 @@ class WLSService(
 
                 val editedItem = itemRepository.editItem(changedItem)
 
-                if (editedItem.equalsExactly(item)) {
+                if (editedItem == item) {
                     logger.info { "Item was not changed: $editedItem" }
                     (editedItem to null)
                 } else {
@@ -270,18 +267,12 @@ class WLSService(
             transactionPort.executeInTransaction {
                 val createdOrder = orderRepository.createOrder(orderDTO.toOrder())
                 val storageEvent = storageEventRepository.save(OrderCreated(createdOrder))
-
-                if (createdOrder.contactEmail != null) {
-                    emailEventRepository.save(OrderConfirmationMail(createdOrder))
-                } else {
-                    logger.warn { "No order email available for ${createdOrder.contactPerson} in order ${createdOrder.hostOrderId}" }
-                }
-                val items = existingItems.plus(missingItems)
-                emailEventRepository.save(
-                    OrderPickupMail(createOrderPickupData(createdOrder, items))
-                )
                 (createdOrder to storageEvent)
             }
+        val items = existingItems.plus(missingItems)
+
+        emailService.createOrderConfirmation(createdOrder)
+        emailService.createOrderPickup(createdOrder, items)
 
         processStorageEventAsync(storageEvent)
 
@@ -497,7 +488,7 @@ class WLSService(
                     preferredEnvironment = syncItem.currentPreferredEnvironment,
                     packaging = syncItem.packaging,
                     callbackUrl = null,
-                    location = syncItem.location,
+                    location = syncItem.location ?: UNKNOWN_LOCATION,
                     quantity = syncItem.quantity,
                     associatedStorage = syncItem.associatedStorage
                 )
@@ -509,29 +500,29 @@ class WLSService(
         itemToUpdate: Item,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val syncItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
+        val itemToSynchronize = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
 
         val oldQuantity = itemToUpdate.quantity
         val oldLocation = itemToUpdate.location
 
-        itemToUpdate.synchronizeItem(syncItem.quantity, syncItem.location, syncItem.associatedStorage)
+        val syncedItem = itemToUpdate.synchronizeItem(itemToSynchronize.quantity, itemToSynchronize.location, itemToSynchronize.associatedStorage)
 
-        if (oldQuantity != itemToUpdate.quantity || oldLocation != itemToUpdate.location) {
+        if (oldQuantity != syncedItem.quantity || oldLocation != syncedItem.location) {
             val event =
                 transactionPort.executeInTransaction {
                     val updatedItem =
                         itemRepository.updateItem(
-                            itemToUpdate.hostId,
-                            itemToUpdate.hostName,
-                            itemToUpdate.quantity,
-                            itemToUpdate.location,
-                            itemToUpdate.associatedStorage
+                            syncedItem.hostId,
+                            syncedItem.hostName,
+                            syncedItem.quantity,
+                            syncedItem.location,
+                            syncedItem.associatedStorage
                         )
                     logger.info {
                         """
-                        Synchronizing item ${itemToUpdate.hostName}_${itemToUpdate.hostId}:
-                        Synchronizing quantity [$oldQuantity -> ${itemToUpdate.quantity}]
-                        Synchronizing location [$oldLocation -> ${itemToUpdate.location}]
+                        Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
+                        Synchronizing quantity [$oldQuantity -> ${syncedItem.quantity}]
+                        Synchronizing location [$oldLocation -> ${syncedItem.location}]
                         """.trimIndent()
                     }
                     catalogEventRepository.save(ItemEvent(updatedItem))
