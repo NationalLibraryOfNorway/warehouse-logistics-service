@@ -2,8 +2,9 @@ package no.nb.mlt.wls.infrastructure.callbacks
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.ninjasquad.springmockk.SpykBean
-import com.ninjasquad.springmockk.SpykDefinition
+import com.ninjasquad.springmockk.MockkSpyBean
+import io.mockk.junit5.MockKExtension
+import io.mockk.spyk
 import io.mockk.verify
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
@@ -21,21 +22,19 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.ResolvableType
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.web.reactive.function.client.WebClient
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+@ExtendWith(MockKExtension::class)
 class InventoryNotifierAdapterTest {
-    @SpykBean
-    @Qualifier("proxyWebClient")
+    @MockkSpyBean(name = "proxyWebClient")
     private lateinit var proxyWebClient: WebClient
 
-    @SpykBean
-    @Qualifier("nonProxyWebClient")
+    @MockkSpyBean(name = "nonProxyWebClient")
     private lateinit var webClient: WebClient
 
     private lateinit var mockWebServer: MockWebServer
@@ -55,17 +54,8 @@ class InventoryNotifierAdapterTest {
         mockWebServer = MockWebServer()
         mockWebServer.start()
 
-        webClient =
-            SpykDefinition(
-                "nonProxyWebClient",
-                ResolvableType.forClass(WebClient::class.java)
-            ).createSpy(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
-
-        proxyWebClient =
-            SpykDefinition(
-                "proxyWebClient",
-                ResolvableType.forClass(WebClient::class.java)
-            ).createSpy(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
+        webClient = spyk(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
+        proxyWebClient = spyk(WebClient.builder().baseUrl(mockWebServer.url("/").toString()).build())
 
         mockServerItemCallbackPath = mockWebServer.url("/item-callback").toString()
         mockServerOrderCallbackPath = mockWebServer.url("/order-callback").toString()

@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.order.controller
 
 import com.ninjasquad.springmockk.MockkBean
-import com.ninjasquad.springmockk.SpykBean
+import com.ninjasquad.springmockk.MockkSpyBean
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.junit5.MockKExtension
@@ -60,17 +60,17 @@ import org.springframework.test.web.reactive.server.expectBody
 @EnableMongoRepositories("no.nb.mlt.wls")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class OrderControllerTest(
-    @Autowired val itemMongoRepository: ItemMongoRepository,
-    @Autowired val applicationContext: ApplicationContext,
-    @Autowired val repository: OrderMongoRepository,
-    @Autowired val mongoRepository: MongoOrderRepositoryAdapter,
-    @Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
-    @Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
+    @param:Autowired val itemMongoRepository: ItemMongoRepository,
+    @param:Autowired val applicationContext: ApplicationContext,
+    @param:Autowired val repository: OrderMongoRepository,
+    @param:Autowired val mongoRepository: MongoOrderRepositoryAdapter,
+    @param:Autowired val mongoStorageEventRepository: MongoStorageEventRepository,
+    @param:Autowired val storageEventRepositoryAdapter: MongoStorageEventRepositoryAdapter
 ) {
     @MockkBean
     private lateinit var synqStandardAdapterMock: SynqStandardAdapter
 
-    @SpykBean
+    @MockkSpyBean
     private lateinit var storageEventRepository: EventRepository<StorageEvent>
 
     private lateinit var webTestClient: WebTestClient
@@ -214,8 +214,8 @@ class OrderControllerTest(
             .isOk
             .expectBody(ApiOrderPayload::class.java)
             .consumeWith { response ->
-                assertThat(response?.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
-                assertThat(response?.responseBody?.status?.equals(duplicateOrderPayload.status))
+                assertThat(response.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
+                assertThat(response.responseBody?.status?.equals(duplicateOrderPayload.status))
             }
     }
 

@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.infrastructure.kafka
 
-import org.apache.kafka.clients.producer.ProducerRecord
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
