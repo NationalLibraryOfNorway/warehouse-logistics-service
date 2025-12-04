@@ -214,8 +214,10 @@ class OrderControllerTest(
             .isOk
             .expectBody(ApiOrderPayload::class.java)
             .consumeWith { response ->
-                assertThat(response.responseBody?.hostOrderId.equals(duplicateOrderPayload.hostOrderId))
-                assertThat(response.responseBody?.status?.equals(duplicateOrderPayload.status))
+                assertThat(response.responseBody).isNotNull
+                assertThat(response.responseBody!!.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
+                assertThat(response.responseBody!!.hostOrderId).isEqualTo(duplicateOrderPayload.hostOrderId)
+                assertThat(response.responseBody!!.status).isEqualTo(duplicateOrderPayload.status)
             }
     }
 
