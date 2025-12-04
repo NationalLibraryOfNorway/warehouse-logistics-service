@@ -139,13 +139,13 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun moveItem(
-        hostName: HostName,
-        hostId: String,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item {
+    override suspend fun moveItem(item: Item): Item {
+        val hostName = item.hostName
+        val hostId = item.hostId
+        val quantity = item.quantity
+        val location = item.location
+        val associatedStorage = item.associatedStorage
+
         val itemsModified =
             mongoRepo
                 .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
@@ -163,35 +163,6 @@ class MongoItemRepositoryAdapter(
 
         if (itemsModified == 0L) {
             throw ItemNotFoundException("Item was not found. Host ID: $hostId, Host: $hostName")
-        }
-
-        return getItem(hostName, hostId)!!
-    }
-
-    override suspend fun updateItem(
-        hostId: String,
-        hostName: HostName,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item {
-        val itemsModified =
-            mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
-                .timeout(timeoutConfig.mongo)
-                .doOnError {
-                    logger.error(it) {
-                        if (it is TimeoutException) {
-                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
-                        } else {
-                            "Error while updating item"
-                        }
-                    }
-                }.onErrorMap { ItemMovingException(it.message ?: "Item could not be updated", it) }
-                .awaitSingle()
-
-        if (itemsModified == 0L) {
-            logger.warn { "Item was not updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
         } else {
             logger.debug { "Item was updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
         }

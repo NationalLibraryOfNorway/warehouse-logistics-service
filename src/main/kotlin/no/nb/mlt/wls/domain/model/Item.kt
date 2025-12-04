@@ -128,6 +128,15 @@ data class Item(
         )
     }
 
+    /**
+     * Moves an item within the logistics system
+     */
+    fun move(
+        location: String,
+        quantity: Int,
+        associatedStorage: AssociatedStorage
+    ): Item = this.copy(location = location, quantity = quantity, associatedStorage = associatedStorage)
+
     fun edit(
         description: String,
         itemCategory: ItemCategory,
@@ -153,7 +162,7 @@ data class Item(
      * Use it to indicate that we do not know where the current whereabouts of the item is.
      * Sets quantity to zero and location to [MISSING]
      */
-    fun reportMissing(): Item = this.copy(quantity = 0, location = MISSING)
+    fun reportMissing(): Item = this.copy(quantity = 0, location = MISSING, associatedStorage = AssociatedStorage.UNKNOWN)
 
     fun isSameItem(other: Item): Boolean = other.hostId == hostId && other.hostName == hostName
 }

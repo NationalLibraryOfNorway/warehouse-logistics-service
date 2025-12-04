@@ -1,6 +1,5 @@
 package no.nb.mlt.wls.domain.ports.outbound
 
-import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 
@@ -31,21 +30,7 @@ interface ItemRepository {
 
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
 
-    suspend fun moveItem(
-        hostName: HostName,
-        hostId: String,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item
-
-    suspend fun updateItem(
-        hostId: String,
-        hostName: HostName,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item
+    suspend fun moveItem(item: Item): Item
 
     data class ItemId(
         val hostName: HostName,

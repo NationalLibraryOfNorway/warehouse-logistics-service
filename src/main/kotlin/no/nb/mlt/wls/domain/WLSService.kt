@@ -5,7 +5,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -115,10 +114,15 @@ class WLSService(
                         callbackUrl = newMetadata.callbackUrl
                     )
 
+                if (changedItem == item) {
+                    logger.info { "Item ${item.hostId} for ${item.hostName} was not changed" }
+                    return@executeInTransaction (item to null)
+                }
+
                 val editedItem = itemRepository.editItem(changedItem)
 
                 if (editedItem == item) {
-                    logger.info { "Item was not changed: $editedItem" }
+                    logger.warn { "Item was not changed: $editedItem" }
                     (editedItem to null)
                 } else {
                     val event =
@@ -142,16 +146,21 @@ class WLSService(
     override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
         val item = getItemOrThrow(updateItemPayload.hostName, updateItemPayload.hostId)
 
+        val updateItem =
+            item.move(
+                updateItemPayload.location,
+                updateItemPayload.quantity,
+                updateItemPayload.associatedStorage
+            )
+
+        if (item == updateItem) {
+            logger.info { "Item ${updateItem.hostId} for ${updateItem.hostName} was unchanged" }
+            return item
+        }
+
         val (updatedItem, catalogEvent) =
             transactionPort.executeInTransaction {
-                val updatedItem =
-                    itemRepository.updateItem(
-                        item.hostId,
-                        item.hostName,
-                        updateItemPayload.quantity,
-                        updateItemPayload.location,
-                        updateItemPayload.associatedStorage
-                    )
+                val updatedItem = itemRepository.moveItem(updateItem)
                 val event = catalogEventRepository.save(ItemEvent(updatedItem))
 
                 (updatedItem to event)
@@ -168,16 +177,22 @@ class WLSService(
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
         val item = getItemOrThrow(moveItemPayload.hostName, moveItemPayload.hostId)
 
+        val updateItem =
+            item.move(
+                moveItemPayload.location,
+                item.quantity + moveItemPayload.quantity,
+                moveItemPayload.associatedStorage
+            )
+
+        if (item == updateItem) {
+            logger.info { "Item ${updateItem.hostId} for ${updateItem.hostName} was unchanged" }
+            return item
+        }
+
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
                 val movedItem =
-                    itemRepository.moveItem(
-                        item.hostName,
-                        item.hostId,
-                        item.quantity + moveItemPayload.quantity,
-                        moveItemPayload.location,
-                        moveItemPayload.associatedStorage
-                    )
+                    itemRepository.moveItem(updateItem)
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)
@@ -214,13 +229,7 @@ class WLSService(
             val catalogEvent =
                 transactionPort.executeInTransaction {
                     val movedItem =
-                        itemRepository.moveItem(
-                            item.hostName,
-                            item.hostId,
-                            pickedItem.quantity,
-                            pickedItem.location,
-                            pickedItem.associatedStorage
-                        )
+                        itemRepository.moveItem(pickedItem)
 
                     catalogEventRepository.save(ItemEvent(movedItem))
                 }
@@ -511,13 +520,7 @@ class WLSService(
             val event =
                 transactionPort.executeInTransaction {
                     val updatedItem =
-                        itemRepository.updateItem(
-                            syncedItem.hostId,
-                            syncedItem.hostName,
-                            syncedItem.quantity,
-                            syncedItem.location,
-                            syncedItem.associatedStorage
-                        )
+                        itemRepository.moveItem(syncedItem)
                     logger.info {
                         """
                         Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
@@ -539,14 +542,7 @@ class WLSService(
         val (missingItem, catalogItemEvent) =
             transactionPort.executeInTransaction {
                 val missingItem = item.reportMissing()
-                val updatedMissingItem =
-                    itemRepository.updateItem(
-                        missingItem.hostId,
-                        missingItem.hostName,
-                        missingItem.quantity,
-                        missingItem.location,
-                        AssociatedStorage.UNKNOWN
-                    )
+                val updatedMissingItem = itemRepository.moveItem(missingItem)
                 val event = catalogEventRepository.save(ItemEvent(updatedMissingItem))
                 (updatedMissingItem to event)
             }

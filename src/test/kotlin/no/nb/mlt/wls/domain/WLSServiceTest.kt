@@ -196,7 +196,7 @@ class WLSServiceTest {
             val editItemResult = serviceAvecTrans.editItem(expectedItem, editMetadata)
 
             assertThat(editItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { itemRepository.editItem(any()) }
+            coVerify(exactly = 0) { itemRepository.editItem(any()) }
             coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
@@ -223,15 +223,7 @@ class WLSServiceTest {
         val itemUpdatedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
-        coEvery {
-            itemRepository.updateItem(
-                startingItem.hostId,
-                startingItem.hostName,
-                expectedItem.quantity,
-                expectedItem.location,
-                expectedItem.associatedStorage
-            )
-        } answers { expectedItem }
+        coEvery { itemRepository.moveItem(any()) } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemUpdatedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemUpdatedEvent) } answers {}
 
@@ -239,7 +231,7 @@ class WLSServiceTest {
             val updateItemResult = serviceAvecTrans.updateItem(updateItemPayload)
 
             assertThat(updateItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { itemRepository.updateItem(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.moveItem(any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemUpdatedEvent) }
         }
@@ -255,15 +247,7 @@ class WLSServiceTest {
         val itemMovedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
-        coEvery {
-            itemRepository.moveItem(
-                startingItem.hostName,
-                startingItem.hostId,
-                startingItem.quantity + expectedItem.quantity,
-                expectedItem.location,
-                expectedItem.associatedStorage
-            )
-        } answers { expectedItem }
+        coEvery { itemRepository.moveItem(any()) } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemMovedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
 
@@ -271,7 +255,7 @@ class WLSServiceTest {
             val moveItemResult = serviceAvecTrans.moveItem(moveItemPayload)
 
             assertThat(moveItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.moveItem(any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemMovedEvent) }
         }
@@ -287,7 +271,7 @@ class WLSServiceTest {
             }
 
             coVerify(exactly = 1) { itemRepository.getItem(any(), any()) }
-            coVerify(exactly = 0) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 0) { itemRepository.moveItem(any()) }
         }
     }
 
@@ -299,15 +283,7 @@ class WLSServiceTest {
 
         coEvery { itemRepository.doesEveryItemExist(any()) } answers { true }
         coEvery { itemRepository.getItemsByIds(any(), any()) } answers { listOf(expectedItem) }
-        coEvery {
-            itemRepository.moveItem(
-                expectedItem.hostName,
-                expectedItem.hostId,
-                expectedItem.quantity,
-                expectedItem.location,
-                expectedItem.associatedStorage
-            )
-        } answers { expectedItem }
+        coEvery { itemRepository.moveItem(expectedItem) } answers { expectedItem }
         coEvery { catalogEventRepository.save(any()) } answers { itemPickedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemPickedEvent) } answers {}
 
@@ -316,7 +292,7 @@ class WLSServiceTest {
 
             coVerify(exactly = 1) { itemRepository.doesEveryItemExist(any()) }
             coVerify(exactly = 1) { itemRepository.getItemsByIds(any(), any()) }
-            coVerify(exactly = 1) { itemRepository.moveItem(any(), any(), any(), any(), any()) }
+            coVerify(exactly = 1) { itemRepository.moveItem(any()) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(itemPickedEvent) }
         }
@@ -1198,35 +1174,21 @@ class WLSServiceTest {
                     itemList.any { it.hostId == id.hostId && it.hostName == id.hostName }
                 }
 
-            override suspend fun moveItem(
-                hostName: HostName,
-                hostId: String,
-                quantity: Int,
-                location: String,
-                associatedStorage: AssociatedStorage
-            ): Item = updateItem(hostId, hostName, quantity, location, associatedStorage)
-
-            override suspend fun updateItem(
-                hostId: String,
-                hostName: HostName,
-                quantity: Int,
-                location: String,
-                associatedStorage: AssociatedStorage
-            ): Item {
-                val item = itemList.first { it.hostName == hostName && it.hostId == hostId }
-                val index = itemList.indexOf(item)
+            override suspend fun moveItem(item: Item): Item {
+                val existingItem = itemList.first { it.hostName == item.hostName && it.hostId == item.hostId }
+                val index = itemList.indexOf(existingItem)
                 val updatedItem =
                     createTestItem(
-                        item.hostName,
-                        item.hostId,
-                        item.description,
-                        item.itemCategory,
-                        item.preferredEnvironment,
-                        item.packaging,
-                        item.callbackUrl,
-                        location,
-                        quantity,
-                        associatedStorage
+                        existingItem.hostName,
+                        existingItem.hostId,
+                        existingItem.description,
+                        existingItem.itemCategory,
+                        existingItem.preferredEnvironment,
+                        existingItem.packaging,
+                        existingItem.callbackUrl,
+                        item.location,
+                        item.quantity,
+                        item.associatedStorage
                     )
                 itemList[index] = updatedItem
 
