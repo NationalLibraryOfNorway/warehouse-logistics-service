@@ -196,7 +196,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(AXIELL))
+                    .queryParam("hostNames", AXIELL)
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
@@ -219,7 +219,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", arrayOf(AXIELL))
+                    .queryParam("hostNames", AXIELL)
                     .queryParam("hostId", testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)

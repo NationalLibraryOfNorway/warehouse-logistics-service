@@ -5,7 +5,6 @@ import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.stereotype.Service
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 @Service
 class StatisticsProducer(
@@ -17,7 +16,7 @@ class StatisticsProducer(
     fun sendStatisticsMessage(
         key: String,
         message: Any
-    ): Future<SendResult<String, Any>> = sendMessage(defaultTopic, key, message)
+    ): CompletableFuture<SendResult<String, Any>> = sendMessage(defaultTopic, key, message)
 
     // Marking this as private for now since we only need to send statistics messages
     // However, if we need it in the future, we can make this public and send messages to whatever topic we want

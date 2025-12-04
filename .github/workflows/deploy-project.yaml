@@ -45,7 +45,7 @@ jobs:
       # Simple step which merely checks out the repository to the runner, making it available for other steps
       - name: Checkout
         # Specifies that this step should run a pre-defined action, meaning an action that was made by someone else or exists elsewhere
-        # In this case the provided identifier is a reference to a repository in: https://github.com/actions/checkout and the version is set tov4
+        # In this case the provided identifier is a reference to a repository in: https://github.com/actions/checkout
         uses: actions/checkout@v6
 
       # This step installs the specified Java JDK

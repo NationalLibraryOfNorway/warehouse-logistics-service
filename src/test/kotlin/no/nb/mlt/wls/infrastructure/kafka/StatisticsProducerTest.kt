@@ -9,11 +9,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.SendResult
 import org.springframework.test.util.ReflectionTestUtils
-import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.test.StepVerifier
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
 
 class StatisticsProducerTest {
     private lateinit var kafkaTemplate: KafkaTemplate<String, Any>
@@ -32,9 +30,9 @@ class StatisticsProducerTest {
         // Arrange
         val key = "test-key"
         val message = mapOf("field" to "value")
-        val mockResult = mockk<CompletableFuture<SendResult<String, Any>>>()
+        val mockResult: SendResult<String, Any> = mockk<SendResult<String, Any>>()
 
-        every { kafkaTemplate.send("test-topic", key, message) } returns mockResult
+        every { kafkaTemplate.send("test-topic", key, message) } returns CompletableFuture.completedFuture(mockResult)
 
         // Act & Assert
         StepVerifier
