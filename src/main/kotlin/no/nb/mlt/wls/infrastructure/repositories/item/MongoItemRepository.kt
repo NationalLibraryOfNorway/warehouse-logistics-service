@@ -134,29 +134,23 @@ class MongoItemRepositoryAdapter(
             }.awaitSingle()
 
     override suspend fun moveItem(item: Item): Boolean {
-        val hostName = item.hostName
-        val hostId = item.hostId
-        val quantity = item.quantity
-        val location = item.location
-        val associatedStorage = item.associatedStorage
-
         val itemsModified =
             mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
+                .findAndUpdateItemByHostNameAndHostId(item.hostName, item.hostId, item.quantity, item.location, item.associatedStorage)
                 .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {
-                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
+                            "Timed out while updating Item. Host ID: ${item.hostId}, Host: ${item.hostName}"
                         } else {
-                            "Error while updating item. Host ID: $hostId, Host: $hostName"
+                            "Error while updating item. Host ID: ${item.hostId}, Host: ${item.hostName}"
                         }
                     }
                 }.onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
                 .awaitSingle()
 
         if (itemsModified != 0L) {
-            logger.debug { "Item was moved. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
+            logger.debug { "Item was moved. hostId=${item.hostId}, hostName=${item.hostName}, location=${item.location}, quantity=${item.quantity}" }
             return true
         }
         return false
