@@ -503,10 +503,10 @@ class WLSService(
                     if (itemRepository.moveItem(syncedItem)) {
                         logger.info {
                             """
-                        Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
-                        Synchronizing quantity [$oldQuantity -> ${syncedItem.quantity}]
-                        Synchronizing location [$oldLocation -> ${syncedItem.location}]
-                        """.trimIndent()
+                            Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
+                            Synchronizing quantity [$oldQuantity -> ${syncedItem.quantity}]
+                            Synchronizing location [$oldLocation -> ${syncedItem.location}]
+                            """.trimIndent()
                         }
                         catalogEventRepository.save(ItemEvent(syncedItem))
                     } else {
