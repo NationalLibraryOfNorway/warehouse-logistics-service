@@ -169,7 +169,10 @@ class WLSService(
         return moveItemInternal(item, updateItem)
     }
 
-    private suspend fun moveItemInternal(originalItem: Item, updateItem: Item): Item {
+    private suspend fun moveItemInternal(
+        originalItem: Item,
+        updateItem: Item
+    ): Item {
         if (originalItem == updateItem) {
             logger.info { "Item ${updateItem.hostId} for ${updateItem.hostName} was unchanged" }
             return originalItem
