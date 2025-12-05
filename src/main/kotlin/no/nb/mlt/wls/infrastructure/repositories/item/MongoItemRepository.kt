@@ -9,7 +9,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMetadataUpdateException
@@ -95,7 +94,7 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun editItem(item: Item): Item {
+    override suspend fun editItem(item: Item): Boolean {
         val itemsEdited =
             mongoRepo
                 .findAndUpdateItemMetadataByHostNameAndHostId(
@@ -118,12 +117,7 @@ class MongoItemRepositoryAdapter(
                 }.onErrorMap { ItemMetadataUpdateException(it.message ?: "Item metadata could not be updated", it) }
                 .awaitSingle()
 
-        if (itemsEdited == 0L) {
-            throw ItemNotFoundException("Item was not found. Item: $item")
-        }
-
-        return getItem(item.hostName, item.hostId)
-            ?: throw ItemNotFoundException("Item was not found after update. Item: $item")
+        return itemsEdited != 0L
     }
 
     override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean =
@@ -139,7 +133,7 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun moveItem(item: Item): Item {
+    override suspend fun moveItem(item: Item): Boolean {
         val hostName = item.hostName
         val hostId = item.hostId
         val quantity = item.quantity
@@ -161,13 +155,11 @@ class MongoItemRepositoryAdapter(
                 }.onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
                 .awaitSingle()
 
-        if (itemsModified == 0L) {
-            throw ItemNotFoundException("Item was not found. Host ID: $hostId, Host: $hostName")
-        } else {
-            logger.debug { "Item was updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
+        if (itemsModified != 0L) {
+            logger.debug { "Item was moved. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
+            return true
         }
-
-        return getItem(hostName, hostId)!!
+        return false
     }
 }
 

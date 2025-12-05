@@ -26,11 +26,11 @@ interface ItemRepository {
 
     suspend fun createItem(item: Item): Item
 
-    suspend fun editItem(item: Item): Item
+    suspend fun editItem(item: Item): Boolean
 
     suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean
 
-    suspend fun moveItem(item: Item): Item
+    suspend fun moveItem(item: Item): Boolean
 
     data class ItemId(
         val hostName: HostName,
