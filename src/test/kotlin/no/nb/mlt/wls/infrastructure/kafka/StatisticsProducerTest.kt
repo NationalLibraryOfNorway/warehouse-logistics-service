@@ -30,7 +30,7 @@ class StatisticsProducerTest {
         // Arrange
         val key = "test-key"
         val message = mapOf("field" to "value")
-        val mockResult: SendResult<String, Any> = mockk<SendResult<String, Any>>()
+        val mockResult = mockk<SendResult<String, Any>>()
 
         every { kafkaTemplate.send("test-topic", key, message) } returns CompletableFuture.completedFuture(mockResult)
 
