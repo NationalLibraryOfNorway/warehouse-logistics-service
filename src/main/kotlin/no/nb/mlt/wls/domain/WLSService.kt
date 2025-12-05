@@ -153,25 +153,7 @@ class WLSService(
                 updateItemPayload.associatedStorage
             )
 
-        if (item == updateItem) {
-            logger.info { "Item ${updateItem.hostId} for ${updateItem.hostName} was unchanged" }
-            return item
-        }
-
-        val (updatedItem, catalogEvent) =
-            transactionPort.executeInTransaction {
-                val updatedItem = itemRepository.moveItem(updateItem)
-                val event = catalogEventRepository.save(ItemEvent(updatedItem))
-
-                (updatedItem to event)
-            }
-
-        processCatalogEventAsync(catalogEvent)
-
-        if (item.quantity == 0 && updateItemPayload.quantity > 0) {
-            returnOrderItems(updateItemPayload.hostName, listOf(updateItemPayload.hostId))
-        }
-        return updatedItem
+        return moveItemInternal(item, updateItem)
     }
 
     override suspend fun moveItem(moveItemPayload: MoveItemPayload): Item {
@@ -184,25 +166,34 @@ class WLSService(
                 moveItemPayload.associatedStorage
             )
 
-        if (item == updateItem) {
+        return moveItemInternal(item, updateItem)
+    }
+
+    private suspend fun moveItemInternal(originalItem: Item, updateItem: Item): Item {
+        if (originalItem == updateItem) {
             logger.info { "Item ${updateItem.hostId} for ${updateItem.hostName} was unchanged" }
-            return item
+            return originalItem
         }
 
         val (movedItem, catalogEvent) =
             transactionPort.executeInTransaction {
                 val movedItem =
                     itemRepository.moveItem(updateItem)
+                if (movedItem == originalItem) {
+                    return@executeInTransaction (movedItem to null)
+                }
                 val event = catalogEventRepository.save(ItemEvent(movedItem))
 
                 (movedItem to event)
             }
 
-        processCatalogEventAsync(catalogEvent)
-
-        if (item.quantity == 0 && moveItemPayload.quantity > 0) {
-            returnOrderItems(moveItemPayload.hostName, listOf(moveItemPayload.hostId))
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+            if (originalItem.quantity == 0 && movedItem.quantity > 0) {
+                returnOrderItems(movedItem.hostName, listOf(movedItem.hostId))
+            }
         }
+
         return movedItem
     }
 
