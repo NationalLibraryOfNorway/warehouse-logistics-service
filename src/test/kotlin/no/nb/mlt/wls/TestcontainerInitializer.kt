@@ -32,7 +32,7 @@ class TestcontainerInitializer : ApplicationContextInitializer<ConfigurableAppli
     }
 
     override fun initialize(applicationContext: ConfigurableApplicationContext) {
-        TestPropertyValues.of("spring.data.mongodb.uri=" + MongoContainer.replicaSetUrl).applyTo(applicationContext)
+        TestPropertyValues.of("spring.mongodb.uri=" + MongoContainer.replicaSetUrl).applyTo(applicationContext)
         TestPropertyValues.of("spring.mail.host=" + MailhogContainer.host).applyTo(applicationContext)
         TestPropertyValues.of("spring.mail.port=" + MailhogContainer.getMappedPort(MAILHOG_SMTP_PORT)).applyTo(applicationContext)
     }
