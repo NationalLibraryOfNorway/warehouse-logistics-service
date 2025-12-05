@@ -640,7 +640,7 @@ class WLSServiceTest {
         runTest {
             cut.createOrder(createOrderDTO)
 
-            assert(itemRepository.doesEveryItemExist(testOrder.orderLine.map { ItemRepository.ItemId(testOrder.hostName, it.hostId) }))
+            assertThat(itemRepository.doesEveryItemExist(testOrder.orderLine.map { ItemRepository.ItemId(testOrder.hostName, it.hostId) })).isTrue
             assertThat(itemRepository.getItem(testOrderItems[1].hostName, testOrderItems[1].hostId)).isNotNull
         }
     }
@@ -686,9 +686,10 @@ class WLSServiceTest {
             cut.pickOrderItems(HostName.AXIELL, listOf(testItem.hostId), order.hostOrderId)
 
             val orderFromRepo = orderRepository.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
-            assert(orderFromRepo != null)
-            assert(orderFromRepo == expectedOrder)
-            assert(pickedOrder == expectedOrder)
+            assertThat(orderFromRepo)
+                .isNotNull
+                .isEqualTo(expectedOrder)
+            assertThat(pickedOrder).isEqualTo(expectedOrder)
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
         }
     }
@@ -922,12 +923,14 @@ class WLSServiceTest {
             cut.updateItem(testUpdateItemPayload)
 
             val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
-            assert(item != null)
-            assert(item == expectedItem)
+            assertThat(item)
+                .isNotNull
+                .isEqualTo(expectedItem)
 
             val order = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
-            assert(order != null)
-            assert(order == expectedOrder)
+            assertThat(order)
+                .isNotNull
+                .isEqualTo(expectedOrder)
         }
     }
 
@@ -950,12 +953,14 @@ class WLSServiceTest {
             cut.updateItem(testUpdateItemPayload)
 
             val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
-            assert(item != null)
-            assert(item == expectedItem)
+            assertThat(item)
+                .isNotNull
+                .isEqualTo(expectedItem)
 
             val order = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
-            assert(order != null)
-            assert(order == expectedOrder)
+            assertThat(order)
+                .isNotNull
+                .isEqualTo(expectedOrder)
         }
     }
 
@@ -1028,12 +1033,14 @@ class WLSServiceTest {
             cut.moveItem(testMoveItemPayload)
 
             val item = cut.getItem(expectedItem.hostName, expectedItem.hostId)
-            assert(item != null)
-            assert(item == expectedItem)
+            assertThat(item)
+                .isNotNull
+                .isEqualTo(expectedItem)
 
             val order = cut.getOrder(expectedOrder.hostName, expectedOrder.hostOrderId)
-            assert(order != null)
-            assert(order == expectedOrder)
+            assertThat(order)
+                .isNotNull
+                .isEqualTo(expectedOrder)
         }
     }
 
