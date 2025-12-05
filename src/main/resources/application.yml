@@ -130,10 +130,19 @@ spring:
           issuer-uri: http://localhost:8082/realms/mlt-local
           audiences: http://localhost:8080
 
+  mail:
+    host: ${EMAIL_SERVER}
+    port: ${EMAIL_PORT}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: "8000"
+          timeout: "5000"
+          writetimeout: "8000"
+
   # Set the database settings for the local-dev profile
-  data:
-    mongodb:
-      uri: mongodb://bruker:drossap@localhost:27017/wls
+  mongodb:
+    uri: mongodb://bruker:drossap@localhost:27017/wls
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:
@@ -189,11 +198,6 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
           audiences: ${KEYCLOAK_TOKEN_AUD}
 
-  # Set the database settings for the stage profile
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}
-
   mail:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
@@ -203,6 +207,10 @@ spring:
           connectiontimeout: "8000"
           timeout: "5000"
           writetimeout: "8000"
+
+  # Set the database settings for the stage profile
+  mongodb:
+    uri: ${MONGODB_URI}
 
 # Set base path to SynQ API in stage environment
 synq:
@@ -259,11 +267,6 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
           audiences: ${KEYCLOAK_TOKEN_AUD}
 
-  # Set the database settings for the prod profile
-  data:
-    mongodb:
-      uri: ${MONGODB_URI}
-
   mail:
     host: ${EMAIL_SERVER}
     port: ${EMAIL_PORT}
@@ -273,6 +276,10 @@ spring:
           connectiontimeout: "8000"
           timeout: "5000"
           writetimeout: "8000"
+
+  # Set the database settings for the prod profile
+  mongodb:
+    uri: ${MONGODB_URI}
 
 # Set base path to SynQ API in prod environment
 synq:

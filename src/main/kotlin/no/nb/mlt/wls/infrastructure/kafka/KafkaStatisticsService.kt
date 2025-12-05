@@ -10,6 +10,7 @@ import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import org.springframework.stereotype.Service
+import reactor.kotlin.core.publisher.toMono
 
 private val logger = KotlinLogging.logger {}
 
@@ -34,6 +35,7 @@ class KafkaStatisticsService(
 
         statisticsProducer
             .sendStatisticsMessage(statisticsEvent.id, statisticsEvent)
+            .toMono()
             .doOnError { logger.error(it) { "Error while sending statistics event: $statisticsEvent" } }
             .onErrorComplete() // Error logged, do we need to do something else here?
             .block()

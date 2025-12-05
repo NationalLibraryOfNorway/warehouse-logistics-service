@@ -119,11 +119,10 @@ spring:
           audiences: http://localhost:8080
 
   # Set the database settings for the local-dev profile
-  data:
-    mongodb:
-      username: bruker
-      password: drossap
-      database: wls
+  mongodb:
+    password: drossap
+    database: wls
+    username: bruker
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:

@@ -82,7 +82,7 @@ class SecurityConfig {
 }
 
 fun JwtAuthenticationToken.checkIfAuthorized(host: HostName) {
-    if (authorities.any { it.authority.contains(host.name.lowercase()) }) return
+    if (authorities.any { it.authority?.contains(host.name.lowercase()) == true }) return
 
     throw ResponseStatusException(
         HttpStatus.FORBIDDEN,
@@ -92,7 +92,7 @@ fun JwtAuthenticationToken.checkIfAuthorized(host: HostName) {
 
 fun JwtAuthenticationToken.getUsersHosts(): List<HostName> {
     val hostNameStrings = HostName.entries.map { it.name }.toSet()
-    val roles = authorities.map { it.authority.removePrefix("ROLE_").uppercase() }
+    val roles = authorities.mapNotNull { it.authority?.removePrefix("ROLE_")?.uppercase() }
 
     return roles.intersect(hostNameStrings).map { HostName.valueOf(it) }
 }
