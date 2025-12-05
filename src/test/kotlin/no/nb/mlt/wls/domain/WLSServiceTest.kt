@@ -196,7 +196,7 @@ class WLSServiceTest {
             val editItemResult = serviceAvecTrans.editItem(expectedItem, editMetadata)
 
             assertThat(editItemResult).isEqualTo(expectedItem)
-            coVerify(exactly = 0) { itemRepository.editItem(any()) }
+            coVerify(exactly = 1) { itemRepository.editItem(any()) }
             coVerify(exactly = 0) { storageEventProcessor.handleEvent(any()) }
         }
     }
