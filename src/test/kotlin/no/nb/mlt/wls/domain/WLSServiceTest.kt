@@ -163,7 +163,7 @@ class WLSServiceTest {
         val itemEditedEvent = ItemEdited(EditedItemInfo(editedItem = editedItem, oldItem = oldItem))
 
         coEvery { itemRepository.getItem(oldItem.hostName, oldItem.hostId) } answers { oldItem }
-        coEvery { itemRepository.editItem(editedItem) } answers { editedItem }
+        coEvery { itemRepository.editItem(editedItem) } answers { true }
         coEvery { storageEventRepository.save(any()) } answers { itemEditedEvent }
         coEvery { storageEventProcessor.handleEvent(itemEditedEvent) } answers {}
 
@@ -190,7 +190,7 @@ class WLSServiceTest {
             )
 
         coEvery { itemRepository.getItem(expectedItem.hostName, expectedItem.hostId) } answers { expectedItem }
-        coEvery { itemRepository.editItem(expectedItem) } answers { expectedItem }
+        coEvery { itemRepository.editItem(expectedItem) } answers { false }
 
         runTest {
             val editItemResult = serviceAvecTrans.editItem(expectedItem, editMetadata)
@@ -223,7 +223,7 @@ class WLSServiceTest {
         val itemUpdatedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
-        coEvery { itemRepository.moveItem(any()) } answers { expectedItem }
+        coEvery { itemRepository.moveItem(any()) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { itemUpdatedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemUpdatedEvent) } answers {}
 
@@ -241,13 +241,13 @@ class WLSServiceTest {
     fun `moveItem should change item's location and quantity`() {
         val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1)
         val expectedItem =
-            createTestItem(hostName = startingItem.hostName, hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = -1)
+            createTestItem(hostName = startingItem.hostName, hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = 0)
         val moveItemPayload =
-            MoveItemPayload(expectedItem.hostName, expectedItem.hostId, expectedItem.quantity, expectedItem.location, expectedItem.associatedStorage)
+            MoveItemPayload(expectedItem.hostName, expectedItem.hostId, -1, expectedItem.location, expectedItem.associatedStorage)
         val itemMovedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
-        coEvery { itemRepository.moveItem(any()) } answers { expectedItem }
+        coEvery { itemRepository.moveItem(any()) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { itemMovedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
 
@@ -283,7 +283,7 @@ class WLSServiceTest {
 
         coEvery { itemRepository.doesEveryItemExist(any()) } answers { true }
         coEvery { itemRepository.getItemsByIds(any(), any()) } answers { listOf(expectedItem) }
-        coEvery { itemRepository.moveItem(expectedItem) } answers { expectedItem }
+        coEvery { itemRepository.moveItem(expectedItem) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { itemPickedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemPickedEvent) } answers {}
 
@@ -1170,10 +1170,12 @@ class WLSServiceTest {
                 return item
             }
 
-            override suspend fun editItem(item: Item): Item {
+            override suspend fun editItem(item: Item): Boolean {
+                if (!items.contains(item)) {
+                    return false
+                }
                 items.replaceAll { if (it.hostId == item.hostId && it.hostName == item.hostName) item else it }
-
-                return item
+                return true
             }
 
             override suspend fun doesEveryItemExist(ids: List<ItemRepository.ItemId>): Boolean =
@@ -1181,8 +1183,9 @@ class WLSServiceTest {
                     itemList.any { it.hostId == id.hostId && it.hostName == id.hostName }
                 }
 
-            override suspend fun moveItem(item: Item): Item {
+            override suspend fun moveItem(item: Item): Boolean {
                 val existingItem = itemList.first { it.hostName == item.hostName && it.hostId == item.hostId }
+                if (existingItem == item) return false
                 val index = itemList.indexOf(existingItem)
                 val updatedItem =
                     createTestItem(
@@ -1199,7 +1202,7 @@ class WLSServiceTest {
                     )
                 itemList[index] = updatedItem
 
-                return itemList[index]
+                return true
             }
         }
     }
