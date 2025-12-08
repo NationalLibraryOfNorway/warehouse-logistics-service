@@ -529,7 +529,6 @@ class WLSService(
                     val event = catalogEventRepository.save(ItemEvent(missingItem))
                     (missingItem to event)
                 } else {
-                    // TODO - Exception?
                     (missingItem to null)
                 }
             }
