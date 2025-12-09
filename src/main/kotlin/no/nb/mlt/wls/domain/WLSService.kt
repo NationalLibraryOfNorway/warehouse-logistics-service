@@ -317,6 +317,7 @@ class WLSService(
                 storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
             }
 
+        emailService.createOrderCancellation(deletedOrder)
         processStorageEventAsync(storageEvent)
     }
 

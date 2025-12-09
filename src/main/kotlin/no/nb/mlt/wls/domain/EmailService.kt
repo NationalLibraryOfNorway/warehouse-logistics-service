@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
+import no.nb.mlt.wls.domain.model.events.email.OrderCancellationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.model.events.email.createOrderPickupData
@@ -45,6 +46,14 @@ class EmailService(
         val event =
             transactionPort.executeInTransaction {
                 emailEventRepository.save(OrderPickupMail(createOrderPickupData(order, orderItems)))
+            }
+        processEmailEventAsync(event)
+    }
+
+    suspend fun createOrderCancellation(order: Order) {
+        val event =
+            transactionPort.executeInTransaction {
+                emailEventRepository.save(OrderCancellationMail(order))
             }
         processEmailEventAsync(event)
     }
