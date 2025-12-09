@@ -448,6 +448,7 @@ class WLSServiceTest {
         coEvery { orderRepository.deleteOrder(deletedOrder) } answers {}
         coEvery { storageEventRepository.save(any()) } answers { deletedOrderEvent }
         coEvery { storageEventProcessor.handleEvent(deletedOrderEvent) } answers {}
+        coEvery { emailServiceMock.createOrderCancellation(any()) } answers { true }
 
         runTest {
             serviceAvecTrans.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
