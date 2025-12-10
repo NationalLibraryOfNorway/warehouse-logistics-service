@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.events.email.EmailEvent
+import no.nb.mlt.wls.domain.model.events.email.OrderCompleteMail
 import no.nb.mlt.wls.domain.model.events.email.OrderConfirmationMail
 import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.ports.outbound.EventProcessor
@@ -40,6 +41,7 @@ class EmailEventProcessorAdapter(
         val isSuccessful =
             when (event) {
                 is OrderConfirmationMail -> userNotifier.orderConfirmation(event.order)
+                is OrderCompleteMail -> userNotifier.orderCompleted(event.order)
                 is OrderPickupMail -> userNotifier.orderPickup(event.orderPickupData)
             }
         if (isSuccessful) {

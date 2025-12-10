@@ -291,7 +291,7 @@ class WLSService(
             return
         }
 
-        val (_, catalogEvent) =
+        val (updatedOrder, catalogEvent) =
             transactionPort.executeInTransaction {
                 if (orderRepository.updateOrder(pickedOrder)) {
                     val event = catalogEventRepository.save(OrderEvent(pickedOrder))
@@ -303,6 +303,10 @@ class WLSService(
 
         if (catalogEvent != null) {
             processCatalogEventAsync(catalogEvent)
+        }
+
+        if (updatedOrder.isPicked()) {
+            emailService.createOrderCompletion(updatedOrder)
         }
     }
 
