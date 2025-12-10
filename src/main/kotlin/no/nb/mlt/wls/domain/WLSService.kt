@@ -391,12 +391,12 @@ class WLSService(
         getItem(hostName, hostId)
             ?: throw ItemNotFoundException("Item with id '$hostId' does not exist for '$hostName'")
 
-    private fun processStorageEventAsync(storageEvent: StorageEvent?) =
+    private fun processStorageEventAsync(storageEvent: StorageEvent?) {
+        if (storageEvent == null) {
+            logger.debug { "Storage event was null, ignoring" }
+            return
+        }
         coroutineContext.launch {
-            if (storageEvent == null) {
-                logger.debug { "Storage event was null, ignoring" }
-                return@launch
-            }
             try {
                 storageEventProcessor.handleEvent(storageEvent)
             } catch (e: StorageSystemException) {
@@ -413,13 +413,14 @@ class WLSService(
                 }
             }
         }
+    }
 
-    private fun processCatalogEventAsync(catalogEvent: CatalogEvent?) =
+    private fun processCatalogEventAsync(catalogEvent: CatalogEvent?) {
+        if (catalogEvent == null) {
+            logger.debug { "Catalog event was null, ignoring" }
+            return
+        }
         coroutineContext.launch {
-            if (catalogEvent == null) {
-                logger.debug { "Catalog event was null, ignoring" }
-                return@launch
-            }
             try {
                 catalogEventProcessor.handleEvent(catalogEvent)
             } catch (e: WebClientResponseException) {
@@ -432,6 +433,7 @@ class WLSService(
                 }
             }
         }
+    }
 
     private suspend fun returnOrderItems(
         hostName: HostName,

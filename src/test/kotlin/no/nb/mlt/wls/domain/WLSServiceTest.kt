@@ -1187,19 +1187,7 @@ class WLSServiceTest {
                 val existingItem = itemList.first { it.hostName == item.hostName && it.hostId == item.hostId }
                 if (existingItem == item) return false
                 val index = itemList.indexOf(existingItem)
-                val updatedItem =
-                    createTestItem(
-                        existingItem.hostName,
-                        existingItem.hostId,
-                        existingItem.description,
-                        existingItem.itemCategory,
-                        existingItem.preferredEnvironment,
-                        existingItem.packaging,
-                        existingItem.callbackUrl,
-                        item.location,
-                        item.quantity,
-                        item.associatedStorage
-                    )
+                val updatedItem = existingItem.copy(location = item.location, quantity = item.quantity, associatedStorage = item.associatedStorage)
                 itemList[index] = updatedItem
 
                 return true
