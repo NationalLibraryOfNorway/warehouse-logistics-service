@@ -472,7 +472,7 @@ class WLSService(
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
         val itemToSynchronize = syncItemsById[(missingId to hostName)]
-        val syncItem = itemToSynchronize ?: throw NullPointerException("Expression 'syncItemsById[(missingId to hostName)]' must not be null")
+        val syncItem = itemToSynchronize ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: $missingId, hostName: $hostName")
 
         val createdItem = itemRepository.createItem(syncItem.toItem())
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
@@ -482,7 +482,7 @@ class WLSService(
         itemToUpdate: Item,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val newItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)] ?: throw NullPointerException("Expression 'syncItemsById[(hostId to hostName)]' must not be null")
+        val newItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)] ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: ${itemToUpdate.hostId}, hostName: ${itemToUpdate.hostName}")
         val syncedItem = itemToUpdate.synchronizeItem(newItem.quantity, newItem.location, newItem.associatedStorage)
 
         val event =
@@ -535,7 +535,7 @@ class WLSService(
         val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
 
         if (orders.isEmpty()) {
-            logger.info {"No orders found for $hostName containing $hostIds"}
+            logger.info { "No orders found for $hostName containing $hostIds" }
             return
         }
 
@@ -550,7 +550,7 @@ class WLSService(
                             logger.warn { "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were marked as missing" }
                             catalogEventRepository.save(OrderEvent(missingOrder))
                         } else {
-                            logger.error{ "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were not marked as missing, transaction failed" }
+                            logger.error { "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were not marked as missing, transaction failed" }
                             null
                         }
                     }

@@ -27,7 +27,7 @@ fun interface SynchronizeItems {
             hostName = this.hostName,
             description = this.description,
             itemCategory = this.itemCategory,
-            preferredEnvironment =  this.currentPreferredEnvironment,
+            preferredEnvironment = this.currentPreferredEnvironment,
             packaging = this.packaging,
             callbackUrl = null,
             location = this.location ?: UNKNOWN_LOCATION,
