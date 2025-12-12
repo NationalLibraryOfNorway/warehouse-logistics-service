@@ -240,11 +240,9 @@ class WLSServiceTest {
 
     @Test
     fun `moveItem should change item's location and quantity`() {
-        val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1)
-        val expectedItem =
-            createTestItem(hostName = startingItem.hostName, hostId = startingItem.hostId, location = WITH_LENDER_LOCATION, quantity = 0)
-        val moveItemPayload =
-            MoveItemPayload(expectedItem.hostName, expectedItem.hostId, -1, expectedItem.location, expectedItem.associatedStorage)
+        val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1, associatedStorage = AssociatedStorage.SYNQ)
+        val expectedItem = startingItem.copy(location = WITH_LENDER_LOCATION, quantity = 0)
+        val moveItemPayload = MoveItemPayload(expectedItem.hostName, expectedItem.hostId, -1, expectedItem.location, expectedItem.associatedStorage)
         val itemMovedEvent = ItemEvent(expectedItem)
 
         coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } returns startingItem andThen expectedItem
@@ -1186,9 +1184,12 @@ class WLSServiceTest {
                 }
 
             override suspend fun moveItem(item: Item): Boolean {
-                val existingItem = itemList.first { it.hostName == item.hostName && it.hostId == item.hostId }
+                val index = itemList.indexOfFirst {it.hostName == item.hostName && it.hostId == item.hostId }
+                if (index == -1) return false
+
+                val existingItem = itemList[index]
                 if (existingItem == item) return false
-                val index = itemList.indexOf(existingItem)
+
                 val updatedItem = existingItem.copy(location = item.location, quantity = item.quantity, associatedStorage = item.associatedStorage)
                 itemList[index] = updatedItem
 

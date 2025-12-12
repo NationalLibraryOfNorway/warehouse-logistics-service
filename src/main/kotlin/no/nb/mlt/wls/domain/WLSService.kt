@@ -194,7 +194,7 @@ class WLSService(
             }
 
         if (!itemRepository.doesEveryItemExist(itemIds)) {
-            throw ItemNotFoundException("Some items do not exist in the database, and so are unpickable: ${pickedItems.keys.joinToString(", ")}")
+            throw ItemNotFoundException("The following items do not exist in the database and cannot be picked: ${pickedItems.keys.joinToString(", ")}")
         }
 
         val itemsToPick = getItemsByIds(hostName, pickedItems.keys.toList())
@@ -473,7 +473,7 @@ class WLSService(
     ) {
         val itemToSynchronize = syncItemsById[(missingId to hostName)]
         val syncItem =
-            itemToSynchronize ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: $missingId, hostName: $hostName")
+            itemToSynchronize ?: throw ItemNotFoundException("Item to synchronize not found in sync data for hostId: $missingId, hostName: $hostName")
 
         val createdItem = itemRepository.createItem(syncItem.toItem())
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
@@ -485,7 +485,7 @@ class WLSService(
     ) {
         val newItem =
             syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]
-                ?: throw NullPointerException(
+                ?: throw ItemNotFoundException(
                     "Item to synchronize not found in sync data for hostId: ${itemToUpdate.hostId}, hostName: ${itemToUpdate.hostName}"
                 )
         val syncedItem = itemToUpdate.synchronizeItem(newItem.quantity, newItem.location, newItem.associatedStorage)
