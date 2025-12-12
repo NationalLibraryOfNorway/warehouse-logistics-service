@@ -539,10 +539,11 @@ class WLSService(
             return
         }
 
-        orders.mapNotNull {
-            // remove orders that are unchanged after its items were marked as missing
-            val updatedOrder = it.markMissing(hostIds)
-            if (updatedOrder != it) updatedOrder else null
+        orders
+            .mapNotNull {
+                // remove orders that are unchanged after its items were marked as missing
+                val updatedOrder = it.markMissing(hostIds)
+                if (updatedOrder != it) updatedOrder else null
             }.forEach { missingOrder ->
                 val orderEvent =
                     transactionPort.executeInTransaction {
@@ -550,7 +551,9 @@ class WLSService(
                             logger.warn { "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were marked as missing" }
                             catalogEventRepository.save(OrderEvent(missingOrder))
                         } else {
-                            logger.error { "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were not marked as missing, transaction failed" }
+                            logger.error {
+                                "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were not marked as missing, transaction failed"
+                            }
                             null
                         }
                     }
