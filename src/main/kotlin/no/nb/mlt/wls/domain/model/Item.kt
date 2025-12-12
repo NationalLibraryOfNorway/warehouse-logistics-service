@@ -95,12 +95,20 @@ data class Item(
 
     /**
      * Synchronizes the quantity and location of the item.
-     * Use it for stock sync updates from storage systems.
-     * If the location is null and quantity is not zero, it throws a ValidationException.
+     *
+     * This function should be used during stock sync updates from storage systems.
+     * Unlike the [move] function, which should be used when an item is physically moved within the system.
+     *
+     * Constraints:
+     * - If [quantity] is not zero, then the [location] can not be null.
+     * - Updates from other storage systems are ignored if the quantity is zero.
+     * - Updates where [location] is null and current location is [WITH_LENDER_LOCATION] will be ignored.
      *
      * @param quantity The new quantity to set for the item.
      * @param location The new location to set for the item.
-     * @throws ValidationException if the location is null and quantity is not zero.
+     * @param associatedStorage The storage system sending this stock update.
+     * @throws ValidationException if the constraints are violated.
+     * @return The updated Item instance.
      */
     @Throws(ValidationException::class)
     fun synchronizeItem(
@@ -129,13 +137,38 @@ data class Item(
     }
 
     /**
-     * Moves an item within the logistics system
+     * Moves an item within the logistics system.
+     *
+     * This function should be used to update the location, quantity, and associated storage of an item
+     * when the item is physically moved within the system.
+     * Unlike [synchronizeItem] which should be used when syncing stock with given storage system.
+     *
+     * Constraints:
+     * - [location] must not be blank.
+     * - If [quantity] is not zero, [location] must not be [UNKNOWN_LOCATION].
+     *
+     * @param location The new location of the item. Must not be blank.
+     * @param quantity The new quantity of the item.
+     * @param associatedStorage The storage system sending this item move update.
+     * @throws ValidationException if the constraints are violated.
+     * @return The updated Item instance.
      */
+    @Throws(ValidationException::class)
     fun move(
         location: String,
         quantity: Int,
         associatedStorage: AssociatedStorage
-    ): Item = this.copy(location = location, quantity = quantity, associatedStorage = associatedStorage)
+    ): Item {
+        if (location.isBlank()) {
+            throw ValidationException("Location can not be blank")
+        }
+
+        if (location == UNKNOWN_LOCATION && quantity != 0) {
+            throw ValidationException("Location must be set when quantity is not zero")
+        }
+
+        return this.copy(location = location, quantity = quantity, associatedStorage = associatedStorage)
+    }
 
     fun edit(
         description: String,
