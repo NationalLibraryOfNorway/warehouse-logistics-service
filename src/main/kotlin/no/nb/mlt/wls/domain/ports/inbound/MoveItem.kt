@@ -33,8 +33,8 @@ data class MoveItemPayload(
     val hostName: HostName,
     @field:NotBlank(message = "Host ID is missing, and can not be blank")
     val hostId: String,
-    @field:Max(value = 1, message = "Quantity on hand is too large. It must be zero, one, or negative one")
     @field:Min(value = -1, message = "Quantity on hand is too small. It must be zero, one, or negative one")
+    @field:Max(value = 1, message = "Quantity on hand is too large. It must be zero, one, or negative one")
     val quantity: Int,
     @field:NotBlank(message = "Location can not be blank")
     val location: String,
