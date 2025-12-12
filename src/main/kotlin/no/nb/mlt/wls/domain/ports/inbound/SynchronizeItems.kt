@@ -22,17 +22,18 @@ fun interface SynchronizeItems {
         val currentPreferredEnvironment: Environment,
         val associatedStorage: AssociatedStorage
     ) {
-        fun toItem() = Item(
-            hostId = this.hostId,
-            hostName = this.hostName,
-            description = this.description,
-            itemCategory = this.itemCategory,
-            preferredEnvironment = this.currentPreferredEnvironment,
-            packaging = this.packaging,
-            callbackUrl = null,
-            location = this.location ?: UNKNOWN_LOCATION,
-            quantity = this.quantity,
-            associatedStorage = this.associatedStorage
-        )
+        fun toItem() =
+            Item(
+                hostId = this.hostId,
+                hostName = this.hostName,
+                description = this.description,
+                itemCategory = this.itemCategory,
+                preferredEnvironment = this.currentPreferredEnvironment,
+                packaging = this.packaging,
+                callbackUrl = null,
+                location = this.location ?: UNKNOWN_LOCATION,
+                quantity = this.quantity,
+                associatedStorage = this.associatedStorage
+            )
     }
 }

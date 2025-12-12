@@ -472,7 +472,8 @@ class WLSService(
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
         val itemToSynchronize = syncItemsById[(missingId to hostName)]
-        val syncItem = itemToSynchronize ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: $missingId, hostName: $hostName")
+        val syncItem =
+            itemToSynchronize ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: $missingId, hostName: $hostName")
 
         val createdItem = itemRepository.createItem(syncItem.toItem())
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
@@ -482,7 +483,11 @@ class WLSService(
         itemToUpdate: Item,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val newItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)] ?: throw NullPointerException("Item to synchronize not found in sync data for hostId: ${itemToUpdate.hostId}, hostName: ${itemToUpdate.hostName}")
+        val newItem =
+            syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]
+                ?: throw NullPointerException(
+                    "Item to synchronize not found in sync data for hostId: ${itemToUpdate.hostId}, hostName: ${itemToUpdate.hostName}"
+                )
         val syncedItem = itemToUpdate.synchronizeItem(newItem.quantity, newItem.location, newItem.associatedStorage)
 
         val event =
