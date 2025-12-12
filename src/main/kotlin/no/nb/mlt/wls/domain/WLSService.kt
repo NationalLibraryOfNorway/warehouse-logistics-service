@@ -11,7 +11,6 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -111,21 +110,26 @@ class WLSService(
                 packaging = newMetadata.packaging,
                 callbackUrl = newMetadata.callbackUrl
             )
+
         val storageEvent =
             transactionPort.executeInTransaction {
                 if (itemRepository.editItem(changedItem)) {
+                    logger.info { "Item ${changedItem.hostId} - ${changedItem.hostName} was edited with new metadata: {$newMetadata}" }
                     storageEventRepository.save(
                         ItemEdited(
                             EditedItemInfo(editedItem = changedItem, oldItem = item)
                         )
                     )
                 } else {
-                    logger.info { "Item ${item.hostId} for ${item.hostName} was not changed" }
+                    logger.info { "Item ${changedItem.hostId} - ${changedItem.hostName} was unchanged after edit with new metadata: {$newMetadata}" }
                     null
                 }
             }
+
         processStorageEventAsync(storageEvent)
-        return changedItem
+
+        // Return item from DB to ensure we return the actual item info we persisted
+        return getItemOrThrow(changedItem.hostName, changedItem.hostId)
     }
 
     override suspend fun updateItem(updateItemPayload: UpdateItemPayload): Item {
@@ -158,28 +162,26 @@ class WLSService(
         originalItem: Item,
         movedItem: Item
     ): Item {
-        if (originalItem == movedItem) {
-            logger.info { "Item ${movedItem.hostId} for ${movedItem.hostName} was unchanged" }
-            return originalItem
-        }
-
         val catalogEvent =
             transactionPort.executeInTransaction {
                 if (itemRepository.moveItem(movedItem)) {
+                    logger.info { "Moved ${movedItem.quantity} of item ${originalItem.hostId} - ${originalItem.hostName} to ${movedItem.location}" }
                     catalogEventRepository.save(ItemEvent(movedItem))
                 } else {
+                    logger.info {
+                        "Move of ${movedItem.quantity} items to ${movedItem.location} had no effect on ${originalItem.hostId} - ${originalItem.hostName}"
+                    }
                     null
                 }
             }
 
-        if (catalogEvent != null) {
-            processCatalogEventAsync(catalogEvent)
-            if (originalItem.quantity == 0 && movedItem.quantity > 0) {
-                returnOrderItems(movedItem.hostName, listOf(movedItem.hostId))
-            }
+        processCatalogEventAsync(catalogEvent)
+
+        if (catalogEvent != null && originalItem.quantity == 0 && movedItem.quantity > 0) {
+            returnOrderItems(movedItem.hostName, listOf(movedItem.hostId))
         }
 
-        return movedItem
+        return getItemOrThrow(movedItem.hostName, movedItem.hostId)
     }
 
     override suspend fun pickItems(
@@ -192,13 +194,16 @@ class WLSService(
             }
 
         if (!itemRepository.doesEveryItemExist(itemIds)) {
-            throw ItemNotFoundException("Some items do not exist in the database, and were unable to be picked")
+            throw ItemNotFoundException("Some items do not exist in the database, and so are unpickable: ${pickedItems.keys.joinToString(", ")}")
         }
 
         val itemsToPick = getItemsByIds(hostName, pickedItems.keys.toList())
-        itemsToPick.map { item ->
+
+        itemsToPick.forEach { item ->
             val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
             val pickedItem = item.pick(pickedItemsQuantity)
+
+            // Can't we just replace the rest of this block with a call to the `moveItemInternal` function now?
 
             // Picking an item is guaranteed to set quantity or location.
             // An exception is thrown otherwise
@@ -233,7 +238,7 @@ class WLSService(
                 existingItems.none { existingItem ->
                     existingItem.hostId == it
                 }
-            }.map {
+            }.forEach {
                 val createdItem =
                     addItem(
                         ItemMetadata(
@@ -273,20 +278,18 @@ class WLSService(
     ) {
         val order = getOrderOrThrow(hostName, orderId)
         val pickedOrder = order.pick(pickedItemIds)
-        if (order == pickedOrder) {
-            logger.warn { "Order was unchanged after picking items $pickedItemIds from $order" }
-            return
-        }
 
         val catalogEvent =
             transactionPort.executeInTransaction {
                 if (orderRepository.updateOrder(pickedOrder)) {
-                    val event = catalogEventRepository.save(OrderEvent(pickedOrder))
-                    event
+                    logger.info { "Order $orderId was picked with items $pickedItemIds for it" }
+                    catalogEventRepository.save(OrderEvent(pickedOrder))
                 } else {
+                    logger.warn { "Order $orderId was unchanged after picking items $pickedItemIds for it" }
                     null
                 }
             }
+
         processCatalogEventAsync(catalogEvent)
     }
 
@@ -295,8 +298,10 @@ class WLSService(
         hostOrderId: String
     ) {
         val deletedOrder = getOrderOrThrow(hostName, hostOrderId).delete()
+
         val storageEvent =
             transactionPort.executeInTransaction {
+                // This should return a boolean
                 orderRepository.deleteOrder(deletedOrder)
                 storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
             }
@@ -311,23 +316,21 @@ class WLSService(
     ): Order {
         val order = getOrderOrThrow(hostName, hostOrderId)
         val updatedOrder = order.updateStatus(status)
-        if (order == updatedOrder) {
-            logger.info { "Tried to update order $hostOrderId for $hostName with same status as it was before" }
-            return order
-        }
-        val (result, catalogEvent) =
+
+        val catalogEvent =
             transactionPort.executeInTransaction {
                 if (orderRepository.updateOrder(updatedOrder)) {
-                    val catalogEvent = catalogEventRepository.save(OrderEvent(updatedOrder))
-                    (updatedOrder to catalogEvent)
+                    logger.info { "Order $hostOrderId for $hostName was updated from status ${order.status} to $status" }
+                    catalogEventRepository.save(OrderEvent(updatedOrder))
                 } else {
-                    (updatedOrder to null)
+                    logger.warn { "Order $hostOrderId for $hostName was unchanged after status update from ${order.status} to $status" }
+                    null
                 }
             }
 
         processCatalogEventAsync(catalogEvent)
 
-        return result
+        return getOrderOrThrow(hostName, hostOrderId)
     }
 
     override suspend fun getItem(
@@ -396,9 +399,11 @@ class WLSService(
             logger.debug { "Storage event was null, ignoring" }
             return
         }
+
         coroutineContext.launch {
             try {
                 storageEventProcessor.handleEvent(storageEvent)
+                logger.info { "Storage event $storageEvent was processed successfully" }
             } catch (e: StorageSystemException) {
                 logger.error(e) {
                     "Storage system reported error while processing outbox event: $storageEvent. Try again later"
@@ -420,9 +425,11 @@ class WLSService(
             logger.debug { "Catalog event was null, ignoring" }
             return
         }
+
         coroutineContext.launch {
             try {
                 catalogEventProcessor.handleEvent(catalogEvent)
+                logger.info { "Catalog event $catalogEvent was processed successfully" }
             } catch (e: WebClientResponseException) {
                 logger.error(e) {
                     "Web client threw an error while sending out: $catalogEvent. Try again later"
@@ -442,23 +449,18 @@ class WLSService(
         val orders: List<Order> = orderRepository.getOrdersWithPickedItems(hostName, returnedItems)
 
         orders.forEach { order ->
-            val (returnedOrder, orderEvent) =
+            val returnedOrder = order.returnItems(returnedItems)
+
+            val orderEvent =
                 transactionPort.executeInTransaction {
-                    val returnOrder = order.returnItems(returnedItems)
-                    if (orderRepository.updateOrder(returnOrder)) {
-                        val orderEvent = catalogEventRepository.save(OrderEvent(returnOrder))
-                        (returnOrder to orderEvent)
+                    if (orderRepository.updateOrder(returnedOrder)) {
+                        logger.info { "Order ${returnedOrder.hostOrderId} - ${returnedOrder.hostName} had some of its items returned" }
+                        catalogEventRepository.save(OrderEvent(returnedOrder))
                     } else {
+                        logger.warn { "Order ${returnedOrder.hostOrderId} - ${returnedOrder.hostName} unchanged after some of its items returned" }
                         null
                     }
-                } ?: (order to null)
-
-            if (orderEvent == null) {
-                logger.error {
-                    "Failed to properly mark order: ${returnedOrder.hostOrderId} in host: ${returnedOrder.hostName} as returned, transaction failed"
                 }
-                return@forEach
-            }
 
             processCatalogEventAsync(orderEvent)
         }
@@ -469,22 +471,10 @@ class WLSService(
         hostName: HostName,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val syncItem = syncItemsById[(missingId to hostName)]!!
-        val createdItem =
-            itemRepository.createItem(
-                Item(
-                    hostId = syncItem.hostId,
-                    hostName = syncItem.hostName,
-                    description = syncItem.description,
-                    itemCategory = syncItem.itemCategory,
-                    preferredEnvironment = syncItem.currentPreferredEnvironment,
-                    packaging = syncItem.packaging,
-                    callbackUrl = null,
-                    location = syncItem.location ?: UNKNOWN_LOCATION,
-                    quantity = syncItem.quantity,
-                    associatedStorage = syncItem.associatedStorage
-                )
-            )
+        val itemToSynchronize = syncItemsById[(missingId to hostName)]
+        val syncItem = itemToSynchronize ?: throw NullPointerException("Expression 'syncItemsById[(missingId to hostName)]' must not be null")
+
+        val createdItem = itemRepository.createItem(syncItem.toItem())
         logger.info { "Item didn't exist when synchronizing. Created item: $createdItem" }
     }
 
@@ -492,31 +482,26 @@ class WLSService(
         itemToUpdate: Item,
         syncItemsById: Map<Pair<String, HostName>, SynchronizeItems.ItemToSynchronize>
     ) {
-        val itemToSynchronize = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)]!!
+        val newItem = syncItemsById[(itemToUpdate.hostId to itemToUpdate.hostName)] ?: throw NullPointerException("Expression 'syncItemsById[(hostId to hostName)]' must not be null")
+        val syncedItem = itemToUpdate.synchronizeItem(newItem.quantity, newItem.location, newItem.associatedStorage)
 
-        val oldQuantity = itemToUpdate.quantity
-        val oldLocation = itemToUpdate.location
-
-        val syncedItem = itemToUpdate.synchronizeItem(itemToSynchronize.quantity, itemToSynchronize.location, itemToSynchronize.associatedStorage)
-
-        if (oldQuantity != syncedItem.quantity || oldLocation != syncedItem.location) {
-            val event =
-                transactionPort.executeInTransaction {
-                    if (itemRepository.moveItem(syncedItem)) {
-                        logger.info {
-                            """
-                            Synchronizing item ${syncedItem.hostName}_${syncedItem.hostId}:
-                            Synchronizing quantity [$oldQuantity -> ${syncedItem.quantity}]
-                            Synchronizing location [$oldLocation -> ${syncedItem.location}]
-                            """.trimIndent()
-                        }
-                        catalogEventRepository.save(ItemEvent(syncedItem))
-                    } else {
-                        null
+        val event =
+            transactionPort.executeInTransaction {
+                if (itemRepository.moveItem(syncedItem)) {
+                    logger.info {
+                        """
+                        Synchronizing item ${syncedItem.hostId} - ${syncedItem.hostName}:
+                        Synchronizing quantity [${itemToUpdate.quantity} -> ${syncedItem.quantity}]
+                        Synchronizing location [${itemToUpdate.location} -> ${syncedItem.location}]
+                        """.trimIndent()
                     }
+                    catalogEventRepository.save(ItemEvent(syncedItem))
+                } else {
+                    null
                 }
-            processCatalogEventAsync(event)
-        }
+            }
+
+        processCatalogEventAsync(event)
     }
 
     override suspend fun reportItemMissing(
@@ -524,20 +509,23 @@ class WLSService(
         hostId: String
     ): Item {
         val item = getItem(hostName, hostId) ?: throw ItemNotFoundException("Could not find item")
-        val (missingItem, catalogItemEvent) =
+        val missingItem = item.reportMissing()
+
+        val catalogItemEvent =
             transactionPort.executeInTransaction {
-                val missingItem = item.reportMissing()
                 if (itemRepository.moveItem(missingItem)) {
-                    val event = catalogEventRepository.save(ItemEvent(missingItem))
-                    (missingItem to event)
+                    logger.info { "Item ${missingItem.hostId} - ${missingItem.hostName} was marked as missing" }
+                    catalogEventRepository.save(ItemEvent(missingItem))
                 } else {
-                    (missingItem to null)
+                    logger.warn { "Item ${missingItem.hostId} - ${missingItem.hostName} was unchanged after being marked as missing" }
+                    null
                 }
             }
+
         processCatalogEventAsync(catalogItemEvent)
         markOrdersAsMissing(hostName, listOf(hostId))
 
-        return missingItem
+        return getItemOrThrow(missingItem.hostName, missingItem.hostId)
     }
 
     private suspend fun markOrdersAsMissing(
@@ -545,35 +533,28 @@ class WLSService(
         hostIds: List<String>
     ) {
         val orders = orderRepository.getOrdersWithItems(hostName, hostIds)
+
         if (orders.isEmpty()) {
-            logger.info {
-                "No orders found for $hostName containing $hostIds"
-            }
+            logger.info {"No orders found for $hostName containing $hostIds"}
+            return
         }
-        orders
-            .mapNotNull {
-                val updatedOrder = it.markMissing(hostIds)
-                if (updatedOrder != it) updatedOrder else null
+
+        orders.mapNotNull {
+            // remove orders that are unchanged after its items were marked as missing
+            val updatedOrder = it.markMissing(hostIds)
+            if (updatedOrder != it) updatedOrder else null
             }.forEach { missingOrder ->
                 val orderEvent =
                     transactionPort.executeInTransaction {
                         if (orderRepository.updateOrder(missingOrder)) {
+                            logger.warn { "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were marked as missing" }
                             catalogEventRepository.save(OrderEvent(missingOrder))
                         } else {
+                            logger.error{ "Items $hostIds in order: ${missingOrder.hostOrderId} - ${missingOrder.hostName} were not marked as missing, transaction failed" }
                             null
                         }
                     }
 
-                if (orderEvent == null) {
-                    logger.error {
-                        "Failed to properly mark order: ${missingOrder.hostOrderId} in host: ${missingOrder.hostName} as missing, transaction failed"
-                    }
-                    return@forEach
-                }
-
-                logger.warn {
-                    "Order line(s) $hostIds in ${missingOrder.hostOrderId} for ${missingOrder.hostName} was marked as missing"
-                }
                 processCatalogEventAsync(orderEvent)
             }
     }

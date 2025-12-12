@@ -153,7 +153,7 @@ class WLSServiceTest {
                 callbackUrl = "https://callback-wls.no/v2/item"
             )
         val editedItem =
-            createTestItem(
+            oldItem.copy(
                 description = editMetadata.description,
                 itemCategory = editMetadata.itemCategory,
                 preferredEnvironment = editMetadata.preferredEnvironment,
@@ -162,7 +162,7 @@ class WLSServiceTest {
             )
         val itemEditedEvent = ItemEdited(EditedItemInfo(editedItem = editedItem, oldItem = oldItem))
 
-        coEvery { itemRepository.getItem(oldItem.hostName, oldItem.hostId) } answers { oldItem }
+        coEvery { itemRepository.getItem(oldItem.hostName, oldItem.hostId) } returns editedItem
         coEvery { itemRepository.editItem(editedItem) } answers { true }
         coEvery { storageEventRepository.save(any()) } answers { itemEditedEvent }
         coEvery { storageEventProcessor.handleEvent(itemEditedEvent) } answers {}
@@ -171,6 +171,7 @@ class WLSServiceTest {
             val editItemResult = serviceAvecTrans.editItem(oldItem, editMetadata)
 
             assertThat(editItemResult).isEqualTo(editedItem)
+            coVerify(exactly = 1) { itemRepository.getItem(oldItem.hostName, oldItem.hostId) }
             coVerify(exactly = 1) { itemRepository.editItem(editedItem) }
             coVerify(exactly = 1) { storageEventRepository.save(any()) }
             coVerify(exactly = 1) { storageEventProcessor.handleEvent(itemEditedEvent) }
@@ -222,7 +223,7 @@ class WLSServiceTest {
             )
         val itemUpdatedEvent = ItemEvent(expectedItem)
 
-        coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
+        coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } returns startingItem andThen expectedItem
         coEvery { itemRepository.moveItem(any()) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { itemUpdatedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemUpdatedEvent) } answers {}
@@ -246,7 +247,7 @@ class WLSServiceTest {
             MoveItemPayload(expectedItem.hostName, expectedItem.hostId, -1, expectedItem.location, expectedItem.associatedStorage)
         val itemMovedEvent = ItemEvent(expectedItem)
 
-        coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } answers { startingItem }
+        coEvery { itemRepository.getItem(startingItem.hostName, startingItem.hostId) } returns startingItem andThen expectedItem
         coEvery { itemRepository.moveItem(any()) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { itemMovedEvent }
         coEvery { catalogEventProcessor.handleEvent(itemMovedEvent) } answers {}
@@ -467,7 +468,7 @@ class WLSServiceTest {
         val completedOrder = testOrder.copy(status = Order.Status.COMPLETED)
         val orderStatusUpdatedEvent = OrderEvent(completedOrder)
 
-        coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } returns testOrder andThen completedOrder
         coEvery { orderRepository.updateOrder(completedOrder) } answers { true }
         coEvery { catalogEventRepository.save(any()) } answers { orderStatusUpdatedEvent }
         coEvery { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) } answers { }
@@ -476,7 +477,7 @@ class WLSServiceTest {
             val updateOrderStatusResult = serviceAvecTrans.updateOrderStatus(testOrder.hostName, testOrder.hostOrderId, Order.Status.COMPLETED)
 
             assertThat(updateOrderStatusResult).isEqualTo(completedOrder)
-            coVerify(exactly = 1) { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) }
+            coVerify(exactly = 2) { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) }
             coVerify(exactly = 1) { orderRepository.updateOrder(completedOrder) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(orderStatusUpdatedEvent) }
         }
