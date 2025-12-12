@@ -1171,10 +1171,11 @@ class WLSServiceTest {
             }
 
             override suspend fun editItem(item: Item): Boolean {
-                if (!items.contains(item)) {
+                val index = items.indexOfFirst { it.hostId == item.hostId && it.hostName == item.hostName }
+                if (index == -1) {
                     return false
                 }
-                items.replaceAll { if (it.hostId == item.hostId && it.hostName == item.hostName) item else it }
+                items[index] = item
                 return true
             }
 
