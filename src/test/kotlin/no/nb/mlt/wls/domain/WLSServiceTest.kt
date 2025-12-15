@@ -1184,7 +1184,7 @@ class WLSServiceTest {
                 }
 
             override suspend fun moveItem(item: Item): Boolean {
-                val index = itemList.indexOfFirst {it.hostName == item.hostName && it.hostId == item.hostId }
+                val index = itemList.indexOfFirst { it.hostName == item.hostName && it.hostId == item.hostId }
                 if (index == -1) return false
 
                 val existingItem = itemList[index]

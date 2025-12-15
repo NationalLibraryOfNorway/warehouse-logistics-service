@@ -194,7 +194,9 @@ class WLSService(
             }
 
         if (!itemRepository.doesEveryItemExist(itemIds)) {
-            throw ItemNotFoundException("The following items do not exist in the database and cannot be picked: ${pickedItems.keys.joinToString(", ")}")
+            throw ItemNotFoundException(
+                "The following items do not exist in the database and cannot be picked: ${pickedItems.keys.joinToString(", ")}"
+            )
         }
 
         val itemsToPick = getItemsByIds(hostName, pickedItems.keys.toList())
