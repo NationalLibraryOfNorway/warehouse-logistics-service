@@ -165,11 +165,13 @@ class WLSService(
         val catalogEvent =
             transactionPort.executeInTransaction {
                 if (itemRepository.moveItem(movedItem)) {
-                    logger.info { "Moved ${movedItem.quantity} of item ${originalItem.hostId} - ${originalItem.hostName} to ${movedItem.location}" }
+                    logger.info {
+                        "Moved ${originalItem.hostId} - ${originalItem.hostName} to ${movedItem.location} quantity is now ${movedItem.quantity})"
+                    }
                     catalogEventRepository.save(ItemEvent(movedItem))
                 } else {
                     logger.info {
-                        "Move of ${movedItem.quantity} items to ${movedItem.location} had no effect on ${originalItem.hostId} - ${originalItem.hostName}"
+                        "Move had no effect: item ${originalItem.hostId} - ${originalItem.hostName} remains at ${movedItem.quantity} items in ${movedItem.location}"
                     }
                     null
                 }
@@ -195,7 +197,7 @@ class WLSService(
 
         if (!itemRepository.doesEveryItemExist(itemIds)) {
             throw ItemNotFoundException(
-                "The following items do not exist in the database and cannot be picked: ${pickedItems.keys.joinToString(", ")}"
+                "Some of these items do not exist in our system and cannot be picked: ${pickedItems.keys.joinToString(", ")}"
             )
         }
 
@@ -204,8 +206,6 @@ class WLSService(
         itemsToPick.forEach { item ->
             val pickedItemsQuantity = pickedItems[item.hostId] ?: 0
             val pickedItem = item.pick(pickedItemsQuantity)
-
-            // Can't we just replace the rest of this block with a call to the `moveItemInternal` function now?
 
             // Picking an item is guaranteed to set quantity or location.
             // An exception is thrown otherwise
@@ -303,7 +303,6 @@ class WLSService(
 
         val storageEvent =
             transactionPort.executeInTransaction {
-                // This should return a boolean
                 orderRepository.deleteOrder(deletedOrder)
                 storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
             }
