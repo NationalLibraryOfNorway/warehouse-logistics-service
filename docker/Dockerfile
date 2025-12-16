@@ -1,5 +1,5 @@
 # Use temurin as base image, getting it from local harbor registry, since this is a Kotlin application
-# To keep the bloat to a minumum, it uses the noble version of the image
+# As we experienced issues with alpine version, it uses the noble (ubuntu) version of the image
 # Should consider removing the french language pack as well: "sudo rm -fr /*"
 FROM harbor.nb.no/library/eclipse-temurin:21-jdk-noble
 
