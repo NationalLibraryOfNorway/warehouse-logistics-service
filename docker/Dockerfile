@@ -1,7 +1,7 @@
 # Use temurin as base image, getting it from local harbor registry, since this is a Kotlin application
-# To keep the bloat to a minumum, it uses the alpine version of the image
+# To keep the bloat to a minumum, it uses the noble version of the image
 # Should consider removing the french language pack as well: "sudo rm -fr /*"
-FROM harbor.nb.no/library/eclipse-temurin:21-jdk-alpine
+FROM harbor.nb.no/library/eclipse-temurin:21-jdk-noble
 
 # Set metadata for the image, this is used to more easily identify the image and who created it
 LABEL maintainer="\"Magasin og Logistikk\" team at NLN"
