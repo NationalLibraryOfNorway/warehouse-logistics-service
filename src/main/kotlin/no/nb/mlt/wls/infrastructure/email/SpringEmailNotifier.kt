@@ -170,7 +170,7 @@ class SpringEmailNotifier(
     private fun createOrderCancellationMail(cancelledOrder: Order): MimeMessage? {
         if (storageEmail.isBlank()) {
             logger.error {
-                "Sending order pickup mail to storage handlers is disabled"
+                "Sending order cancellation mail to storage handlers is disabled"
             }
             return null
         }

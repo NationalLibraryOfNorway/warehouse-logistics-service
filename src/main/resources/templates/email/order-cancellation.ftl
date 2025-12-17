@@ -4,7 +4,7 @@
 
 <div>
     <p>
-        Bestillingen "${hostOrderId}" for ${hostName} har blitt avbestilt via katalog.
+        Bestillingen "${hostOrderId}" for ${hostName} har blitt avbestilt av katalog.
     </p>
     <p>
         Denne skal ikke plukkes.

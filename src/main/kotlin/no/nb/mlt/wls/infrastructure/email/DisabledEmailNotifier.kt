@@ -10,11 +10,11 @@ private val logger = KotlinLogging.logger {}
 const val MESSAGE = "Sending emails for orders is disabled"
 
 class DisabledEmailNotifier : UserNotifier {
-    override suspend fun orderConfirmation(order: Order) = logOrderDisabled()
+    override suspend fun orderConfirmation(order: Order): Boolean = logOrderDisabled()
 
-    override suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData) = logOrderDisabled()
+    override suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData): Boolean = logOrderDisabled()
 
-    override suspend fun orderCompleted(order: Order) = logOrderDisabled()
+    override suspend fun orderCompleted(order: Order): Boolean = logOrderDisabled()
 
     override suspend fun orderCancelled(order: Order): Boolean = logOrderDisabled()
 
