@@ -9,7 +9,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.ItemRepository.ItemId
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ItemMetadataUpdateException
@@ -95,7 +94,7 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun editItem(item: Item): Item {
+    override suspend fun editItem(item: Item): Boolean {
         val itemsEdited =
             mongoRepo
                 .findAndUpdateItemMetadataByHostNameAndHostId(
@@ -118,12 +117,7 @@ class MongoItemRepositoryAdapter(
                 }.onErrorMap { ItemMetadataUpdateException(it.message ?: "Item metadata could not be updated", it) }
                 .awaitSingle()
 
-        if (itemsEdited == 0L) {
-            throw ItemNotFoundException("Item was not found. Item: $item")
-        }
-
-        return getItem(item.hostName, item.hostId)
-            ?: throw ItemNotFoundException("Item was not found after update. Item: $item")
+        return itemsEdited != 0L
     }
 
     override suspend fun doesEveryItemExist(ids: List<ItemId>): Boolean =
@@ -139,64 +133,27 @@ class MongoItemRepositoryAdapter(
                 }
             }.awaitSingle()
 
-    override suspend fun moveItem(
-        hostName: HostName,
-        hostId: String,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item {
+    override suspend fun moveItem(item: Item): Boolean {
         val itemsModified =
             mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
+                .findAndUpdateItemByHostNameAndHostId(item.hostName, item.hostId, item.quantity, item.location, item.associatedStorage)
                 .timeout(timeoutConfig.mongo)
                 .doOnError {
                     logger.error(it) {
                         if (it is TimeoutException) {
-                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
+                            "Timed out while updating Item. Host ID: ${item.hostId}, Host: ${item.hostName}"
                         } else {
-                            "Error while updating item. Host ID: $hostId, Host: $hostName"
+                            "Error while updating item. Host ID: ${item.hostId}, Host: ${item.hostName}"
                         }
                     }
                 }.onErrorMap { ItemMovingException(it.message ?: "Item could not be moved", it) }
                 .awaitSingle()
 
-        if (itemsModified == 0L) {
-            throw ItemNotFoundException("Item was not found. Host ID: $hostId, Host: $hostName")
+        if (itemsModified != 0L) {
+            logger.debug { "Item was moved. hostId=${item.hostId}, hostName=${item.hostName}, location=${item.location}, quantity=${item.quantity}" }
+            return true
         }
-
-        return getItem(hostName, hostId)!!
-    }
-
-    override suspend fun updateItem(
-        hostId: String,
-        hostName: HostName,
-        quantity: Int,
-        location: String,
-        associatedStorage: AssociatedStorage
-    ): Item {
-        val itemsModified =
-            mongoRepo
-                .findAndUpdateItemByHostNameAndHostId(hostName, hostId, quantity, location, associatedStorage)
-                .timeout(timeoutConfig.mongo)
-                .doOnError {
-                    logger.error(it) {
-                        if (it is TimeoutException) {
-                            "Timed out while updating Item. Host ID: $hostId, Host: $hostName"
-                        } else {
-                            "Error while updating item"
-                        }
-                    }
-                }.onErrorMap { ItemMovingException(it.message ?: "Item could not be updated", it) }
-                .awaitSingle()
-
-        if (itemsModified == 0L) {
-            logger.warn { "Item was not updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
-        } else {
-            logger.debug { "Item was updated. hostId=$hostId, hostName=$hostName, location=$location, quantity=$quantity" }
-        }
-
-        return getItem(hostName, hostId)!!
+        return false
     }
 }
 
