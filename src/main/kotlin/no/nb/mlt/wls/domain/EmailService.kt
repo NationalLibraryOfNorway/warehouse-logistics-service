@@ -51,10 +51,7 @@ class EmailService(
     }
 
     suspend fun createOrderCompletion(updatedOrder: Order) {
-        val event =
-            transactionPort.executeInTransaction {
-                emailEventRepository.save(OrderCompleteMail(updatedOrder))
-            }
+        val event = emailEventRepository.save(OrderCompleteMail(updatedOrder))
         processEmailEventAsync(event)
     }
 
