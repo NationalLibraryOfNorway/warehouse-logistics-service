@@ -292,10 +292,13 @@ class WLSService(
                 }
             }
 
-        processCatalogEventAsync(catalogEvent)
-
-        if (updatedOrder.isPicked()) {
-            emailService.createOrderCompletion(updatedOrder)
+        // A non-null catalog event indicates an update happened, so we only fetch then as a small optimization
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+            val order = getOrderOrThrow(hostName, orderId)
+            if (order.isPicked()) {
+                emailService.createOrderCompletion(updatedOrder = order)
+            }
         }
     }
 
