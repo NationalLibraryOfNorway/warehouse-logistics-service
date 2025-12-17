@@ -407,7 +407,7 @@ class WLSServiceTest {
         runTest {
             serviceAvecTrans.pickOrderItems(testOrder.hostName, pickedItems, testOrder.hostOrderId)
 
-            coVerify(exactly = 1) { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) }
+            coVerify(exactly = 2) { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) }
             coVerify(exactly = 1) { orderRepository.updateOrder(expectedOrder) }
             coVerify(exactly = 1) { catalogEventRepository.save(any()) }
             coVerify(exactly = 1) { catalogEventProcessor.handleEvent(orderItemsPickedEvent) }
