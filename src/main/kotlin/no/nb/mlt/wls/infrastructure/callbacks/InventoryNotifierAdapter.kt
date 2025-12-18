@@ -107,6 +107,7 @@ class InventoryNotifierAdapter(
         if (error is WebClientResponseException) {
             // 4xx errors - client errors that should not be retried
             if (error.statusCode.is4xxClientError) {
+                if (callbackUrl.contains("asta") && error.statusCode.value() == 400) return true
                 logger.error(error) {
                     "Received 4xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "we will never retry sending this message: $payload"
