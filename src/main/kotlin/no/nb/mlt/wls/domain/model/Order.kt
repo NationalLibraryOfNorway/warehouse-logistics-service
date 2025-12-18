@@ -202,7 +202,7 @@ data class Order(
     /**
      * Check whether the order is completed by having all its items picked.
      */
-    private fun isPicked(): Boolean = status == Status.COMPLETED
+    fun isPicked(): Boolean = status == Status.COMPLETED
 
     /**
      * Represents an ordered item with its ID and status.
