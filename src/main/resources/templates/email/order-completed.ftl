@@ -18,7 +18,7 @@
 
 <div>
     <p>
-        Bestillingen din er ferdig prossesert.
+        Bestillingen din er ferdig prosessert.
     </p>
         <dl>
             <dt>Bestillingstype:</dt>
