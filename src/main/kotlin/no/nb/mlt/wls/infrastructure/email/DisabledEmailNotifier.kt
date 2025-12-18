@@ -7,8 +7,6 @@ import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 
 private val logger = KotlinLogging.logger {}
 
-const val MESSAGE = "Sending emails for orders is disabled"
-
 class DisabledEmailNotifier : UserNotifier {
     override suspend fun orderConfirmation(order: Order): Boolean = logOrderDisabled()
 
@@ -19,7 +17,7 @@ class DisabledEmailNotifier : UserNotifier {
     override suspend fun orderCancelled(order: Order): Boolean = logOrderDisabled()
 
     private fun logOrderDisabled(): Boolean {
-        logger.warn { MESSAGE }
+        logger.warn { "Sending emails for orders is disabled" }
         return true
     }
 }

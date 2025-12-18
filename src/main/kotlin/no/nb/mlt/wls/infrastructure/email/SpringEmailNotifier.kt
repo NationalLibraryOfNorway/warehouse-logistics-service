@@ -175,7 +175,7 @@ class SpringEmailNotifier(
             return null
         }
         val mail = emailSender.createMimeMessage()
-        val helper = MimeMessageHelper(mail, true)
+        val helper = MimeMessageHelper(mail, false)
         val type = "order-cancellation.ftl"
         val template = freeMarkerConfigurer.configuration.getTemplate(type)
         val htmlBody =
