@@ -8,6 +8,7 @@ import no.nb.mlt.wls.domain.model.events.email.OrderPickupMail
 import no.nb.mlt.wls.domain.ports.outbound.UserNotifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.mail.MailException
+import org.springframework.mail.MailPreparationException
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils
@@ -41,8 +42,15 @@ class SpringEmailNotifier(
         )
 
     override suspend fun orderCompleted(order: Order): Boolean {
-        logger.warn { "not yet implemented" }
-        return true
+        if (order.contactEmail == null) {
+            logger.warn { "No contact email found in order ${order.hostOrderId} for ${order.hostName}" }
+            return true
+        }
+        return sendEmail(
+            createOrderCompleteEmail(order),
+            "Sent order completion email to host",
+            "Failed to send order completion email"
+        )
     }
 
     /**
@@ -116,10 +124,50 @@ class SpringEmailNotifier(
         return helper.mimeMessage
     }
 
+    private fun createOrderCompleteEmail(order: Order): MimeMessage {
+        val receiver = order.contactEmail ?: throw MailPreparationException("Contact email is null")
+        val type = "order-completed.ftl"
+        val mail = emailSender.createMimeMessage()
+        val helper = MimeMessageHelper(mail, false)
+        val template = freeMarkerConfigurer.configuration.getTemplate(type)
+        val htmlBody =
+            FreeMarkerTemplateUtils.processTemplateIntoString(
+                template,
+                mapOf(
+                    "order" to order,
+                    "orderType" to translateOrderType(order.orderType),
+                    "orderLines" to translateOrderLines(order.orderLine)
+                )
+            )
+
+        // Email Metadata
+        setMailMetadata(
+            helper = helper,
+            htmlBody = htmlBody,
+            subject = "Bestillingsbekreftelse fra WLS - ${order.hostOrderId}",
+            from = senderEmail,
+            to = receiver
+        )
+        return helper.mimeMessage
+    }
+
     private fun translateOrderType(orderType: Order.Type): String =
         when (orderType) {
             Order.Type.LOAN -> "Lån"
             Order.Type.DIGITIZATION -> "Digitalisering"
+        }
+
+    private fun translateOrderLines(orderLines: List<Order.OrderItem>): List<EmailOrderLine> =
+        orderLines.map { orderLine ->
+            val status =
+                when (orderLine.status) {
+                    Order.OrderItem.Status.NOT_STARTED -> "Ikke startet"
+                    Order.OrderItem.Status.PICKED -> "Plukket"
+                    Order.OrderItem.Status.FAILED -> "Feilet"
+                    Order.OrderItem.Status.MISSING -> "Mangler"
+                    Order.OrderItem.Status.RETURNED -> "Returnert"
+                }
+            EmailOrderLine(orderLine.hostId, status)
         }
 
     private fun createOrderPickupMail(order: OrderPickupMail.OrderPickupData): MimeMessage? {
@@ -203,5 +251,10 @@ class SpringEmailNotifier(
         val item: OrderPickupMail.OrderPickupData.OrderLine,
         val qr: String,
         val image: BufferedImage
+    )
+
+    data class EmailOrderLine(
+        val hostId: String,
+        val status: String
     )
 }
