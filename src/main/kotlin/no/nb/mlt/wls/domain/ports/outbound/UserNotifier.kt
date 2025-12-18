@@ -14,4 +14,6 @@ interface UserNotifier {
     suspend fun orderPickup(orderPickupData: OrderPickupMail.OrderPickupData): Boolean
 
     suspend fun orderCompleted(order: Order): Boolean
+
+    suspend fun orderCancelled(order: Order): Boolean
 }

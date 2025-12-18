@@ -53,6 +53,13 @@ class SpringEmailNotifier(
         )
     }
 
+    override suspend fun orderCancelled(order: Order): Boolean =
+        sendEmail(
+            createOrderCancellationMail(order),
+            "Sent order cancellation to order handlers",
+            "Failed to send order cancellation email"
+        )
+
     /**
      * Send an email and log any exceptions
      */
@@ -205,6 +212,35 @@ class SpringEmailNotifier(
         for (orderItem in emailOrderItems) {
             helper.rootMimeMultipart.addBodyPart(createImagePart(orderItem.image, orderItem.item.hostId))
         }
+        return helper.mimeMessage
+    }
+
+    private fun createOrderCancellationMail(cancelledOrder: Order): MimeMessage? {
+        if (storageEmail.isBlank()) {
+            logger.error {
+                "Sending order cancellation mail to storage handlers is disabled"
+            }
+            return null
+        }
+        val mail = emailSender.createMimeMessage()
+        val helper = MimeMessageHelper(mail, false)
+        val type = "order-cancellation.ftl"
+        val template = freeMarkerConfigurer.configuration.getTemplate(type)
+        val htmlBody =
+            FreeMarkerTemplateUtils.processTemplateIntoString(
+                template,
+                mapOf(
+                    "hostOrderId" to cancelledOrder.hostOrderId,
+                    "hostName" to cancelledOrder.hostName
+                )
+            )
+        setMailMetadata(
+            helper = helper,
+            htmlBody = htmlBody,
+            subject = "Bestilling kansellert for ${cancelledOrder.hostName} - ${cancelledOrder.hostOrderId}",
+            from = cancelledOrder.contactEmail?.ifBlank { null },
+            to = storageEmail
+        )
         return helper.mimeMessage
     }
 
