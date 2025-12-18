@@ -23,8 +23,6 @@
         <dl>
             <dt>Bestillingstype:</dt>
             <dd>${orderType}</dd>
-            <dt>Melding fra bestiller:</dt>
-            <dd><#if order.note??>${order.note}</#if></dd>
             <dt>Referansenummer:</dt>
             <dd>${order.hostOrderId}</dd>
         </dl>
