@@ -113,6 +113,7 @@ data class LoadUnit(
             "mavis" -> HostName.AXIELL
             "axiell" -> HostName.AXIELL
             "mellomlager" -> HostName.TEMP_STORAGE
+            "unknown" -> HostName.UNKNOWN
             else -> throw InvalidParameterException("Unknown Host Name: $hostName for item: $this")
         }
     }
