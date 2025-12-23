@@ -420,7 +420,7 @@ class WLSServiceTest {
         val deletedOrderEvent = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
-        coEvery { orderRepository.deleteOrder(deletedOrder) } answers {}
+        coEvery { orderRepository.deleteOrder(deletedOrder) } answers { true }
         coEvery { storageEventRepository.save(any()) } answers { deletedOrderEvent }
         coEvery { storageEventProcessor.handleEvent(deletedOrderEvent) } answers {}
         coEvery { emailServiceMock.createOrderCancellation(any()) } answers { }
@@ -1210,9 +1210,8 @@ class WLSServiceTest {
 
             override suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order> = orders.filter { hostnames.contains(it.hostName) }
 
-            override suspend fun deleteOrder(order: Order) {
+            override suspend fun deleteOrder(order: Order): Boolean =
                 orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
-            }
 
             override suspend fun updateOrder(order: Order): Boolean {
                 val originalOrder =
