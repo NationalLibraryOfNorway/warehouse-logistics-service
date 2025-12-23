@@ -19,7 +19,7 @@ interface OrderRepository {
     suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order>
 
     @Throws(OrderNotFoundException::class)
-    suspend fun deleteOrder(order: Order)
+    suspend fun deleteOrder(order: Order): Boolean
 
     /**
      * Updates the given order.

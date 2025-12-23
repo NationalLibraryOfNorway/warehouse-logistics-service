@@ -310,12 +310,17 @@ class WLSService(
 
         val storageEvent =
             transactionPort.executeInTransaction {
-                orderRepository.deleteOrder(deletedOrder)
-                storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
+                if (orderRepository.deleteOrder(deletedOrder)) {
+                    storageEventRepository.save(OrderDeleted(deletedOrder.hostName, deletedOrder.hostOrderId))
+                } else {
+                    null
+                }
             }
 
-        emailService.createOrderCancellation(deletedOrder)
-        processStorageEventAsync(storageEvent)
+        if (storageEvent != null) {
+            emailService.createOrderCancellation(deletedOrder)
+            processStorageEventAsync(storageEvent)
+        }
     }
 
     override suspend fun updateOrderStatus(
