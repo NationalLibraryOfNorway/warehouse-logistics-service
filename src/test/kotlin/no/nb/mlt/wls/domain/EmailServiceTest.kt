@@ -44,9 +44,10 @@ class EmailServiceTest {
         }
     }
 
-    val testOrderItems = listOf(
-        createTestItem(hostId = "test-01"),
-        createTestItem(hostId = "test-02")
-    )
+    val testOrderItems =
+        listOf(
+            createTestItem(hostId = "test-01"),
+            createTestItem(hostId = "test-02")
+        )
     val testOrder = createTestOrder(orderLine = testOrderItems.map { Order.OrderItem(it.hostId, Order.OrderItem.Status.NOT_STARTED) })
 }
