@@ -84,7 +84,7 @@
     <testcontainers.version>1.21.4</testcontainers.version>
     <archunit.junit5.version>1.4.1</archunit.junit5.version>
     <commons.validator.version>1.10.0</commons.validator.version>
-    <jsoup.version>1.21.2</jsoup.version>
+    <jsoup.version>1.22.1</jsoup.version>
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
     <mockwebserver.version>4.12.0</mockwebserver.version>
 
