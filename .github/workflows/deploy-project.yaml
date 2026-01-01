@@ -129,7 +129,7 @@ jobs:
 
       # This step uploads the JAR file as an artifact which can then be used in other jobs
       - name: Upload the JAR File
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: packaged-project # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
           path: target/wls.jar  # File(s) to include, the path is relative to the repository root
