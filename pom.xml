@@ -81,7 +81,7 @@
     <openapi.version>3.0.0</openapi.version>
     <spotless.version>3.1.0</spotless.version>
     <spring.cloud.version>2025.1.0</spring.cloud.version>
-    <testcontainers.version>1.21.3</testcontainers.version>
+    <testcontainers.version>1.21.4</testcontainers.version>
     <archunit.junit5.version>1.4.1</archunit.junit5.version>
     <commons.validator.version>1.10.0</commons.validator.version>
     <jsoup.version>1.21.2</jsoup.version>
