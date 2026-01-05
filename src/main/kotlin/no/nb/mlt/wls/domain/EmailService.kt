@@ -58,6 +58,10 @@ class EmailService(
     }
 
     suspend fun createOrderCompletion(updatedOrder: Order) {
+        if (updatedOrder.contactEmail == null) {
+            logger.warn { "No contact email provided for ${updatedOrder.contactPerson} in order ${updatedOrder.hostOrderId}." }
+            return
+        }
         val event = emailEventRepository.save(OrderCompleteMail(updatedOrder))
 
         processEmailEventAsync(event)

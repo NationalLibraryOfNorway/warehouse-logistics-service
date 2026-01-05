@@ -33,9 +33,17 @@ class EmailServiceTest {
     }
 
     @Test
-    fun `creating email without contactEmail does not create an event`() {
+    fun `creating order confirmation email without contactEmail does not create an event`() {
         runTest {
-            emailAvecTrans.createOrderCancellation(testOrder.copy(contactEmail = null))
+            emailAvecTrans.createOrderConfirmation(testOrder.copy(contactEmail = null))
+            coVerify(exactly = 0) { emailEventRepository.save(any()) }
+        }
+    }
+
+    @Test
+    fun `creating order completion email without contactEmail does not create an event`() {
+        runTest {
+            emailAvecTrans.createOrderCompletion(testOrder.copy(contactEmail = null))
             coVerify(exactly = 0) { emailEventRepository.save(any()) }
         }
     }
