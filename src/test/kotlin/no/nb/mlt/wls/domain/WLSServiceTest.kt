@@ -449,7 +449,7 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `deleteOrder should fail when order deletion fails`() {
+    fun `deleteOrder should fail when storage system throws`() {
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
         coEvery { storageSystemRepoMock.deleteOrder(any(), any()) } throws StorageSystemException("Order not found", null)
 
@@ -459,6 +459,21 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { orderRepository.getOrder(any(), any()) }
             coVerify(exactly = 1) { transactionPortMock.executeInTransaction<Any>(any()) }
+        }
+    }
+
+    @Test
+    fun `deleteOrder should fail when order deletion fails`() {
+        coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { orderRepository.deleteOrder(any()) } answers { false }
+
+        runTest {
+            assertThrows<RuntimeException> {
+                serviceSansTrans.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
+            }
+            coVerify(exactly = 1) { orderRepository.getOrder(any(), any()) }
+            coVerify(exactly = 1) { transactionPortMock.executeInTransaction<Any>(any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.deleteOrder(any(), any())}
         }
     }
 
