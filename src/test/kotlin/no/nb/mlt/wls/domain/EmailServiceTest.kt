@@ -33,6 +33,14 @@ class EmailServiceTest {
     }
 
     @Test
+    fun `creating email without contactEmail does not create an event`() {
+        runTest {
+            emailAvecTrans.createOrderCancellation(testOrder.copy(contactEmail = null))
+            coVerify(exactly = 0) { emailEventRepository.save(any()) }
+        }
+    }
+
+    @Test
     fun `createOrderPickup should save and process email event`() {
         runTest {
             emailAvecTrans.createOrderPickup(testOrder, testOrderItems)
