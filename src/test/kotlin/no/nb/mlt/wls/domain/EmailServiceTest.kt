@@ -33,14 +33,38 @@ class EmailServiceTest {
     }
 
     @Test
-    fun `creating emails succeed`() {
+    fun `createOrderPickup should save and process email event`() {
         runTest {
             cut.createOrderPickup(testOrder, testOrderItems)
+
+            coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    @Test
+    fun `createOrderConfirmation should save and process email event`() {
+        runTest {
             cut.createOrderConfirmation(testOrder)
+
+            coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    @Test
+    fun `createOrderCancellation should save and process email event`() {
+        runTest {
             cut.createOrderCancellation(testOrder)
+
+            coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
+        }
+    }
+
+    @Test
+    fun `createOrderCompletion should save and process email event`() {
+        runTest {
             cut.createOrderCompletion(testOrder)
 
-            coVerify(exactly = 4) { emailEventProcessor.handleEvent(any()) }
+            coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
         }
     }
 
