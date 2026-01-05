@@ -22,12 +22,12 @@ class EmailServiceTest {
         object : TransactionPort {
             override suspend fun <T> executeInTransaction(action: suspend () -> T): T = action()
         }
-    private lateinit var cut: EmailService
+    private lateinit var emailAvecTrans: EmailService
 
     @BeforeEach
     fun beforeEach() {
         clearAllMocks()
-        cut = EmailService(emailEventRepository, emailEventProcessor, transactionPortExecutor)
+        emailAvecTrans = EmailService(emailEventRepository, emailEventProcessor, transactionPortExecutor)
         coEvery { emailEventRepository.save(any()) } answers { firstArg() }
         coEvery { emailEventProcessor.handleEvent(any()) } answers {}
     }
@@ -35,7 +35,7 @@ class EmailServiceTest {
     @Test
     fun `createOrderPickup should save and process email event`() {
         runTest {
-            cut.createOrderPickup(testOrder, testOrderItems)
+            emailAvecTrans.createOrderPickup(testOrder, testOrderItems)
 
             coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
         }
@@ -44,7 +44,7 @@ class EmailServiceTest {
     @Test
     fun `createOrderConfirmation should save and process email event`() {
         runTest {
-            cut.createOrderConfirmation(testOrder)
+            emailAvecTrans.createOrderConfirmation(testOrder)
 
             coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
         }
@@ -53,7 +53,7 @@ class EmailServiceTest {
     @Test
     fun `createOrderCancellation should save and process email event`() {
         runTest {
-            cut.createOrderCancellation(testOrder)
+            emailAvecTrans.createOrderCancellation(testOrder)
 
             coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
         }
@@ -62,7 +62,7 @@ class EmailServiceTest {
     @Test
     fun `createOrderCompletion should save and process email event`() {
         runTest {
-            cut.createOrderCompletion(testOrder)
+            emailAvecTrans.createOrderCompletion(testOrder)
 
             coVerify(exactly = 1) { emailEventProcessor.handleEvent(any()) }
         }
