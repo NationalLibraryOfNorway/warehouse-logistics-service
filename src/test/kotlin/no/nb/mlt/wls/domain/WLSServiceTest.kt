@@ -473,7 +473,7 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { orderRepository.getOrder(any(), any()) }
             coVerify(exactly = 1) { transactionPortMock.executeInTransaction<Any>(any()) }
-            coVerify(exactly = 0) { storageSystemRepoMock.deleteOrder(any(), any())}
+            coVerify(exactly = 0) { storageSystemRepoMock.deleteOrder(any(), any()) }
         }
     }
 
