@@ -2,7 +2,6 @@ package no.nb.mlt.wls.domain.ports.outbound
 
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 
 /**
  * Defines an interface for interacting with a database to manage orders.
@@ -18,8 +17,12 @@ interface OrderRepository {
 
     suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order>
 
-    @Throws(OrderNotFoundException::class)
-    suspend fun deleteOrder(order: Order)
+    /**
+     * Marks the given order as cancelled.
+     * @return `true` if the order was successfully updated as cancelled, false if no order was updated/found.
+     * @throws RepositoryException if more than one order was updated.
+     */
+    suspend fun deleteOrder(order: Order): Boolean
 
     /**
      * Updates the given order.

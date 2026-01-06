@@ -420,7 +420,7 @@ class WLSServiceTest {
         val deletedOrderEvent = OrderDeleted(testOrder.hostName, testOrder.hostOrderId)
 
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
-        coEvery { orderRepository.deleteOrder(deletedOrder) } answers {}
+        coEvery { orderRepository.deleteOrder(deletedOrder) } answers { true }
         coEvery { storageEventRepository.save(any()) } answers { deletedOrderEvent }
         coEvery { storageEventProcessor.handleEvent(deletedOrderEvent) } answers {}
         coEvery { emailServiceMock.createOrderCancellation(any()) } answers { }
@@ -449,7 +449,7 @@ class WLSServiceTest {
     }
 
     @Test
-    fun `deleteOrder should fail when order deletion fails`() {
+    fun `deleteOrder should fail when storage system throws`() {
         coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
         coEvery { storageSystemRepoMock.deleteOrder(any(), any()) } throws StorageSystemException("Order not found", null)
 
@@ -459,6 +459,21 @@ class WLSServiceTest {
             }
             coVerify(exactly = 1) { orderRepository.getOrder(any(), any()) }
             coVerify(exactly = 1) { transactionPortMock.executeInTransaction<Any>(any()) }
+        }
+    }
+
+    @Test
+    fun `deleteOrder should fail when order deletion fails`() {
+        coEvery { orderRepository.getOrder(testOrder.hostName, testOrder.hostOrderId) } answers { testOrder }
+        coEvery { orderRepository.deleteOrder(any()) } answers { false }
+
+        runTest {
+            assertThrows<RuntimeException> {
+                serviceSansTrans.deleteOrder(testOrder.hostName, testOrder.hostOrderId)
+            }
+            coVerify(exactly = 1) { orderRepository.getOrder(any(), any()) }
+            coVerify(exactly = 1) { transactionPortMock.executeInTransaction<Any>(any()) }
+            coVerify(exactly = 0) { storageSystemRepoMock.deleteOrder(any(), any()) }
         }
     }
 
@@ -1210,9 +1225,8 @@ class WLSServiceTest {
 
             override suspend fun getAllOrdersForHosts(hostnames: List<HostName>): List<Order> = orders.filter { hostnames.contains(it.hostName) }
 
-            override suspend fun deleteOrder(order: Order) {
+            override suspend fun deleteOrder(order: Order): Boolean =
                 orderList.removeIf { order1 -> order1.hostName == order.hostName && order1.hostOrderId == order.hostOrderId }
-            }
 
             override suspend fun updateOrder(order: Order): Boolean {
                 val originalOrder =
