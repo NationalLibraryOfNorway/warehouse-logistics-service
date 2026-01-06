@@ -76,7 +76,19 @@ class MongoOrderRepositoryAdapter(
                     }
                 }.awaitSingle()
 
-        return modified != 0L
+        when (modified) {
+            0L -> {
+                logger.error { "Order was not marked as deleted. $order" }
+                return false
+            }
+            1L -> {
+                logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was marked as deleted." }
+                return true
+            }
+            else -> throw RepositoryException(
+                "MongoOrderRepository modified too many orders. Modified $modified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
+            )
+        }
     }
 
     override suspend fun updateOrder(order: Order): Boolean {
