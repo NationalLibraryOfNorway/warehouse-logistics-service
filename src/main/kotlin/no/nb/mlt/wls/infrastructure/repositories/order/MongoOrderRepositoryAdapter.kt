@@ -57,7 +57,7 @@ class MongoOrderRepositoryAdapter(
             }.awaitSingle()
             .map { it.toOrder() }
 
-    override suspend fun deleteOrder(order: Order) {
+    override suspend fun deleteOrder(order: Order): Boolean {
         val modified =
             orderMongoRepository
                 .findAndUpdateByHostNameAndHostOrderId(
@@ -74,9 +74,21 @@ class MongoOrderRepositoryAdapter(
                     logger.error(it) {
                         "Timed out while deleting order from WLS database. Order ID: ${order.hostOrderId}, Host: ${order.hostName}"
                     }
-                }.awaitSingleOrNull()
+                }.awaitSingle()
 
-        if (modified == 0L) throw OrderNotFoundException("Order ${order.hostOrderId} for ${order.hostName} was not found for deletion")
+        when (modified) {
+            0L -> {
+                logger.error { "Order was not marked as deleted. $order" }
+                return false
+            }
+            1L -> {
+                logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was marked as deleted." }
+                return true
+            }
+            else -> throw RepositoryException(
+                "MongoOrderRepository modified too many orders. Modified $modified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
+            )
+        }
     }
 
     override suspend fun updateOrder(order: Order): Boolean {
