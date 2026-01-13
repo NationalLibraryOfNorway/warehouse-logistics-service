@@ -71,7 +71,12 @@ data class LoadUnit(
         description = """Unit of measure""",
         example = "ESK"
     )
-    val uom: String
+    val uom: String,
+    @field:Schema(
+        description = """Whether the item is confidential""",
+        example = "true"
+    )
+    val confidentialProduct: Boolean
 ) {
     @JsonIgnore
     fun getMappedCategory(): ItemCategory {
@@ -139,6 +144,7 @@ data class LoadUnit(
             packaging = getMappedUOM(),
             currentPreferredEnvironment = mapCurrentPreferredEnvironment(),
             description = if (description.isNullOrBlank()) "-" else description,
-            associatedStorage = computeAssociatedStorage(location ?: "")
+            associatedStorage = computeAssociatedStorage(location ?: ""),
+            confidential = confidentialProduct
         )
 }

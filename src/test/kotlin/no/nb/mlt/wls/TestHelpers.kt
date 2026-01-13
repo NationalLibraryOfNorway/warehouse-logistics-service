@@ -54,7 +54,8 @@ fun ApiItemPayload.toItem() =
         callbackUrl = callbackUrl,
         location = location,
         quantity = quantity,
-        associatedStorage = AssociatedStorage.UNKNOWN
+        associatedStorage = AssociatedStorage.UNKNOWN,
+        confidential = false
     )
 
 fun ApiOrderPayload.toOrder() =
@@ -155,8 +156,9 @@ fun createTestItem(
     callbackUrl: String? = "https://callback-wls.no/item",
     location: String = "SYNQ_WAREHOUSE",
     quantity: Int = 1,
-    associatedStorage: AssociatedStorage = AssociatedStorage.SYNQ
-) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity, associatedStorage)
+    associatedStorage: AssociatedStorage = AssociatedStorage.SYNQ,
+    confidential: Boolean = false
+) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity, associatedStorage, confidential)
 
 fun createTestOrder(
     hostName: HostName = HostName.AXIELL,
