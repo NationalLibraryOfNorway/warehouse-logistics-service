@@ -158,7 +158,19 @@ fun createTestItem(
     quantity: Int = 1,
     associatedStorage: AssociatedStorage = AssociatedStorage.SYNQ,
     confidential: Boolean = false
-) = Item(hostId, hostName, description, itemCategory, preferredEnvironment, packaging, callbackUrl, location, quantity, associatedStorage, confidential)
+) = Item(
+    hostId,
+    hostName,
+    description,
+    itemCategory,
+    preferredEnvironment,
+    packaging,
+    callbackUrl,
+    location,
+    quantity,
+    associatedStorage,
+    confidential
+)
 
 fun createTestOrder(
     hostName: HostName = HostName.AXIELL,
