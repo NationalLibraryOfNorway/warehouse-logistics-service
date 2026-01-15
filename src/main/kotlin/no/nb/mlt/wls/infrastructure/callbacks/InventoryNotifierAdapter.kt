@@ -11,6 +11,7 @@ import no.nb.mlt.wls.domain.ports.outbound.exceptions.UnableToNotifyException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -107,7 +108,7 @@ class InventoryNotifierAdapter(
         if (error is WebClientResponseException) {
             // 4xx errors - client errors that should not be retried
             if (error.statusCode.is4xxClientError) {
-                if (callbackUrl.contains("asta") && error.statusCode.value() == 400) return true
+                if (callbackUrl.contains("asta") && error.statusCode == HttpStatus.CONFLICT) return true
                 logger.error(error) {
                     "Received 4xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "we will never retry sending this message: $payload"
