@@ -21,7 +21,8 @@ data class MongoItem(
     val callbackUrl: String?,
     val location: String,
     val quantity: Int,
-    val associatedStorage: AssociatedStorage
+    val associatedStorage: AssociatedStorage,
+    val confidential: Boolean
 )
 
 fun Item.toMongoItem() =
@@ -35,7 +36,8 @@ fun Item.toMongoItem() =
         this.callbackUrl,
         this.location,
         this.quantity,
-        this.associatedStorage
+        this.associatedStorage,
+        this.confidential
     )
 
 fun MongoItem.toItem() =
@@ -49,5 +51,6 @@ fun MongoItem.toItem() =
         this.callbackUrl,
         this.location,
         this.quantity,
-        this.associatedStorage
+        this.associatedStorage,
+        this.confidential
     )

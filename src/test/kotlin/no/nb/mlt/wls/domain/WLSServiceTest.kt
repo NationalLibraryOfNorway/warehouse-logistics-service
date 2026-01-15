@@ -828,7 +828,8 @@ class WLSServiceTest {
                     itemCategory = testItem1.itemCategory,
                     packaging = testItem1.packaging,
                     currentPreferredEnvironment = testItem1.preferredEnvironment,
-                    associatedStorage = testItem1.associatedStorage
+                    associatedStorage = testItem1.associatedStorage,
+                    confidential = testItem1.confidential
                 ),
                 // This item should be created
                 SynchronizeItems.ItemToSynchronize(
@@ -840,7 +841,8 @@ class WLSServiceTest {
                     itemCategory = ItemCategory.PAPER,
                     packaging = Packaging.BOX,
                     currentPreferredEnvironment = Environment.NONE,
-                    associatedStorage = AssociatedStorage.SYNQ
+                    associatedStorage = AssociatedStorage.SYNQ,
+                    confidential = false
                 )
             )
 
@@ -885,7 +887,8 @@ class WLSServiceTest {
                     itemCategory = testItemKardex.itemCategory,
                     packaging = testItemKardex.packaging,
                     currentPreferredEnvironment = testItemKardex.preferredEnvironment,
-                    associatedStorage = AssociatedStorage.SYNQ
+                    associatedStorage = AssociatedStorage.SYNQ,
+                    confidential = testItemKardex.confidential
                 )
             )
 

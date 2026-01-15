@@ -43,6 +43,7 @@ fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.Item
             description = kardexPayload.description,
             itemCategory = ItemCategory.UNKNOWN,
             packaging = Packaging.UNKNOWN,
-            currentPreferredEnvironment = Environment.NONE
+            currentPreferredEnvironment = Environment.NONE,
+            confidential = false
         )
     }

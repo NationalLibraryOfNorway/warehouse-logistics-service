@@ -20,7 +20,8 @@ fun interface SynchronizeItems {
         val itemCategory: ItemCategory,
         val packaging: Packaging,
         val currentPreferredEnvironment: Environment,
-        val associatedStorage: AssociatedStorage
+        val associatedStorage: AssociatedStorage,
+        val confidential: Boolean
     ) {
         fun toItem() =
             Item(
@@ -33,7 +34,8 @@ fun interface SynchronizeItems {
                 callbackUrl = null,
                 location = this.location ?: UNKNOWN_LOCATION,
                 quantity = this.quantity,
-                associatedStorage = this.associatedStorage
+                associatedStorage = this.associatedStorage,
+                confidential = this.confidential
             )
     }
 }

@@ -409,7 +409,8 @@ class SynqControllerTest(
                 location = "SYNQ_WAREHOUSE",
                 description = "description",
                 productCategory = "PAPER",
-                uom = "ESK"
+                uom = "ESK",
+                confidentialProduct = false
             )
 
         webTestClient
