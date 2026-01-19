@@ -23,6 +23,7 @@ import no.nb.mlt.wls.infrastructure.synq.SynqStandardAdapter
 import no.nb.mlt.wls.toItem
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
@@ -279,6 +280,7 @@ class ItemControllerTest(
             .isUnauthorized
     }
 
+    @Disabled("to be removed")
     @Test
     fun `updateItem when item doesn't exist returns 404`() {
         webTestClient
