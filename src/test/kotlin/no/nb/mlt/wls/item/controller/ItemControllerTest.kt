@@ -8,8 +8,8 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.hostapi.item.ApiEditItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
+import no.nb.mlt.wls.application.hostapi.item.ApiPutItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
@@ -384,7 +384,9 @@ class ItemControllerTest(
     private val testItemPayload = testItem.toApiPayload()
 
     private val testItemEditPayload =
-        ApiEditItemPayload(
+        ApiPutItemPayload(
+            hostId = "Host ID",
+            hostName = HostName.AXIELL,
             description = "Edited description",
             itemCategory = ItemCategory.FILM,
             packaging = Packaging.BOX,

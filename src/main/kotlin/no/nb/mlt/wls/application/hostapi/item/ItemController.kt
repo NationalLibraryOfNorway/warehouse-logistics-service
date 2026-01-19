@@ -332,7 +332,7 @@ class ItemController(
             example = "mlt-12345"
         )
         @PathVariable("hostId") hostId: String,
-        @RequestBody @Valid payload: ApiEditItemPayload
+        @RequestBody @Valid payload: ApiPutItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(hostName)
 
