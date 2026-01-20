@@ -73,7 +73,7 @@ data class LoadUnit(
     )
     val uom: String,
     @field:Schema(
-        description = """Whether the item is confidential""",
+        description = """Whether this product is confidential""",
         example = "true"
     )
     val confidentialProduct: Boolean

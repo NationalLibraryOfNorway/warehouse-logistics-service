@@ -50,7 +50,7 @@ data class Item(
     val location: String = UNKNOWN_LOCATION,
     val quantity: Int = 0,
     val associatedStorage: AssociatedStorage,
-    val confidential: Boolean
+    val confidential: Boolean = false
 ) {
     init {
         if (location.isBlank()) {
