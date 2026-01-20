@@ -49,7 +49,8 @@ data class Item(
     val callbackUrl: String?,
     val location: String = UNKNOWN_LOCATION,
     val quantity: Int = 0,
-    val associatedStorage: AssociatedStorage
+    val associatedStorage: AssociatedStorage,
+    val confidential: Boolean = false
 ) {
     init {
         if (location.isBlank()) {
@@ -187,7 +188,8 @@ data class Item(
             callbackUrl = if (callbackUrl.isNullOrBlank()) this.callbackUrl else callbackUrl,
             location = this.location,
             quantity = this.quantity,
-            associatedStorage = this.associatedStorage
+            associatedStorage = this.associatedStorage,
+            confidential = this.confidential
         )
 
     /**
