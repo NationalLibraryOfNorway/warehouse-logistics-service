@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.item.model
 
+import no.nb.mlt.wls.application.hostapi.item.ApiCreateOrUpdateItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
-import no.nb.mlt.wls.application.hostapi.item.ApiPutItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.domain.model.Environment
@@ -141,7 +141,7 @@ class ItemModelConversionTest {
         )
 
     private val testEditItemPayload =
-        ApiPutItemPayload(
+        ApiCreateOrUpdateItemPayload(
             hostId = "hostId",
             hostName = HostName.AXIELL,
             description = "description",

@@ -18,6 +18,8 @@ import org.hibernate.validator.constraints.URL
     """,
     example = """
     {
+      "hostName": "AXIELL",
+      "hostId": "mlt-12345",
       "description": "Tyven, tyven skal du hete",
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
@@ -26,7 +28,7 @@ import org.hibernate.validator.constraints.URL
     }
     """
 )
-data class ApiPutItemPayload(
+data class ApiCreateOrUpdateItemPayload(
     @field:Schema(
         description = """The item ID from the host system, usually a barcode or any equivalent ID.""",
         example = "mlt-12345"

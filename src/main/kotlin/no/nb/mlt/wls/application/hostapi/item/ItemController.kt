@@ -151,7 +151,7 @@ class ItemController(
     @PostMapping("/item")
     suspend fun createItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
-        @RequestBody @Valid payload: ApiCreateItemPayload
+        @RequestBody @Valid payload: ApiCreateOrUpdateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(payload.hostName)
 
@@ -316,7 +316,7 @@ class ItemController(
         )
     )
     @PutMapping("/item/{hostName}/{hostId}")
-    suspend fun putItem(
+    suspend fun updateOrCreateItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @Parameter(
             description = """Name of the host system which owns the item.""",
@@ -332,7 +332,7 @@ class ItemController(
             example = "mlt-12345"
         )
         @PathVariable("hostId") hostId: String,
-        @RequestBody @Valid payload: ApiPutItemPayload
+        @RequestBody @Valid payload: ApiCreateOrUpdateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         jwt.checkIfAuthorized(hostName)
 
