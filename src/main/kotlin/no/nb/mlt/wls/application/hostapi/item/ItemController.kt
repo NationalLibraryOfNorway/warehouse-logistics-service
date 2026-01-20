@@ -316,7 +316,7 @@ class ItemController(
         )
     )
     @PutMapping("/item/{hostName}/{hostId}")
-    suspend fun updateItem(
+    suspend fun putItem(
         @AuthenticationPrincipal jwt: JwtAuthenticationToken,
         @Parameter(
             description = """Name of the host system which owns the item.""",

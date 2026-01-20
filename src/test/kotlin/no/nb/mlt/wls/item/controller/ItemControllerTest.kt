@@ -224,7 +224,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `updateItem with valid payload updates item`() =
+    fun `putItem with valid payload updates item`() =
         runTest {
             webTestClient
                 .mutateWith(csrf())
@@ -254,7 +254,7 @@ class ItemControllerTest(
         }
 
     @Test
-    fun `updateItem with invalid fields returns 400`() {
+    fun `putItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -268,7 +268,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `updateItem without user returns 401`() {
+    fun `putItem without user returns 401`() {
         webTestClient
             .mutateWith(csrf())
             .put()
@@ -280,9 +280,8 @@ class ItemControllerTest(
             .isUnauthorized
     }
 
-    @Disabled("to be removed")
     @Test
-    fun `updateItem when item doesn't exist returns 404`() {
+    fun `putItem creates item if item doesn't exist`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -292,7 +291,7 @@ class ItemControllerTest(
             .bodyValue(testItemEditPayload)
             .exchange()
             .expectStatus()
-            .isNotFound
+            .isCreated
     }
 
     @Test
@@ -357,7 +356,7 @@ class ItemControllerTest(
         matches = "local-dev",
         disabledReason = "Only local-dev has properly configured keycloak & JWT"
     )
-    fun `updateItem with unauthorized user returns 403`() {
+    fun `putItem with unauthorized user returns 403`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
