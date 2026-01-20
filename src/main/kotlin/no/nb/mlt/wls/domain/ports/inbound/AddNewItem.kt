@@ -62,6 +62,7 @@ data class ItemMetadata(
         this.callbackUrl,
         location,
         quantity,
-        AssociatedStorage.UNKNOWN
+        AssociatedStorage.UNKNOWN,
+        confidential = false
     )
 }
