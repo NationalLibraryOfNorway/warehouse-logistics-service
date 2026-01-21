@@ -385,7 +385,7 @@ class ItemControllerTest(
 
     private val testItemEditPayload =
         ApiCreateOrUpdateItemPayload(
-            hostId = "Host ID",
+            hostId = "axiell-01",
             hostName = HostName.AXIELL,
             description = "Edited description",
             itemCategory = ItemCategory.FILM,
