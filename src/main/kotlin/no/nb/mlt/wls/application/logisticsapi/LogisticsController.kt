@@ -162,19 +162,6 @@ class LogisticsController(
         return ResponseEntity.ok(item.toApiPayload())
     }
 
-    private fun normalizeOrderId(orderId: String): Pair<HostName, String>? {
-        // i.e. split AXIELL-SD---mlt-123 into [AXIELL-SD, mlt-123]
-        val fragments = orderId.split(DELIMITER)
-        if (fragments.size != 2) {
-            return null
-        }
-        // remove storage indicator from hostName, E.G. AXIELL-SD into AXIELL
-        val potentialHost = fragments.first().substringBefore("-")
-        val hostName = HostName.fromString(potentialHost)
-        val orderId = fragments[1]
-        return hostName to orderId
-    }
-
     @Operation(
         summary = "Retrieves items by their host ID",
         description = """Endpoint for retrieving items based on their host ID.
@@ -243,5 +230,23 @@ class LogisticsController(
         }
 
         return ResponseEntity.ok(items)
+    }
+
+    private fun normalizeOrderId(orderId: String): Pair<HostName, String>? {
+        // i.e. split AXIELL-SD---mlt-123 into [AXIELL-SD, mlt-123]
+        val fragments = orderId.split(DELIMITER)
+        if (fragments.size != 2) {
+            return null
+        }
+        // remove storage indicator from hostName, E.G. AXIELL-SD into AXIELL
+        val potentialHost = fragments.first().substringBefore("-")
+        try {
+            val hostName = HostName.fromString(potentialHost)
+            val orderId = fragments[1]
+            return hostName to orderId
+        } catch (_: IllegalArgumentException) {
+            logger.error { "Invalid hostname from id: $orderId" }
+            return null
+        }
     }
 }
