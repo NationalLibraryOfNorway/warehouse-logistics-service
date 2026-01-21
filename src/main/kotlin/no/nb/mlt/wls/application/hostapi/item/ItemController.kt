@@ -337,19 +337,16 @@ class ItemController(
         jwt.checkIfAuthorized(hostName)
 
         val item = getItem.getItem(hostName, hostId)
-        return when (item == null) {
-            true -> {
-                val itemCreated = addNewItem.addItem(payload.toItemMetadata())
-                ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(itemCreated.toApiPayload())
-            }
-            false -> {
-                val editedItem = editItem.editItem(item, payload.toItemEditMetadata())
-                ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(editedItem.toApiPayload())
-            }
+        return if (item == null) {
+            val itemCreated = addNewItem.addItem(payload.toItemMetadata())
+            ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(itemCreated.toApiPayload())
+        } else {
+            val editedItem = editItem.editItem(item, payload.toItemEditMetadata())
+            ResponseEntity
+                .status(HttpStatus.OK)
+                .body(editedItem.toApiPayload())
         }
     }
 }
