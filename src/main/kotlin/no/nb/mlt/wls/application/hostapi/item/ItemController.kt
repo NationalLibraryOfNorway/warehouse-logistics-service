@@ -256,9 +256,10 @@ class ItemController(
     }
 
     @Operation(
-        summary = "Update item metadata in Hermes",
-        description = """Update metadata about the item in Hermes WLS and appropriate storage systems.
+        summary = "Update or create item metadata in Hermes",
+        description = """Update or create metadata about an item in Hermes WLS and appropriate storage systems.
         This endpoint allows updating item's description, category, environment, packaging, and callback URL.
+        If the item does not exist, it will create it instead.
         In cases where only some fields should be updated, the others must be included in their original state.
         For example if you only want to update description, you still have to include category, environment, and the others."""
     )
@@ -324,16 +325,18 @@ class ItemController(
             allowEmptyValue = false,
             example = "AXIELL"
         )
-        @PathVariable("hostName") hostName: HostName,
+        @PathVariable("hostName") ignored: HostName,
         @Parameter(
             description = """ID of the item which you wish to update.""",
             required = true,
             allowEmptyValue = false,
             example = "mlt-12345"
         )
-        @PathVariable("hostId") hostId: String,
+        @PathVariable("hostId") ignored2: String,
         @RequestBody @Valid payload: ApiCreateOrUpdateItemPayload
     ): ResponseEntity<ApiItemPayload> {
+        val hostName = payload.hostName
+        val hostId = payload.hostId
         jwt.checkIfAuthorized(hostName)
 
         val item = getItem.getItem(hostName, hostId)
