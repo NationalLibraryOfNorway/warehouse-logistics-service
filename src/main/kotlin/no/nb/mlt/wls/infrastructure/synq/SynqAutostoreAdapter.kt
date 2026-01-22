@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.synq
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingle
 import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
@@ -9,9 +10,11 @@ import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.ResourceNotFoundException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -53,6 +56,30 @@ class SynqAutostoreAdapter(
             }.onErrorMap(WebClientResponseException::class.java) { createServerError(it) }
             .onErrorComplete(SynqError.DuplicateProductException::class.java)
             .awaitSingle()
+    }
+
+    override suspend fun editItem(item: Item) {
+        val product = item.toSynqPayload()
+        val uri = URI.create("$baseUrl/nbproducts/${product.owner}/${product.productId}")
+
+        webClient
+            .put()
+            .uri(uri)
+            .bodyValue(product)
+            .retrieve()
+            .toEntity(SynqError::class.java)
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
+            }
+            .onErrorMap(WebClientResponseException::class.java) { error ->
+                if (error.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                    ResourceNotFoundException(error.message)
+                } else {
+                    createServerError(error)
+                }
+            }
+            .awaitFirst()
     }
 
     override suspend fun createOrder(order: Order) {
