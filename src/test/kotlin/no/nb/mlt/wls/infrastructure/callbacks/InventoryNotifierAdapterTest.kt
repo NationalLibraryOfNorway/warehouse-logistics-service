@@ -240,7 +240,7 @@ class InventoryNotifierAdapterTest {
     }
 
     @Test
-    fun `should retry on various 401 errors`() {
+    fun `should retry on 401 error`() {
         mockWebServer.enqueue(MockResponse().setResponseCode(401))
 
         assertThrows<UnableToNotifyException> {
@@ -248,6 +248,7 @@ class InventoryNotifierAdapterTest {
         }
 
         mockWebServer.takeRequest() // Clear the request
+        assertEquals(1, mockWebServer.requestCount)
     }
 
     @Test
