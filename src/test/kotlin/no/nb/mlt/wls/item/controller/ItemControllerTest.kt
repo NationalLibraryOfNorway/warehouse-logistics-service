@@ -85,8 +85,8 @@ class ItemControllerTest(
             .isOk
             .expectBody(ApiItemPayload::class.java)
             .consumeWith { response ->
-                assertThat(response?.responseBody?.hostId.equals(duplicateItemPayload.hostId))
-                assertThat(response?.responseBody?.description?.equals(duplicateItemPayload.description))
+                assertThat(response.responseBody?.hostId.equals(duplicateItemPayload.hostId))
+                assertThat(response.responseBody?.description?.equals(duplicateItemPayload.description))
             }
     }
 
@@ -281,13 +281,15 @@ class ItemControllerTest(
 
     @Test
     fun `putItem creates item if item doesn't exist`() {
+        coEvery { synqStandardAdapterMock.canHandleItem(newEditItemPayload.toItem()) } returns true
+
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .put()
-            .uri("/{hostName}/{hostId}", testItem.hostName, "unknown-id")
+            .uri("/{hostName}/{hostId}", newEditItemPayload.hostName, newEditItemPayload.hostId)
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemEditPayload)
+            .bodyValue(newEditItemPayload)
             .exchange()
             .expectStatus()
             .isCreated
@@ -395,6 +397,8 @@ class ItemControllerTest(
         )
 
     private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
+
+    private val newEditItemPayload = testItemPayload.copy(hostId = "some-new-id")
 
     fun populateDb() {
         runBlocking {
