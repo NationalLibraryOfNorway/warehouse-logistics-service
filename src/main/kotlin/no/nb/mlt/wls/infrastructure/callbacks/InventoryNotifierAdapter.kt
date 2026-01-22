@@ -107,14 +107,14 @@ class InventoryNotifierAdapter(
 
         // Handle HTTP response errors
         if (error is WebClientResponseException) {
-            // 401 error is the only client error we should retry
+            // 401 UNAUTHORIZED should be retried, unlike other 4xx client errors
             if (error.statusCode.isSameCodeAs(HttpStatus.UNAUTHORIZED)) {
                 return false
             }
 
-            // 4xx errors - client errors that should not be retried
+            // 4xx errors - all other client errors should not be retried
             if (error.statusCode.is4xxClientError) {
-                // Silently ignore 409 Conflict errors from Asta, since they are expected to happen
+                // Don't log anything here for 409 Conflict errors from Asta, since they are expected to happen
                 if (callbackUrl.contains("asta") && error.statusCode.isSameCodeAs(HttpStatus.CONFLICT)) {
                     return true
                 }
