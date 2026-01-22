@@ -106,22 +106,33 @@ class InventoryNotifierAdapter(
 
         // Handle HTTP response errors
         if (error is WebClientResponseException) {
+            // 401 error is the only client error we should retry
+            if (error.statusCode.isSameCodeAs(HttpStatus.UNAUTHORIZED)) {
+                return false
+            }
+
             // 4xx errors - client errors that should not be retried
             if (error.statusCode.is4xxClientError) {
-                if (callbackUrl.contains("asta") && error.statusCode in listOf(HttpStatus.BAD_REQUEST, HttpStatus.CONFLICT)) return true
-                logger.error(error) {
+                // Silently ignore 409 Conflict errors from Asta, since they are expected to happen
+                if (callbackUrl.contains("asta") && error.statusCode.isSameCodeAs(HttpStatus.CONFLICT)) {
+                    return true
+                }
+
+                logger.error {
                     "Received 4xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "we will never retry sending this message: $payload"
                 }
+
                 return true
             }
 
             // 5xx errors - server errors, log and continue normal retry flow
             if (error.statusCode.is5xxServerError) {
-                logger.error(error) {
+                logger.error {
                     "Received 5xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "will continue with normal retry flow"
                 }
+
                 return false
             }
         }
