@@ -16,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
@@ -73,12 +74,12 @@ class InventoryNotifierAdapter(
                 it["X-Signature"] = generateSignature(payload, timestamp)
                 it["X-Timestamp"] = timestamp
             }.retrieve()
-            .bodyToMono(Void::class.java)
+            .bodyToMono<Unit>()
             .timeout(timeoutConfig.inventory)
             .onErrorComplete { error ->
                 shouldCompleteOnError(error, callbackUrl, payload)
             }.doOnError {
-                logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
+                logger.error { "Error while sending update to callback URL: $callbackUrl" }
             }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
             .block()
     }
@@ -98,7 +99,7 @@ class InventoryNotifierAdapter(
             error.cause is DnsErrorCauseException ||
                 error.stackTraceToString().contains("Failed to resolve")
         if (callbackUrlIsMalformed) {
-            logger.error(error) {
+            logger.error {
                 "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload"
             }
             return true
