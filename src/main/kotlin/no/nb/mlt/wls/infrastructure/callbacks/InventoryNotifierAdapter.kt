@@ -16,6 +16,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
@@ -73,12 +74,12 @@ class InventoryNotifierAdapter(
                 it["X-Signature"] = generateSignature(payload, timestamp)
                 it["X-Timestamp"] = timestamp
             }.retrieve()
-            .bodyToMono(Void::class.java)
+            .bodyToMono<Unit>()
             .timeout(timeoutConfig.inventory)
             .onErrorComplete { error ->
                 shouldCompleteOnError(error, callbackUrl, payload)
             }.doOnError {
-                logger.error(it) { "Error while sending update to callback URL: $callbackUrl" }
+                logger.error { "Error while sending update to callback URL: $callbackUrl" }
             }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
             .block()
     }
@@ -98,7 +99,7 @@ class InventoryNotifierAdapter(
             error.cause is DnsErrorCauseException ||
                 error.stackTraceToString().contains("Failed to resolve")
         if (callbackUrlIsMalformed) {
-            logger.error(error) {
+            logger.error {
                 "Cannot resolve callback URL: $callbackUrl, we will never retry sending this message: $payload"
             }
             return true
@@ -106,22 +107,33 @@ class InventoryNotifierAdapter(
 
         // Handle HTTP response errors
         if (error is WebClientResponseException) {
-            // 4xx errors - client errors that should not be retried
+            // 401 UNAUTHORIZED should be retried, unlike other 4xx client errors
+            if (error.statusCode.isSameCodeAs(HttpStatus.UNAUTHORIZED)) {
+                return false
+            }
+
+            // 4xx errors - all other client errors should not be retried
             if (error.statusCode.is4xxClientError) {
-                if (callbackUrl.contains("asta") && error.statusCode in listOf(HttpStatus.BAD_REQUEST, HttpStatus.CONFLICT)) return true
-                logger.error(error) {
+                // Don't log anything here for 409 Conflict errors from Asta, since they are expected to happen
+                if (callbackUrl.contains("asta") && error.statusCode.isSameCodeAs(HttpStatus.CONFLICT)) {
+                    return true
+                }
+
+                logger.error {
                     "Received 4xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "we will never retry sending this message: $payload"
                 }
+
                 return true
             }
 
             // 5xx errors - server errors, log and continue normal retry flow
             if (error.statusCode.is5xxServerError) {
-                logger.error(error) {
+                logger.error {
                     "Received 5xx error (${error.statusCode.value()}) from callback URL: $callbackUrl, " +
                         "will continue with normal retry flow"
                 }
+
                 return false
             }
         }

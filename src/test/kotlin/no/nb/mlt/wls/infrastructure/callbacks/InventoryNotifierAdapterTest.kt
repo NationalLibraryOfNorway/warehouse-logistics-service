@@ -226,7 +226,7 @@ class InventoryNotifierAdapterTest {
 
     @Test
     fun `should not retry on various 4xx errors`() {
-        val clientErrorCodes = listOf(400, 401, 403, 404, 409, 422, 429)
+        val clientErrorCodes = listOf(400, 403, 404, 409, 422, 429)
 
         clientErrorCodes.forEach { statusCode ->
             mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
@@ -237,6 +237,18 @@ class InventoryNotifierAdapterTest {
 
             mockWebServer.takeRequest() // Clear the request
         }
+    }
+
+    @Test
+    fun `should retry on 401 error`() {
+        mockWebServer.enqueue(MockResponse().setResponseCode(401))
+
+        assertThrows<UnableToNotifyException> {
+            inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+        }
+
+        mockWebServer.takeRequest() // Clear the request
+        assertEquals(1, mockWebServer.requestCount)
     }
 
     @Test
