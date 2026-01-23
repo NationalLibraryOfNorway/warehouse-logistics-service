@@ -282,6 +282,7 @@ class ItemControllerTest(
     @Test
     fun `putItem creates item if item doesn't exist`() {
         coEvery { synqStandardAdapterMock.canHandleItem(newEditItemPayload.toItem()) } returns true
+        coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
 
         webTestClient
             .mutateWith(csrf())
@@ -398,7 +399,7 @@ class ItemControllerTest(
 
     private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
 
-    private val newEditItemPayload = testItemPayload.copy(hostId = "some-new-id")
+    private val newEditItemPayload = testItemEditPayload.copy(hostId = "some-new-id")
 
     fun populateDb() {
         runBlocking {
