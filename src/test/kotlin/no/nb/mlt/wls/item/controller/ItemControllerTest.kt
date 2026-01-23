@@ -296,7 +296,8 @@ class ItemControllerTest(
 
     @Test
     fun `updateOrCreateItem creates item if item doesn't exist`() {
-        coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
+        coEvery { synqStandardAdapterMock.canHandleItem(newEditItemPayload.toItemMetadata().toItem()) } returns true
+        coEvery { synqStandardAdapterMock.createItem(any()) } answers {}
 
         webTestClient
             .mutateWith(csrf())
@@ -308,6 +309,24 @@ class ItemControllerTest(
             .exchange()
             .expectStatus()
             .isCreated
+
+        runTest {
+            val item = repository.findByHostNameAndHostId(newEditItemPayload.hostName, newEditItemPayload.hostId).awaitSingle()
+            assertThat(item)
+                .isNotNull
+                .extracting("hostName", "hostId", "description", "itemCategory", "packaging", "preferredEnvironment", "callbackUrl", "location", "quantity")
+                .containsExactly(
+                    newEditItemPayload.hostName,
+                    newEditItemPayload.hostId,
+                    newEditItemPayload.description,
+                    newEditItemPayload.itemCategory,
+                    newEditItemPayload.packaging,
+                    newEditItemPayload.preferredEnvironment,
+                    newEditItemPayload.callbackUrl,
+                    UNKNOWN_LOCATION,
+                    0
+                )
+        }
     }
 
     @Test
