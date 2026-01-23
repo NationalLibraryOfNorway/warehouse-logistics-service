@@ -324,8 +324,7 @@ class ItemControllerTest(
                     "callbackUrl",
                     "location",
                     "quantity"
-                )
-                .containsExactly(
+                ).containsExactly(
                     newEditItemPayload.hostName,
                     newEditItemPayload.hostId,
                     newEditItemPayload.description,
