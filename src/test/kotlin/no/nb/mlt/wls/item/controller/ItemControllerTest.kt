@@ -314,7 +314,17 @@ class ItemControllerTest(
             val item = repository.findByHostNameAndHostId(newEditItemPayload.hostName, newEditItemPayload.hostId).awaitSingle()
             assertThat(item)
                 .isNotNull
-                .extracting("hostName", "hostId", "description", "itemCategory", "packaging", "preferredEnvironment", "callbackUrl", "location", "quantity")
+                .extracting(
+                    "hostName",
+                    "hostId",
+                    "description",
+                    "itemCategory",
+                    "packaging",
+                    "preferredEnvironment",
+                    "callbackUrl",
+                    "location",
+                    "quantity"
+                )
                 .containsExactly(
                     newEditItemPayload.hostName,
                     newEditItemPayload.hostId,
