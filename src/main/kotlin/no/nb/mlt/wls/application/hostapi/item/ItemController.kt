@@ -325,19 +325,23 @@ class ItemController(
             allowEmptyValue = false,
             example = "AXIELL"
         )
-        @PathVariable("hostName") ignored: HostName,
+        @PathVariable("hostName") pathHostName: HostName,
         @Parameter(
             description = """ID of the item which you wish to update.""",
             required = true,
             allowEmptyValue = false,
             example = "mlt-12345"
         )
-        @PathVariable("hostId") ignored2: String,
+        @PathVariable("hostId") pathHostId: String,
         @RequestBody @Valid payload: ApiCreateOrUpdateItemPayload
     ): ResponseEntity<ApiItemPayload> {
         val hostName = payload.hostName
         val hostId = payload.hostId
         jwt.checkIfAuthorized(hostName)
+
+        if (pathHostName != hostName || pathHostId != hostId) {
+            return ResponseEntity.badRequest().build()
+        }
 
         val item = getItem.getItem(hostName, hostId)
         return if (item == null) {

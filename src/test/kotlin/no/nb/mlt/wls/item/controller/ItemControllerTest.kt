@@ -253,6 +253,21 @@ class ItemControllerTest(
         }
 
     @Test
+    fun `updateOrCreateItem with mismatching path hostName or hostId vs payload in path returns 400`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .uri("/{hostName}/{hostId}", testItem.hostName, "different-id")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testItemEditPayload)
+                .exchange()
+                .expectStatus()
+                .isBadRequest
+        }
+
+    @Test
     fun `updateOrCreateItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
@@ -357,7 +372,7 @@ class ItemControllerTest(
         matches = "local-dev",
         disabledReason = "Only local-dev has properly configured keycloak & JWT"
     )
-    fun `putItem with unauthorized user returns 403`() {
+    fun `updateOrCreateItem with unauthorized user returns 403`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
