@@ -223,7 +223,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `putItem with valid payload updates item`() =
+    fun `updateOrCreateItem with valid payload updates item`() =
         runTest {
             webTestClient
                 .mutateWith(csrf())
@@ -253,7 +253,7 @@ class ItemControllerTest(
         }
 
     @Test
-    fun `putItem with invalid fields returns 400`() {
+    fun `updateOrCreateItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -267,7 +267,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `putItem without user returns 401`() {
+    fun `updateOrCreateItem without user returns 401`() {
         webTestClient
             .mutateWith(csrf())
             .put()
@@ -280,8 +280,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `putItem creates item if item doesn't exist`() {
-        coEvery { synqStandardAdapterMock.canHandleItem(newEditItemPayload.toItem()) } returns true
+    fun `updateOrCreateItem creates item if item doesn't exist`() {
         coEvery { synqStandardAdapterMock.canHandleItem(any()) } returns true
 
         webTestClient
