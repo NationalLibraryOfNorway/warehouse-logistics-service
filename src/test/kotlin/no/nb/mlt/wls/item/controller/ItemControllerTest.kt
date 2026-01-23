@@ -85,8 +85,8 @@ class ItemControllerTest(
             .isOk
             .expectBody(ApiItemPayload::class.java)
             .consumeWith { response ->
-                assertThat(response.responseBody?.hostId.equals(duplicateItemPayload.hostId))
-                assertThat(response.responseBody?.description?.equals(duplicateItemPayload.description))
+                assertThat(response.responseBody?.hostId).isEqualTo(duplicateItemPayload.hostId)
+                assertThat(response.responseBody?.description).isEqualTo(duplicateItemPayload.description)
             }
     }
 
