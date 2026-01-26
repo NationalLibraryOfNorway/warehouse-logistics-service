@@ -74,7 +74,7 @@ class InventoryNotifierAdapter(
                 it["X-Signature"] = generateSignature(payload, timestamp)
                 it["X-Timestamp"] = timestamp
             }.retrieve()
-            .bodyToMono<Unit>()
+            .toBodilessEntity()
             .timeout(timeoutConfig.inventory)
             .onErrorComplete { error ->
                 shouldCompleteOnError(error, callbackUrl, payload)
