@@ -65,11 +65,11 @@ services:
   # Kafka is used to send history/statistic messages from Hermes to ElasticSearch
   # To view available topics, you can use "Kafka" plugin for IntelliJ and connect it to 127.0.0.1:9092
   #
-  # This version of Kafka (4.0.0) does not require Zookeper, using KRaft instead
+  # This version of Kafka (4.1.1) does not require Zookeper, using KRaft instead
   # The service is configured to use the new features as far as I am aware
   # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
   kafka:
-    image: "bitnami/kafka:4.0.0"
+    image: "apache/kafka:4.1.1"
     restart: always
     hostname: kafka
     ports:
@@ -89,7 +89,7 @@ services:
 
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
   kafka-topic-setup:
-    image: 'bitnami/kafka:4.0.0'
+    image: 'apache/kafka:4.1.1'
     depends_on:
       - kafka
     entrypoint: [ ]
