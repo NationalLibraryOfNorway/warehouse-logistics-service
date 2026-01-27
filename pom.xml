@@ -77,6 +77,11 @@
 
   <properties>
     <java.version>21</java.version>
+
+    <!--  Temporary change until https://github.com/spring-projects/spring-security/issues/18333 gets resolved  -->
+    <micrometer.version>1.15.8</micrometer.version>
+    <micrometer-tracing.version>1.5.8</micrometer-tracing.version>
+
     <mockk.version>5.0.1</mockk.version>
     <openapi.version>3.0.0</openapi.version>
     <spotless.version>3.1.0</spotless.version>
@@ -112,6 +117,12 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-tracing-bridge-brave</artifactId>
+    </dependency>
+
+    <!-- Core context propagation API -->
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>context-propagation</artifactId>
     </dependency>
 
     <dependency>

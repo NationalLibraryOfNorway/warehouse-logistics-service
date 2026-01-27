@@ -2,7 +2,10 @@
   <configuration default="false" name="Run Hermes" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="local-dev" />
     <envs>
+      <env name="EMAIL_PORT" value="25" />
+      <env name="EMAIL_SERVER" value="relaydev.nb.no" />
       <env name="ORDER_HANDLER_EMAIL" value="daniel.salwerowicz@nb.no" />
+      <env name="ORDER_SENDER_EMAIL" value="wls-api@nb.no" />
     </envs>
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
     <module name="wls" />

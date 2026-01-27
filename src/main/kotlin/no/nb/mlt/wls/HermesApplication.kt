@@ -14,7 +14,5 @@ import reactor.core.publisher.Hooks
 class HermesApplication
 
 fun main(args: Array<String>) {
-    // Turn on automatic context propagation to enable traceId in logs
-    Hooks.enableAutomaticContextPropagation()
     runApplication<HermesApplication>(*args)
 }

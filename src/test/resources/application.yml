@@ -28,6 +28,9 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  reactor:
+    # Set context propagation to auto to enable context propagation in reactive streams
+    context-propagation: auto
 
 # Server port for the main application
 server:
