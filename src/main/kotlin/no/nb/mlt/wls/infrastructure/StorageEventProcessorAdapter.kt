@@ -137,24 +137,34 @@ class StorageEventProcessorAdapter(
                     logger.error(e) { "Error occurred while editing item $item" }
                 }
             }
+            logger.info {
+                """
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+            """.trimIndent()
+            }
         }
-
-//        logger.error {
-//            """
-//            !!!
-//                Item edit handling not yet implemented.
-//                Item ${item.hostId} metadata changed from this:
-//                    [$oldItem]
-//                to this:
-//                    [$item]
-//                old storage candidates:
-//                    $oldStorageCandidates
-//                new storage candidates:
-//                    $newStorageCandidates
-//                No updates will be propagated to storage systems.
-//            !!!
-//            """.trimIndent()
-//        }
+        else if (item.quantity == 1) {
+            logger.warn {
+                """
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+                No changes were made to storages as the items need to be ordered out from the system
+            """.trimIndent()
+            }
+        }
     }
 
     private suspend fun handleOrderCreated(event: OrderCreated) {
