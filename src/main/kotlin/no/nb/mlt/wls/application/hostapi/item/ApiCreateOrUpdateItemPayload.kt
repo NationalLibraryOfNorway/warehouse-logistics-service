@@ -4,15 +4,22 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.Environment
+import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.ports.inbound.ItemEditMetadata
+import no.nb.mlt.wls.domain.ports.inbound.ItemMetadata
 import org.hibernate.validator.constraints.URL
 
 @Schema(
-    description = """Payload for editing an item in Hermes WLS, and appropriate storage systems.""",
+    description = """Payload for creating and editing an item in Hermes WLS, and appropriate storage systems.
+        When editing an item only the following fields are editable: 'description', 'itemCategory',
+        'preferredEnvironment', 'packaging', and 'callbackUrl'
+    """,
     example = """
     {
+      "hostName": "AXIELL",
+      "hostId": "mlt-12345",
       "description": "Tyven, tyven skal du hete",
       "itemCategory": "PAPER",
       "preferredEnvironment": "NONE",
@@ -21,7 +28,19 @@ import org.hibernate.validator.constraints.URL
     }
     """
 )
-data class ApiEditItemPayload(
+data class ApiCreateOrUpdateItemPayload(
+    @field:Schema(
+        description = """The item ID from the host system, usually a barcode or any equivalent ID.""",
+        example = "mlt-12345"
+    )
+    @field:NotBlank(message = "The item's 'hostId' is required, and it cannot be blank")
+    val hostId: String,
+    @field:Schema(
+        description = """Name of the host system that owns the item, and where the request comes from.
+            Host system is usually the catalogue that the item is registered in.""",
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
+    )
+    val hostName: HostName,
     @field:Schema(
         description = """Description of the item for easy identification in the warehouse system.
             Usually item's title/name, or contents description.""",
@@ -64,6 +83,17 @@ data class ApiEditItemPayload(
     )
     val callbackUrl: String?
 ) {
+    fun toItemMetadata(): ItemMetadata =
+        ItemMetadata(
+            hostId = hostId,
+            hostName = hostName,
+            description = description,
+            itemCategory = itemCategory,
+            preferredEnvironment = preferredEnvironment,
+            packaging = packaging,
+            callbackUrl = callbackUrl
+        )
+
     fun toItemEditMetadata(): ItemEditMetadata =
         ItemEditMetadata(
             description = description,

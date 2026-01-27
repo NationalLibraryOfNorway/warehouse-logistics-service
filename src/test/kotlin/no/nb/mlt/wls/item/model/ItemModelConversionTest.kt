@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.item.model
 
-import no.nb.mlt.wls.application.hostapi.item.ApiEditItemPayload
+import no.nb.mlt.wls.application.hostapi.item.ApiCreateOrUpdateItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
@@ -77,6 +77,18 @@ class ItemModelConversionTest {
     }
 
     @Test
+    fun `API put payload converts to item create metadata`() {
+        val createItemMetadata = testEditItemPayload.toItemMetadata()
+        assertThat(createItemMetadata.hostId).isEqualTo(testEditItemPayload.hostId)
+        assertThat(createItemMetadata.hostName).isEqualTo(testEditItemPayload.hostName)
+        assertThat(createItemMetadata.description).isEqualTo(testEditItemPayload.description)
+        assertThat(createItemMetadata.itemCategory).isEqualTo(testEditItemPayload.itemCategory)
+        assertThat(createItemMetadata.preferredEnvironment).isEqualTo(testEditItemPayload.preferredEnvironment)
+        assertThat(createItemMetadata.packaging).isEqualTo(testEditItemPayload.packaging)
+        assertThat(createItemMetadata.callbackUrl).isEqualTo(testEditItemPayload.callbackUrl)
+    }
+
+    @Test
     fun `API edit payload converts to item edit metadata`() {
         val editItemMetadata = testEditItemPayload.toItemEditMetadata()
         assertThat(editItemMetadata.description).isEqualTo(testEditItemPayload.description)
@@ -129,7 +141,9 @@ class ItemModelConversionTest {
         )
 
     private val testEditItemPayload =
-        ApiEditItemPayload(
+        ApiCreateOrUpdateItemPayload(
+            hostId = "hostId",
+            hostName = HostName.AXIELL,
             description = "description",
             itemCategory = ItemCategory.PAPER,
             preferredEnvironment = Environment.NONE,
