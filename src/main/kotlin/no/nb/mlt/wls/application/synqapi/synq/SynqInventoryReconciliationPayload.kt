@@ -22,12 +22,13 @@ private val logger = KotlinLogging.logger {}
                 "productOwner" : "NB",
                 "quantityOnHand" : 1.0,
                 "hostName" : "Axiell",
-                "confidentalProduct" : false,
+                "confidentialProduct" : false,
                 "productCategory" : "Papir",
-                "uom" : "OBJ",
+                "uom" : "OBJ"
             }
         ]
-    }"""
+    }
+    """
 )
 data class SynqInventoryReconciliationPayload(
     @field:Schema(description = """List of load units in the warehouse""")
