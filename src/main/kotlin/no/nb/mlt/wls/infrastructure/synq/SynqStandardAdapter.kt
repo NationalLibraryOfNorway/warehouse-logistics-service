@@ -123,15 +123,13 @@ class SynqStandardAdapter(
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
-            }
-            .onErrorMap(WebClientResponseException::class.java) { error ->
+            }.onErrorMap(WebClientResponseException::class.java) { error ->
                 if (error.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
                     ResourceNotFoundException(error.message)
                 } else {
                     createServerError(error)
                 }
-            }
-            .awaitFirst()
+            }.awaitFirst()
     }
 
     override suspend fun deleteOrder(

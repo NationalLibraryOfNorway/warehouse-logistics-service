@@ -147,10 +147,9 @@ class StorageEventProcessorAdapter(
                     $oldStorageCandidates
                 new storage candidates:
                     $newStorageCandidates
-            """.trimIndent()
+                """.trimIndent()
             }
-        }
-        else if (item.quantity == 1) {
+        } else if (item.quantity == 1) {
             logger.warn {
                 """
                 Item ${item.hostId} metadata changed from this:
@@ -162,7 +161,7 @@ class StorageEventProcessorAdapter(
                 new storage candidates:
                     $newStorageCandidates
                 No changes were made to storages as the items need to be ordered out from the system
-            """.trimIndent()
+                """.trimIndent()
             }
         }
     }
