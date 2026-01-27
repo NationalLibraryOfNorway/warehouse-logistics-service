@@ -8,7 +8,7 @@ import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.EnableTestcontainers
-import no.nb.mlt.wls.application.hostapi.item.ApiEditItemPayload
+import no.nb.mlt.wls.application.hostapi.item.ApiCreateOrUpdateItemPayload
 import no.nb.mlt.wls.application.hostapi.item.ApiItemPayload
 import no.nb.mlt.wls.application.hostapi.item.toApiPayload
 import no.nb.mlt.wls.createTestItem
@@ -85,8 +85,8 @@ class ItemControllerTest(
             .isOk
             .expectBody(ApiItemPayload::class.java)
             .consumeWith { response ->
-                assertThat(response?.responseBody?.hostId.equals(duplicateItemPayload.hostId))
-                assertThat(response?.responseBody?.description?.equals(duplicateItemPayload.description))
+                assertThat(response.responseBody?.hostId).isEqualTo(duplicateItemPayload.hostId)
+                assertThat(response.responseBody?.description).isEqualTo(duplicateItemPayload.description)
             }
     }
 
@@ -223,7 +223,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `updateItem with valid payload updates item`() =
+    fun `updateOrCreateItem with valid payload updates item`() =
         runTest {
             webTestClient
                 .mutateWith(csrf())
@@ -253,7 +253,22 @@ class ItemControllerTest(
         }
 
     @Test
-    fun `updateItem with invalid fields returns 400`() {
+    fun `updateOrCreateItem with mismatching path hostName or hostId vs payload in path returns 400`() =
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
+                .put()
+                .uri("/{hostName}/{hostId}", testItem.hostName, "different-id")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(testItemEditPayload)
+                .exchange()
+                .expectStatus()
+                .isBadRequest
+        }
+
+    @Test
+    fun `updateOrCreateItem with invalid fields returns 400`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
@@ -267,7 +282,7 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `updateItem without user returns 401`() {
+    fun `updateOrCreateItem without user returns 401`() {
         webTestClient
             .mutateWith(csrf())
             .put()
@@ -280,17 +295,47 @@ class ItemControllerTest(
     }
 
     @Test
-    fun `updateItem when item doesn't exist returns 404`() {
+    fun `updateOrCreateItem creates item if item doesn't exist`() {
+        coEvery { synqStandardAdapterMock.canHandleItem(newEditItemPayload.toItemMetadata().toItem()) } returns true
+        coEvery { synqStandardAdapterMock.createItem(any()) } answers {}
+
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority(clientRole)))
             .put()
-            .uri("/{hostName}/{hostId}", testItem.hostName, "unknown-id")
+            .uri("/{hostName}/{hostId}", newEditItemPayload.hostName, newEditItemPayload.hostId)
             .accept(MediaType.APPLICATION_JSON)
-            .bodyValue(testItemEditPayload)
+            .bodyValue(newEditItemPayload)
             .exchange()
             .expectStatus()
-            .isNotFound
+            .isCreated
+
+        runTest {
+            val item = repository.findByHostNameAndHostId(newEditItemPayload.hostName, newEditItemPayload.hostId).awaitSingle()
+            assertThat(item)
+                .isNotNull
+                .extracting(
+                    "hostName",
+                    "hostId",
+                    "description",
+                    "itemCategory",
+                    "packaging",
+                    "preferredEnvironment",
+                    "callbackUrl",
+                    "location",
+                    "quantity"
+                ).containsExactly(
+                    newEditItemPayload.hostName,
+                    newEditItemPayload.hostId,
+                    newEditItemPayload.description,
+                    newEditItemPayload.itemCategory,
+                    newEditItemPayload.packaging,
+                    newEditItemPayload.preferredEnvironment,
+                    newEditItemPayload.callbackUrl,
+                    UNKNOWN_LOCATION,
+                    0
+                )
+        }
     }
 
     @Test
@@ -355,7 +400,7 @@ class ItemControllerTest(
         matches = "local-dev",
         disabledReason = "Only local-dev has properly configured keycloak & JWT"
     )
-    fun `updateItem with unauthorized user returns 403`() {
+    fun `updateOrCreateItem with unauthorized user returns 403`() {
         webTestClient
             .mutateWith(csrf())
             .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_item"), SimpleGrantedAuthority("ROLE_asta")))
@@ -384,7 +429,9 @@ class ItemControllerTest(
     private val testItemPayload = testItem.toApiPayload()
 
     private val testItemEditPayload =
-        ApiEditItemPayload(
+        ApiCreateOrUpdateItemPayload(
+            hostId = "axiell-01",
+            hostName = HostName.AXIELL,
             description = "Edited description",
             itemCategory = ItemCategory.FILM,
             packaging = Packaging.BOX,
@@ -393,6 +440,8 @@ class ItemControllerTest(
         )
 
     private val duplicateItemPayload = testItemPayload.copy(hostId = "duplicateItemId")
+
+    private val newEditItemPayload = testItemEditPayload.copy(hostId = "some-new-id")
 
     fun populateDb() {
         runBlocking {
