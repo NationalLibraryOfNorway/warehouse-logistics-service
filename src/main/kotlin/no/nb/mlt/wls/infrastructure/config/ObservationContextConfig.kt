@@ -8,7 +8,6 @@ import reactor.core.publisher.Hooks
 
 @Configuration
 class ObservationContextConfig {
-
     @PostConstruct
     fun configureContextPropagation() {
         // Ensure ObservationThreadLocalAccessor is registered
