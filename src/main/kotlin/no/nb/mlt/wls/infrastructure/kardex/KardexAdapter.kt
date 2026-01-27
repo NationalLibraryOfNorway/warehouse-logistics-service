@@ -81,6 +81,10 @@ class KardexAdapter(
             }.awaitSingle()
     }
 
+    override suspend fun editItem(item: Item) {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun deleteOrder(
         orderId: String,
         hostName: HostName

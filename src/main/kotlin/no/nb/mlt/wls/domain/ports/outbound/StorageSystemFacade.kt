@@ -5,6 +5,7 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.ResourceNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 
 /**
@@ -25,6 +26,9 @@ interface StorageSystemFacade {
 
     @Throws(DuplicateResourceException::class)
     suspend fun createOrder(order: Order)
+
+    @Throws(StorageSystemException::class, ResourceNotFoundException::class)
+    suspend fun editItem(item: Item)
 
     suspend fun deleteOrder(
         orderId: String,

@@ -14,6 +14,7 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.NotSupportedException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.ResourceNotFoundException
 import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}
@@ -119,10 +120,25 @@ class StorageEventProcessorAdapter(
             return
         }
 
-        logger.error {
-            """
-            !!!
-                Item edit handling not yet implemented.
+        if (item.quantity == 0) {
+            newStorageCandidates.forEach { storageCandidate ->
+                logger.info {
+                    "Updating ${item.hostId} for ${item.hostName} in $storageCandidate"
+                }
+                try {
+                    storageCandidate.editItem(item)
+                } catch (e: ResourceNotFoundException) {
+                    logger.warn {
+                        "Could not find item, trying to create it instead"
+                    }
+                    storageCandidate.createItem(item)
+                    logger.info { "Created item ${item.hostId} for ${item.hostName} in storage system $storageCandidate" }
+                } catch (e: Exception) {
+                    logger.error(e) { "Error occurred while editing item $item" }
+                }
+            }
+            logger.info {
+                """
                 Item ${item.hostId} metadata changed from this:
                     [$oldItem]
                 to this:
@@ -131,9 +147,22 @@ class StorageEventProcessorAdapter(
                     $oldStorageCandidates
                 new storage candidates:
                     $newStorageCandidates
-                No updates will be propagated to storage systems.
-            !!!
-            """.trimIndent()
+                """.trimIndent()
+            }
+        } else if (item.quantity == 1) {
+            logger.warn {
+                """
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+                No changes were made to storages as the items need to be ordered out from the system
+                """.trimIndent()
+            }
         }
     }
 
