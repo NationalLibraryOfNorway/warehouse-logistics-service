@@ -142,7 +142,7 @@ spring:
 
   # Set the database settings for the local-dev profile
   mongodb:
-    uri: mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls
+    uri: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}/wls?replicaSet=rs0&authSource=wls
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:

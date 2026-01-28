@@ -122,6 +122,15 @@ Its default Spring run configuration for the application works well.
 To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `local-dev`.
 In case you can't/won't use local Keycloak instance, then provide the `KEYCLOAK_ISSUER_URI` variable (see below) and set the `SPRING_PROFILES_ACTIVE` variable to `stage`.
 Keycloak in `dev` and `stage` is set up with a test client `wls`.
+   <option name="ACTIVE_PROFILES" value="local-dev" />
+MONGODB_USERNAME
+MONGODB_PASSWORD
+MONGODB_HOST
+EMAIL_PORT
+EMAIL_SERVER
+ORDER_HANDLER_EMAIL
+ORDER_SENDER_EMAIL
+
 
 ## Running Tests
 

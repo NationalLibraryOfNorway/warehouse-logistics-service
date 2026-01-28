@@ -36,7 +36,7 @@ if (!db.system.users.findOne({ user: "wls" })) {
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
         "associatedStorage": "SYNQ",
-        "confidential": "false",
+        "confidential": false,
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
     db.items.insertOne({
@@ -50,7 +50,7 @@ if (!db.system.users.findOne({ user: "wls" })) {
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
         "associatedStorage": "SYNQ",
-        "confidential": "true",
+        "confidential": true,
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
 
