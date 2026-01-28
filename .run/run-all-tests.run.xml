@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="All Tests" type="JUnit" factoryName="JUnit">
+  <configuration default="false" name="run-all-tests" type="JUnit" factoryName="JUnit">
     <module name="wls" />
     <extension name="coverage">
       <pattern>

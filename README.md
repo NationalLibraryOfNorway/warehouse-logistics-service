@@ -119,18 +119,32 @@ docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/w
 
 For local development and testing an IDE like [IntelliJ IDEA](https://www.jetbrains.com/idea/) is recommended.
 Its default Spring run configuration for the application works well.
-To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `local-dev`.
-In case you can't/won't use local Keycloak instance, then provide the `KEYCLOAK_ISSUER_URI` variable (see below) and set the `SPRING_PROFILES_ACTIVE` variable to `stage`.
-Keycloak in `dev` and `stage` is set up with a test client `wls`.
-   <option name="ACTIVE_PROFILES" value="local-dev" />
-MONGODB_USERNAME
-MONGODB_PASSWORD
-MONGODB_HOST
-EMAIL_PORT
-EMAIL_SERVER
-ORDER_HANDLER_EMAIL
-ORDER_SENDER_EMAIL
+Ensure that you have the [Docker Compose file](docker/compose.yaml "Link to project Docker compose file") running before running the application.
+User provided [run config](.run/run-hermes.run.xml), or set the `SPRING_PROFILES_ACTIVE` / `Active Profiles` variable to `local-dev`.
 
+App has a default configuration for local development, however in your run configuration you can override the default values by setting the environment variables in the run configuration.
+Currently supported config values are:
+
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `KEYCLOAK_ISSUER_URI`
+- `KEYCLOAK_TOKEN_AUD`
+- `EMAIL_SERVER`
+- `EMAIL_PORT`
+- `MONGODB_URI`
+- `CALLBACK_SECRET`
+- `SYNQ_BASE_URL`
+- `KARDEX_ENABLED`
+- `KARDEX_BASE_URL`
+- `LOGISTICS_ENABLED`
+- `ORDER_HANDLER_EMAIL`
+- `ORDER_SENDER_EMAIL`
+- `TIMEOUT_SMTP`
+- `TIMEOUT_MONGO`
+- `TIMEOUT_INVENTORY`
+- `TIMEOUT_STORAGE`
+- `HTTP_PROXY_HOST`
+- `HTTP_PROXY_PORT`
+- `HTTP_NON_PROXY_HOSTS`
 
 ## Running Tests
 

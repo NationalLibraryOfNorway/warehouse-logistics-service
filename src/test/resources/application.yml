@@ -1,20 +1,16 @@
-# This is the main configuration file for the application
-# It contains the configuration for the application that is common for all profiles
-# The configuration for the stage and prod profiles is in the same file
-# The configuration for the stage and prod profiles is separated by ---
+# Test configuration for Hermes application
 spring:
-  # Application name setup
   application:
     name: Hermes
-  # Set time limit for shutdown phase
   lifecycle:
     timeout-per-shutdown-phase: 15s
-  # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
-  # Configure Kafka
+  http:
+    codecs:
+      max-in-memory-size: 1000KB
+
   kafka:
-    # If and how to retry sending Kafka messages
     retry:
       topic:
         enabled: true
@@ -29,128 +25,81 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
-# Server port for the main application
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8082/realms/mlt-local}
+          audiences: ${KEYCLOAK_TOKEN_AUD:http://localhost:8080}
+
+  mail:
+    host: ${EMAIL_SERVER:localhost}
+    port: ${EMAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: ${TIMEOUT_SMTP:8000}
+          timeout: ${TIMEOUT_SMTP:8000}
+          writetimeout: ${TIMEOUT_SMTP:8000}
+
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls}
+
 server:
   port: 8080
   shutdown: graceful
 
-# Enable actuator endpoints and set the port
 management:
   endpoints:
     web:
       base-path: /hermes/actuator
   endpoint:
     health:
-      # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
       access: read_only
   server:
     port: 8888
 
-# Swagger config for the application
 springdoc:
   api-docs:
-    # Set the base path for the Swagger API documentation
     path: /hermes/api-docs
   swagger-ui:
-    # Set the base path for Swagger UI
     path: /hermes/swagger
-  # Don't show actuator endpoints in Swagger, they are on different port
   show-actuator: false
 
 logging:
   level:
-    # Set the logging level for the web package to debug
+    no.nb.mlt.wls: debug
     web: debug
 
-# Set a dummycatalog base path to SynQ for testing purposes
+callback:
+  secret: ${CALLBACK_SECRET:superdupersecretkey}
+
 synq:
   path:
-    base: http://localhost:8181/synq/resources
+    base: ${SYNQ_BASE_URL:http://localhost:8181/synq/resources}
 
-# Set a dummycatalog base path to Kardex for testing purposes
 kardex:
-  enabled: false
+  enabled: ${KARDEX_ENABLED:false}
   path:
-    base: http://localhost:8182/kardex
+    base: ${KARDEX_BASE_URL:http://localhost:8182/kardex}
 
 logistics:
-  enabled: true
+  enabled: ${LOGISTICS_ENABLED:true}
 
-# Secret for the signature on callbacks for the local-dev profile
-callback:
-  secret: superdupersecretkey
-
-# Configures destination e-mails for receivers
 wls:
   order:
     handler:
-      email: daniel@mlt.hermes.no
+      email: ${ORDER_HANDLER_EMAIL:daniel@mlt.hermes.no}
     sender:
-      email: hermes+mlt@nb.no
+      email: ${ORDER_SENDER_EMAIL:hermes@mlt.hermes.no}
 
-# Define timeouts for calls to external services
 timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
+  mongoTimeout: ${TIMEOUT_MONGO:8}
+  inventoryTimeout: ${TIMEOUT_INVENTORY:10}
+  storageTimeout: ${TIMEOUT_STORAGE:10}
 
-# Set the proxy settings for the application
 proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
-
----
-
-# This is the configuration for the local-dev profile
-spring:
-  config:
-    activate:
-      # This part of the app config is only activated when the profile is local-dev
-      on-profile: local-dev
-
-  # Set the security settings for the local-dev profile
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8082/realms/mlt-local
-          audiences: http://localhost:8080
-
-  # Set the database settings for the local-dev profile
-  mongodb:
-    uri: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}/wls?replicaSet=rs0&authSource=wls
-
-# Secret for the signature on callbacks for the local-dev profile
-callback:
-  secret: superdupersecretkey
-
-# Set a dummycatalog base path to SynQ for testing purposes
-synq:
-  path:
-    base: http://localhost:8181/synq/resources
-
-# Set a dummycatalog base path to Kardex for testing purposes
-kardex:
-  enabled: false
-  path:
-    base: http://localhost:8182/kardex
-
-# Configures destination e-mails for receivers
-wls:
-  order:
-    handler:
-      email: daniel@mlt.hermes.no
-
-# Define timeouts for calls to external services
-timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
-
-# Set the proxy settings for the application
-proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
+  http-proxy-host: ${HTTP_PROXY_HOST:localhost}
+  http-proxy-port: ${HTTP_PROXY_PORT:3128}
+  non-proxy-hosts: ${HTTP_NON_PROXY_HOSTS:localhost|127.0.0.1|docker}
