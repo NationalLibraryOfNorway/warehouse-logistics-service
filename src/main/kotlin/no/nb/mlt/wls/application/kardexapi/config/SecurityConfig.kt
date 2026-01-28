@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.application.kardexapi.config
 
-import no.nb.mlt.wls.application.hostapi.config.SecurityConfig.RealmAccessToAuthoritiesConverter
+import no.nb.mlt.wls.application.hostapi.config.SecurityConfig
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -28,6 +28,7 @@ class SecurityConfig {
             csrf { }
             authorizeExchange {
                 authorize("/hermes/kardex/api-docs", permitAll)
+                authorize("/hermes/kardex/api-docs.yaml", permitAll)
                 authorize("/hermes/kardex/api-docs/**", permitAll)
                 authorize("/hermes/kardex/swagger", permitAll)
                 authorize("/hermes/kardex/swagger/**", permitAll)
@@ -37,7 +38,7 @@ class SecurityConfig {
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
-                jwt { jwtAuthenticationConverter = RealmAccessToAuthoritiesConverter() }
+                jwt { jwtAuthenticationConverter = SecurityConfig.RealmAccessToAuthoritiesConverter() }
             }
         }
 

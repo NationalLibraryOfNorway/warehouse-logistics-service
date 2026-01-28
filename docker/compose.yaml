@@ -89,7 +89,7 @@ services:
   # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
   kafka:
     image: "apache/kafka:4.1.1"
-    restart: always
+    restart: unless-stopped
     hostname: kafka
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
@@ -127,6 +127,14 @@ services:
         --partitions 1 \
         --replication-factor 1
       '
+
+  email:
+    image: haravich/fake-smtp-server
+    restart: unless-stopped
+    hostname: email
+    ports:
+      - "1025:1025"
+      - "1080:1080"
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality

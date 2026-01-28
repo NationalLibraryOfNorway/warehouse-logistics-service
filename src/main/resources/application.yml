@@ -12,6 +12,11 @@ spring:
   # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
+  # Configure HTTP codecs' max in-memory size to avoid OOM while streaming
+  http:
+    codecs:
+      max-in-memory-size: 1000KB
+
   # Configure Kafka
   kafka:
     # If and how to retry sending Kafka messages
@@ -28,9 +33,6 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  http:
-    codecs:
-      max-in-memory-size: 1000KB
 
 # Server port for the main application
 server:
@@ -79,39 +81,42 @@ logging:
   level:
     no.nb.mlt.wls: debug
 
+# Secret for the signature on callbacks for the local-dev profile
+callback:
+  secret: ${CALLBACK_SECRET:superdupersecretkey}
+
 # Set a dummycatalog base path to SynQ for testing purposes
 synq:
   path:
-    base: http://localhost:8181/synq/resources
+    base: ${SYNQ_BASE_URL:http://localhost:8181/synq/resources}
 
-# Set a dummycatalog base path to Kardex for testing purposes
 kardex:
-  enabled: true
+  enabled: ${KARDEX_ENABLED:false}
   path:
-    base: http://localhost:8181/kardex/
+    base: ${KARDEX_BASE_URL:http://localhost:8182/kardex}
 
 logistics:
-  enabled: true
+  enabled: ${LOGISTICS_ENABLED:true}
 
 # Configures destination e-mails for receivers
 wls:
   order:
     handler:
-      email: daniel@mlt.hermes.no
+      email: ${ORDER_HANDLER_EMAIL:daniel@mlt.hermes.no}
     sender:
-      email: hermes+mlt@nb.no
+      email: ${ORDER_SENDER_EMAIL:hermes@mlt.hermes.no}
 
 # Define timeouts for calls to external services
 timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
+  mongoTimeout: ${TIMEOUT_MONGO:8}
+  inventoryTimeout: ${TIMEOUT_INVENTORY:10}
+  storageTimeout: ${TIMEOUT_STORAGE:10}
 
 # Set the proxy settings for the application
 proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
+  http-proxy-host: ${HTTP_PROXY_HOST:localhost}
+  http-proxy-port: ${HTTP_PROXY_PORT:3128}
+  non-proxy-hosts: ${HTTP_NON_PROXY_HOSTS:localhost|127.0.0.1|docker}
 
 ---
 
@@ -122,64 +127,28 @@ spring:
       # This part of the app config is only activated when the profile is local-dev
       on-profile: local-dev
 
-  # Set the security settings for the local-dev profile
+  # Config security settings
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8082/realms/mlt-local
-          audiences: http://localhost:8080
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8082/realms/mlt-local}
+          audiences: ${KEYCLOAK_TOKEN_AUD:http://localhost:8080}
 
+  # Configure mail settings
   mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
+    host: ${EMAIL_SERVER:localhost}
+    port: ${EMAIL_PORT:1025}
     properties:
       mail:
         smtp:
-          connectiontimeout: "8000"
-          timeout: "5000"
-          writetimeout: "8000"
+          connectiontimeout: ${TIMEOUT_SMTP:8000}
+          timeout: ${TIMEOUT_SMTP:8000}
+          writetimeout: ${TIMEOUT_SMTP:8000}
 
-  # Set the database settings for the local-dev profile
+  # Configure MongoDB settings
   mongodb:
-    uri: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}/wls?replicaSet=rs0&authSource=wls
-
-# Secret for the signature on callbacks for the local-dev profile
-callback:
-  secret: superdupersecretkey
-
-# Set a dummycatalog base path to SynQ for testing purposes
-synq:
-  path:
-    base: http://localhost:8181/synq/resources
-
-kardex:
-  enabled: false
-  path:
-    base: http://localhost:8182/kardex
-
-logistics:
-  enabled: true
-
-# Configures destination e-mails for receivers
-wls:
-  order:
-    handler:
-      email: ${ORDER_HANDLER_EMAIL}
-    sender:
-      email: ${ORDER_SENDER_EMAIL}
-
-# Define timeouts for calls to external services
-timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
-
-# Set the proxy settings for the application
-proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
+    uri: ${MONGODB_URI:mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls}
 
 ---
 
@@ -248,7 +217,7 @@ timeout:
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
   http-proxy-port: ${HTTP_PROXY_PORT}
-  non-proxy-hosts: localhost|127.0.0.1|docker
+  non-proxy-hosts: ${HTTP_NON_PROXY_HOSTS:localhost|127.0.0.1|docker}
 
 ---
 
@@ -317,7 +286,7 @@ timeout:
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
   http-proxy-port: ${HTTP_PROXY_PORT}
-  non-proxy-hosts: localhost|127.0.0.1|docker
+  non-proxy-hosts: ${HTTP_NON_PROXY_HOSTS:localhost|127.0.0.1|docker}
 
 logging:
   level:
