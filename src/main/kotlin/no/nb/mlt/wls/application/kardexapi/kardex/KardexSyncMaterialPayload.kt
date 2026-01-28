@@ -6,6 +6,7 @@ import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
+import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 
 data class KardexSyncMaterialPayload(
@@ -38,7 +39,7 @@ fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.Item
             hostId = kardexPayload.hostId,
             hostName = HostName.fromString(kardexPayload.hostName),
             quantity = kardexPayload.quantity.toInt(),
-            location = kardexPayload.location,
+            location = kardexPayload.location.ifBlank { UNKNOWN_LOCATION },
             associatedStorage = AssociatedStorage.KARDEX,
             description = kardexPayload.description,
             itemCategory = ItemCategory.UNKNOWN,
