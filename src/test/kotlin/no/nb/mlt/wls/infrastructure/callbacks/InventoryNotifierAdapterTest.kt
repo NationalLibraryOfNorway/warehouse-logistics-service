@@ -283,7 +283,7 @@ class InventoryNotifierAdapterTest {
     @Test
     fun `should not retry on malformed callback URL for item`() =
         runTest {
-            val itemWithBadUrl = createTestItem(callbackUrl = "https://invalid-host-that-does-not-exist-69420.com/callback")
+            val itemWithBadUrl = createTestItem(callbackUrl = "https://invalid-host-that-does-not-exist-69420.cum/callback")
 
             assertDoesNotThrow {
                 inventoryNotifierAdapter.itemChanged(itemWithBadUrl, timestamp, messageId)
