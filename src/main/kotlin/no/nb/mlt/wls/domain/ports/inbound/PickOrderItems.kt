@@ -3,6 +3,7 @@ package no.nb.mlt.wls.domain.ports.inbound
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 
 /**
  * A port for handling the process of marking specific items in an order as picked.
@@ -17,6 +18,7 @@ import no.nb.mlt.wls.domain.model.Order
  * @see Order
  */
 fun interface PickOrderItems {
+    @Throws(OrderNotFoundException::class)
     suspend fun pickOrderItems(
         hostName: HostName,
         pickedItemIds: List<String>,
