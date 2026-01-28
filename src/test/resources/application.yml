@@ -28,9 +28,6 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  reactor:
-    # Set context propagation to auto to enable context propagation in reactive streams
-    context-propagation: auto
 
 # Server port for the main application
 server:
@@ -123,9 +120,7 @@ spring:
 
   # Set the database settings for the local-dev profile
   mongodb:
-    password: drossap
-    database: wls
-    username: bruker
+    uri: mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:

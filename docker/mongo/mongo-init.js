@@ -3,19 +3,27 @@
 // If for some reason it fails to load, re-create the container.
 //     (by running "docker compose down")
 db = db.getSiblingDB('admin');
-if (!db.system.users.findOne({ user: "bruker" })) {
-    print("START ##################################################################");
 
+if (!db.system.users.findOne({ user: "wls" })) {
+    print("#####################################################################");
+    print("##############################  START  ##############################");
+    print("#####################################################################");
+
+    print("Creating WLS database, user, and collections...");
+
+
+    print("Creating user wls with read-write access to the wls database...")
     db = db.getSiblingDB('wls');
     db.createUser(
             {
-                user: "bruker",
-                pwd: "drossap",
+                user: "wls",
+                pwd: "slw",
                 roles: [{ role: "readWrite", db: "wls" }],
             },
     );
 
 
+    print("Creating items collection and inserting sample data...")
     db.createCollection("items");
     db.items.insertOne({
         "hostId": "mlt-12345",
@@ -28,6 +36,7 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
         "associatedStorage": "SYNQ",
+        "confidential": "false",
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
     db.items.insertOne({
@@ -41,10 +50,12 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         "location": "SYNQ_WAREHOUSE",
         "quantity": 1,
         "associatedStorage": "SYNQ",
+        "confidential": "true",
         "_class": "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem"
     })
 
 
+    print("Creating orders collection and inserting sample data...")
     db.createCollection("orders")
     db.orders.insertOne({
         "hostName": "AXIELL",
@@ -72,5 +83,7 @@ if (!db.system.users.findOne({ user: "bruker" })) {
         "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
     })
 
-    print("END ####################################################################");
+    print("#####################################################################");
+    print("###############################  END  ###############################");
+    print("#####################################################################");
 }

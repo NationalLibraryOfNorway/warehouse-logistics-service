@@ -31,9 +31,6 @@ spring:
   http:
     codecs:
       max-in-memory-size: 1000KB
-  reactor:
-    # Set context propagation to auto to enable context propagation in reactive streams
-    context-propagation: auto
 
 # Server port for the main application
 server:
@@ -145,7 +142,7 @@ spring:
 
   # Set the database settings for the local-dev profile
   mongodb:
-    uri: mongodb://bruker:drossap@localhost:27017/wls
+    uri: mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls
 
 # Secret for the signature on callbacks for the local-dev profile
 callback:

@@ -176,15 +176,16 @@ Regardless of what method you used to run the Hermes WLS, it has other services 
 In order to run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 This will spin up the following services:
 - MongoDB: database for the application
-  - Can be accessed through provided mongo-express service at: `http://localhost:8081`
   - Use the following credentials to log in:
-    - Username: `root`
-    - Password: `toor`
+    - Username: `wls`
+    - Password: `slw`
+- Zipkin: tracing service for the application
+  - Can be accessed at: `http://localhost:8081`
 - Keycloak: authentication and authorization service for the application
   - Can be accessed at: `http://localhost:8082`
   - Use the following credentials to log in:
-    - Username: `root`
-    - Password: `toor`
+    - Username: `wls`
+    - Password: `slw`
 - Kafka: a message queue system for handling inventory statistics messages
   - Can be accessed at: `http://localhost:9092`
   - You can use the Kafka plugin for IntelliJ to view topics, queues, and their contents
@@ -201,10 +202,6 @@ To start the services, run the following command:
 ```shell
 cd docker
 docker compose up -d
-
-# If its the first time setting up, run the following command to setup replica set for MongoDB
-chmod 755 ./setup-replicaset.sh
-./setup-replicaset.sh
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.

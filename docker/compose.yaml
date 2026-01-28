@@ -2,7 +2,7 @@
 services:
     # Set up a local mongo instance for local development
   mongo-db:
-    image: mongo:8.0.16 # Same as the version in the prod env
+    image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
     restart: unless-stopped
     entrypoint: >
@@ -11,6 +11,11 @@ services:
       chmod 400 /data/keyfile.key &&
       chown mongodb:mongodb /data/keyfile.key &&
       /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     ports:
       - "27017:27017"
     environment:
@@ -18,24 +23,40 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
     volumes:
-      - ./mongo/mongo-init.js:/mongo-init.js:ro
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - mongodata:/data/db
       - mongoconfig:/data/configdb
       - mongoshared:/data
 
-  # Set up a mongo-express instance to view the mongo database
-  # Makes GUI available at: http://localhost:8081
-  mongo-express:
-    image: mongo-express:1.0.2
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
+  # Initialize replica set + seed data after Mongo is healthy
+  mongo-setup:
+    image: mongo:8.2.3
     depends_on:
-      - mongo-db
+      mongo-db:
+        condition: service_healthy
+    entrypoint: >
+      /bin/bash -c '
+      mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \\\"rs0\\\", members: [{_id: 0, host: \\\"mongo-db:27017\\\"}]})}" &&
+      mongosh -u root -p toor --host mongo-db --eval "load(\\\"/docker-entrypoint-initdb.d/mongo-init.js\\\")"
+      '
+    volumes:
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+  # Set up Zipkin for local development
+  # Zipkin is used to trace requests between services
+  # To view traces, go to http://localhost:8081
+  zipkin:
+    image: openzipkin/zipkin:3.5.1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9411/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "8081:9411"
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://root:toor@mongo-db:27017/?replicaSet=rs0
-      ME_CONFIG_OPTIONS_EDITORTHEME: gruvbox-dark
-      ME_CONFIG_BASICAUTH: false
+      STORAGE_TYPE: mem
 
   # Set up a local keycloak instance for local development
   # Keycloak is configured to automatically import a test realm with service accounts
@@ -46,8 +67,6 @@ services:
   # docker cp wls-local-keycloak-1:/tmp/mlt-local-realm-export.json ./docker/keycloak/import/mlt-local-realm-export.json
   # git add docker/keycloak/import/mlt-local-realm-export.json
   # This connects interactively to the container, uses keycloak export command to export the realm, copies the file to the local machine, and adds it to git
-  #
-  # Also, since I am a lazy boi: axiell -> E93MF2F8UfpRrCowAbVMStvsTzy0gmgr
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
     restart: always
@@ -72,47 +91,47 @@ services:
     image: "apache/kafka:4.1.1"
     restart: always
     hostname: kafka
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
     ports:
       - "9092:9092"
     environment:
-      KAFKA_CLUSTER_ID: 1
-      KAFKA_CFG_NODE_ID: 1
-      KAFKA_CFG_PROCESS_ROLES: broker,controller
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      ALLOW_PLAINTEXT_LISTENER: yes
-      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
   kafka-topic-setup:
     image: 'apache/kafka:4.1.1'
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     entrypoint: [ ]
     command: >
       bash -c '
-      echo "Waiting for Kafka to be ready..." &&
-      sleep 30 &&
-      kafka-topics.sh --create --if-not-exists \
+      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists \
         --bootstrap-server kafka:9092 \
         --topic hermes-mythos \
         --partitions 1 \
         --replication-factor 1
       '
 
-  zipkin:
-    image: openzipkin/zipkin:latest
-    ports:
-      - "9411:9411"
-
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
   mockoon:
-    image: mockoon/cli:9.2.0
+    image: mockoon/cli:9.5.0
     restart: always
     hostname: mockoon
     ports:
@@ -123,7 +142,7 @@ services:
 
   # Also use Mockoon for testing Kardex
   mockoon-kardex:
-    image: mockoon/cli:9.2.0
+    image: mockoon/cli:9.5.0
     restart: always
     hostname: mockoon
     ports:
@@ -134,7 +153,7 @@ services:
 
   # Also use Mockoon for testing the SynQ Controller
   mockoon-synq:
-    image: mockoon/cli:9.2.0
+    image: mockoon/cli:9.5.0
     restart: always
     hostname: mockoon
     ports:
