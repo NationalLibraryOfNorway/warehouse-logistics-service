@@ -3,7 +3,7 @@
 Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs ([National Library of Norway](https://nb.no/en "English version of the NLN website")) catalogues and storage systems.
 The goal with the service is to unite all the storage systems and catalogues used at NLN with a common interface.
 
-Benefits of this approach are:
+The benefits of this approach are:
 - Decoupling of the storage systems and catalogues, which make it easier to change systems if needed.
 - Makes it easier for end users to access material stored in different systems.
 - Storage systems don't need to know which catalogue to inform about changes, as the service will handle this.
@@ -52,11 +52,9 @@ Hermes WLS uses the following technologies:
 - [Vault](https://www.vaultproject.io "Vault homepage") for secrets management.
 - [GitHub Actions](https://github.com/features/actions "GitHub Actions homepage") for CI/CD.
 
-As of now the service is in the early stages of development, and is not yet in production.
-Therefore the technologies listed above are subject to change.
+As of now, the service is in the early stages of development so there's a chance of major changes occurring.
 Check the [pom.xml](pom.xml "Link to project's POM file") file for the most up-to-date list of dependencies.
 As well as the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") for the current Docker image setup.
-And lastly the [Kubernetes deployment](k8s/prod/wls.yml "Link to project's k8s deployment file in production") for the current deployment setup.
 You might also want to check the [GitHub Actions](.github/workflows/deploy-project.yaml "Link to project's CI/CD pipeline definition file") for the current CI/CD setup.
 
 # Running the Application

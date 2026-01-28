@@ -72,8 +72,8 @@ services:
     restart: always
     hostname: keycloak
     environment:
-      KEYCLOAK_ADMIN: root
-      KEYCLOAK_ADMIN_PASSWORD: toor
+      KEYCLOAK_ADMIN: wls
+      KEYCLOAK_ADMIN_PASSWORD: slw
     ports:
       - "8082:8080"
     command: start-dev --import-realm # Automatically import realm on startup with necessary clients
