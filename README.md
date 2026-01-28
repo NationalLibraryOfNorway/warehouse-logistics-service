@@ -3,7 +3,7 @@
 Hermes WLS (Warehouse and Logistics Service) functions as a middleware between NLNs ([National Library of Norway](https://nb.no/en "English version of the NLN website")) catalogues and storage systems.
 The goal with the service is to unite all the storage systems and catalogues used at NLN with a common interface.
 
-Benefits of this approach are:
+The benefits of this approach are:
 - Decoupling of the storage systems and catalogues, which make it easier to change systems if needed.
 - Makes it easier for end users to access material stored in different systems.
 - Storage systems don't need to know which catalogue to inform about changes, as the service will handle this.
@@ -52,11 +52,9 @@ Hermes WLS uses the following technologies:
 - [Vault](https://www.vaultproject.io "Vault homepage") for secrets management.
 - [GitHub Actions](https://github.com/features/actions "GitHub Actions homepage") for CI/CD.
 
-As of now the service is in the early stages of development, and is not yet in production.
-Therefore the technologies listed above are subject to change.
+As of now, the service is in the early stages of development so there's a chance of major changes occurring.
 Check the [pom.xml](pom.xml "Link to project's POM file") file for the most up-to-date list of dependencies.
 As well as the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") for the current Docker image setup.
-And lastly the [Kubernetes deployment](k8s/prod/wls.yml "Link to project's k8s deployment file in production") for the current deployment setup.
 You might also want to check the [GitHub Actions](.github/workflows/deploy-project.yaml "Link to project's CI/CD pipeline definition file") for the current CI/CD setup.
 
 # Running the Application
@@ -121,9 +119,32 @@ docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/w
 
 For local development and testing an IDE like [IntelliJ IDEA](https://www.jetbrains.com/idea/) is recommended.
 Its default Spring run configuration for the application works well.
-To test the service with authentication make sure that dev version of the Keycloak is running, and set the `SPRING_PROFILES_ACTIVE` variable to `local-dev`.
-In case you can't/won't use local Keycloak instance, then provide the `KEYCLOAK_ISSUER_URI` variable (see below) and set the `SPRING_PROFILES_ACTIVE` variable to `stage`.
-Keycloak in `dev` and `stage` is set up with a test client `wls`.
+Ensure that you have the [Docker Compose file](docker/compose.yaml "Link to project Docker compose file") running before running the application.
+User provided [run config](.run/run-hermes.run.xml), or set the `SPRING_PROFILES_ACTIVE` / `Active Profiles` variable to `local-dev`.
+
+App has a default configuration for local development, however in your run configuration you can override the default values by setting the environment variables in the run configuration.
+Currently supported config values are:
+
+- `KAFKA_BOOTSTRAP_SERVERS`
+- `KEYCLOAK_ISSUER_URI`
+- `KEYCLOAK_TOKEN_AUD`
+- `EMAIL_SERVER`
+- `EMAIL_PORT`
+- `MONGODB_URI`
+- `CALLBACK_SECRET`
+- `SYNQ_BASE_URL`
+- `KARDEX_ENABLED`
+- `KARDEX_BASE_URL`
+- `LOGISTICS_ENABLED`
+- `ORDER_HANDLER_EMAIL`
+- `ORDER_SENDER_EMAIL`
+- `TIMEOUT_SMTP`
+- `TIMEOUT_MONGO`
+- `TIMEOUT_INVENTORY`
+- `TIMEOUT_STORAGE`
+- `HTTP_PROXY_HOST`
+- `HTTP_PROXY_PORT`
+- `HTTP_NON_PROXY_HOSTS`
 
 ## Running Tests
 
@@ -176,15 +197,16 @@ Regardless of what method you used to run the Hermes WLS, it has other services 
 In order to run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 This will spin up the following services:
 - MongoDB: database for the application
-  - Can be accessed through provided mongo-express service at: `http://localhost:8081`
   - Use the following credentials to log in:
-    - Username: `root`
-    - Password: `toor`
+    - Username: `wls`
+    - Password: `slw`
+- Zipkin: tracing service for the application
+  - Can be accessed at: `http://localhost:8081`
 - Keycloak: authentication and authorization service for the application
   - Can be accessed at: `http://localhost:8082`
   - Use the following credentials to log in:
-    - Username: `root`
-    - Password: `toor`
+    - Username: `wls`
+    - Password: `slw`
 - Kafka: a message queue system for handling inventory statistics messages
   - Can be accessed at: `http://localhost:9092`
   - You can use the Kafka plugin for IntelliJ to view topics, queues, and their contents
@@ -201,10 +223,6 @@ To start the services, run the following command:
 ```shell
 cd docker
 docker compose up -d
-
-# If its the first time setting up, run the following command to setup replica set for MongoDB
-chmod 755 ./setup-replicaset.sh
-./setup-replicaset.sh
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.

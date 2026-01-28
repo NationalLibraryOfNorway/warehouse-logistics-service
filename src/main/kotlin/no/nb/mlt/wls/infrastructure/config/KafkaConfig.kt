@@ -16,7 +16,7 @@ class KafkaConfig {
     private lateinit var bootstrapServers: String
 
     @Bean
-    fun producerFactory(): ProducerFactory<String, Object> {
+    fun producerFactory(): ProducerFactory<String, Any> {
         val producerProps =
             mapOf(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
@@ -28,5 +28,5 @@ class KafkaConfig {
     }
 
     @Bean
-    fun kafkaTemplate(): KafkaTemplate<String, Object> = KafkaTemplate(producerFactory())
+    fun kafkaTemplate(): KafkaTemplate<String, Any> = KafkaTemplate(producerFactory())
 }

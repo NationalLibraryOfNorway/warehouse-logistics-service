@@ -11,14 +11,14 @@ import java.time.Instant
  */
 interface InventoryNotifier {
     @Throws(UnableToNotifyException::class)
-    fun itemChanged(
+    suspend fun itemChanged(
         item: Item,
         eventTimestamp: Instant,
         messageId: String
     )
 
     @Throws(UnableToNotifyException::class)
-    fun orderChanged(
+    suspend fun orderChanged(
         order: Order,
         eventTimestamp: Instant,
         messageId: String

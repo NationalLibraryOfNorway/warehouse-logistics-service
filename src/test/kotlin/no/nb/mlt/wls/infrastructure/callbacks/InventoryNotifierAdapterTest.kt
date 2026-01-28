@@ -6,6 +6,7 @@ import com.ninjasquad.springmockk.MockkSpyBean
 import io.mockk.junit5.MockKExtension
 import io.mockk.spyk
 import io.mockk.verify
+import kotlinx.coroutines.test.runTest
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
@@ -74,215 +75,230 @@ class InventoryNotifierAdapterTest {
     }
 
     @Test
-    fun `should send callback on itemChange`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
+    fun `should send callback on itemChange`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        assertEquals(itemCallbackPath, request.path)
-        assertEquals("POST", request.method)
-        val requestItem: NotificationItemPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
-        assertEquals(itemNotificationPayload, requestItem)
-        verify(exactly = 0) { proxyWebClient.post() }
-        verify(exactly = 1) { webClient.post() }
-    }
-
-    @Test
-    fun `should send callback on orderChange`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
-
-        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        assertEquals(orderCallbackPath, request.path)
-        assertEquals("POST", request.method)
-        val requestOrder: NotificationOrderPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
-        assertEquals(orderNotificationPayload, requestOrder)
-        verify(exactly = 0) { proxyWebClient.post() }
-        verify(exactly = 1) { webClient.post() }
-    }
-
-    @Test
-    fun `should use proxied web client when notifying of item belonging to proxied host`() {
-        val item = createTestItem(hostName = HostName.ASTA, callbackUrl = mockServerItemCallbackPath)
-        val timestamp = Instant.now()
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
-
-        inventoryNotifierAdapter.itemChanged(item, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        assertEquals(itemCallbackPath, request.path)
-        assertEquals("POST", request.method)
-        verify(exactly = 1) { proxyWebClient.post() }
-        verify(exactly = 0) { webClient.post() }
-    }
-
-    @Test
-    fun `should use proxied web client when notifying of order belonging to proxied host`() {
-        val order = testOrderWithCallback.copy(hostName = HostName.ASTA)
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
-
-        inventoryNotifierAdapter.orderChanged(order, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        assertEquals(orderCallbackPath, request.path)
-        assertEquals("POST", request.method)
-        verify(exactly = 1) { proxyWebClient.post() }
-        verify(exactly = 0) { webClient.post() }
-    }
-
-    @Test
-    fun `should include signature header in item changed callback`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
-
-        inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        val sigHeader = request.getHeader(signatureHeader)
-        assertNotNull(sigHeader)
-        val timestampHeader = request.getHeader(timestampHeader)
-        assertNotNull(timestampHeader)
-        val bodyString = request.body.readUtf8()
-        val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
-        val signature = Base64.getEncoder().encodeToString(expectedSignature)
-        assertEquals(signature, sigHeader)
-    }
-
-    @Test
-    fun `should include signature header in order changed callback`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(200))
-
-        inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
-        val request = mockWebServer.takeRequest()
-
-        val sigHeader = request.getHeader(signatureHeader)
-        assertNotNull(sigHeader)
-        val timestampHeader = request.getHeader(timestampHeader)
-        assertNotNull(timestampHeader)
-        val bodyString = request.body.readUtf8()
-        val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
-        val signature = Base64.getEncoder().encodeToString(expectedSignature)
-        assertEquals(signature, sigHeader)
-    }
-
-    @Test
-    fun `should not retry on 4xx client error for item callback`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(404))
-
-        // Should complete without throwing exception (no retry)
-        assertDoesNotThrow {
             inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            assertEquals(itemCallbackPath, request.path)
+            assertEquals("POST", request.method)
+            val requestItem: NotificationItemPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
+            assertEquals(itemNotificationPayload, requestItem)
+            verify(exactly = 0) { proxyWebClient.post() }
+            verify(exactly = 1) { webClient.post() }
         }
 
-        val request = mockWebServer.takeRequest()
-        assertEquals(itemCallbackPath, request.path)
-        assertEquals("POST", request.method)
-
-        // Verify only one request was made (no retry)
-        assertEquals(1, mockWebServer.requestCount)
-    }
-
     @Test
-    fun `should not retry on 4xx client error for order callback`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(400))
+    fun `should send callback on orderChange`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        assertDoesNotThrow {
             inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            assertEquals(orderCallbackPath, request.path)
+            assertEquals("POST", request.method)
+            val requestOrder: NotificationOrderPayload = jacksonObjectMapper().readValue(request.body.readUtf8())
+            assertEquals(orderNotificationPayload, requestOrder)
+            verify(exactly = 0) { proxyWebClient.post() }
+            verify(exactly = 1) { webClient.post() }
         }
 
-        val request = mockWebServer.takeRequest()
-        assertEquals(orderCallbackPath, request.path)
-        assertEquals("POST", request.method)
+    @Test
+    fun `should use proxied web client when notifying of item belonging to proxied host`() =
+        runTest {
+            val item = createTestItem(hostName = HostName.ASTA, callbackUrl = mockServerItemCallbackPath)
+            val timestamp = Instant.now()
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        assertEquals(1, mockWebServer.requestCount)
-    }
+            inventoryNotifierAdapter.itemChanged(item, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            assertEquals(itemCallbackPath, request.path)
+            assertEquals("POST", request.method)
+            verify(exactly = 1) { proxyWebClient.post() }
+            verify(exactly = 0) { webClient.post() }
+        }
 
     @Test
-    fun `should throw exception on 5xx server error for item callback to allow retry`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(500))
+    fun `should use proxied web client when notifying of order belonging to proxied host`() =
+        runTest {
+            val order = testOrderWithCallback.copy(hostName = HostName.ASTA)
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        assertThrows<UnableToNotifyException> {
+            inventoryNotifierAdapter.orderChanged(order, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            assertEquals(orderCallbackPath, request.path)
+            assertEquals("POST", request.method)
+            verify(exactly = 1) { proxyWebClient.post() }
+            verify(exactly = 0) { webClient.post() }
+        }
+
+    @Test
+    fun `should include signature header in item changed callback`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
+
             inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            val sigHeader = request.getHeader(signatureHeader)
+            assertNotNull(sigHeader)
+            val timestampHeader = request.getHeader(timestampHeader)
+            assertNotNull(timestampHeader)
+            val bodyString = request.body.readUtf8()
+            val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
+            val signature = Base64.getEncoder().encodeToString(expectedSignature)
+            assertEquals(signature, sigHeader)
         }
 
-        val request = mockWebServer.takeRequest()
-        assertEquals(itemCallbackPath, request.path)
-        assertEquals("POST", request.method)
-    }
-
     @Test
-    fun `should throw exception on 5xx server error for order callback to allow retry`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(503))
+    fun `should include signature header in order changed callback`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
-        assertThrows<UnableToNotifyException> {
             inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            val sigHeader = request.getHeader(signatureHeader)
+            assertNotNull(sigHeader)
+            val timestampHeader = request.getHeader(timestampHeader)
+            assertNotNull(timestampHeader)
+            val bodyString = request.body.readUtf8()
+            val expectedSignature = getMac().doFinal("$timestampHeader.$bodyString".toByteArray())
+            val signature = Base64.getEncoder().encodeToString(expectedSignature)
+            assertEquals(signature, sigHeader)
         }
 
-        val request = mockWebServer.takeRequest()
-        assertEquals(orderCallbackPath, request.path)
-        assertEquals("POST", request.method)
-    }
-
     @Test
-    fun `should not retry on various 4xx errors`() {
-        val clientErrorCodes = listOf(400, 403, 404, 409, 422, 429)
+    fun `should not retry on 4xx client error for item callback`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(404))
 
-        clientErrorCodes.forEach { statusCode ->
-            mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
-
+            // Should complete without throwing exception (no retry)
             assertDoesNotThrow {
                 inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
             }
 
-            mockWebServer.takeRequest() // Clear the request
-        }
-    }
+            val request = mockWebServer.takeRequest()
+            assertEquals(itemCallbackPath, request.path)
+            assertEquals("POST", request.method)
 
-    @Test
-    fun `should retry on 401 error`() {
-        mockWebServer.enqueue(MockResponse().setResponseCode(401))
-
-        assertThrows<UnableToNotifyException> {
-            inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            // Verify only one request was made (no retry)
+            assertEquals(1, mockWebServer.requestCount)
         }
 
-        mockWebServer.takeRequest() // Clear the request
-        assertEquals(1, mockWebServer.requestCount)
-    }
+    @Test
+    fun `should not retry on 4xx client error for order callback`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(400))
+
+            assertDoesNotThrow {
+                inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+            }
+
+            val request = mockWebServer.takeRequest()
+            assertEquals(orderCallbackPath, request.path)
+            assertEquals("POST", request.method)
+
+            assertEquals(1, mockWebServer.requestCount)
+        }
 
     @Test
-    fun `should propagate error on various 5xx errors`() {
-        val serverErrorCodes = listOf(500, 501, 502, 503, 504)
+    fun `should throw exception on 5xx server error for item callback to allow retry`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(500))
 
-        serverErrorCodes.forEach { statusCode ->
-            mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
+            assertThrows<UnableToNotifyException> {
+                inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+            }
+
+            val request = mockWebServer.takeRequest()
+            assertEquals(itemCallbackPath, request.path)
+            assertEquals("POST", request.method)
+        }
+
+    @Test
+    fun `should throw exception on 5xx server error for order callback to allow retry`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(503))
+
+            assertThrows<UnableToNotifyException> {
+                inventoryNotifierAdapter.orderChanged(testOrderWithCallback, timestamp, messageId)
+            }
+
+            val request = mockWebServer.takeRequest()
+            assertEquals(orderCallbackPath, request.path)
+            assertEquals("POST", request.method)
+        }
+
+    @Test
+    fun `should not retry on various 4xx errors`() =
+        runTest {
+            val clientErrorCodes = listOf(400, 403, 404, 409, 422, 429)
+
+            clientErrorCodes.forEach { statusCode ->
+                mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
+
+                assertDoesNotThrow {
+                    inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+                }
+
+                mockWebServer.takeRequest() // Clear the request
+            }
+        }
+
+    @Test
+    fun `should retry on 401 error`() =
+        runTest {
+            mockWebServer.enqueue(MockResponse().setResponseCode(401))
 
             assertThrows<UnableToNotifyException> {
                 inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
             }
 
             mockWebServer.takeRequest() // Clear the request
+            assertEquals(1, mockWebServer.requestCount)
         }
-    }
 
     @Test
-    fun `should not retry on malformed callback URL for item`() {
-        val itemWithBadUrl = createTestItem(callbackUrl = "https://invalid-host-that-does-not-exist-69420.com/callback")
+    fun `should propagate error on various 5xx errors`() =
+        runTest {
+            val serverErrorCodes = listOf(500, 501, 502, 503, 504)
 
-        assertDoesNotThrow {
-            inventoryNotifierAdapter.itemChanged(itemWithBadUrl, timestamp, messageId)
+            serverErrorCodes.forEach { statusCode ->
+                mockWebServer.enqueue(MockResponse().setResponseCode(statusCode))
+
+                assertThrows<UnableToNotifyException> {
+                    inventoryNotifierAdapter.itemChanged(testItemWithCallback, timestamp, messageId)
+                }
+
+                mockWebServer.takeRequest() // Clear the request
+            }
         }
-    }
 
     @Test
-    fun `should not retry on malformed callback URL for order`() {
-        val orderWithBadUrl = testOrderWithCallback.copy(callbackUrl = "https://invalid-host-that-does-not-exist-66642.com/callback")
+    fun `should not retry on malformed callback URL for item`() =
+        runTest {
+            val itemWithBadUrl = createTestItem(callbackUrl = "https://invalid-host-that-does-not-exist-69420.cum/callback")
 
-        assertDoesNotThrow {
-            inventoryNotifierAdapter.orderChanged(orderWithBadUrl, timestamp, messageId)
+            assertDoesNotThrow {
+                inventoryNotifierAdapter.itemChanged(itemWithBadUrl, timestamp, messageId)
+            }
         }
-    }
+
+    @Test
+    fun `should not retry on malformed callback URL for order`() =
+        runTest {
+            val orderWithBadUrl = testOrderWithCallback.copy(callbackUrl = "https://invalid-host-that-does-not-exist-66642.com/callback")
+
+            assertDoesNotThrow {
+                inventoryNotifierAdapter.orderChanged(orderWithBadUrl, timestamp, messageId)
+            }
+        }
 
     private val itemCallbackPath = "/item-callback"
 

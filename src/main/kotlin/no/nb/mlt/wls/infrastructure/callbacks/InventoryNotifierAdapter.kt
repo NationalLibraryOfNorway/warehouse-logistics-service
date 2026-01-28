@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.callbacks
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.netty.resolver.dns.DnsErrorCauseException
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.Order
@@ -35,7 +36,7 @@ class InventoryNotifierAdapter(
     private val objectMapper: ObjectMapper,
     private val timeoutConfig: TimeoutProperties
 ) : InventoryNotifier {
-    override fun itemChanged(
+    override suspend fun itemChanged(
         item: Item,
         eventTimestamp: Instant,
         messageId: String
@@ -48,7 +49,7 @@ class InventoryNotifierAdapter(
         }
     }
 
-    override fun orderChanged(
+    override suspend fun orderChanged(
         order: Order,
         eventTimestamp: Instant,
         messageId: String
@@ -59,7 +60,7 @@ class InventoryNotifierAdapter(
         sendCallback(order.hostName, order.callbackUrl, payload, timestamp)
     }
 
-    private fun sendCallback(
+    private suspend fun sendCallback(
         hostName: HostName,
         callbackUrl: String,
         payload: String,
@@ -81,7 +82,7 @@ class InventoryNotifierAdapter(
             }.doOnError {
                 logger.error { "Error while sending update to callback URL: $callbackUrl" }
             }.onErrorMap { UnableToNotifyException("Unable to send callback", it) }
-            .block()
+            .awaitSingleOrNull()
     }
 
     /**

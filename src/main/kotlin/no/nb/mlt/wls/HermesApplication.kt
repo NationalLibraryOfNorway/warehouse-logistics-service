@@ -5,7 +5,6 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.boot.runApplication
 import org.springframework.data.mongodb.config.EnableReactiveMongoAuditing
 import org.springframework.scheduling.annotation.EnableScheduling
-import reactor.core.publisher.Hooks
 
 @ConfigurationPropertiesScan
 @SpringBootApplication
@@ -14,7 +13,5 @@ import reactor.core.publisher.Hooks
 class HermesApplication
 
 fun main(args: Array<String>) {
-    // Turn on automatic context propagation to enable traceId in logs
-    Hooks.enableAutomaticContextPropagation()
     runApplication<HermesApplication>(*args)
 }
