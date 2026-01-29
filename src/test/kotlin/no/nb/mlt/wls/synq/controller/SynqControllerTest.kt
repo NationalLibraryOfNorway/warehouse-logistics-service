@@ -3,9 +3,7 @@ package no.nb.mlt.wls.synq.controller
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.junit5.MockKExtension
-import io.mockk.verify
 import kotlinx.coroutines.reactive.awaitLast
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking

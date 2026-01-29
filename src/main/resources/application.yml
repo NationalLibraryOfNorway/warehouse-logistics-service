@@ -51,18 +51,6 @@ server:
   shutdown: graceful
 
 management:
-  otlp:
-    tracing:
-      endpoint: http://localhost:4318/v1/traces
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: http://localhost:9411/api/v2/spans
-  metrics:
-    tags:
-      application: ${spring.application.name}
   endpoints:
     web:
       base-path: /actuator
@@ -121,6 +109,79 @@ proxy:
 
 ---
 
+spring:
+  config:
+    activate:
+      on-profile: stage|prod
+
+  kafka:
+    retry:
+      topic:
+        enabled: true
+        attempts: 5
+        backoff:
+          delay: 5s
+          multiplier: 2
+    template:
+      default-topic: hermes-mythos
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          audiences: ${KEYCLOAK_TOKEN_AUD}
+
+  mail:
+    host: ${EMAIL_SERVER}
+    port: ${EMAIL_PORT}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: ${TIMEOUT_SMTP}
+          timeout: ${TIMEOUT_SMTP}
+          writetimeout: ${TIMEOUT_SMTP}
+
+  mongodb:
+    uri: ${MONGODB_URI}
+
+callback:
+  secret: ${CALLBACK_SECRET}
+
+synq:
+  path:
+    base: ${SYNQ_BASE_URL}
+
+kardex:
+  enabled: ${KARDEX_ENABLED}
+  path:
+    base: ${KARDEX_BASE_URL}
+
+logistics:
+  enabled: ${LOGISTICS_ENABLED}
+
+wls:
+  order:
+    handler:
+      email: ${ORDER_HANDLER_EMAIL}
+    sender:
+      email: ${ORDER_SENDER_EMAIL}
+
+timeout:
+  mongoTimeout: ${TIMEOUT_MONGO}
+  inventoryTimeout: ${TIMEOUT_INVENTORY}
+  storageTimeout: ${TIMEOUT_STORAGE}
+
+proxy:
+  http-proxy-host: ${HTTP_PROXY_HOST}
+  http-proxy-port: ${HTTP_PROXY_PORT}
+
+---
+
 # Production profile — only overrides what differs
 spring:
   config:
@@ -130,3 +191,4 @@ spring:
 logging:
   level:
     no.nb.mlt.wls: info
+    web: info

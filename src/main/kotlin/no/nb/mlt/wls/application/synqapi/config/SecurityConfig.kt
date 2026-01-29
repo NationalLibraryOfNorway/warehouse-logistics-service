@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.application.synqapi.config
 
-import no.nb.mlt.wls.application.hostapi.config.SecurityConfig
+import no.nb.mlt.wls.application.hostapi.config.SecurityConfig.RealmAccessToAuthoritiesConverter
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -38,7 +38,7 @@ class SecurityConfig {
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
-                jwt { jwtAuthenticationConverter = SecurityConfig.RealmAccessToAuthoritiesConverter() }
+                jwt { jwtAuthenticationConverter = RealmAccessToAuthoritiesConverter() }
             }
         }
 

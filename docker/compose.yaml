@@ -42,21 +42,16 @@ services:
     volumes:
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
-  # Set up Zipkin for local development
-  # Zipkin is used to trace requests between services
-  # To view traces, go to http://localhost:8081
-  zipkin:
-    image: openzipkin/zipkin:3.5.1
+  # Set up a local SMTP server for local development
+  # Makes GUI available at: http://localhost:8081
+  # Useful for testing email sending functionality locally, without spamming actual email accounts
+  email:
+    image: haravich/fake-smtp-server
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9411/health || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
+    hostname: email
     ports:
-      - "8081:9411"
-    environment:
-      STORAGE_TYPE: mem
+      - "1025:1025"
+      - "8081:1080"
 
   # Set up a local keycloak instance for local development
   # Keycloak is configured to automatically import a test realm with service accounts
@@ -127,14 +122,6 @@ services:
         --partitions 1 \
         --replication-factor 1
       '
-
-  email:
-    image: haravich/fake-smtp-server
-    restart: unless-stopped
-    hostname: email
-    ports:
-      - "1025:1025"
-      - "1080:1080"
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality

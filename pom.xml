@@ -113,21 +113,10 @@
       <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
 
-    <!-- Add tracing dependencies for Zipkin -->
-    <dependency>
-      <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-tracing-bridge-brave</artifactId>
-    </dependency>
-
     <!-- Core context propagation API -->
     <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>context-propagation</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>io.zipkin.reporter2</groupId>
-      <artifactId>zipkin-reporter-brave</artifactId>
     </dependency>
 
     <dependency>
