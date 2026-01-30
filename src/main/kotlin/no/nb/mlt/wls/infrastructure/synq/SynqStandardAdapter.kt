@@ -10,7 +10,6 @@ import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
@@ -22,6 +21,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.toEntity
 import reactor.core.publisher.Mono
 import java.net.URI
 import java.util.concurrent.TimeoutException
@@ -44,7 +44,7 @@ class SynqStandardAdapter(
             .uri(uri)
             .bodyValue(item.toSynqPayload())
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError {
                 if (it is TimeoutException) {
@@ -80,7 +80,7 @@ class SynqStandardAdapter(
             .uri(URI.create("$baseUrl/orders/batch"))
             .bodyValue(orders)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError {
                 if (it is TimeoutException) {
@@ -119,7 +119,7 @@ class SynqStandardAdapter(
             .uri(uri)
             .bodyValue(product)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
@@ -149,7 +149,7 @@ class SynqStandardAdapter(
             .delete()
             .uri(URI.create("$baseUrl/orders/$owner/$synqOrderId"))
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError {
                 if (it is TimeoutException) {

@@ -150,7 +150,7 @@ class StorageEventProcessorAdapter(
                 """.trimIndent()
             }
         } else if (item.quantity == 1) {
-            logger.warn {
+            logger.error {
                 """
                 Item ${item.hostId} metadata changed from this:
                     [$oldItem]

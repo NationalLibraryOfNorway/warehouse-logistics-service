@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.toEntity
 import reactor.core.publisher.Mono
 import java.net.URI
 import java.util.concurrent.TimeoutException
@@ -40,7 +41,7 @@ class SynqAutostoreAdapter(
             .uri(uri)
             .bodyValue(item.toSynqPayload())
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
@@ -67,7 +68,7 @@ class SynqAutostoreAdapter(
             .uri(uri)
             .bodyValue(product)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
@@ -89,7 +90,7 @@ class SynqAutostoreAdapter(
             .uri(URI.create("$baseUrl/orders/batch"))
             .bodyValue(orders)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
@@ -126,7 +127,7 @@ class SynqAutostoreAdapter(
             .delete()
             .uri(URI.create("$baseUrl/orders/$owner/$synqOrderId"))
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
