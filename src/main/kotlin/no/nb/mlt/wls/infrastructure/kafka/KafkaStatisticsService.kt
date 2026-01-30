@@ -1,6 +1,7 @@
 package no.nb.mlt.wls.infrastructure.kafka
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import no.nb.mlt.wls.domain.model.events.Event
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -38,6 +39,6 @@ class KafkaStatisticsService(
             .toMono()
             .doOnError { logger.error(it) { "Error while sending statistics event: $statisticsEvent" } }
             .onErrorComplete() // Error logged, do we need to do something else here?
-            .block()
+            .awaitSingleOrNull()
     }
 }
