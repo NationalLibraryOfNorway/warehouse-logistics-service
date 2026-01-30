@@ -26,14 +26,14 @@ class SecurityConfig {
         http {
             securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes-admin/**"))
             authorizeExchange {
-                authorize("/hermes-admin/api-docs", permitAll)
-                authorize("/hermes-admin/api-docs.yaml", permitAll)
-                authorize("/hermes-admin/api-docs/**", permitAll)
-                authorize("/hermes-admin/swagger", permitAll)
-                authorize("/hermes-admin/swagger/**", permitAll)
-                authorize("/hermes-admin/swagger-ui/**", permitAll)
-                authorize("/hermes-admin/webjars/swagger-ui/**", permitAll)
-                authorize("/hermes-admin/**", hasRole("hermes-admin"))
+                authorize("/hermes/admin/api-docs", permitAll)
+                authorize("/hermes/admin/api-docs.yaml", permitAll)
+                authorize("/hermes/admin/api-docs/**", permitAll)
+                authorize("/hermes/admin/swagger", permitAll)
+                authorize("/hermes/admin/swagger/**", permitAll)
+                authorize("/hermes/admin/swagger-ui/**", permitAll)
+                authorize("/hermes/admin/webjars/swagger-ui/**", permitAll)
+                authorize("/hermes/admin/v1**", hasRole("hermes-admin"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {

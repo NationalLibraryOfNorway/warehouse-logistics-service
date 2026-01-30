@@ -29,7 +29,7 @@ class SwaggerConfig {
             .builder()
             .group("Admin API")
             .displayName("Admin API")
-            .pathsToMatch("/hermes-admin/**")
+            .pathsToMatch("/hermes/admin/**")
             .addOpenApiCustomizer {
                 it.security = listOf((SecurityRequirement().addList("clientCredentials")))
             }.build()
