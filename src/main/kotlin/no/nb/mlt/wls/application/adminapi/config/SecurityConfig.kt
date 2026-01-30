@@ -24,7 +24,7 @@ class SecurityConfig {
     @Order(Ordered.HIGHEST_PRECEDENCE)
     fun adminSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http {
-            securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes-admin/**"))
+            securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes/admin/**"))
             authorizeExchange {
                 authorize("/hermes/admin/api-docs", permitAll)
                 authorize("/hermes/admin/api-docs.yaml", permitAll)
@@ -33,7 +33,7 @@ class SecurityConfig {
                 authorize("/hermes/admin/swagger/**", permitAll)
                 authorize("/hermes/admin/swagger-ui/**", permitAll)
                 authorize("/hermes/admin/webjars/swagger-ui/**", permitAll)
-                authorize("/hermes/admin/v1**", hasRole("hermes-admin"))
+                authorize("/hermes/admin/v1/**", hasRole("hermes-admin"))
                 authorize(anyExchange, authenticated)
             }
             oauth2ResourceServer {
