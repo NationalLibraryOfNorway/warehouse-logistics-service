@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/hermes-admin/v1")
+@RequestMapping("/hermes/admin/v1")
 @Tag(name = "Administration endpoints", description = """API for administrative tasks""")
 class AdminController(
     private val catalogEventProcessor: EventProcessor<CatalogEvent>,
