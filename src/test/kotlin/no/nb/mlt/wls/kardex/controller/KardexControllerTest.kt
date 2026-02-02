@@ -2,6 +2,7 @@ package no.nb.mlt.wls.kardex.controller
 
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
+import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
@@ -164,7 +165,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload))
+                .bodyValue(listOf(transactionPayload))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -174,7 +175,7 @@ class KardexControllerTest(
             assert(order.status == Order.Status.IN_PROGRESS)
 
             val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
-            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity == transactionPayload.quantity.toInt())
             assert(item.quantity != testItem1.quantity)
         }
     }
@@ -188,7 +189,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload.copy(hostName = HostName.UNKNOWN.toString())))
+                .bodyValue(listOf(transactionPayload.copy(hostName = HostName.UNKNOWN.toString())))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -198,7 +199,7 @@ class KardexControllerTest(
             assert(order.status == Order.Status.IN_PROGRESS)
 
             val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
-            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity == transactionPayload.quantity.toInt())
             assert(item.quantity != testItem1.quantity)
         }
     }
@@ -212,7 +213,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload.copy(hostName = "")))
+                .bodyValue(listOf(transactionPayload.copy(hostName = "")))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -222,7 +223,7 @@ class KardexControllerTest(
             assert(order.status == Order.Status.IN_PROGRESS)
 
             val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
-            assert(item.quantity == orderUpdatePayload.quantity.toInt())
+            assert(item.quantity == transactionPayload.quantity.toInt())
             assert(item.quantity != testItem1.quantity)
         }
     }
@@ -236,7 +237,7 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload.copy(hostOrderId = "")))
+                .bodyValue(listOf(transactionPayload.copy(hostOrderId = "", location = "")))
                 .exchange()
                 .expectStatus()
                 .isBadRequest()
@@ -244,10 +245,18 @@ class KardexControllerTest(
     }
 
     @Test
-    fun `order update on missing order fails`() {
+    fun `order update on missing order only updates item`() {
         runTest {
             val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, "non-existing").awaitSingleOrNull()
-            assert(order == null)
+            assertThat(order).isNull()
+
+            val item =
+                itemRepository
+                    .findByHostNameAndHostId(
+                        HostName.fromString(transactionPayload.hostName),
+                        transactionPayload.hostId
+                    ).awaitSingleOrNull()
+            assertThat(item).isNotNull
 
             webTestClient
                 .mutateWith(csrf())
@@ -255,10 +264,21 @@ class KardexControllerTest(
                 .post()
                 .uri("/order-update")
                 .accept(MediaType.APPLICATION_JSON)
-                .bodyValue(listOf(orderUpdatePayload.copy(hostOrderId = "non-existing")))
+                .bodyValue(listOf(transactionPayload.copy(hostOrderId = "non-existing")))
                 .exchange()
                 .expectStatus()
-                .isNotFound
+                .isOk
+
+            val newItem =
+                itemRepository
+                    .findByHostNameAndHostId(
+                        HostName.fromString(transactionPayload.hostName),
+                        transactionPayload.hostId
+                    ).awaitSingleOrNull()
+            assertThat(newItem)
+                .isNotNull
+                .extracting("hostId", "hostName", "quantity")
+                .containsExactly(item!!.hostId, item.hostName, transactionPayload.quantity.toInt())
         }
     }
 
@@ -317,7 +337,7 @@ class KardexControllerTest(
             motiveType = MotiveType.NotSet
         )
 
-    private val orderUpdatePayload =
+    private val transactionPayload =
         KardexTransactionPayload(
             hostOrderId = testOrder.hostOrderId,
             hostName = testOrder.hostName.toString(),

@@ -10,6 +10,7 @@ import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.DuplicateItemException
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ItemNotFoundException
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -51,9 +52,16 @@ class KardexController(
             val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
             val resolvedHostName = getHostNameForItem(payload.hostName, payload.hostId)
             val validPayload = payload.copy(hostName = resolvedHostName.toString())
-
             updateItem.updateItem(validPayload.toUpdateItemPayload())
-            pickOrderItems.pickOrderItems(resolvedHostName, validPayload.mapToOrderItems(), normalizedOrderId)
+            try {
+                pickOrderItems.pickOrderItems(resolvedHostName, validPayload.mapToOrderItems(), normalizedOrderId)
+            } catch (_: OrderNotFoundException) {
+                // Since Kardex sends us "order" updates for its pick history, any manual picks will
+                // not have an order in Hermes, and will always fail.
+                logger.warn {
+                    "Order with ID $normalizedOrderId was not found, but item ${validPayload.hostId} was updated."
+                }
+            }
         }
 
         return ResponseEntity.ok().build()
