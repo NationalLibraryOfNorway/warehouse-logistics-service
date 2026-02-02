@@ -56,8 +56,10 @@ class KardexController(
             try {
                 pickOrderItems.pickOrderItems(resolvedHostName, validPayload.mapToOrderItems(), normalizedOrderId)
             } catch (_: OrderNotFoundException) {
+                // Since Kardex sends us "order" updates for its pick history, any manual picks will
+                // not have an order in Hermes, and will always fail.
                 logger.warn {
-                    "Order with ID $normalizedOrderId was not found, but item was updated. Continuing processing..."
+                    "Order with ID $normalizedOrderId was not found, but item ${validPayload.hostId} was updated."
                 }
             }
         }
