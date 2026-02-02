@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.config.web.server.invoke
 import org.springframework.security.oauth2.jwt.JwtDecoder
@@ -17,17 +16,23 @@ import org.springframework.security.web.server.util.matcher.PathPatternParserSer
 
 @Configuration("adminSecurityConfig")
 @Profile("!pipeline")
-@EnableWebFluxSecurity
 class SecurityConfig {
     @Value($$"${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
     val issuerUri: String = ""
 
     @Bean("adminSecurityFilterChain")
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun synqSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
+    fun adminSecurityFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http {
             securityMatcher(PathPatternParserServerWebExchangeMatcher("/hermes-admin/**"))
             authorizeExchange {
+                authorize("/hermes-admin/api-docs", permitAll)
+                authorize("/hermes-admin/api-docs.yaml", permitAll)
+                authorize("/hermes-admin/api-docs/**", permitAll)
+                authorize("/hermes-admin/swagger", permitAll)
+                authorize("/hermes-admin/swagger/**", permitAll)
+                authorize("/hermes-admin/swagger-ui/**", permitAll)
+                authorize("/hermes-admin/webjars/swagger-ui/**", permitAll)
                 authorize("/hermes-admin/**", hasRole("hermes-admin"))
                 authorize(anyExchange, authenticated)
             }

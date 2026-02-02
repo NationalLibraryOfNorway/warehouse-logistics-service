@@ -1,0 +1,33 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Hermes Locally" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" value="local-dev" />
+    <envs>
+      <env name="KAFKA_BOOTSTRAP_SERVERS" value="localhost:9092" />
+      <env name="KEYCLOAK_ISSUER_URI" value="http://localhost:8082/realms/mlt-local" />
+      <env name="KEYCLOAK_TOKEN_AUD" value="http://localhost:8080" />
+      <env name="EMAIL_SERVER" value="localhost" />
+      <env name="EMAIL_PORT" value="1025" />
+      <env name="TIMEOUT_SMTP" value="8000" />
+      <env name="MONGODB_URI" value="mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&amp;authSource=wls" />
+      <env name="CALLBACK_SECRET" value="superdupersecretkey" />
+      <env name="SYNQ_BASE_URL" value="http://localhost:8181/synq/resources" />
+      <env name="KARDEX_ENABLED" value="false" />
+      <env name="KARDEX_BASE_URL" value="http://localhost:8182/kardex" />
+      <env name="LOGISTICS_ENABLED" value="true" />
+      <env name="ORDER_HANDLER_EMAIL" value="daniel@mlt.hermes.no" />
+      <env name="ORDER_SENDER_EMAIL" value="hermes@mlt.hermes.no" />
+      <env name="TIMEOUT_MONGO" value="8" />
+      <env name="TIMEOUT_INVENTORY" value="10" />
+      <env name="TIMEOUT_STORAGE" value="10" />
+      <env name="HTTP_PROXY_HOST" value="localhost" />
+      <env name="HTTP_PROXY_PORT" value="3128" />
+      <env name="HTTP_NON_PROXY_HOSTS" value="localhost|127.0.0.1|docker" />
+    </envs>
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UpdateClassesAndResources" />
+    <module name="wls" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="no.nb.mlt.wls.HermesApplication" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

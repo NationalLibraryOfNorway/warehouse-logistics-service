@@ -1,20 +1,16 @@
-# This is the main configuration file for the application
-# It contains the configuration for the application that is common for all profiles
-# The configuration for the stage and prod profiles is in the same file
-# The configuration for the stage and prod profiles is separated by ---
+# Main configuration for Hermes application
 spring:
-  # Application name setup
   application:
     name: Hermes
-  # Set time limit for shutdown phase
   lifecycle:
     timeout-per-shutdown-phase: 15s
-  # Set the default profile to pipeline, used to disable security in the pipeline
   profiles:
     default: pipeline
-  # Configure Kafka
+  http:
+    codecs:
+      max-in-memory-size: 1000KB
+
   kafka:
-    # If and how to retry sending Kafka messages
     retry:
       topic:
         enabled: true
@@ -28,29 +24,33 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  http:
-    codecs:
-      max-in-memory-size: 1000KB
 
-# Server port for the main application
+  # Security — env vars required in stage/prod, defaults for local
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8082/realms/mlt-local}
+          audiences: ${KEYCLOAK_TOKEN_AUD:http://localhost:8080}
+
+  mail:
+    host: ${EMAIL_SERVER:localhost}
+    port: ${EMAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          connectiontimeout: ${TIMEOUT_SMTP:8000}
+          timeout: ${TIMEOUT_SMTP:8000}
+          writetimeout: ${TIMEOUT_SMTP:8000}
+
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls}
+
 server:
   port: 8080
   shutdown: graceful
 
-# Enable actuator endpoints and set the port
 management:
-  otlp:
-    tracing:
-      endpoint: http://localhost:4318/v1/traces
-  tracing:
-    sampling:
-      probability: 1.0
-  zipkin:
-    tracing:
-      endpoint: http://localhost:9411/api/v2/spans
-  metrics:
-    tags:
-      application: ${spring.application.name}
   endpoints:
     web:
       base-path: /actuator
@@ -58,139 +58,77 @@ management:
         include: prometheus,health,info
   endpoint:
     health:
-      # Not completely sure but I think it's useful/needed for Kubernetes
       show-details: always
       access: read_only
   server:
     port: 8888
 
-# Swagger config for the application
 springdoc:
   api-docs:
-    # Set the base path for the Swagger API documentation
     path: /hermes/api-docs
   swagger-ui:
-    # Set the base path for Swagger UI
     path: /hermes/swagger
-  # Don't show actuator endpoints in Swagger, they are on different port
   show-actuator: false
 
 logging:
   level:
     no.nb.mlt.wls: debug
+    web: debug
 
-# Set a dummycatalog base path to SynQ for testing purposes
-synq:
-  path:
-    base: http://localhost:8181/synq/resources
-
-# Set a dummycatalog base path to Kardex for testing purposes
-kardex:
-  enabled: true
-  path:
-    base: http://localhost:8181/kardex/
-
-logistics:
-  enabled: true
-
-# Configures destination e-mails for receivers
-wls:
-  order:
-    handler:
-      email: daniel@mlt.hermes.no
-    sender:
-      email: hermes+mlt@nb.no
-
-# Define timeouts for calls to external services
-timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
-
-# Set the proxy settings for the application
-proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
-
----
-
-# This is the configuration for the local-dev profile
-spring:
-  config:
-    activate:
-      # This part of the app config is only activated when the profile is local-dev
-      on-profile: local-dev
-
-  # Set the security settings for the local-dev profile
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8082/realms/mlt-local
-          audiences: http://localhost:8080
-
-  mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
-    properties:
-      mail:
-        smtp:
-          connectiontimeout: "8000"
-          timeout: "5000"
-          writetimeout: "8000"
-
-  # Set the database settings for the local-dev profile
-  mongodb:
-    uri: mongodb://bruker:drossap@localhost:27017/wls
-
-# Secret for the signature on callbacks for the local-dev profile
 callback:
-  secret: superdupersecretkey
+  secret: ${CALLBACK_SECRET:superdupersecretkey}
 
-# Set a dummycatalog base path to SynQ for testing purposes
 synq:
   path:
-    base: http://localhost:8181/synq/resources
+    base: ${SYNQ_BASE_URL:http://localhost:8181/synq/resources}
 
 kardex:
-  enabled: false
+  enabled: ${KARDEX_ENABLED:false}
   path:
-    base: http://localhost:8182/kardex
+    base: ${KARDEX_BASE_URL:http://localhost:8182/kardex}
 
 logistics:
-  enabled: true
+  enabled: ${LOGISTICS_ENABLED:true}
 
-# Configures destination e-mails for receivers
 wls:
   order:
     handler:
-      email: ${ORDER_HANDLER_EMAIL}
+      email: ${ORDER_HANDLER_EMAIL:daniel@mlt.hermes.no}
     sender:
-      email: ${ORDER_SENDER_EMAIL}
+      email: ${ORDER_SENDER_EMAIL:hermes@mlt.hermes.no}
 
-# Define timeouts for calls to external services
 timeout:
-  mongoTimeout: 8
-  inventoryTimeout: 10
-  storageTimeout: 10
+  mongoTimeout: ${TIMEOUT_MONGO:8}
+  inventoryTimeout: ${TIMEOUT_INVENTORY:10}
+  storageTimeout: ${TIMEOUT_STORAGE:10}
 
-# Set the proxy settings for the application
 proxy:
-  http-proxy-host: localhost
-  http-proxy-port: 3128
-  non-proxy-hosts: localhost|127.0.0.1|docker
+  http-proxy-host: ${HTTP_PROXY_HOST:localhost}
+  http-proxy-port: ${HTTP_PROXY_PORT:3128}
+  non-proxy-hosts: ${HTTP_NON_PROXY_HOSTS:localhost|127.0.0.1|docker}
 
 ---
 
-# This is the configuration for the stage profile
 spring:
   config:
     activate:
-      # This part of the app config is only activated when the profile is stage
-      on-profile: stage
+      on-profile: stage|prod
 
-  # Set the security settings for the stage profile
+  kafka:
+    retry:
+      topic:
+        enabled: true
+        attempts: 5
+        backoff:
+          delay: 5s
+          multiplier: 2
+    template:
+      default-topic: hermes-mythos
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
   security:
     oauth2:
       resourceserver:
@@ -204,20 +142,20 @@ spring:
     properties:
       mail:
         smtp:
-          connectiontimeout: "8000"
-          timeout: "5000"
-          writetimeout: "8000"
+          connectiontimeout: ${TIMEOUT_SMTP}
+          timeout: ${TIMEOUT_SMTP}
+          writetimeout: ${TIMEOUT_SMTP}
 
-  # Set the database settings for the stage profile
   mongodb:
     uri: ${MONGODB_URI}
 
-# Set base path to SynQ API in stage environment
+callback:
+  secret: ${CALLBACK_SECRET}
+
 synq:
   path:
     base: ${SYNQ_BASE_URL}
 
-# Set base path to Kardex API in stage environment
 kardex:
   enabled: ${KARDEX_ENABLED}
   path:
@@ -226,11 +164,6 @@ kardex:
 logistics:
   enabled: ${LOGISTICS_ENABLED}
 
-# Secret for the signature on callbacks in stage environment
-callback:
-  secret: ${CALLBACK_SECRET}
-
-# Configures destination e-mails for receivers
 wls:
   order:
     handler:
@@ -238,87 +171,24 @@ wls:
     sender:
       email: ${ORDER_SENDER_EMAIL}
 
-# Define timeouts for calls to external service
 timeout:
   mongoTimeout: ${TIMEOUT_MONGO}
   inventoryTimeout: ${TIMEOUT_INVENTORY}
   storageTimeout: ${TIMEOUT_STORAGE}
 
-# Set the proxy settings for the application
 proxy:
   http-proxy-host: ${HTTP_PROXY_HOST}
   http-proxy-port: ${HTTP_PROXY_PORT}
-  non-proxy-hosts: localhost|127.0.0.1|docker
 
 ---
 
-# This is the configuration for the prod profile
+# Production profile — only overrides what differs
 spring:
   config:
     activate:
-      # This part of the app config is only activated when the profile is prod
       on-profile: prod
-
-  # Set the security settings for the prod profile
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI}
-          audiences: ${KEYCLOAK_TOKEN_AUD}
-
-  mail:
-    host: ${EMAIL_SERVER}
-    port: ${EMAIL_PORT}
-    properties:
-      mail:
-        smtp:
-          connectiontimeout: "8000"
-          timeout: "5000"
-          writetimeout: "8000"
-
-  # Set the database settings for the prod profile
-  mongodb:
-    uri: ${MONGODB_URI}
-
-# Set base path to SynQ API in prod environment
-synq:
-  path:
-    base: ${SYNQ_BASE_URL}
-
-# Set base path to Kardex API in prod environment
-kardex:
-  enabled: ${KARDEX_ENABLED}
-  path:
-    base: ${KARDEX_BASE_URL}
-
-logistics:
-  enabled: ${LOGISTICS_ENABLED}
-
-# Secret for the signature on callbacks in prod environment
-callback:
-  secret: ${CALLBACK_SECRET}
-
-# Configures destination e-mails for receivers
-wls:
-  order:
-    handler:
-      email: ${ORDER_HANDLER_EMAIL}
-    sender:
-      email: ${ORDER_SENDER_EMAIL}
-
-# Define timeouts for calls to external service
-timeout:
-  mongoTimeout: ${TIMEOUT_MONGO}
-  inventoryTimeout: ${TIMEOUT_INVENTORY}
-  storageTimeout: ${TIMEOUT_STORAGE}
-
-# Set the proxy settings for the application
-proxy:
-  http-proxy-host: ${HTTP_PROXY_HOST}
-  http-proxy-port: ${HTTP_PROXY_PORT}
-  non-proxy-hosts: localhost|127.0.0.1|docker
 
 logging:
   level:
     no.nb.mlt.wls: info
+    web: info
