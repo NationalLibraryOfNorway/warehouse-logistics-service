@@ -144,7 +144,6 @@
     } ],
     "client" : {
       "axiell" : [ ],
-      "bibliofil" : [ ],
       "realm-management" : [ {
         "id" : "a30a6c80-c585-45fe-af9b-c1009aaa25d4",
         "name" : "manage-clients",
@@ -313,6 +312,7 @@
         "containerId" : "d4959811-baeb-46f9-a313-14371c9894f1",
         "attributes" : { }
       } ],
+      "bibliofil" : [ ],
       "security-admin-console" : [ ],
       "account-console" : [ ],
       "hermes-dashboard" : [ ],
@@ -688,7 +688,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1745326089",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -773,7 +773,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1720685173",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -858,6 +858,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1770036936",
       "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1087,12 +1088,12 @@
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "kardex",
-    "redirectUris" : [ "/*" ],
-    "webOrigins" : [ "/*" ],
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
     "notBefore" : 0,
     "bearerOnly" : false,
     "consentRequired" : false,
-    "standardFlowEnabled" : false,
+    "standardFlowEnabled" : true,
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : true,
@@ -1103,7 +1104,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1744373610",
       "backchannel.logout.session.required" : "true",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1263,7 +1264,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1728308503",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1952,7 +1953,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1961,7 +1962,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-role-list-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
