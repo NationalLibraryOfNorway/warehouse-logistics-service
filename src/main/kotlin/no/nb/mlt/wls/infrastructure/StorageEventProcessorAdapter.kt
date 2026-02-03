@@ -146,7 +146,7 @@ class StorageEventProcessorAdapter(
                     $newStorageCandidates
                 """.trimIndent()
             }
-        } else if (item.quantity == 1) {
+        } else if (item.quantity >= 1) {
             logger.error {
                 """
                 Item ${item.hostId} metadata changed from this:
@@ -159,6 +159,10 @@ class StorageEventProcessorAdapter(
                     $newStorageCandidates
                 No changes were made to storages as the items need to be ordered out from the system
                 """.trimIndent()
+            }
+        } else {
+            logger.error {
+                "Tried editing item, but quantity was less than zero (${item.quantity}). Item: $item"
             }
         }
     }
