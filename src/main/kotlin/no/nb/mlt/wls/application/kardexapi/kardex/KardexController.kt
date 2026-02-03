@@ -64,8 +64,7 @@ class KardexController(
             } catch (e: ValidationException) {
                 logger.warn { "Unable to validate Kardex transaction payload. Error: ${e.localizedMessage}" }
                 logger.debug { "Payload info: $validPayload" }
-            }
-            catch (_: OrderNotFoundException) {
+            } catch (_: OrderNotFoundException) {
                 // Since Kardex sends us "order" updates for its pick history, any manual picks will
                 // not have an order in Hermes, and will always fail.
                 logger.warn {
