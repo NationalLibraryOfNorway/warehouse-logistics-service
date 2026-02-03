@@ -50,9 +50,7 @@ fun toSynqCategory(
     return when (category) {
         ItemCategory.FILM -> "Film"
         ItemCategory.PHOTO -> "Fotografi"
-        ItemCategory.MAGNETIC_TAPE -> "Magnetbånd" // Need to double-check with Espen if we actually need/want this
         ItemCategory.PAPER -> "Papir"
-        ItemCategory.DISC -> "Plate" // Need to double-check with Espen if we actually need/want this
         ItemCategory.BULK_ITEMS -> "Sekkepost"
         ItemCategory.UNKNOWN -> throw IllegalArgumentException("Unknown item category")
         else -> throw IllegalArgumentException("Illegal item category for SynQ: $category")
@@ -63,8 +61,8 @@ fun toSynqHostname(hostName: HostName): String =
     when (hostName) {
         HostName.ALMA -> "Alma"
         HostName.ASTA -> "Asta"
-        HostName.MAVIS -> "Axiell"
         HostName.AXIELL -> "Axiell"
+        HostName.BIBLIOFIL -> "Bibliofil"
         HostName.TEMP_STORAGE -> "Mellomlager"
         HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.UNKNOWN is not supported")
     }

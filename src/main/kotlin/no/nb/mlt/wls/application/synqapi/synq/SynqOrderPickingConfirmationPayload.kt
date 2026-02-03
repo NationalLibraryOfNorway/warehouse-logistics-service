@@ -61,12 +61,6 @@ data class SynqOrderPickingConfirmationPayload(
     fun getValidHostName(): HostName {
         val hostName = getHostNameString()
         try {
-            if (hostName.lowercase() == "mavis") {
-                // As of now over 160k items exist with hostName Mavis in SynQ.
-                // These need to be migrated to Axiell, but before that is done we can cheat the system by converting Mavis -> Axiell
-                return HostName.AXIELL
-            }
-
             return HostName.fromString(hostName)
         } catch (e: IllegalArgumentException) {
             throw ValidationException("Hostname $hostName is not recognized by WLS", e)
@@ -81,11 +75,8 @@ data class SynqOrderPickingConfirmationPayload(
      */
     fun mapProductsToQuantity(): Map<String, Int> {
         val map: MutableMap<String, Int> = mutableMapOf()
-        this.orderLine.map { orderLine ->
-            map.put(
-                orderLine.productId,
-                orderLine.quantity
-            )
+        this.orderLine.forEach { orderLine ->
+            map[orderLine.productId] = orderLine.quantity
         }
         return map
     }

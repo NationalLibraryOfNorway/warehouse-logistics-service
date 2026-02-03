@@ -22,9 +22,10 @@ private val logger = KotlinLogging.logger {}
                 "productOwner" : "NB",
                 "quantityOnHand" : 1.0,
                 "hostName" : "Axiell",
-                "confidentialProduct" : false,
+                "location" : "SYNQ_WAREHOUSE",
                 "productCategory" : "Papir",
-                "uom" : "OBJ"
+                "uom" : "OBJ",
+                "confidentialProduct" : false
             }
         ]
     }
@@ -35,6 +36,21 @@ data class SynqInventoryReconciliationPayload(
     val loadUnit: List<LoadUnit>
 )
 
+@Schema(
+    description = """Object containing product data needed for inventory reconciliation""",
+    example = """
+    {
+        "productId" : "mlt-12345",
+        "productOwner" : "NB",
+        "quantityOnHand" : 1.0,
+        "hostName" : "Axiell",
+        "location" : "SYNQ_WAREHOUSE",
+        "productCategory" : "Papir",
+        "uom" : "OBJ",
+        "confidentialProduct" : false
+    }
+    """
+)
 data class LoadUnit(
     @field:Schema(
         description = """ID of the product""",
@@ -43,7 +59,7 @@ data class LoadUnit(
     val productId: String,
     @field:Schema(
         description = """Owner of the product""",
-        example = "NB"
+        examples = ["NB", "AV"]
     )
     val productOwner: String,
     @field:Schema(description = """Description of the product""")
@@ -55,7 +71,7 @@ data class LoadUnit(
     val quantityOnHand: Double,
     @field:Schema(
         description = """Which host system the product belongs to""",
-        example = "Axiell"
+        examples = ["Axiell", "Bibliofil", "Alma", "Asta", "Mellomlager"]
     )
     val hostName: String?,
     @field:Schema(
@@ -65,33 +81,27 @@ data class LoadUnit(
     val location: String?,
     @field:Schema(
         description = """Category of the product""",
-        example = "PAPER"
+        examples = ["Arkivmateriale", "Papir", "Film", "Fotografi", "Sekkepost"]
     )
     val productCategory: String,
     @field:Schema(
         description = """Unit of measure""",
-        example = "ESK"
+        examples = ["ABOX", "OBJ", "ESK"]
     )
     val uom: String,
     @field:Schema(
         description = """Whether this product is confidential""",
-        example = "true"
+        example = "false"
     )
     val confidentialProduct: Boolean
 ) {
     @JsonIgnore
     fun getMappedCategory(): ItemCategory {
-        // Double check which one of those can be deleted
-
-        if (productCategory.startsWith("arkiv", ignoreCase = true)) return ItemCategory.PAPER
-
         return when (productCategory.lowercase()) {
-            "systemtest", "helsemateriale", "aviser", "book", "issue", "papir" -> ItemCategory.PAPER
-            "film_frys", "film" -> ItemCategory.FILM
-            "fotografi", "fotografi_frys" -> ItemCategory.PHOTO
+            "arkivmateriale", "papir" -> ItemCategory.PAPER
+            "film" -> ItemCategory.FILM
+            "fotografi" -> ItemCategory.PHOTO
             "sekkepost" -> ItemCategory.BULK_ITEMS
-            "plate" -> ItemCategory.DISC
-            "magnetbånd" -> ItemCategory.MAGNETIC_TAPE
             else -> throw InvalidParameterException("Unknown category: $productCategory")
         }
     }
@@ -112,12 +122,11 @@ data class LoadUnit(
             return HostName.UNKNOWN
         }
 
-        // Mavis here can be deleted, right?
         return when (hostName.lowercase()) {
             "alma" -> HostName.ALMA
             "asta" -> HostName.ASTA
-            "mavis" -> HostName.AXIELL
             "axiell" -> HostName.AXIELL
+            "bibliofil" -> HostName.BIBLIOFIL
             "mellomlager" -> HostName.TEMP_STORAGE
             "unknown" -> HostName.UNKNOWN
             else -> throw InvalidParameterException("Unknown Host Name: $hostName for item: $this")
@@ -126,8 +135,8 @@ data class LoadUnit(
 
     @JsonIgnore
     fun mapCurrentPreferredEnvironment(): Environment =
-        if (location?.startsWith("WS_FRYS", ignoreCase = true) == true ||
-            productCategory.contains("frys", ignoreCase = true)
+        if (location?.startsWith("ws_frys", ignoreCase = true) == true ||
+            productCategory.equals("film", ignoreCase = true)
         ) {
             Environment.FREEZE
         } else {

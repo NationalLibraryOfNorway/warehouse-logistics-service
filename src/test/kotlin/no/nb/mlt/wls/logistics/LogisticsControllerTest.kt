@@ -12,7 +12,7 @@ import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName.ALMA
 import no.nb.mlt.wls.domain.model.HostName.ASTA
 import no.nb.mlt.wls.domain.model.HostName.AXIELL
-import no.nb.mlt.wls.domain.model.HostName.MAVIS
+import no.nb.mlt.wls.domain.model.HostName.BIBLIOFIL
 import no.nb.mlt.wls.domain.model.HostName.TEMP_STORAGE
 import no.nb.mlt.wls.domain.model.HostName.UNKNOWN
 import no.nb.mlt.wls.domain.model.Order
@@ -118,7 +118,7 @@ class LogisticsControllerTest(
             .uri { builder ->
                 builder
                     .path("/order")
-                    .queryParam("hostNames", ALMA, ASTA, MAVIS, AXIELL, TEMP_STORAGE, UNKNOWN)
+                    .queryParam("hostNames", ALMA, ASTA, AXIELL, BIBLIOFIL, TEMP_STORAGE, UNKNOWN)
                     .queryParam("hostId", testOrder.hostName.toString() + "-ABC" + DELIMITER + testOrder.hostOrderId)
                     .build()
             }.accept(MediaType.APPLICATION_JSON)
