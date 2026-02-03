@@ -107,4 +107,6 @@ class KardexAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
+
+    override fun getName(): String = "Kardex"
 }

@@ -125,7 +125,7 @@ class SynqStandardAdapter(
                 logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
             }.onErrorMap(WebClientResponseException::class.java) { error ->
                 if (error.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
-                    ResourceNotFoundException(error.message)
+                    ResourceNotFoundException(error.message, error)
                 } else {
                     createServerError(error)
                 }
@@ -174,4 +174,6 @@ class SynqStandardAdapter(
             else -> false
         }
     }
+
+    override fun getName(): String = "Standard SynQ"
 }

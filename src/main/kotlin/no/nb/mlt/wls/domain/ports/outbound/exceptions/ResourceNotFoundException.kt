@@ -1,6 +1,6 @@
 package no.nb.mlt.wls.domain.ports.outbound.exceptions
 
 class ResourceNotFoundException(
-    message: String,
+    message: String?,
     cause: Throwable? = null
-) : RuntimeException(message, cause)
+) : RuntimeException(message ?: "Resource was not found", cause)

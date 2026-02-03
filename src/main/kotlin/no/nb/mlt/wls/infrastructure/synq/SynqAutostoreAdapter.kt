@@ -74,7 +74,7 @@ class SynqAutostoreAdapter(
                 logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
             }.onErrorMap(WebClientResponseException::class.java) { error ->
                 if (error.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
-                    ResourceNotFoundException(error.message)
+                    ResourceNotFoundException(error.message, error)
                 } else {
                     createServerError(error)
                 }
@@ -141,4 +141,6 @@ class SynqAutostoreAdapter(
 
     // This adapter method is a no-op, since the item creation is handled by the standard SynQ adapter
     override fun canHandleItem(item: Item): Boolean = false
+
+    override fun getName(): String = "AutoStore"
 }

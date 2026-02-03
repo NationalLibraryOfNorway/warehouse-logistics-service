@@ -38,4 +38,6 @@ interface StorageSystemFacade {
     fun isInStorage(location: AssociatedStorage): Boolean
 
     fun canHandleItem(item: Item): Boolean
+
+    fun getName(): String
 }

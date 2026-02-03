@@ -123,18 +123,15 @@ class StorageEventProcessorAdapter(
         if (item.quantity == 0) {
             newStorageCandidates.forEach { storageCandidate ->
                 logger.info {
-                    "Updating ${item.hostId} for ${item.hostName} in $storageCandidate"
+                    "Updating ${item.hostId} for ${item.hostName} in ${storageCandidate.getName()}"
                 }
                 try {
                     storageCandidate.editItem(item)
-                } catch (e: ResourceNotFoundException) {
+                } catch (_: ResourceNotFoundException) {
                     logger.warn {
                         "Could not find item, trying to create it instead"
                     }
-                    storageCandidate.createItem(item)
-                    logger.info { "Created item ${item.hostId} for ${item.hostName} in storage system $storageCandidate" }
-                } catch (e: Exception) {
-                    logger.error(e) { "Error occurred while editing item $item" }
+                    createItemInStorage(storageCandidate, item)
                 }
             }
             logger.info {
@@ -191,7 +188,24 @@ class StorageEventProcessorAdapter(
                 )
 
             storageSystemFacade?.createOrder(orderCopy)
-            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
+            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade?.getName() ?: "none"}" }
+        }
+    }
+
+    /**
+     * Tries to create an item in a given storage system, or log an error if it fails
+     */
+    private suspend fun createItemInStorage(
+        storageSystem: StorageSystemFacade,
+        item: Item
+    ) {
+        try {
+            storageSystem.createItem(item)
+            logger.info { "Created item ${item.hostId} for ${item.hostName} in storage system ${storageSystem.getName()}" }
+        } catch (e: Exception) {
+            logger.error {
+                "Could not create item ${item.hostId} for ${item.hostName} in ${storageSystem.getName()}: ${e.message}"
+            }
         }
     }
 
