@@ -275,7 +275,8 @@ class SynqController(
         updateOrderStatus.updateOrderStatus(
             HostName.fromString(orderUpdatePayload.hostName),
             orderIdWithoutPrefix,
-            orderUpdatePayload.getConvertedStatus())
+            orderUpdatePayload.getConvertedStatus()
+        )
 
         return ResponseEntity.ok().build()
     }

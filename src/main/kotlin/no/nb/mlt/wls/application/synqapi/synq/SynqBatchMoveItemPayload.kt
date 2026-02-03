@@ -193,9 +193,7 @@ data class Product(
             associatedStorage = computeAssociatedStorage(location)
         )
 
-    private fun getHostNameFromSynqTypes(): HostName {
-        return HostName.fromString(hostName)
-    }
+    private fun getHostNameFromSynqTypes(): HostName = HostName.fromString(hostName)
 }
 
 @Schema(

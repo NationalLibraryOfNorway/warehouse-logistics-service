@@ -96,15 +96,14 @@ data class LoadUnit(
     val confidentialProduct: Boolean
 ) {
     @JsonIgnore
-    fun getMappedCategory(): ItemCategory {
-        return when (productCategory.lowercase()) {
+    fun getMappedCategory(): ItemCategory =
+        when (productCategory.lowercase()) {
             "arkivmateriale", "papir" -> ItemCategory.PAPER
             "film" -> ItemCategory.FILM
             "fotografi" -> ItemCategory.PHOTO
             "sekkepost" -> ItemCategory.BULK_ITEMS
             else -> throw InvalidParameterException("Unknown category: $productCategory")
         }
-    }
 
     @JsonIgnore
     fun getMappedUOM() =
