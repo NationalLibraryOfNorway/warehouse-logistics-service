@@ -56,6 +56,14 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
+      "id" : "6834db56-225f-4e0a-99d8-dd4ae42a5b63",
+      "name" : "bibliofil",
+      "description" : "Adds a \"bibliofil\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
       "id" : "a4e99e98-ede2-4cb6-8ec8-344f584443ac",
       "name" : "order",
       "description" : "Adds an \"order\" role to the JWT to identify users/clients permitted to access order endpoints",
@@ -136,7 +144,6 @@
     } ],
     "client" : {
       "axiell" : [ ],
-      "asta" : [ ],
       "realm-management" : [ {
         "id" : "a30a6c80-c585-45fe-af9b-c1009aaa25d4",
         "name" : "manage-clients",
@@ -305,11 +312,10 @@
         "containerId" : "d4959811-baeb-46f9-a313-14371c9894f1",
         "attributes" : { }
       } ],
+      "bibliofil" : [ ],
       "security-admin-console" : [ ],
-      "admin" : [ ],
-      "admin-cli" : [ ],
-      "kardex" : [ ],
       "account-console" : [ ],
+      "hermes-dashboard" : [ ],
       "broker" : [ {
         "id" : "8f1aaeb7-54a3-4921-b341-247d9d2ae02d",
         "name" : "read-token",
@@ -319,6 +325,10 @@
         "containerId" : "2ce493fb-c784-410d-b03d-53d489653ad7",
         "attributes" : { }
       } ],
+      "asta" : [ ],
+      "hermes-admin" : [ ],
+      "admin-cli" : [ ],
+      "kardex" : [ ],
       "account" : [ {
         "id" : "d2b4e7b3-9555-489b-9343-a734ff98a844",
         "name" : "view-profile",
@@ -394,7 +404,6 @@
         "containerId" : "16862c54-915f-451c-bae6-41ea604d20eb",
         "attributes" : { }
       } ],
-      "dashboard" : [ ],
       "synq" : [ ]
     }
   },
@@ -463,20 +472,6 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "4d092f99-3b17-4540-bdb6-8c09abcc34ba",
-    "username" : "service-account-admin",
-    "emailVerified" : false,
-    "createdTimestamp" : 1747829329456,
-    "enabled" : true,
-    "totp" : false,
-    "serviceAccountClientId" : "admin",
-    "credentials" : [ ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "hermes-admin" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
     "id" : "7d249c92-9621-4234-971a-c62e13c2cf17",
     "username" : "service-account-asta",
     "emailVerified" : false,
@@ -502,6 +497,34 @@
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
     "realmRoles" : [ "order", "item", "axiell" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "bd86a0a8-218c-45ef-b89c-851bd90089da",
+    "username" : "service-account-bibliofil",
+    "emailVerified" : false,
+    "createdTimestamp" : 1770037041231,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "bibliofil",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "bibliofil", "order", "item" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "dac3b485-12c6-474f-b58b-1f8f09ede4a3",
+    "username" : "service-account-hermes-admin",
+    "emailVerified" : false,
+    "createdTimestamp" : 1770037353708,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "hermes-admin",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "hermes-admin" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -609,91 +632,6 @@
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
-    "id" : "eb724003-ff3b-4dbc-b018-024923a7224a",
-    "clientId" : "admin",
-    "name" : "Admin (Local Client)",
-    "description" : "A local development version of the admin client used to access admin-only endpoints in Hermes WLS",
-    "rootUrl" : "",
-    "adminUrl" : "",
-    "baseUrl" : "",
-    "surrogateAuthRequired" : false,
-    "enabled" : true,
-    "alwaysDisplayInConsole" : true,
-    "clientAuthenticatorType" : "client-secret",
-    "secret" : "admin",
-    "redirectUris" : [ "*" ],
-    "webOrigins" : [ "*" ],
-    "notBefore" : 0,
-    "bearerOnly" : false,
-    "consentRequired" : false,
-    "standardFlowEnabled" : false,
-    "implicitFlowEnabled" : false,
-    "directAccessGrantsEnabled" : false,
-    "serviceAccountsEnabled" : true,
-    "publicClient" : false,
-    "frontchannelLogout" : false,
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "oidc.ciba.grant.enabled" : "false",
-      "client.secret.creation.time" : "1747829329",
-      "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "*",
-      "oauth2.device.authorization.grant.enabled" : "false",
-      "display.on.consent.screen" : "false",
-      "backchannel.logout.revoke.offline.tokens" : "false"
-    },
-    "authenticationFlowBindingOverrides" : { },
-    "fullScopeAllowed" : true,
-    "nodeReRegistrationTimeout" : -1,
-    "protocolMappers" : [ {
-      "id" : "6de8ba41-1398-4adc-bebc-b61db2661e75",
-      "name" : "Client Host",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "clientHost",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "clientHost",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "e12d3a53-b8bc-4046-9c3c-8c5a54b6b4a5",
-      "name" : "Client IP Address",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "clientAddress",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "clientAddress",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "2a748809-cced-4d17-a3a0-1858724336d9",
-      "name" : "Client ID",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "client_id",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "client_id",
-        "jsonType.label" : "String"
-      }
-    } ],
-    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
-    "optionalClientScopes" : [ ]
-  }, {
     "id" : "ec9ed42f-93c1-4011-9d83-f67dc0753d83",
     "clientId" : "admin-cli",
     "name" : "${client_admin-cli}",
@@ -750,7 +688,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1745326089",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -835,7 +773,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1720685173",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -892,6 +830,91 @@
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
     "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   }, {
+    "id" : "5c8c5a23-03ec-4130-9c3e-978a94b8ed43",
+    "clientId" : "bibliofil",
+    "name" : "Bibliofil (Local Client)",
+    "description" : "A local development version of the client for Bibliofil to use in communication with Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "bibliofil",
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : true,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : true,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1770036936",
+      "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "*",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "93dc62fc-1e8d-49b8-8667-6b8a95979ce4",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "9932f8e9-a507-4385-b8bb-95c6cd0e38ac",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "d9c0d914-57de-41ed-aa12-bdbd75d47107",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ ]
+  }, {
     "id" : "2ce493fb-c784-410d-b03d-53d489653ad7",
     "clientId" : "broker",
     "name" : "${client_broker}",
@@ -920,10 +943,95 @@
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
-    "id" : "2a8e55c9-ee3c-421b-8685-5616a434f092",
-    "clientId" : "dashboard",
-    "name" : "Dashboard (Local Client)",
-    "description" : "Client for the Dashboard app. Use with the username dash",
+    "id" : "28ceef31-4cda-46e4-93c9-0ea2b57421f3",
+    "clientId" : "hermes-admin",
+    "name" : "Hermes Admin (Local Client)",
+    "description" : "A local development version of the admin client used to access admin-only endpoints in Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : true,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "hermes-admin",
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : false,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1747829329",
+      "backchannel.logout.session.required" : "false",
+      "post.logout.redirect.uris" : "*",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "1171c1dc-3a8a-465c-9088-feca235a0ac5",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "692bfb9d-bb98-40e6-ae07-da19d2a8026e",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "139c09be-6c10-4d90-857e-c3f80accee14",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ ]
+  }, {
+    "id" : "eee2ac64-4fd2-4a43-8cf1-29476ba84c24",
+    "clientId" : "hermes-dashboard",
+    "name" : "Hermes Dashboard (Local Client)",
+    "description" : "A local version of the client used by the Hermes Dashboard app to authenticate users",
     "rootUrl" : "",
     "adminUrl" : "",
     "baseUrl" : "",
@@ -931,9 +1039,9 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "dashboard",
+    "secret" : "hermes-dashboard",
     "redirectUris" : [ "*" ],
-    "webOrigins" : [ "+" ],
+    "webOrigins" : [ "*" ],
     "notBefore" : 0,
     "bearerOnly" : false,
     "consentRequired" : false,
@@ -980,12 +1088,12 @@
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "kardex",
-    "redirectUris" : [ "/*" ],
-    "webOrigins" : [ "/*" ],
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
     "notBefore" : 0,
     "bearerOnly" : false,
     "consentRequired" : false,
-    "standardFlowEnabled" : false,
+    "standardFlowEnabled" : true,
     "implicitFlowEnabled" : false,
     "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : true,
@@ -996,7 +1104,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1744373610",
       "backchannel.logout.session.required" : "true",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1156,7 +1264,7 @@
       "oidc.ciba.grant.enabled" : "false",
       "client.secret.creation.time" : "1728308503",
       "backchannel.logout.session.required" : "false",
-      "post.logout.redirect.uris" : "+",
+      "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
       "display.on.consent.screen" : "false",
       "backchannel.logout.revoke.offline.tokens" : "false"
@@ -1845,7 +1953,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1854,7 +1962,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
