@@ -65,7 +65,6 @@ class SynqAdapter(
         // Wrap the order like SynQ likes it
         val synqOrder = SynqOrder(listOf(synqOrderPayload))
         webClient
-
             .post()
             .uri(uri)
             .bodyValue(synqOrder)
