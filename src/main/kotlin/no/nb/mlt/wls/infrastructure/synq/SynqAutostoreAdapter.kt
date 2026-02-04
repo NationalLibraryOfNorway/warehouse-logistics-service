@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class SynqAutostoreAdapter(
-    val synqAdapter: SynqAdapter
+    private val synqAdapter: SynqAdapter
 ) : StorageSystemFacade {
     override suspend fun createItem(item: Item) {
         synqAdapter.createItem(item.toSynqPayload())
