@@ -112,7 +112,7 @@ data class Product(
         description = """Marks the product as confidential, meaning only people with special access can view, modify, or request the product.""",
         example = "false"
     )
-    val confidentialProduct: Boolean,
+    val confidentialProduct: Boolean = false,
     @field:Schema(
         description = """Name of the host system which the product belongs to.""",
         example = "AXIELL"
@@ -193,15 +193,7 @@ data class Product(
             associatedStorage = computeAssociatedStorage(location)
         )
 
-    private fun getHostNameFromSynqTypes(): HostName {
-        if (hostName.lowercase() == "mavis") {
-            // As of now over 160k items exist with hostName Mavis in SynQ.
-            // These need to be migrated to Axiell, but before that is done we can cheat the system by converting Mavis -> Axiell
-            return HostName.AXIELL
-        }
-
-        return HostName.fromString(hostName)
-    }
+    private fun getHostNameFromSynqTypes(): HostName = HostName.fromString(hostName)
 }
 
 @Schema(
