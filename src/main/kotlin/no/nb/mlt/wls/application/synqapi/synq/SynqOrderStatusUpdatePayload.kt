@@ -39,15 +39,6 @@ data class SynqOrderStatusUpdatePayload(
     val warehouse: String
 )
 
-val SynqOrderStatusUpdatePayload.sanitizedHostName: String
-    get() {
-        if (hostName.lowercase() == "mavis") {
-            return "AXIELL"
-        }
-
-        return hostName
-    }
-
 enum class SynqOrderStatus {
     ALLOCATED,
     ALLOCATING,
