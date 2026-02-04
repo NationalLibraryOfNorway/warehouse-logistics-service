@@ -3,7 +3,6 @@ package no.nb.mlt.wls.infrastructure.synq
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
-import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.DuplicateResourceException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
@@ -66,6 +65,7 @@ class SynqAdapter(
         // Wrap the order like SynQ likes it
         val synqOrder = SynqOrder(listOf(synqOrderPayload))
         webClient
+
             .post()
             .uri(uri)
             .bodyValue(synqOrder)
