@@ -84,12 +84,12 @@ class SynqAdapter(
                 // Convert specific errors to other types for better info
                 if (synqError.errorCode == 1037 || synqError.errorCode == 1029) {
                     logger.error {
-                        "Items in order  ${synqOrderPayload.orderId}' are not found in SynQ, error text: ${synqError.errorText}"
+                        "Items in order '${synqOrderPayload.orderId}' are not found in SynQ, error text: ${synqError.errorText}"
                     }
                     throw OrderNotFoundException(synqError.errorText)
                 }
                 if (synqError.errorText.contains("Duplicate order")) {
-                    logger.error { "Order ${synqOrderPayload.orderId}' in SynQ already exists, error text: ${synqError.errorText}" }
+                    logger.error { "Order '${synqOrderPayload.orderId}' in SynQ already exists, error text: ${synqError.errorText}" }
                     throw DuplicateResourceException("errorCode: ${synqError.errorCode}, errorText: ${synqError.errorText}", error)
                 } else {
                     // Pass other errors along with just simple logging
