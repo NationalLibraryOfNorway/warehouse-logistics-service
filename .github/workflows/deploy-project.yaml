@@ -32,10 +32,6 @@ permissions:
   actions: read
   checks: write
 
-# Set image and project name for the deployment
-env:
-  IMAGE_NAME: wls
-
 # List of jobs that this workflow executes, each job can run on different runners, have different steps, etc.
 jobs:
   # Unique identifier for this job, make sure it is unique, you can use the "name" property to give it a more descriptive name
@@ -197,7 +193,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           # Define to use for tags, can be multiple values if needed
-          images: harbor.nb.no/mlt/${{ env.IMAGE_NAME }}
+          images: harbor.nb.no/mlt/${{ vars.PROJECT_NAME }}
           # Defines a list of tag types to use for generating the metadata
           # the semver type uses GitHub tag in semver form and turns it into a proper tag for the image (semantic versioning: v4.2.0 -> 4.2.0)
           # the ref type bases its version either on branch or PR event and generates the tag for the image based on that (branch -> branch-name, pr -> pr-number)
@@ -232,9 +228,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/deploy-to-environment.yaml
     with:
-      project-name: ${{ env.IMAGE_NAME }}
+      project-name: ${{ vars.PROJECT_NAME }}
       environment: stage
-      manifest-file: ${{ env.IMAGE_NAME }/stage/deployment.yml
+      manifest-file: ${{ vars.PROJECT_NAME }}/stage/deployment.yml
       image-tag: sha-${{ github.sha }}
     secrets:
       MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
@@ -243,13 +239,12 @@ jobs:
   deploy-to-prod:
     name: Deploy to Prod
     needs: publish-image
-    # Runs only on tags
     if: startsWith(github.event.ref,'refs/tags/v')
     uses: ./.github/workflows/deploy-to-environment.yaml
     with:
-      project-name: ${{ env.IMAGE_NAME }}
+      project-name: ${{ vars.PROJECT_NAME }}
       environment: prod
-      manifest-file: ${{ env.IMAGE_NAME }/prod/deployment.yml
+      manifest-file: ${{ vars.PROJECT_NAME }}/prod/deployment.yml
       image-tag: ${{ needs.publish-image.outputs.version }}
     secrets:
       MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
