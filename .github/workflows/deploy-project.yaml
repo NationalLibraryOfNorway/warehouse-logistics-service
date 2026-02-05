@@ -134,12 +134,12 @@ jobs:
       - name: Upload the Build
         uses: actions/upload-artifact@v6
         with:
-          name: packaged-project      # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
-          path: |                     # File(s) to include, the path is relative to the repository root
-            target/wls.jar            # Set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
-          if-no-files-found: error    # Fail if artifact is not found
-          include-hidden-files: true  # Include hidden files in the artifact
-          overwrite: true             # Allow overwriting of previous artifacts
+          name: packaged-project                  # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
+          path: |                                 # File(s) to include, the path is relative to the repository root
+            target/${{ vars.PROJECT_NAME }}.jar   # Set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
+          if-no-files-found: error                # Fail if artifact is not found
+          include-hidden-files: true              # Include hidden files in the artifact
+          overwrite: true                         # Allow overwriting of previous artifacts
 
   # This job builds a Docker image with relevant tags and labels and publishes it to Harbor
   publish-image:
