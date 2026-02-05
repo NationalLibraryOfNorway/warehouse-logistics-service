@@ -1,7 +1,7 @@
 # Reusable workflow for deploying to an environment
 # This workflow can be called by other workflows to deploy any project to stage or prod environments
 # It updates the image tag in the ArgoCD repository manifest and commits the change
-# This is workflow can be called from other workflows using "uses" keyword
+# This workflow can be called from other workflows using "uses" keyword
 name: Deploy to Environment
 
 on:
