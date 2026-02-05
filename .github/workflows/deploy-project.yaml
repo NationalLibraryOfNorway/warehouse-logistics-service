@@ -174,7 +174,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker # Use the docker driver which runs the build directly on the host
+          driver: docker  # Use the docker driver which runs the build directly on the host
 
       # Simple action that authenticates against the NLN's Harbor instance
       # The url must be in form: https://<URL>, username and password should be for the GitHub robot user
@@ -202,6 +202,7 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=sha,format=long,prefix=sha-
+          # Defines labels to be added to the image, these are key-value pairs that can be used for informational purposes or by other tools to filter images
           flavor: |
             latest=false
 
@@ -221,30 +222,40 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}      # Set tags for the image using output from the meta-step
           labels: ${{ steps.meta.outputs.labels }}  # Set labels for the image using output from the meta-step
 
+  # This job deploys the Docker image to the Stage environment
+  # It uses a reusable workflow to handle the actual deployment process via ArgoCD
   deploy-to-stage:
     name: Deploy to Stage
+    # Requires the image to be published first before deployment can occur
     needs: publish-image
+    # Only runs on pushes to the main branch, not on PRs or tags
     if: github.ref == 'refs/heads/main'
+    # Calls a reusable workflow defined in another file, this approach keeps deployment logic DRY
     uses: ./.github/workflows/deploy-to-environment.yaml
     with:
       project-name: ${{ vars.PROJECT_NAME }}
-      environment: stage
-      manifest-file: ${{ vars.PROJECT_NAME }}/stage/deployment.yml
-      image-tag: sha-${{ github.sha }}
+      environment: stage                                            # Target environment for deployment
+      manifest-file: ${{ vars.PROJECT_NAME }}/stage/deployment.yml  # Path to the Kubernetes manifest in the ArgoCD repository
+      image-tag: sha-${{ github.sha }}                              # Use the SHA-based tag for stage deployments to match main branch commits
     secrets:
-      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
-      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}               # GitHub App ID for authenticating with ArgoCD repository
+      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}     # Private key for the GitHub App
 
+  # This job deploys the Docker image to the Production environment
+  # It uses a reusable workflow to handle the actual deployment process via ArgoCD
   deploy-to-prod:
     name: Deploy to Prod
+    # Requires the image to be published first before deployment can occur
     needs: publish-image
-    if: startsWith(github.event.ref,'refs/tags/v')
+    # Only runs when a semver tag (v*.*.*) is pushed, ensuring controlled production releases
+    if: startsWith(github.ref, 'refs/tags/v')
+    # Calls a reusable workflow defined in another file, this approach keeps deployment logic DRY
     uses: ./.github/workflows/deploy-to-environment.yaml
     with:
       project-name: ${{ vars.PROJECT_NAME }}
-      environment: prod
-      manifest-file: ${{ vars.PROJECT_NAME }}/prod/deployment.yml
-      image-tag: ${{ needs.publish-image.outputs.version }}
+      environment: prod                                             # Target environment for deployment
+      manifest-file: ${{ vars.PROJECT_NAME }}/prod/deployment.yml   # Path to the Kubernetes manifest in the ArgoCD repository
+      image-tag: ${{ needs.publish-image.outputs.version }}         # Use the semantic version tag for prod deployments (e.g., 1.2.3)
     secrets:
-      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
-      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}               # GitHub App ID for authenticating with ArgoCD repository
+      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}     # Private key for the GitHub App
