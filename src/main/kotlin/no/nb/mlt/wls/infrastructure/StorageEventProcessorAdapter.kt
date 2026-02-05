@@ -14,6 +14,7 @@ import no.nb.mlt.wls.domain.ports.outbound.ItemRepository
 import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.NotSupportedException
+import no.nb.mlt.wls.domain.ports.outbound.exceptions.ResourceNotFoundException
 import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}
@@ -119,10 +120,22 @@ class StorageEventProcessorAdapter(
             return
         }
 
-        logger.error {
-            """
-            !!!
-                Item edit handling not yet implemented.
+        if (item.quantity == 0) {
+            newStorageCandidates.forEach { storageCandidate ->
+                logger.info {
+                    "Updating ${item.hostId} for ${item.hostName} in ${storageCandidate.getName()}"
+                }
+                try {
+                    storageCandidate.editItem(item)
+                } catch (_: ResourceNotFoundException) {
+                    logger.warn {
+                        "Could not find item, trying to create it instead"
+                    }
+                    createItemInStorage(storageCandidate, item)
+                }
+            }
+            logger.info {
+                """
                 Item ${item.hostId} metadata changed from this:
                     [$oldItem]
                 to this:
@@ -131,9 +144,26 @@ class StorageEventProcessorAdapter(
                     $oldStorageCandidates
                 new storage candidates:
                     $newStorageCandidates
-                No updates will be propagated to storage systems.
-            !!!
-            """.trimIndent()
+                """.trimIndent()
+            }
+        } else if (item.quantity >= 1) {
+            logger.error {
+                """
+                Item ${item.hostId} metadata changed from this:
+                    [$oldItem]
+                to this:
+                    [$item]
+                old storage candidates:
+                    $oldStorageCandidates
+                new storage candidates:
+                    $newStorageCandidates
+                No changes were made to storages as the items need to be ordered out from the system
+                """.trimIndent()
+            }
+        } else {
+            logger.error {
+                "Tried editing item, but quantity was less than zero (${item.quantity}). Item: $item"
+            }
         }
     }
 
@@ -162,7 +192,24 @@ class StorageEventProcessorAdapter(
                 )
 
             storageSystemFacade?.createOrder(orderCopy)
-            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade ?: "none"}" }
+            logger.info { "Created order [$orderCopy] in storage system: ${storageSystemFacade?.getName() ?: "none"}" }
+        }
+    }
+
+    /**
+     * Tries to create an item in a given storage system, or log an error if it fails
+     */
+    private suspend fun createItemInStorage(
+        storageSystem: StorageSystemFacade,
+        item: Item
+    ) {
+        try {
+            storageSystem.createItem(item)
+            logger.info { "Created item ${item.hostId} for ${item.hostName} in storage system ${storageSystem.getName()}" }
+        } catch (e: Exception) {
+            logger.error {
+                "Could not create item ${item.hostId} for ${item.hostName} in ${storageSystem.getName()}: ${e.message}"
+            }
         }
     }
 

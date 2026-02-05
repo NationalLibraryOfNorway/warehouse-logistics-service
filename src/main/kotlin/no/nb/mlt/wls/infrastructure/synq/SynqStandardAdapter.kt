@@ -21,6 +21,28 @@ class SynqStandardAdapter(
         synqAdapter.createOrder(order.toSynqStandardPayload())
     }
 
+    override suspend fun editItem(item: Item) {
+        val product = item.toSynqPayload()
+        val uri = URI.create("$baseUrl/nbproducts/${product.owner}/${product.productId}")
+
+        webClient
+            .put()
+            .uri(uri)
+            .bodyValue(product)
+            .retrieve()
+            .toEntity<SynqError>()
+            .timeout(timeoutProperties.storage)
+            .doOnError(TimeoutException::class.java) {
+                logger.error { "Timed out while editing item '${item.hostId}' for ${item.hostName} in SynQ" }
+            }.onErrorMap(WebClientResponseException::class.java) { error ->
+                if (error.statusCode.isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                    ResourceNotFoundException(error.message, error)
+                } else {
+                    createServerError(error)
+                }
+            }.awaitFirst()
+    }
+
     override suspend fun deleteOrder(
         orderId: String,
         hostName: HostName
@@ -48,4 +70,6 @@ class SynqStandardAdapter(
             else -> false
         }
     }
+
+    override fun getName(): String = "Standard SynQ"
 }
