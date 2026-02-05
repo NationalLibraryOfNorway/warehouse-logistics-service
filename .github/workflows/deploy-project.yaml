@@ -92,10 +92,10 @@ jobs:
         uses: hashicorp/vault-action@v3
         with:
           url: ${{ secrets.NB_VAULT_URL }}
-          method: approle # Method used to authenticate against Vault
+          method: approle                                      # Method used to authenticate against Vault
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/proxy * # The "*" at the end is a wildcard, it will get all secrets in the path
+          secrets: secret/v1/application/k8s/mlt/data/proxy *  # The "*" at the end is a wildcard, it will get all secrets in the path
 
       # This step actually builds, tests, and verifies the project using Maven #[[verify-the-project]]
       # "envsubst" supplies proxy settings for Maven, proxy host address must be an IP address, not a URL
@@ -114,11 +114,11 @@ jobs:
         # That is because the report should be published, even if the tests failed
         if: always()
         with:
-          name: JUnit Test Results # Name for the report
-          path: ./**/TEST-*.xml # Where to look for report files, any file named "TEST-...xml" anywhere in the project
-          reporter: java-junit # What reporter to use, since this project uses JUnit, the reporter is "java-junit"
-          fail-on-error: true # Fail this step if there are test errors
-          fail-on-empty: true # Fail this step if no test results were found
+          name: JUnit Test Results  # Name for the report
+          path: ./**/TEST-*.xml     # Where to look for report files, any file named "TEST-...xml" anywhere in the project
+          reporter: java-junit      # What reporter to use, since this project uses JUnit, the reporter is "java-junit"
+          fail-on-error: true       # Fail this step if there are test errors
+          fail-on-empty: true       # Fail this step if no test results were found
 
       # This step checks the code for any TODO or FIXME comments and fails the job if any are found
       - name: Check for TODOs
@@ -135,8 +135,8 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: packaged-project                  # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
-          path: |                                 # File(s) to include, the path is relative to the repository root
-            target/${{ vars.PROJECT_NAME }}.jar   # Set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
+          path: |                                 # File(s) to include, the path is relative to the repository root, set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
+            target/${{ vars.PROJECT_NAME }}.jar
           if-no-files-found: error                # Fail if artifact is not found
           include-hidden-files: true              # Include hidden files in the artifact
           overwrite: true                         # Allow overwriting of previous artifacts
@@ -174,7 +174,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker-container # Use the docker-container driver which runs the build in a separate container, allowing for better isolation and support for multiple platforms
+          driver: docker # Use the docker driver which runs the build directly on the host
 
       # Simple action that authenticates against the NLN's Harbor instance
       # The url must be in form: https://<URL>, username and password should be for the GitHub robot user
@@ -215,12 +215,11 @@ jobs:
       - name: Build and Publish the Docker Image
         uses: docker/build-push-action@v6
         with:
-          push: true # Makes the action push image to Harbor, equivalent to "--output-type=registry"
-          context: . # Build context, makes the build process use actual files in the runner instead of using files from GitHub
-          file: ./docker/Dockerfile # Override the path to the Dockerfile, since this project has it in the docker folder
-          tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta-step
-          labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta-step
-          platforms: linux/amd64,linux/arm64 # Set the platform that this image is built for
+          push: true                                # Makes the action push image to Harbor, equivalent to "--output-type=registry"
+          context: .                                # Build context, makes the build process use actual files in the runner instead of using files from GitHub
+          file: ./docker/Dockerfile                 # Override the path to the Dockerfile, since this project has it in the docker folder
+          tags: ${{ steps.meta.outputs.tags }}      # Set tags for the image using output from the meta-step
+          labels: ${{ steps.meta.outputs.labels }}  # Set labels for the image using output from the meta-step
 
   deploy-to-stage:
     name: Deploy to Stage
