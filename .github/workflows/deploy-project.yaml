@@ -174,7 +174,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker
+          driver: docker-container # Use the docker-container driver which runs the build in a separate container, allowing for better isolation and support for multiple platforms
 
       # Simple action that authenticates against the NLN's Harbor instance
       # The url must be in form: https://<URL>, username and password should be for the GitHub robot user
