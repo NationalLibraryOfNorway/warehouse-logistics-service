@@ -123,7 +123,7 @@ jobs:
       # This step checks the code for any TODO or FIXME comments and fails the job if any are found
       - name: Check for TODOs
         run: |
-          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,.node_modules,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" . ; then
+          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,node_modules,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" . ; then
             echo "TODOs found! Turn them into Jira tasks and remove them from the code"
             exit 69
           else
