@@ -1,0 +1,108 @@
+# Reusable workflow for deploying to an environment
+# This workflow can be called by other workflows to deploy any project to stage or prod environments
+# It updates the image tag in the ArgoCD repository manifest and commits the change
+# This workflow can be called from other workflows using "uses" keyword
+name: Deploy to Environment
+
+on:
+  workflow_call:
+    # Inputs that must be provided by the calling workflow
+    inputs:
+      project-name:
+        description: 'Project name (used for image name)'
+        required: true
+        type: string
+      environment:
+        description: 'Target environment (stage or prod)'
+        required: true
+        type: string
+      manifest-file:
+        description: 'Path to the manifest file in mlt-argo repository'
+        required: true
+        type: string
+      image-tag:
+        description: 'Image tag to deploy'
+        required: true
+        type: string
+    # Secrets required to authenticate with the ArgoCD repository
+    # These should be passed from the calling workflow's secrets
+    secrets:
+      MLT_ARGO_APP_ID:
+        required: true
+      MLT_ARGO_PRIVATE_KEY:
+        required: true
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    # Uses the self-hosted Linux runner
+    runs-on: self-hosted-linux
+    # The environment setting enables environment protection rules and secrets
+    environment: ${{ inputs.environment }}
+    steps:
+      # Generate a GitHub App token to authenticate with the mlt-argo repository
+      # This token has limited scope and expires after use, more secure than a PAT
+      - name: Generate token for mlt-argo repository
+        uses: actions/create-github-app-token@v2
+        id: generate-token
+        with:
+          app-id: ${{ secrets.MLT_ARGO_APP_ID }}
+          private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            mlt-argo
+
+      # Check out the mlt-argo repository which contains the ArgoCD deployment manifests
+      # This repository is separate from the application code and tracks deployment configurations
+      - name: Checkout mlt-argo repository
+        uses: actions/checkout@v6
+        with:
+          repository: NationalLibraryOfNorway/mlt-argo
+          token: ${{ steps.generate-token.outputs.token }}
+          path: mlt-argo
+
+      # Configure Git with bot credentials for committing changes
+      - name: Set up Git user
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      # Update the image tag in the deployment manifest using sed
+      # This replaces the existing image reference with the new tag
+      # Image format: harbor.nb.no/mlt/{project-name}:{tag}
+      # Uses a more robust pattern that matches to end of line and verifies the substitution succeeded
+      - name: Update image tag in manifest
+        run: |
+          FILE="mlt-argo/${{ inputs.manifest-file }}"
+          IMAGE_TAG="${{ inputs.image-tag }}"
+          IMAGE_PATH="harbor.nb.no/mlt/${{ inputs.project-name }}"
+
+          echo "Updating image tag in $FILE to ${IMAGE_PATH}:${IMAGE_TAG}"
+
+          # Check if the image line exists before attempting substitution
+          if ! grep -qE "image:.*${IMAGE_PATH}:" "$FILE"; then
+            echo "Error: Could not find image line for ${IMAGE_PATH} in $FILE"
+            exit 1
+          fi
+
+          # Perform the substitution, matching to end of line to handle any YAML formatting
+          sed -i -E "s|image:.*${IMAGE_PATH}:.*|image: ${IMAGE_PATH}:${IMAGE_TAG}|" "$FILE"
+
+          # Verify the new tag is present in the file
+          if ! grep -q "image: ${IMAGE_PATH}:${IMAGE_TAG}" "$FILE"; then
+            echo "Error: Failed to update image tag to ${IMAGE_TAG} in $FILE"
+            echo "Current content:"
+            grep "image:.*${IMAGE_PATH}" "$FILE" || echo "No matching line found"
+            exit 1
+          fi
+
+          echo "Successfully updated image tag to ${IMAGE_TAG}"
+
+      # Commit the updated manifest to the mlt-argo repository
+      # ArgoCD will detect this change and automatically deploy the new image
+      - name: Commit and push changes
+        run: |
+          cd mlt-argo
+          git add "${{ inputs.manifest-file }}"
+          git commit -m "ci: update ${{ inputs.environment }} ${{ inputs.project-name }} image tag to ${{ inputs.image-tag }}" || echo "No changes to commit"
+          git push

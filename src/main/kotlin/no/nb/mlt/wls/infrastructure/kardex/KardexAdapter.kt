@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.toEntity
 import java.net.URI
 import java.util.concurrent.TimeoutException
 
@@ -37,7 +38,7 @@ class KardexAdapter(
             .uri(uri)
             .bodyValue(item.toKardexPayload())
             .retrieve()
-            .toEntity(KardexResponse::class.java)
+            .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
             .handle { it, sink ->
                 if (it.body?.isError() == true) {
@@ -55,6 +56,31 @@ class KardexAdapter(
             }.awaitSingle()
     }
 
+    override suspend fun editItem(item: Item) {
+        val uri = $$"$$baseUrl/materials/$material?material=$material&materialRequest=$body"
+
+        webClient
+            .put()
+            .uri(uri, item.hostId, item.hostId, item.toKardexPayload())
+            .retrieve()
+            .toEntity<KardexResponse>()
+            .timeout(timeoutProperties.storage)
+            .handle { it, sink ->
+                if (it.body?.isError() == true) {
+                    sink.error(StorageSystemException("Failed to edit item in Kardex: ${it.body?.message}"))
+                    it.body!!.errors.forEach {
+                        logger.error { "${it.item}: ${it.errors}" }
+                    }
+                } else {
+                    sink.next(it)
+                }
+            }.doOnError(TimeoutException::class.java) {
+                logger.error(it) {
+                    "Timed out while editing item '${item.hostId}' for ${item.hostName} in Kardex"
+                }
+            }.awaitSingle()
+    }
+
     override suspend fun createOrder(order: Order) {
         val uri = URI.create("$baseUrl/orders")
 
@@ -63,7 +89,7 @@ class KardexAdapter(
             .uri(uri)
             .bodyValue(order.toKardexOrderPayload())
             .retrieve()
-            .toEntity(KardexResponse::class.java)
+            .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
             .handle { it, sink ->
                 if (it.body?.isError() == true) {
@@ -91,7 +117,7 @@ class KardexAdapter(
             .delete()
             .uri(uri)
             .retrieve()
-            .toEntity(String::class.java)
+            .toEntity<String>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
                 logger.error(it) {
@@ -103,4 +129,6 @@ class KardexAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
+
+    override fun getName(): String = "Kardex"
 }
