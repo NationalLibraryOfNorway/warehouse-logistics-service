@@ -2,7 +2,6 @@ package no.nb.mlt.wls.kardex.controller
 
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
@@ -299,6 +298,48 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `stock sync for item metadata creates unknown item`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(emptyStockSyncPayload)
+                ).exchange()
+                .expectStatus()
+                .isOk()
+        }
+    }
+
+    @Test
+    fun `stock sync for item with decimal points fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "",
+                            quantity = "0.5",
+                            location = "",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
     fun `stock sync for missing item completes and creates items`() {
         runTest {
             val nonExistingItem = "non-existing"
@@ -352,9 +393,18 @@ class KardexControllerTest(
         KardexSyncMaterialPayload(
             hostId = testItem1.hostId,
             hostName = testItem1.hostName.toString(),
-            quantity = 1.0,
+            quantity = "1.0",
             location = testItem1.location,
             description = testItem1.description
+        )
+
+    private val emptyStockSyncPayload =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "",
+            quantity = "",
+            location = "",
+            description = "Test Material"
         )
 
     fun populateDb() {
