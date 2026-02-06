@@ -15,6 +15,8 @@ on:
       - v*.*.*
   # Runs every time a pull request is created, updated, etc. can use "types" to run only on select PR activities
   pull_request:
+    branches:
+      - main
 
 # Used to make sure that only one workflow in the specified group runs at the same time
 concurrency:
@@ -28,14 +30,14 @@ concurrency:
 permissions:
   contents: read
   actions: read
-  checks: write # See the [[test-report-publisher]] step for explanation why this is needed
+  checks: write
 
 # List of jobs that this workflow executes, each job can run on different runners, have different steps, etc.
 jobs:
   # Unique identifier for this job, make sure it is unique, you can use the "name" property to give it a more descriptive name
   test-project:
     # This name is displayed in the GitHub UI when the job is running
-    name: Build and Test the Project
+    name: Build and Validate the Project
     # Defines what runner to run this job on, if you want you can use an array of tags/identifiers to match the runner name
     # For example, this can be written as [self-hosted, linux], and only the runner matching all of these values will run it
     runs-on: self-hosted-linux
@@ -80,7 +82,7 @@ jobs:
           mvn -v
 
       # This step imports secrets from Vault, it is recommended to use Vault as it allows checking and editing the secrets
-      # GitHub does not permit checking secret's value or re-use the secrets
+      # GitHub does not permit checking the value of a secret or re-using secrets
       # Speak with the Platform team to set up a namespace if needed
       # They should also create an approle "user" which allows fetching the secrets within a GitHub action
       #
@@ -89,11 +91,11 @@ jobs:
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
-          url: ${{ secrets.VAULT_URL }}
-          method: approle # Method used to authenticate against Vault
+          url: ${{ secrets.NB_VAULT_URL }}
+          method: approle                                      # Method used to authenticate against Vault
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: secret/v1/application/k8s/mlt/data/proxy * # The "*" at the end is a wildcard, it will get all secrets in the path
+          secrets: secret/v1/application/k8s/mlt/data/proxy *  # The "*" at the end is a wildcard, it will get all secrets in the path
 
       # This step actually builds, tests, and verifies the project using Maven #[[verify-the-project]]
       # "envsubst" supplies proxy settings for Maven, proxy host address must be an IP address, not a URL
@@ -112,30 +114,32 @@ jobs:
         # That is because the report should be published, even if the tests failed
         if: always()
         with:
-          name: JUnit Test Results # Name for the report
-          path: ./**/TEST-*.xml # Where to look for report files, any file named "TEST-...xml" anywhere in the project
-          reporter: java-junit # What reporter to use, since this project uses JUnit, the reporter is "java-junit"
-          fail-on-error: true # Fail this step if there are test errors
-          fail-on-empty: true # Fail this step if no test results were found
+          name: JUnit Test Results  # Name for the report
+          path: ./**/TEST-*.xml     # Where to look for report files, any file named "TEST-...xml" anywhere in the project
+          reporter: java-junit      # What reporter to use, since this project uses JUnit, the reporter is "java-junit"
+          fail-on-error: true       # Fail this step if there are test errors
+          fail-on-empty: true       # Fail this step if no test results were found
 
+      # This step checks the code for any TODO or FIXME comments and fails the job if any are found
       - name: Check for TODOs
         run: |
-          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" . ; then
+          if grep -Eri --exclude-dir={.git,.github,.idea,.m2,.mvn,node_modules,target} "([/*#]+[ ]*(\bTODO\b|\bFIXME\b)+)" . ; then
             echo "TODOs found! Turn them into Jira tasks and remove them from the code"
             exit 69
           else
             echo "No TODOs found."
           fi
 
-      # This step uploads the JAR file as an artifact which can then be used in other jobs
-      - name: Upload the JAR File
+      # This step uploads the build files as an artifact which can then be used in other jobs
+      - name: Upload the Build
         uses: actions/upload-artifact@v6
         with:
-          name: packaged-project # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
-          path: target/wls.jar  # File(s) to include, the path is relative to the repository root
-                                #     Set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
-          if-no-files-found: error # Fail if artifact is not found
-          overwrite: true # Allow overwriting of previous artifacts
+          name: packaged-project                  # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
+          path: |                                 # File(s) to include, the path is relative to the repository root, set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
+            target/${{ vars.PROJECT_NAME }}.jar
+          if-no-files-found: error                # Fail if artifact is not found
+          include-hidden-files: true              # Include hidden files in the artifact
+          overwrite: true                         # Allow overwriting of previous artifacts
 
   # This job builds a Docker image with relevant tags and labels and publishes it to Harbor
   publish-image:
@@ -147,9 +151,11 @@ jobs:
     runs-on: self-hosted-linux
     # Outputs allow a job to output values that can be picked up by _downstream_ jobs that _depend_ on this job
     outputs:
-      # The metadata step produces an image name that is then used in deployment jobs
+      # The metadata step produces an image tag that is then used in deployment jobs
       # Gets the value from the "meta" step: [[meta-step-id]]
       image-tags: ${{ steps.meta.outputs.tags }}
+      # Extract the version number from the metadata for cleaner prod deployment reference
+      version: ${{ steps.meta.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -157,14 +163,12 @@ jobs:
       # Sets up a Docker Build action which is then used to produce the Docker image
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
 
       # See this step description in the first job
       - name: Import Secrets
         uses: hashicorp/vault-action@v3
         with:
-          url: ${{ secrets.VAULT_URL }}
+          url: ${{ secrets.NB_VAULT_URL }}
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
@@ -180,13 +184,14 @@ jobs:
           username: ${{ env.HARBOR_USERNAME }}
           password: ${{ env.HARBOR_PASSWORD }}
 
-      - name: Extract Metadata for Docker
+      # Create metadata needed for the Docker image
+      - name: Create Metadata for the Docker image
         # Give this step a unique ID for referencing it elsewhere; here it is used to get the value of tags #[[meta-step-id]]
         id: meta
         uses: docker/metadata-action@v5
         with:
           # Define to use for tags, can be multiple values if needed
-          images: harbor.nb.no/mlt/wls
+          images: harbor.nb.no/mlt/${{ vars.PROJECT_NAME }}
           # Defines a list of tag types to use for generating the metadata
           # the semver type uses GitHub tag in semver form and turns it into a proper tag for the image (semantic versioning: v4.2.0 -> 4.2.0)
           # the ref type bases its version either on branch or PR event and generates the tag for the image based on that (branch -> branch-name, pr -> pr-number)
@@ -194,111 +199,61 @@ jobs:
             type=semver,pattern={{version}}
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,format=short
+            type=sha,format=long,prefix=sha-
+          # Defines labels to be added to the image, these are key-value pairs that can be used for informational purposes or by other tools to filter images
+          flavor: |
+            latest=false
 
       # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
-      - name: Download the JAR File
+      - name: Download the Build Artifacts
         uses: actions/download-artifact@v7
         with:
           name: packaged-project
 
       # Builds and publishes the image in Harbor
-      - name: Build the Docker Image
+      - name: Build and Publish the Docker Image
         uses: docker/build-push-action@v6
         with:
-          push: true # Makes the action push image to Harbor, equivalent to "--output-type=registry"
-          context: . # Build context, makes the build process use actual files in the runner instead of using files from GitHub
-          file: ./docker/Dockerfile # Override the path to the Dockerfile, since this project has it in the docker folder
-          tags: ${{ steps.meta.outputs.tags }} # Set tags for the image using output from the meta-step
-          labels: ${{ steps.meta.outputs.labels }} # Set labels for the image using output from the meta-step
+          push: true                                # Makes the action push image to Harbor, equivalent to "--output-type=registry"
+          context: .                                # Build context, makes the build process use actual files in the runner instead of using files from GitHub
+          file: ./docker/Dockerfile                 # Override the path to the Dockerfile, since this project has it in the docker folder
+          tags: ${{ steps.meta.outputs.tags }}      # Set tags for the image using output from the meta-step
+          labels: ${{ steps.meta.outputs.labels }}  # Set labels for the image using output from the meta-step
 
+  # This job deploys the Docker image to the Stage environment
+  # It uses a reusable workflow to handle the actual deployment process via ArgoCD
+  deploy-to-stage:
+    name: Deploy to Stage
+    # Requires the image to be published first before deployment can occur
+    needs: publish-image
+    # Only runs on pushes to the main branch, not on PRs or tags
+    if: github.ref == 'refs/heads/main'
+    # Calls a reusable workflow defined in another file, this approach keeps deployment logic DRY
+    uses: ./.github/workflows/deploy-to-environment.yaml
+    with:
+      project-name: ${{ vars.PROJECT_NAME }}
+      environment: stage                                            # Target environment for deployment
+      manifest-file: ${{ vars.PROJECT_NAME }}/stage/deployment.yml  # Path to the Kubernetes manifest in the ArgoCD repository
+      image-tag: sha-${{ github.sha }}                              # Use the SHA-based tag for stage deployments to match main branch commits
+    secrets:
+      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}               # GitHub App ID for authenticating with ArgoCD repository
+      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}     # Private key for the GitHub App
+
+  # This job deploys the Docker image to the Production environment
+  # It uses a reusable workflow to handle the actual deployment process via ArgoCD
   deploy-to-prod:
     name: Deploy to Prod
+    # Requires the image to be published first before deployment can occur
     needs: publish-image
-    # Runs only on tags
-    if: startsWith(github.event.ref,'refs/tags/v')
-    runs-on: self-hosted-linux
-    environment: prod
-    steps:
-      - name: Generate token for mlt-argo repository
-        uses: actions/create-github-app-token@v2
-        id: generate-token
-        with:
-          app-id: ${{ vars.MLT_ARGO_APP_ID }}
-          private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            mlt-argo
-
-      - name: Checkout mlt-argo repository
-        uses: actions/checkout@v6
-        with:
-          repository: NationalLibraryOfNorway/mlt-argo
-          token: ${{ steps.generate-token.outputs.token }}
-          path: mlt-argo
-
-      - name: Set up Git user
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Update image tag in stage manifest
-        run: |
-          IMAGE_TAG=$(echo "${{ github.ref_name }}" | sed 's/v//g')
-          IMAGE_FULL_NAME=harbor.nb.no/mlt/wls:${IMAGE_TAG}
-          FILE="mlt-argo/hermes/prod/wls.yml"
-          echo "Updating image tag in $FILE to $IMAGE_FULL_NAME"
-          sed -i.bak -E "s|image: harbor.nb.no/mlt/wls:[^ ]*|image: ${IMAGE_FULL_NAME}|" "$FILE"
-          rm "$FILE.bak"
-          echo "IMAGE_FULL_NAME=$IMAGE_FULL_NAME" >> $GITHUB_ENV
-
-      - name: Commit and push changes
-        run: |
-          cd mlt-argo
-          git add hermes/prod/wls.yml
-          git commit -m "ci: update prod wls image tag to ${IMAGE_FULL_NAME}" || echo "No changes to commit"
-          git push
-
-  update-argo-stage-manifest:
-    name: Update ArgoCD Stage Manifest
-    needs: publish-image
-    if: github.ref == 'refs/heads/main'
-    runs-on: self-hosted-linux
-    environment: stage
-    steps:
-      - name: Generate token for mlt-argo repository
-        uses: actions/create-github-app-token@v2
-        id: generate-token
-        with:
-          app-id: ${{ vars.MLT_ARGO_APP_ID }}
-          private-key: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            mlt-argo
-
-      - name: Checkout mlt-argo repository
-        uses: actions/checkout@v6
-        with:
-          repository: NationalLibraryOfNorway/mlt-argo
-          token: ${{ steps.generate-token.outputs.token }}
-          path: mlt-argo
-
-      - name: Set up Git user
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-
-      - name: Update image tag in stage manifest
-        run: |
-          IMAGE_TAG=$(echo "${{ needs.publish-image.outputs.image-tags }}" | grep 'sha-' | head -n1 | sed 's/.*sha-//')
-          FILE="mlt-argo/hermes/stage/wls.yml"
-          sed -i.bak -E "s|(image: harbor.nb.no/mlt/wls:).*|\1sha-${IMAGE_TAG}|" "$FILE"
-          rm "$FILE.bak"
-          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-
-      - name: Commit and push changes
-        run: |
-          cd mlt-argo
-          git add hermes/stage/wls.yml
-          git commit -m "ci: update stage wls image tag to sha-${IMAGE_TAG}" || echo "No changes to commit"
-          git push
+    # Only runs when a semver tag (v*.*.*) is pushed, ensuring controlled production releases
+    if: startsWith(github.ref, 'refs/tags/v')
+    # Calls a reusable workflow defined in another file, this approach keeps deployment logic DRY
+    uses: ./.github/workflows/deploy-to-environment.yaml
+    with:
+      project-name: ${{ vars.PROJECT_NAME }}
+      environment: prod                                             # Target environment for deployment
+      manifest-file: ${{ vars.PROJECT_NAME }}/prod/deployment.yml   # Path to the Kubernetes manifest in the ArgoCD repository
+      image-tag: ${{ needs.publish-image.outputs.version }}         # Use the semantic version tag for prod deployments (e.g., 1.2.3)
+    secrets:
+      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}               # GitHub App ID for authenticating with ArgoCD repository
+      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}     # Private key for the GitHub App
