@@ -40,6 +40,7 @@ data class KardexSyncMaterialPayload(
 fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.ItemToSynchronize> =
     this.map { kardexPayload -> kardexPayload.toSyncPayload() }
 
+@Throws(ValidationException::class)
 fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchronize {
     // Handle quantity, which is a double in spec, but is sent to us as string
     val amount =
@@ -56,26 +57,21 @@ fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchroniz
                 throw ValidationException("Unable to synchronize item. Quantity must be a whole number")
             }
         }
-    // REVIEW - Should we also allow items without HostName, or should these be corrected manually?
-    val hostName =
-        try {
-            HostName.fromString(this.hostName)
-        } catch (_: IllegalArgumentException) {
-            logger.warn {
-                "Received invalid hostname from Kardex Item ${this.hostId}: '${this.hostName.ifBlank { "<blank>" }}'"
-            }
-            HostName.UNKNOWN
-        }
-    return SynchronizeItems.ItemToSynchronize(
-        hostId = this.hostId,
-        hostName = hostName,
-        quantity = amount.toInt(),
-        location = this.location.ifBlank { UNKNOWN_LOCATION },
-        associatedStorage = AssociatedStorage.KARDEX,
-        description = this.description,
-        itemCategory = ItemCategory.UNKNOWN,
-        packaging = Packaging.UNKNOWN,
-        currentPreferredEnvironment = Environment.NONE,
-        confidential = false
-    )
+    try {
+        val hostName = HostName.fromString(this.hostName)
+        return SynchronizeItems.ItemToSynchronize(
+            hostId = this.hostId,
+            hostName = hostName,
+            quantity = amount.toInt(),
+            location = this.location.ifBlank { UNKNOWN_LOCATION },
+            associatedStorage = AssociatedStorage.KARDEX,
+            description = this.description,
+            itemCategory = ItemCategory.UNKNOWN,
+            packaging = Packaging.UNKNOWN,
+            currentPreferredEnvironment = Environment.NONE,
+            confidential = false
+        )
+    } catch (_: IllegalArgumentException) {
+        throw ValidationException("Unable to sync item $hostId with hostname=${hostName.ifBlank { "<empty>" }}")
+    }
 }
