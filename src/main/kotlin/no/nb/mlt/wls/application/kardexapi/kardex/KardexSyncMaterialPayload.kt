@@ -48,11 +48,11 @@ fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchroniz
             0
         } else {
             // Check for decimal points, which for now is invalid
-            if (quantity.toDouble().rem(1) == 0.0) {
-                quantity.toDouble()
+            if (quantity.matches(Regex("^\\d.0"))) {
+                quantity.toDouble().toInt()
             } else {
                 logger.error {
-                    "Tried to sync item with quantity between 0.0 and 1.0: $this"
+                    "Tried to sync item with non-whole quantity: $this"
                 }
                 throw ValidationException("Unable to synchronize item. Quantity must be a whole number")
             }
@@ -62,7 +62,7 @@ fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchroniz
         return SynchronizeItems.ItemToSynchronize(
             hostId = this.hostId,
             hostName = hostName,
-            quantity = amount.toInt(),
+            quantity = amount,
             location = this.location.ifBlank { UNKNOWN_LOCATION },
             associatedStorage = AssociatedStorage.KARDEX,
             description = this.description,

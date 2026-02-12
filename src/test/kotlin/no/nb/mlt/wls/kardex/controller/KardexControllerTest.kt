@@ -332,7 +332,7 @@ class KardexControllerTest(
     }
 
     @Test
-    fun `stock sync for item with decimal points fails`() {
+    fun `stock sync for item with non whole numbers fails`() {
         runTest {
             webTestClient
                 .mutateWith(csrf())
@@ -344,9 +344,50 @@ class KardexControllerTest(
                     listOf(
                         KardexSyncMaterialPayload(
                             hostId = "test-material",
-                            hostName = "",
+                            hostName = "UNKNOWN",
                             quantity = "0.5",
                             location = "",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "UNKNOWN",
+                            quantity = "1.0001",
+                            location = "",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+
+            // Kardex should never send us this format
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "UNKNOWN",
+                            quantity = "1.000",
+                            location = "U10",
                             description = "Test Material"
                         )
                     )
