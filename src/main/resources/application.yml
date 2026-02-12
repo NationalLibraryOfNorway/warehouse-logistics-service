@@ -153,9 +153,6 @@ spring:
 springdoc:
   server-url: ${SWAGGER_SERVER_URL}
 
-server:
-  forward-headers-strategy: framework
-
 callback:
   secret: ${CALLBACK_SECRET}
 
