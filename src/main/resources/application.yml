@@ -64,6 +64,7 @@ management:
     port: 8888
 
 springdoc:
+  server-url: ${SWAGGER_SERVER_URL:http://localhost:8080}
   api-docs:
     path: /hermes/api-docs
   swagger-ui:
@@ -148,6 +149,12 @@ spring:
 
   mongodb:
     uri: ${MONGODB_URI}
+
+springdoc:
+  server-url: ${SWAGGER_SERVER_URL}
+
+server:
+  forward-headers-strategy: framework
 
 callback:
   secret: ${CALLBACK_SECRET}
