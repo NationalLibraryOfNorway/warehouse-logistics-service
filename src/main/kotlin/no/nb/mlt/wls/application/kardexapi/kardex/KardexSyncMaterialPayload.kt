@@ -43,7 +43,7 @@ fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.Item
 @Throws(ValidationException::class)
 fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchronize {
     // Handle quantity, which is a double in spec, but is sent to us as string
-    val amount =
+    val newAmount =
         if (quantity.isBlank()) {
             0
         } else {
@@ -58,11 +58,11 @@ fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchroniz
             }
         }
     try {
-        val hostName = HostName.fromString(this.hostName)
+        val validatedHostName = HostName.fromString(this.hostName)
         return SynchronizeItems.ItemToSynchronize(
             hostId = this.hostId,
-            hostName = hostName,
-            quantity = amount,
+            hostName = validatedHostName,
+            quantity = newAmount,
             location = this.location.ifBlank { UNKNOWN_LOCATION },
             associatedStorage = AssociatedStorage.KARDEX,
             description = this.description,
