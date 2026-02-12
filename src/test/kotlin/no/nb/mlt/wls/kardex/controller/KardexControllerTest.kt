@@ -311,6 +311,15 @@ class KardexControllerTest(
                 ).exchange()
                 .expectStatus()
                 .isOk()
+
+            val unknownItem =
+                itemRepository
+                    .findByHostNameAndHostId(
+                        HostName.fromString(emptyStockSyncPayload.hostName),
+                        emptyStockSyncPayload.hostId
+                    ).awaitSingleOrNull()
+            assertThat(unknownItem)
+                .isNotNull
         }
     }
 
