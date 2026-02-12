@@ -1,7 +1,7 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Pattern
 import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -10,8 +10,6 @@ import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
-
-private val logger = KotlinLogging.logger {}
 
 data class KardexSyncMaterialPayload(
     @field:Schema(
@@ -25,6 +23,10 @@ data class KardexSyncMaterialPayload(
     val hostName: String,
     @field:Schema(
         description = """The current quantity of the material."""
+    )
+    @field:Pattern(
+        regexp = "^(\\d+(\\.0)?)?$",
+        message = "Quantity must be blank or a positive whole number (e.g., '', '1.0', '42' are valid)"
     )
     val quantity: String,
     @field:Schema(
@@ -43,20 +45,8 @@ fun List<KardexSyncMaterialPayload>.toSyncPayloads(): List<SynchronizeItems.Item
 @Throws(ValidationException::class)
 fun KardexSyncMaterialPayload.toSyncPayload(): SynchronizeItems.ItemToSynchronize {
     // Handle quantity, which is a double in spec, but is sent to us as string
-    val newAmount =
-        if (quantity.isBlank()) {
-            0
-        } else {
-            // Check for decimal points, which for now is invalid
-            if (quantity.matches(Regex("^\\d.0"))) {
-                quantity.toDouble().toInt()
-            } else {
-                logger.error {
-                    "Tried to sync item with non-whole quantity: $this"
-                }
-                throw ValidationException("Unable to synchronize item. Quantity must be a whole number")
-            }
-        }
+
+    val newAmount = quantity.ifBlank { "0.0" }.toDouble().toInt()
     try {
         val validatedHostName = HostName.fromString(this.hostName)
         return SynchronizeItems.ItemToSynchronize(

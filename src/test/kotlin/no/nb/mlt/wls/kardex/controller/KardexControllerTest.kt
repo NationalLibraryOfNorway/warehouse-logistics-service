@@ -337,6 +337,18 @@ class KardexControllerTest(
                 ).exchange()
                 .expectStatus()
                 .isBadRequest()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(invalidStockSyncPayload2)
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
         }
     }
 
@@ -479,6 +491,15 @@ class KardexControllerTest(
             hostId = "TestingMaterial",
             hostName = "",
             quantity = "1",
+            location = "anywhere really",
+            description = "Test Material"
+        )
+
+    private val invalidStockSyncPayload2 =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "",
+            quantity = "corrupt",
             location = "anywhere really",
             description = "Test Material"
         )
