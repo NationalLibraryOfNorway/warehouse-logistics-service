@@ -6,7 +6,9 @@ import io.swagger.v3.oas.annotations.security.OAuthFlows
 import io.swagger.v3.oas.annotations.security.SecurityScheme
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.security.SecurityRequirement
+import io.swagger.v3.oas.models.servers.Server
 import org.springdoc.core.models.GroupedOpenApi
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -23,7 +25,9 @@ import org.springframework.context.annotation.Configuration
                 )
         )
 )
-class SwaggerConfig {
+class SwaggerConfig(
+    @param:Value($$"${springdoc.server-url}") private val serverUrl: String
+) {
     @Bean("kardexApi")
     fun kardexApi(): GroupedOpenApi =
         GroupedOpenApi
@@ -47,6 +51,7 @@ class SwaggerConfig {
                         .email("mlt@nb.no")
                         .url("https://www.nb.no")
                 it.security = listOf((SecurityRequirement().addList("clientCredentials")))
+                it.servers = listOf(Server().url(serverUrl))
             }.pathsToMatch("/hermes/kardex/v1/**")
             .build()
 }
