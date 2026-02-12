@@ -35,7 +35,7 @@ class SwaggerConfig(
             .group("Admin API")
             .displayName("Admin API")
             .addOpenApiCustomizer {
-                it.info.title = "Kardex updates port for Hermes WLS"
+                it.info.title = "Hermes Admin API"
                 it.info.description =
                     """
                     Hermes, developed and maintained by the Warehouse and Logistics team (MLT) at the National Library of Norway (NLN).
