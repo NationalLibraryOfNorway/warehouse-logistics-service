@@ -315,6 +315,23 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `stock sync with invalid item metadata fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(invalidStockSyncPayload)
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
     fun `stock sync for item with decimal points fails`() {
         runTest {
             webTestClient
@@ -401,9 +418,18 @@ class KardexControllerTest(
     private val emptyStockSyncPayload =
         KardexSyncMaterialPayload(
             hostId = "TestingMaterial",
-            hostName = "",
+            hostName = "UNKNOWN",
             quantity = "",
             location = "",
+            description = "Test Material"
+        )
+
+    private val invalidStockSyncPayload =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "",
+            quantity = "1",
+            location = "anywhere really",
             description = "Test Material"
         )
 
