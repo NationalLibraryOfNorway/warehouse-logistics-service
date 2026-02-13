@@ -498,7 +498,7 @@ class KardexControllerTest(
     private val invalidStockSyncPayload2 =
         KardexSyncMaterialPayload(
             hostId = "TestingMaterial",
-            hostName = "",
+            hostName = "UNKNOWN",
             quantity = "corrupt",
             location = "anywhere really",
             description = "Test Material"
