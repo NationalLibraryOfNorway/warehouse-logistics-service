@@ -78,6 +78,7 @@ class StorageEventProcessorAdapter(
 
     override suspend fun handleEvent(event: StorageEvent) {
         logger.trace { "Processing storage event: $event" }
+        logger.debug { "Available storage systems: ${storageSystems.map { it.getName() }}" }
 
         try {
             when (event) {
@@ -111,7 +112,7 @@ class StorageEventProcessorAdapter(
 
         storageCandidates.forEach {
             it.createItem(item)
-            logger.info { "Created item [$item] in storage system: $it" }
+            logger.info { "Created item [$item] in storage system: ${it.getName()}" }
         }
     }
 
