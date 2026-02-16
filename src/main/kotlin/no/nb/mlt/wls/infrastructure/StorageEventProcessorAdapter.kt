@@ -70,6 +70,7 @@ class StorageEventProcessorAdapter(
 
     override suspend fun handleEvent(event: StorageEvent) {
         logger.trace { "Processing storage event: $event" }
+        logger.debug { "Available storage systems: ${storageSystems.map { it.getName() }}" }
 
         try {
             when (event) {
