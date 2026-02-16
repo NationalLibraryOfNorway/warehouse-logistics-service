@@ -9,9 +9,10 @@
       <env name="EMAIL_PORT" value="1025" />
       <env name="TIMEOUT_SMTP" value="8000" />
       <env name="MONGODB_URI" value="mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&amp;authSource=wls" />
+      <env name="SWAGGER_SERVER_URL" value="http://localhost:8080" />
       <env name="CALLBACK_SECRET" value="superdupersecretkey" />
       <env name="SYNQ_BASE_URL" value="http://localhost:8181/synq/resources" />
-      <env name="KARDEX_ENABLED" value="false" />
+      <env name="KARDEX_ENABLED" value="true" />
       <env name="KARDEX_BASE_URL" value="http://localhost:8182/kardex" />
       <env name="LOGISTICS_ENABLED" value="true" />
       <env name="ORDER_HANDLER_EMAIL" value="daniel@mlt.hermes.no" />

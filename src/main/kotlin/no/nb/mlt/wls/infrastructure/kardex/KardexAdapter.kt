@@ -22,7 +22,12 @@ import java.util.concurrent.TimeoutException
 private val logger = KotlinLogging.logger {}
 
 @Component
-@ConditionalOnBooleanProperty(value = ["kardex.enabled"], havingValue = true)
+@ConditionalOnBooleanProperty(
+    prefix = "kardex",
+    value = ["enabled"],
+    havingValue = true,
+    matchIfMissing = false
+)
 class KardexAdapter(
     @param:Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
