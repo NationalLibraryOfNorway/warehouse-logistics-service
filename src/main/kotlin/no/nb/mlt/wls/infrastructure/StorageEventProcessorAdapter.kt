@@ -89,7 +89,6 @@ class StorageEventProcessorAdapter(
         logger.debug { "Marked event as processed: $processedEvent" }
 
         statisticsService.recordStatisticsEvent(event)
-
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
