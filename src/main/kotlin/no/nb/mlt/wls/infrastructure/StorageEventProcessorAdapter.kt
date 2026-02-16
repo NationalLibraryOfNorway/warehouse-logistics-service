@@ -89,6 +89,7 @@ class StorageEventProcessorAdapter(
         logger.debug { "Marked event as processed: $processedEvent" }
 
         statisticsService.recordStatisticsEvent(event)
+
     }
 
     private suspend fun handleItemCreated(event: ItemCreated) {
@@ -104,7 +105,7 @@ class StorageEventProcessorAdapter(
 
         storageCandidates.forEach {
             it.createItem(item)
-            logger.info { "Created item [$item] in storage system: $it" }
+            logger.info { "Created item [$item] in storage system: ${it.getName()}" }
         }
     }
 
