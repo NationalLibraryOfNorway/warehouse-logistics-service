@@ -15,6 +15,7 @@ import no.nb.mlt.wls.domain.ports.outbound.StatisticsService
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.NotSupportedException
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.ResourceNotFoundException
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
 private val logger = KotlinLogging.logger {}
@@ -24,8 +25,15 @@ class StorageEventProcessorAdapter(
     private val storageEventRepository: EventRepository<StorageEvent>,
     private val storageSystems: List<StorageSystemFacade>,
     private val itemRepository: ItemRepository,
-    private val statisticsService: StatisticsService
+    private val statisticsService: StatisticsService,
+    @param:Value($$"${kardex.enabled}")
+    private val kardexEnabled: String
 ) : EventProcessor<StorageEvent> {
+    init {
+        logger.info { "Registered storage systems: ${storageSystems.map { it.getName() }}" }
+        logger.info { "Kardex Enabled value $kardexEnabled" }
+    }
+
     override suspend fun processOutbox() {
         logger.trace { "Processing storage event outbox" }
 
