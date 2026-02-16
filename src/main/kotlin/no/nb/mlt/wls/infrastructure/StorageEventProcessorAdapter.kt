@@ -70,7 +70,6 @@ class StorageEventProcessorAdapter(
 
     override suspend fun handleEvent(event: StorageEvent) {
         logger.trace { "Processing storage event: $event" }
-        logger.debug { "Available storage systems: ${storageSystems.map { it.getName() }}" }
 
         try {
             when (event) {
@@ -228,4 +227,8 @@ class StorageEventProcessorAdapter(
         }
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
+
+    init {
+        logger.info { "Registered storage systems: ${storageSystems.map { it.getName() }}" }
+    }
 }
