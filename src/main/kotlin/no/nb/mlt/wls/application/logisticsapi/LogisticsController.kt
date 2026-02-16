@@ -16,6 +16,7 @@ import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.GetOrders
 import no.nb.mlt.wls.domain.ports.inbound.ReportItemAsMissing
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,7 +26,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-@ConditionalOnProperty(value = ["logistics.enabled"], havingValue = "true")
+@ConditionalOnBooleanProperty(
+    prefix = "logistics",
+    value = ["enabled"],
+    havingValue = true,
+    matchIfMissing = true
+)
 @RestController
 @RequestMapping("/hermes/logistics/v1")
 @Tag(name = "Logistics endpoints", description = """API for managing logistics within Hermes WLS""")
