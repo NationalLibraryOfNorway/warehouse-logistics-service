@@ -84,7 +84,7 @@ synq:
     base: ${SYNQ_BASE_URL:http://localhost:8181/synq/resources}
 
 kardex:
-  enabled: ${KARDEX_ENABLED:false}
+  enabled: ${KARDEX_ENABLED:true}
   path:
     base: ${KARDEX_BASE_URL:http://localhost:8182/kardex}
 

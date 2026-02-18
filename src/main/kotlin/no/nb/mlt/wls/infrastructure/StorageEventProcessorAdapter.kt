@@ -103,7 +103,7 @@ class StorageEventProcessorAdapter(
 
         storageCandidates.forEach {
             it.createItem(item)
-            logger.info { "Created item [$item] in storage system: $it" }
+            logger.info { "Created item [$item] in storage system: ${it.getName()}" }
         }
     }
 
@@ -227,4 +227,8 @@ class StorageEventProcessorAdapter(
         }
 
     private suspend fun findValidStorageCandidates(item: Item): List<StorageSystemFacade> = storageSystems.filter { it.canHandleItem(item) }
+
+    init {
+        logger.info { "Registered storage systems: ${storageSystems.map { it.getName() }}" }
+    }
 }

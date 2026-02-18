@@ -12,7 +12,7 @@ import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
 import no.nb.mlt.wls.infrastructure.config.TimeoutProperties
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.toEntity
@@ -22,7 +22,12 @@ import java.util.concurrent.TimeoutException
 private val logger = KotlinLogging.logger {}
 
 @Component
-@ConditionalOnProperty(value = ["kardex.enabled"], havingValue = "true")
+@ConditionalOnBooleanProperty(
+    prefix = "kardex",
+    value = ["enabled"],
+    havingValue = true,
+    matchIfMissing = false
+)
 class KardexAdapter(
     @param:Qualifier("nonProxyWebClient")
     private val webClient: WebClient,
