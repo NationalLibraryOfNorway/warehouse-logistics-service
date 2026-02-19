@@ -34,11 +34,16 @@ class KardexController(
         @RequestBody @Valid payloads: List<KardexMaterialPayload>
     ): ResponseEntity<Unit> {
         payloads.forEach { material ->
-            material.validate()
-            val resolvedHostName = getHostNameForItem(material.hostName, material.hostId)
-            val validMaterial = material.copy(hostName = resolvedHostName.toString())
+            if (material.validate()) {
+                val resolvedHostName = getHostNameForItem(material.hostName, material.hostId)
+                val validMaterial = material.copy(hostName = resolvedHostName.toString())
 
-            updateItem.updateItem(validMaterial.toUpdateItemPayload())
+                updateItem.updateItem(validMaterial.toUpdateItemPayload())
+            } else {
+                logger.error {
+                    "Unable to process material ${material.hostId} for ${material.hostName}. Motive: ${material.motiveType}"
+                }
+            }
         }
 
         return ResponseEntity.ok().build()
