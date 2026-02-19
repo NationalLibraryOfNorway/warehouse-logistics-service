@@ -3,6 +3,7 @@ package no.nb.mlt.wls.infrastructure.kardex
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 
 data class KardexMaterialPayload(
     val materialName: String,
@@ -33,8 +34,9 @@ fun fromItemCategory(itemCategory: ItemCategory): String =
     when (itemCategory) {
         ItemCategory.PAPER -> "PAPIR"
         ItemCategory.FILM -> "FILM"
+        ItemCategory.MAGNETIC_TAPE -> "MAGNETISK"
         ItemCategory.EQUIPMENT -> "UTSTYR"
-        else -> ItemCategory.UNKNOWN.toString()
+        else -> throw ValidationException("Tried mapping an unsupported item category to Kardex")
     }
 
 data class StorageRule(
