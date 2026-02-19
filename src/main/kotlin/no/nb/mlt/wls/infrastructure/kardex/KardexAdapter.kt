@@ -138,11 +138,12 @@ class KardexAdapter(
         if (item.preferredEnvironment == Environment.FRAGILE) {
             return false
         }
-        return item.itemCategory in listOf(
-            ItemCategory.FILM,
-            ItemCategory.PAPER,
-            ItemCategory.MAGNETIC_TAPE
-        )
+        return item.itemCategory in
+            listOf(
+                ItemCategory.FILM,
+                ItemCategory.PAPER,
+                ItemCategory.MAGNETIC_TAPE
+            )
     }
 
     override fun getName(): String = "Kardex"
