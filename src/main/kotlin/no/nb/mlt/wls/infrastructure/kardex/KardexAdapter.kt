@@ -135,15 +135,18 @@ class KardexAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item): Boolean {
-        if (item.preferredEnvironment == Environment.FRAGILE) {
-            return false
+        if (item.hostName in listOf(HostName.AXIELL)) {
+            if (item.preferredEnvironment == Environment.FRAGILE) {
+                return false
+            }
+            return item.itemCategory in
+                listOf(
+                    ItemCategory.FILM,
+                    ItemCategory.PAPER,
+                    ItemCategory.MAGNETIC_TAPE
+                )
         }
-        return item.itemCategory in
-            listOf(
-                ItemCategory.FILM,
-                ItemCategory.PAPER,
-                ItemCategory.MAGNETIC_TAPE
-            )
+        return false
     }
 
     override fun getName(): String = "Kardex"
