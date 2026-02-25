@@ -2,6 +2,7 @@ package no.nb.mlt.wls.infrastructure.kardex
 
 import jakarta.validation.constraints.Min
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 
 data class KardexOrderPayload(
     val orderName: String,
@@ -13,7 +14,7 @@ data class KardexOrderPayload(
 
 fun Order.toKardexOrderPayload(): KardexOrderPayload =
     KardexOrderPayload(
-        orderName = hostOrderId,
+        orderName = hostName.toString() + DELIMITER + hostOrderId,
         directionType = DirectionType.Pick,
         priority = KardexPriority.Medium,
         info5 = hostName.toString(),

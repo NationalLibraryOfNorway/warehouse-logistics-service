@@ -2,7 +2,6 @@ package no.nb.mlt.wls.kardex.controller
 
 import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.reactive.awaitLast
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.runBlocking
@@ -299,6 +298,127 @@ class KardexControllerTest(
     }
 
     @Test
+    fun `stock sync for item metadata creates unknown item`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(emptyStockSyncPayload)
+                ).exchange()
+                .expectStatus()
+                .isOk()
+
+            val unknownItem =
+                itemRepository
+                    .findByHostNameAndHostId(
+                        HostName.fromString(emptyStockSyncPayload.hostName),
+                        emptyStockSyncPayload.hostId
+                    ).awaitSingleOrNull()
+            assertThat(unknownItem)
+                .isNotNull
+        }
+    }
+
+    @Test
+    fun `stock sync with invalid item metadata fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(invalidStockSyncPayload)
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(invalidStockSyncPayload2)
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
+    fun `stock sync for item with non whole numbers fails`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "UNKNOWN",
+                            quantity = "0.5",
+                            location = "",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "UNKNOWN",
+                            quantity = "1.0001",
+                            location = "",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+
+            // Kardex should never send us this format
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/stock-sync")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        KardexSyncMaterialPayload(
+                            hostId = "test-material",
+                            hostName = "UNKNOWN",
+                            quantity = "1.000",
+                            location = "U10",
+                            description = "Test Material"
+                        )
+                    )
+                ).exchange()
+                .expectStatus()
+                .isBadRequest()
+        }
+    }
+
+    @Test
     fun `stock sync for missing item completes and creates items`() {
         runTest {
             val nonExistingItem = "non-existing"
@@ -352,9 +472,36 @@ class KardexControllerTest(
         KardexSyncMaterialPayload(
             hostId = testItem1.hostId,
             hostName = testItem1.hostName.toString(),
-            quantity = 1.0,
+            quantity = "1.0",
             location = testItem1.location,
             description = testItem1.description
+        )
+
+    private val emptyStockSyncPayload =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "UNKNOWN",
+            quantity = "",
+            location = "",
+            description = "Test Material"
+        )
+
+    private val invalidStockSyncPayload =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "",
+            quantity = "1",
+            location = "anywhere really",
+            description = "Test Material"
+        )
+
+    private val invalidStockSyncPayload2 =
+        KardexSyncMaterialPayload(
+            hostId = "TestingMaterial",
+            hostName = "UNKNOWN",
+            quantity = "corrupt",
+            location = "anywhere really",
+            description = "Test Material"
         )
 
     fun populateDb() {

@@ -6,6 +6,7 @@ import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
+import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import no.nb.mlt.wls.domain.ports.outbound.exceptions.StorageSystemException
@@ -133,7 +134,20 @@ class KardexAdapter(
 
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
-    override fun canHandleItem(item: Item) = item.preferredEnvironment != Environment.FRAGILE
+    override fun canHandleItem(item: Item): Boolean {
+        if (item.hostName == HostName.AXIELL) {
+            if (item.preferredEnvironment == Environment.FRAGILE) {
+                return false
+            }
+            return item.itemCategory in
+                listOf(
+                    ItemCategory.FILM,
+                    ItemCategory.PAPER,
+                    ItemCategory.MAGNETIC_TAPE
+                )
+        }
+        return false
+    }
 
     override fun getName(): String = "Kardex"
 }
