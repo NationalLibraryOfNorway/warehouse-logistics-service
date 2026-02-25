@@ -34,16 +34,15 @@ class KardexController(
         @RequestBody @Valid payloads: List<KardexMaterialPayload>
     ): ResponseEntity<Unit> {
         payloads.forEach { material ->
-            if (material.validate()) {
-                val resolvedHostName = getHostNameForItem(material.hostName, material.hostId)
-                val validMaterial = material.copy(hostName = resolvedHostName.toString())
-
-                updateItem.updateItem(validMaterial.toUpdateItemPayload())
-            } else {
+            if (!material.validate()) {
                 logger.error {
                     "Unable to process material ${material.hostId} for ${material.hostName}. Motive: ${material.motiveType}"
                 }
+                return@forEach
             }
+            val resolvedHostName = getHostNameForItem(material.hostName, material.hostId)
+            val validMaterial = material.copy(hostName = resolvedHostName.toString())
+            updateItem.updateItem(validMaterial.toUpdateItemPayload())
         }
 
         return ResponseEntity.ok().build()
@@ -100,7 +99,7 @@ class KardexController(
 
         if (itemsById.size > 1) {
             logger.error { "Found multiple items with same Host ID: $hostId" }
-            logger.error { "Items: ${itemsById.joinToString { i -> "${i.hostName} ${i.hostId} ${i.description}"}}" }
+            logger.error { "Items: ${itemsById.joinToString { i -> "${i.hostName} ${i.hostId} ${i.description}" }}" }
             throw DuplicateItemException("Found multiple items with same Host ID: $hostId")
         }
 
