@@ -27,7 +27,7 @@ private val logger = KotlinLogging.logger {}
     prefix = "kardex",
     value = ["enabled"],
     havingValue = true,
-    matchIfMissing = false
+    matchIfMissing = true
 )
 class KardexAdapter(
     @param:Qualifier("nonProxyWebClient")
