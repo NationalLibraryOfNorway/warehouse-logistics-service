@@ -135,7 +135,7 @@ class KardexAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item): Boolean {
-        if (item.hostName in listOf(HostName.AXIELL)) {
+        if (item.hostName == HostName.AXIELL) {
             if (item.preferredEnvironment == Environment.FRAGILE) {
                 return false
             }
