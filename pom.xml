@@ -93,7 +93,7 @@
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
     <mockwebserver.version>4.12.0</mockwebserver.version>
 
-    <kotlin.version>2.3.0</kotlin.version>
+    <kotlin.version>2.3.10</kotlin.version>
     <kotlin.code.style>official</kotlin.code.style>
     <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
     <kotlin.compiler.apiVersion>2.2</kotlin.compiler.apiVersion>
