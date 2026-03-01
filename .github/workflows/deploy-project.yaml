@@ -206,7 +206,7 @@ jobs:
 
       # Downloads previously uploaded artifact with the provided id / name, see [[packaged-project-id]] to see how it was defined
       - name: Download the Build Artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: packaged-project
 
