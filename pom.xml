@@ -83,7 +83,7 @@
     <micrometer-tracing.version>1.5.8</micrometer-tracing.version>
 
     <mockk.version>5.0.1</mockk.version>
-    <openapi.version>3.0.0</openapi.version>
+    <openapi.version>3.0.2</openapi.version>
     <spotless.version>3.1.0</spotless.version>
     <spring.cloud.version>2025.1.0</spring.cloud.version>
     <testcontainers.version>1.21.4</testcontainers.version>
