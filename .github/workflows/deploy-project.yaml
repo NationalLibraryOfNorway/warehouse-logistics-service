@@ -132,7 +132,7 @@ jobs:
 
       # This step uploads the build files as an artifact which can then be used in other jobs
       - name: Upload the Build
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: packaged-project                  # Artifact ID, used to reference the artifact in other jobs when downloading it #[[packaged-project-id]]
           path: |                                 # File(s) to include, the path is relative to the repository root, set "project.build.finalName --> ${project.artifactId}" in pom.xml to drop the version suffix
