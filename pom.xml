@@ -99,7 +99,7 @@
     <kotlin.compiler.apiVersion>2.2</kotlin.compiler.apiVersion>
     <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
     <kotlin.compiler.languageVersion>2.2</kotlin.compiler.languageVersion>
-    <kotlin.logging.version>7.0.13</kotlin.logging.version>
+    <kotlin.logging.version>8.0.01</kotlin.logging.version>
   </properties>
 
   <dependencies>
