@@ -16,10 +16,19 @@ interface KardexItemPayload {
     val operator: String
     val motiveType: MotiveType
 
-    fun validate() {
-        if (motiveType !in listOf(MotiveType.Deleted) && location.isBlank()) {
+    /**
+     * Validates whether the material is processable
+     * @return true if processable, false otherwise
+     * @throws ValidationException if payload is badly formatted, for example having blank location for non-deletions
+     */
+    fun validate(): Boolean {
+        if (motiveType in listOf(MotiveType.StockUnavailable, MotiveType.SpaceUnavailable, MotiveType.Shortage)) {
+            return false
+        }
+        if (motiveType !in listOf(MotiveType.Deleted, MotiveType.Canceled) && location.isBlank()) {
             throw ValidationException("Location can not be blank for a regular payload")
         }
+        return true
     }
 }
 
