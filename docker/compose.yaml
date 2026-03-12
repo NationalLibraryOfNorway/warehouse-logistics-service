@@ -1,16 +1,21 @@
+# This docker-compose file is used for setting up local development environment with all necessary dependencies
+# It includes services for MongoDB, Keycloak, Kafka, and Mockoon for testing callbacks, SynQ, and Kardex compability
+
+# Give the docker-compose project a name, which will be used as a prefix for container names and network
+name: wls
+
 # Define what services to set up for local development
 services:
     # Set up a local mongo instance for local development
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    restart: unless-stopped
+    restart: no
     entrypoint: >
       /bin/bash -c '
-      openssl rand -base64 756 > /data/keyfile.key &&
-      chmod 400 /data/keyfile.key &&
+      [ -s /data/keyfile.key ] || { echo "Missing keyfile at /data/keyfile.key"; exit 1; } &&
       chown mongodb:mongodb /data/keyfile.key &&
-      /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
+      exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
     healthcheck:
       test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
       interval: 5s
@@ -22,8 +27,10 @@ services:
       MONGO_INITDB_DATABASE: wls
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
     volumes:
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo/secrets/keyfile.key:/data/keyfile.key
       - mongodata:/data/db
       - mongoconfig:/data/configdb
       - mongoshared:/data
@@ -31,6 +38,7 @@ services:
   # Initialize replica set + seed data after Mongo is healthy
   mongo-setup:
     image: mongo:8.2.3
+    restart: no
     depends_on:
       mongo-db:
         condition: service_healthy
@@ -47,7 +55,7 @@ services:
   # Useful for testing email sending functionality locally, without spamming actual email accounts
   email:
     image: haravich/fake-smtp-server
-    restart: unless-stopped
+    restart: no
     hostname: email
     ports:
       - "1025:1025"
@@ -64,7 +72,7 @@ services:
   # This connects interactively to the container, uses keycloak export command to export the realm, copies the file to the local machine, and adds it to git
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
-    restart: always
+    restart: no
     hostname: keycloak
     environment:
       KEYCLOAK_ADMIN: wls
@@ -84,7 +92,7 @@ services:
   # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
   kafka:
     image: "apache/kafka:4.1.1"
-    restart: unless-stopped
+    restart: no
     hostname: kafka
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
@@ -92,14 +100,15 @@ services:
       timeout: 5s
       retries: 12
     ports:
-      - "9092:9092"
+      - "9092:9092"    # internal Docker listener (also reachable from host for simple tools)
+      - "29092:29092"  # external listener for IntelliJ Kafka plugin
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -110,6 +119,7 @@ services:
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
   kafka-topic-setup:
     image: 'apache/kafka:4.1.1'
+    restart: no
     depends_on:
       kafka:
         condition: service_healthy
@@ -127,8 +137,8 @@ services:
   # In our case it is used for locally testing the callback functionality
   mockoon:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    restart: no
+    hostname: mockoon-callbacks
     ports:
       - "80:8282"
     command: --data /data/wls-callbacks.json --port 8282 --log-transaction
@@ -138,8 +148,8 @@ services:
   # Also use Mockoon for testing Kardex
   mockoon-kardex:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    restart: no
+    hostname: mockoon-kardex
     ports:
       - "8182:8182"
     command: --data /data/wls-kardex.json --port 8182 --log-transaction
@@ -149,8 +159,8 @@ services:
   # Also use Mockoon for testing the SynQ Controller
   mockoon-synq:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    restart: no
+    hostname: mockoon-synq
     ports:
       - "8181:8181"
     command: --data /data/wls-synq.json --port 8181 --log-transaction
@@ -158,6 +168,26 @@ services:
       - ./mockoon/wls-synq.json:/data/wls-synq.json
 
 volumes:
+  # Persistent MongoDB data files (collections, indexes, oplog)
   mongodata:
+    driver: local
+  # MongoDB runtime/config metadata used by WiredTiger and startup internals
   mongoconfig:
+    driver: local
+  # Shared mount used by this setup for the keyfile path and init-time artifacts
   mongoshared:
+    driver: local
+
+networks:
+  # Pin the default Compose network subnet to avoid host-network overlap.
+  # Without this, Docker may auto-assign a 10.x/172.x subnet that conflicts
+  # with corporate/home routing and causes intermittent service-to-service
+  # failures (e.g. ECONNREFUSED/timeout between containers).
+  default:
+    # Bridge keeps all services isolated while still reachable by service name
+    # (mongo-db, kafka, keycloak, etc.) through Docker's internal DNS.
+    driver: bridge
+    ipam:
+      config:
+        # Chosen private range for stable, conflict-free local networking.
+        - subnet: 172.28.0.0/16

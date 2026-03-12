@@ -33,4 +33,8 @@ build/
 .vscode/
 
 ### Other ###
+# Some people really like their git patches...
 *.patch
+
+# MongoDB container replica-set keyfile
+docker/mongo/secrets/

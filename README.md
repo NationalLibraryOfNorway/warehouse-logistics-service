@@ -21,7 +21,8 @@ More features and benefits will be added as the service is developed.
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
       2. [Using Docker](#using-docker)
-      3. [Using an IDE](#using-an-ide)
+      3. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
+      4. [Using an IDE](#using-an-ide)
    2. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
       2. [Running Tests in an IDE](#running-tests-in-an-ide)
@@ -67,7 +68,7 @@ You might also want to check the [GitHub Actions](.github/workflows/deploy-proje
 
 
 The Warehouse Logistics Service is a Spring Boot application that can be run locally or in a container.
-It is recommended to use Docker for local testing, as the service is designed to run in a containerized environment.
+It is recommended to use Docker or containerd (via `nerdctl`) for local testing, as the service is designed to run in a containerized environment.
 Additionally, this service depends on other applications, such as MongoDB, which can be spun up using the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 For development an IDE such as [IntelliJ IDEA](https://www.jetbrains.com/idea/ "Link to JetBrains IntelliJ IDEA program") is highly recommended.
 
@@ -97,6 +98,13 @@ cp target/wls.jar docker/wls.jar
 docker buildx build --platform linux/amd64 -t wls:latest docker/
 ```
 
+If you need local setup of Docker on Arch Linux, install and enable the required tooling:
+
+```bash
+pacman -S --needed docker docker-buildx docker-compose
+systemctl enable --now docker
+```
+
 ***Caveats:***
 - When building the Docker image outside NLNs network, the build will fail, as it won't be able to access the internal Harbor instance which is used to pull the base image.
   In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-noble` and build the image locally.
@@ -117,7 +125,37 @@ docker pull harbor.nb.no/mlt/wls:<TAG>
 With the image either built or pulled, WLS can be run using the following command:
 
 ```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG>
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
+```
+
+### Using containerd + BuildKit (nerdctl)
+
+After building the JAR file, it can be used to build an image with `nerdctl` (which uses BuildKit):
+
+```shell
+# Move the jar to the Docker directory
+cp target/wls.jar docker/wls.jar
+
+# Build image with containerd/BuildKit
+nerdctl build --platform linux/amd64 -t wls:latest docker/
+```
+
+If you need local setup of rootful `containerd` on Arch Linux, install and enable the required tooling:
+
+```shell
+pacman -S --needed containerd runc nerdctl cni-plugins buildkit iptables-nft rootlesskit
+systemctl enable --now containerd
+systemctl enable --now buildkit
+```
+
+The same caveats from [Using Docker](#using-docker) apply when building outside NLN's network.
+
+With the image either built or pulled, WLS can be run using the following command:
+
+```shell
+nerdctl run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
+nerdctl run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
 ```
 
 ### Using an IDE
@@ -189,6 +227,7 @@ The API is accessible at the usual URL, with the `/hermes` suffix.
 
 Regardless of what method you used to run the Hermes WLS, it has other services and applications that it depends on.
 To run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
+The compose stack can be run with either `docker compose` or `nerdctl compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
@@ -211,7 +250,16 @@ This will spin up the following services:
   - See below on how to enable mapping `localhost` to `callback-wls.no`
   - To read the logs with request and response data, run:
     - `docker logs --follow docker-mockoon-1`
+    - Or with containerd: `nerdctl logs --follow docker-mockoon-1`
     - Make sure that the container name matches the actual name from running `docker compose`
+
+Before starting the local dependency stack, generate MongoDB replica-set keyfile once:
+
+```shell
+mkdir -p ./docker/mongo/secrets
+openssl rand -base64 756 > ./docker/mongo/secrets/keyfile.key
+chmod 400 ./docker/mongo/secrets/keyfile.key
+```
 
 To start the services, run the following command:
 
@@ -221,6 +269,16 @@ docker compose up -d
 
 # Alternatively
 docker compose -f docker/compose.yaml up -d
+```
+
+Using containerd:
+
+```shell
+cd docker
+nerdctl compose up -d
+
+# Alternatively
+nerdctl compose -f ./docker/compose.yaml up -d\
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
@@ -237,6 +295,21 @@ docker compose down
 
 # Alternatively
 docker compose -f docker/compose.yaml down
+
+# Optional step for clean restart (removes volumes too)
+docker system prune --volumes -af
+```
+
+Using containerd:
+
+```shell
+nerdctl compose down
+
+# Alternatively
+nerdctl compose -f ./docker/compose.yaml down
+
+# Optional step for clean restart (removes volumes too)
+nerdctl system prune --volumes -af
 ```
 
 ## Deployment Dependencies
