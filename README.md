@@ -249,13 +249,9 @@ This will spin up the following services:
     - Make sure that the container name matches the actual name from running `<docker|nerdctl> compose up`
     - You can check it using `<docker|nerdctl> ps`
 
-Before starting the local dependency stack, generate MongoDB replica-set keyfile once:
-
-```shell
-mkdir -p ./docker/mongo/secrets
-openssl rand -base64 756 > ./docker/mongo/secrets/keyfile.key
-chmod 400 ./docker/mongo/secrets/keyfile.key
-```
+For MongoDB replica set auth in local Compose, provide a keyfile at `docker/mongo/secrets/keyfile.key` before startup.
+The Compose setup mounts this file read-only and copies it into container-local tmpfs at runtime, so host file ownership is never changed.
+Run `bash docker/setup-mongo-keyfile.sh` before startup: it creates the keyfile if missing and validates it if already present.
 
 To start the services, run the following command:
 

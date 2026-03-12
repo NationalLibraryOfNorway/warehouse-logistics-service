@@ -10,17 +10,26 @@ services:
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    entrypoint: >
+    # Rootless-safe keyfile flow:
+    # 1) user provides keyfile on host
+    # 2) file is mounted read-only at a staging path
+    # 3) startup copies file to tmpfs and applies strict permissions there
+    entrypoint: |
       /bin/bash -c '
-      [ -s /data/keyfile.key ] || { echo "Missing keyfile at /data/keyfile.key"; exit 42; } &&
-      chmod 400 /data/keyfile.key || { echo "Failed to set permission '400' on /data/keyfile.key"; exit 67; } &&
-      chown mongodb:mongodb /data/keyfile.key || { echo "Failed to make mongodb owner of /data/keyfile.key"; exit 69; } &&
-      exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
+      set -euo pipefail;
+      KEYFILE_SRC="/run/mongo-keyfile-src/keyfile.key";
+      KEYFILE_DEST="/run/mongo-keyfile/keyfile.key";
+      [ -s "$$KEYFILE_SRC" ] || { echo "Missing keyfile at $$KEYFILE_SRC"; exit 69; }
+      cp "$$KEYFILE_SRC" "$$KEYFILE_DEST" || { echo "Failed to copy keyfile to container tmpfs"; exit 67; }
+      chmod 400 "$$KEYFILE_DEST" || { echo "Failed to set permission 400 on $$KEYFILE_DEST"; exit 42; }
+      chown mongodb:mongodb "$$KEYFILE_DEST" || { echo "Failed to make mongodb owner of $$KEYFILE_DEST"; exit 34; }
+      exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile "$$KEYFILE_DEST" --bind_ip_all --port 27017';
     healthcheck:
       test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
-      interval: 5s
+      start_period: 30s
+      interval: 30s
       timeout: 5s
-      retries: 12
+      retries: 5
     ports:
       - "27017:27017"
     environment:
@@ -28,28 +37,35 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
       GLIBC_TUNABLES: glibc.pthread.rseq=1
+    tmpfs:
+      - /run/mongo-keyfile
     volumes:
       - mongoconfig:/data/configdb
       - mongodata:/data/db
       - mongoshared:/data
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - ./mongo/secrets/keyfile.key:/data/keyfile.key
+      - ./mongo/secrets/keyfile.key:/run/mongo-keyfile-src/keyfile.key:ro
 
   # Initialize replica set + seed data after Mongo is healthy
-  mongo-setup:
+  mongo-db-setup:
     image: mongo:8.2.3
     depends_on:
       mongo-db:
         condition: service_healthy
-    entrypoint: >
+    entrypoint: |
       /bin/bash -c '
-      mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-db:27017\"}]})}" &&
-      mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"
-      '
+      set -euo pipefail;
+      until mongosh -u root -p toor --host mongo-db --quiet --eval "db.runCommand({ping:1})" >/dev/null 2>&1; do
+        echo "mongo-db not ready yet, retrying in 2s...";
+        sleep 2;
+      done;
+      echo "mongo-db is ready, initializing replica set and seeding data...";
+      mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-db:27017\"}]})}";
+      mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"';
     volumes:
-      - mongoconfig:/data/configdb:ro
-      - mongodata:/data/db:ro
-      - mongoshared:/data:ro
+      - mongo-setup-config:/data/configdb
+      - mongo-setup-data:/data/db
+      - mongo-setup-shared:/data
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Set up a local SMTP server for local development
@@ -120,7 +136,7 @@ services:
       - kafka-shared-config:/mnt/shared/config
 
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
-  kafka-topic-setup:
+  kafka-setup:
     image: 'apache/kafka:4.1.1'
     depends_on:
       kafka:
@@ -179,6 +195,15 @@ volumes:
     driver: local
   # Shared mount used by this setup for the keyfile path and init-time artifacts
   mongoshared:
+    driver: local
+  # Dedicated mongo-setup config volume to avoid anonymous mounts and shared writes
+  mongo-setup-config:
+    driver: local
+  # Dedicated mongo-setup data volume to avoid anonymous mounts and shared writes
+  mongo-setup-data:
+    driver: local
+  # Dedicated mongo-setup /data volume to avoid anonymous mounts and shared writes
+  mongo-setup-shared:
     driver: local
   # Persistent Kafka broker data (KRaft metadata + topic data)
   kafka-data:
