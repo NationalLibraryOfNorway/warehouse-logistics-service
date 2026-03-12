@@ -37,4 +37,4 @@ build/
 *.patch
 
 # MongoDB container replica-set keyfile
-docker/mongo/secrets/
+**/keyfile.key

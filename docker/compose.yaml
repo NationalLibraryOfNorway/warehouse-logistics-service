@@ -10,7 +10,6 @@ services:
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    restart: no
     entrypoint: >
       /bin/bash -c '
       [ -s /data/keyfile.key ] || { echo "Missing keyfile at /data/keyfile.key"; exit 42; } &&
@@ -30,16 +29,15 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: toor
       GLIBC_TUNABLES: glibc.pthread.rseq=1
     volumes:
+      - mongoconfig:/data/configdb
+      - mongodata:/data/db
+      - mongoshared:/data
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo/secrets/keyfile.key:/data/keyfile.key
-      - mongodata:/data/db
-      - mongoconfig:/data/configdb
-      - mongoshared:/data
 
   # Initialize replica set + seed data after Mongo is healthy
   mongo-setup:
     image: mongo:8.2.3
-    restart: no
     depends_on:
       mongo-db:
         condition: service_healthy
@@ -49,17 +47,16 @@ services:
       mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"
       '
     volumes:
-      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - mongodata:/data/db:ro
       - mongoconfig:/data/configdb:ro
+      - mongodata:/data/db:ro
       - mongoshared:/data:ro
+      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Set up a local SMTP server for local development
   # Makes GUI available at: http://localhost:8081
   # Useful for testing email sending functionality locally, without spamming actual email accounts
   email:
     image: haravich/fake-smtp-server
-    restart: no
     hostname: email
     ports:
       - "1025:1025"
@@ -76,7 +73,6 @@ services:
   # This connects interactively to the container, uses keycloak export command to export the realm, copies the file to the local machine, and adds it to git
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
-    restart: no
     hostname: keycloak
     environment:
       KEYCLOAK_ADMIN: wls
@@ -96,7 +92,6 @@ services:
   # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
   kafka:
     image: "apache/kafka:4.1.1"
-    restart: no
     hostname: kafka
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
@@ -127,7 +122,6 @@ services:
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
   kafka-topic-setup:
     image: 'apache/kafka:4.1.1'
-    restart: no
     depends_on:
       kafka:
         condition: service_healthy
@@ -149,7 +143,6 @@ services:
   # In our case it is used for locally testing the callback functionality
   mockoon:
     image: mockoon/cli:9.5.0
-    restart: no
     hostname: mockoon-callbacks
     ports:
       - "80:8282"
@@ -160,7 +153,6 @@ services:
   # Also use Mockoon for testing Kardex
   mockoon-kardex:
     image: mockoon/cli:9.5.0
-    restart: no
     hostname: mockoon-kardex
     ports:
       - "8182:8182"
@@ -171,7 +163,6 @@ services:
   # Also use Mockoon for testing the SynQ Controller
   mockoon-synq:
     image: mockoon/cli:9.5.0
-    restart: no
     hostname: mockoon-synq
     ports:
       - "8181:8181"

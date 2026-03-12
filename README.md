@@ -222,7 +222,7 @@ The API is accessible at the usual URL, with the `/hermes` suffix.
 
 Regardless of what method you used to run the Hermes WLS, it has other services and applications that it depends on.
 To run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
-The compose stack can be run with either `docker / nerdctl compose`.
+The compose stack can be run with either `<docker|nerdctl> compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
@@ -244,9 +244,10 @@ This will spin up the following services:
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`
   - To read the logs with request and response data, run:
-    - `docker / nerdctl logs --follow wls-mockoon-1`
-    - Make sure that the container name matches the actual name from running `docker / nerdctl compose`
-    - You can check it using `docker / nerdctl ps`
+    - `<docker|nerdctl> compose logs -f mockoon` to use compose log streaming by service name
+    - `<docker|nerdctl> logs -f wls-mockoon-1` to use container log streaming by container name
+    - Make sure that the container name matches the actual name from running `<docker|nerdctl> compose up`
+    - You can check it using `<docker|nerdctl> ps`
 
 Before starting the local dependency stack, generate MongoDB replica-set keyfile once:
 
@@ -260,32 +261,33 @@ To start the services, run the following command:
 
 ```shell
 cd docker
-docker / nerdctl compose up -d
+<docker|nerdctl> compose up -d
 
-# Alternatively
-docker / nerdctl compose -f docker/compose.yaml up -d
+# Alternatively from project root
+<docker|nerdctl> compose -f docker/compose.yaml up -d
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
-For ease of use add a line for MongoDB too, as it will make your life easier.
+For ease of use add a line for MongoDB and Kafka too, as it will make your life easier if you want to connect other tools to them, such as MongoDB Compass.
 Add the following line to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
 127.0.0.1 callback-wls.no
 127.0.0.1 mongo-db
+127.0.0.1 kafka
 ```
 
 To stop the services, run the following command:
 
 ```shell
-docker / nerdctl compose down
+<docker|nerdctl> compose down
 
-# Alternatively
-docker / nerdctl compose -f docker/compose.yaml down
+# Alternatively from project root
+<docker|nerdctl> compose -f docker/compose.yaml down
 
 # Optional step for clean restart (remove volumes in extra command as `system prune --volumes` does not work)
-docker / nerdctl system prune -af
-docker / nerdctl volumes prune -af
+<docker|nerdctl> system prune -af
+<docker|nerdctl> volumes prune -af
 ```
 
 ## Deployment Dependencies
