@@ -244,7 +244,7 @@ This will spin up the following services:
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`
   - To read the logs with request and response data, run:
-    - `docker / nerdctl logs --follow mockoon`
+    - `docker / nerdctl logs --follow wls-mockoon-1`
     - Make sure that the container name matches the actual name from running `docker / nerdctl compose`
     - You can check it using `docker / nerdctl ps`
 

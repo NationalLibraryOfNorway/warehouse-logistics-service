@@ -89,7 +89,7 @@ services:
 
   # Set up Kafka for local development
   # Kafka is used to send history/statistic messages from Hermes to ElasticSearch
-  # To view available topics, you can use "Kafka" plugin for IntelliJ and connect it to 127.0.0.1:9092
+  # To view available topics, you can use "Kafka" plugin for IntelliJ and connect it to localhost:29092
   #
   # This version of Kafka (4.1.1) does not require Zookeper, using KRaft instead
   # The service is configured to use the new features as far as I am aware
