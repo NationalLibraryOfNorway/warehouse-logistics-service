@@ -1,5 +1,5 @@
 # This docker-compose file is used for setting up local development environment with all necessary dependencies
-# It includes services for MongoDB, Keycloak, Kafka, and Mockoon for testing callbacks, SynQ, and Kardex compability
+# It includes services for MongoDB, Keycloak, Kafka, and Mockoon for testing callbacks, SynQ, and Kardex compatibility
 
 # Give the docker-compose project a name, which will be used as a prefix for container names and network
 name: wls
@@ -13,8 +13,9 @@ services:
     restart: no
     entrypoint: >
       /bin/bash -c '
-      [ -s /data/keyfile.key ] || { echo "Missing keyfile at /data/keyfile.key"; exit 1; } &&
-      chown mongodb:mongodb /data/keyfile.key &&
+      [ -s /data/keyfile.key ] || { echo "Missing keyfile at /data/keyfile.key"; exit 42; } &&
+      chmod 400 /data/keyfile.key || { echo "Failed to set permission '400' on /data/keyfile.key"; exit 67; } &&
+      chown mongodb:mongodb /data/keyfile.key || { echo "Failed to make mongodb owner of /data/keyfile.key"; exit 69; } &&
       exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
     healthcheck:
       test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
@@ -49,6 +50,9 @@ services:
       '
     volumes:
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - mongodata:/data/db:ro
+      - mongoconfig:/data/configdb:ro
+      - mongoshared:/data:ro
 
   # Set up a local SMTP server for local development
   # Makes GUI available at: http://localhost:8081
@@ -113,8 +117,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_LOG_DIRS: /var/lib/kafka/data/logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - kafka-secrets:/etc/kafka/secrets
+      - kafka-shared-config:/mnt/shared/config
 
   # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
   kafka-topic-setup:
@@ -132,6 +140,10 @@ services:
         --partitions 1 \
         --replication-factor 1
       '
+    volumes:
+      - kafka-data:/var/lib/kafka/data:ro
+      - kafka-secrets:/etc/kafka/secrets:ro
+      - kafka-shared-config:/mnt/shared/config:ro
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
@@ -176,6 +188,15 @@ volumes:
     driver: local
   # Shared mount used by this setup for the keyfile path and init-time artifacts
   mongoshared:
+    driver: local
+  # Persistent Kafka broker data (KRaft metadata + topic data)
+  kafka-data:
+    driver: local
+  # Kafka secret directory declared by the image
+  kafka-secrets:
+    driver: local
+  # Kafka shared config directory declared by the image
+  kafka-shared-config:
     driver: local
 
 networks:

@@ -141,7 +141,7 @@ cp target/wls.jar docker/wls.jar
 nerdctl build --platform linux/amd64 -t wls:latest docker/
 ```
 
-If you need local setup of rootful `containerd` on Arch Linux, install and enable the required tooling:
+If you need local setup of "rootful" `containerd` on Arch Linux, install and enable the required tooling:
 
 ```shell
 pacman -S --needed containerd runc nerdctl cni-plugins buildkit iptables-nft rootlesskit
@@ -151,12 +151,7 @@ systemctl enable --now buildkit
 
 The same caveats from [Using Docker](#using-docker) apply when building outside NLN's network.
 
-With the image either built or pulled, WLS can be run using the following command:
-
-```shell
-nerdctl run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
-nerdctl run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
-```
+With the image either built or pulled, WLS can be run using the same commands as in [Using Docker](#using-docker), just use `nerdctl` instead of `docker`.
 
 ### Using an IDE
 
@@ -227,7 +222,7 @@ The API is accessible at the usual URL, with the `/hermes` suffix.
 
 Regardless of what method you used to run the Hermes WLS, it has other services and applications that it depends on.
 To run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
-The compose stack can be run with either `docker compose` or `nerdctl compose`.
+The compose stack can be run with either `docker / nerdctl compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
@@ -249,9 +244,9 @@ This will spin up the following services:
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`
   - To read the logs with request and response data, run:
-    - `docker logs --follow docker-mockoon-1`
-    - Or with containerd: `nerdctl logs --follow docker-mockoon-1`
-    - Make sure that the container name matches the actual name from running `docker compose`
+    - `docker / nerdctl logs --follow mockoon`
+    - Make sure that the container name matches the actual name from running `docker / nerdctl compose`
+    - You can check it using `docker / nerdctl ps`
 
 Before starting the local dependency stack, generate MongoDB replica-set keyfile once:
 
@@ -265,51 +260,32 @@ To start the services, run the following command:
 
 ```shell
 cd docker
-docker compose up -d
+docker / nerdctl compose up -d
 
 # Alternatively
-docker compose -f docker/compose.yaml up -d
-```
-
-Using containerd:
-
-```shell
-cd docker
-nerdctl compose up -d
-
-# Alternatively
-nerdctl compose -f ./docker/compose.yaml up -d\
+docker / nerdctl compose -f docker/compose.yaml up -d
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
+For ease of use add a line for MongoDB too, as it will make your life easier.
 Add the following line to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
 127.0.0.1 callback-wls.no
+127.0.0.1 mongo-db
 ```
 
 To stop the services, run the following command:
 
 ```shell
-docker compose down
+docker / nerdctl compose down
 
 # Alternatively
-docker compose -f docker/compose.yaml down
+docker / nerdctl compose -f docker/compose.yaml down
 
-# Optional step for clean restart (removes volumes too)
-docker system prune --volumes -af
-```
-
-Using containerd:
-
-```shell
-nerdctl compose down
-
-# Alternatively
-nerdctl compose -f ./docker/compose.yaml down
-
-# Optional step for clean restart (removes volumes too)
-nerdctl system prune --volumes -af
+# Optional step for clean restart (remove volumes in extra command as `system prune --volumes` does not work)
+docker / nerdctl system prune -af
+docker / nerdctl volumes prune -af
 ```
 
 ## Deployment Dependencies
