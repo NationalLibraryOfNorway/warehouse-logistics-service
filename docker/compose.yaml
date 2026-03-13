@@ -7,37 +7,18 @@ name: wls
 # Define what services to set up for local development
 services:
   # MongoDB instance for local development with replica set authentication
-  # Accessible from host at  mongo-db:27017 (requires /etc/hosts entry) or localhost:27017
-  # Accessible from containers at mongo-db:27017
-  # Uses named volumes (mongodata, mongoconfig) for data persistence between restarts
+  # Accessible from host at localhost:27017 and from containers at mongo-db:27017
+  # If you add an entry to /etc/hosts, you can access it at mongo-db:27017 on host machine
+  # Uses named volume (mongodata) for data persistence between restarts
+  # Initialization handled by custom entrypoint script (mongo-entrypoint.sh) that:
+  # - Sets up keyfile with correct permissions in tmpfs
+  # - Starts MongoDB with replica set configuration
+  # - Initializes replica set and loads seed data
+  # - All-in-one service, no separate setup container needed
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    # Custom entrypoint for rootless-safe keyfile handling:
-    # The MongoDB image requires a keyfile with specific permissions (400, owned by mongodb user)
-    # to enable replica set authentication. Since we can't control host file ownership in
-    # rootless/multi-user environments, we use this workaround:
-    # 1. Mount host keyfile read-only at /run/mongo-keyfile-src/keyfile.key
-    # 2. Copy it to tmpfs at /run/mongo-keyfile/keyfile.key (tmpfs is writable)
-    # 3. Apply strict permissions (chmod 400) and ownership (chown mongodb:mongodb)
-    # 4. Start mongod with replica set (rs0) using the tmpfs keyfile
-    # This ensures the container can set correct permissions without modifying host files.
-    entrypoint: |
-      /bin/bash -c '
-      set -euo pipefail;
-      KEYFILE_SRC="/run/mongo-keyfile-src/keyfile.key";
-      KEYFILE_DEST="/run/mongo-keyfile/keyfile.key";
-      [ -s "$$KEYFILE_SRC" ] || { echo "Missing keyfile at $$KEYFILE_SRC"; exit 69; }
-      cp "$$KEYFILE_SRC" "$$KEYFILE_DEST" || { echo "Failed to copy keyfile to container tmpfs"; exit 67; }
-      chmod 400 "$$KEYFILE_DEST" || { echo "Failed to set permission 400 on $$KEYFILE_DEST"; exit 42; }
-      chown mongodb:mongodb "$$KEYFILE_DEST" || { echo "Failed to make mongodb owner of $$KEYFILE_DEST"; exit 34; }
-      exec /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile "$$KEYFILE_DEST" --bind_ip_all --port 27017';
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
-      start_period: 30s
-      interval: 30s
-      timeout: 5s
-      retries: 5
+    entrypoint: ["/bin/bash", "/scripts/mongo-entrypoint.sh"]
     ports:
       - "27017:27017"
     environment:
@@ -47,42 +28,12 @@ services:
       GLIBC_TUNABLES: glibc.pthread.rseq=1
     tmpfs:
       - /run/mongo-keyfile
+      - /data/configdb
     volumes:
-      - mongoconfig:/data/configdb
       - mongodata:/data/db
+      - ./mongo/mongo-entrypoint.sh:/scripts/mongo-entrypoint.sh:ro
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo/secrets/keyfile.key:/run/mongo-keyfile-src/keyfile.key:ro
-
-  # One-time setup container that initializes MongoDB replica set and seeds initial data
-  # This container runs after mongo-db is healthy, performs setup tasks, then exits
-  # Uses tmpfs for all MongoDB image-declared volumes to prevent anonymous volume buildup
-  mongo-db-setup:
-    image: mongo:8.2.3
-    depends_on:
-      mongo-db:
-        condition: service_healthy
-    # Custom entrypoint that performs MongoDB initialization:
-    # 1. Wait for mongo-db to be fully ready and accepting connections
-    # 2. Initialize the replica set (rs0) if not already initialized
-    #    - Uses try/catch: rs.conf() throws error if not initialized, then runs rs.initiate()
-    # 3. Load and execute the seed data script (mongo-init.js)
-    # This runs once at startup and then the container exits successfully
-    entrypoint: |
-      /bin/bash -c '
-      set -euo pipefail;
-      until mongosh -u root -p toor --host mongo-db --quiet --eval "db.runCommand({ping:1})" >/dev/null 2>&1; do
-        echo "mongo-db not ready yet, retrying in 2s...";
-        sleep 2;
-      done;
-      echo "mongo-db is ready, initializing replica set and seeding data...";
-      mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-db:27017\"}]})}";
-      mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"';
-    tmpfs:
-      - /data/configdb
-      - /data/db
-      - /data
-    volumes:
-      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Set up a local SMTP server for local development
   # Makes GUI available at: http://localhost:8081
@@ -120,58 +71,31 @@ services:
   # Accessible from host at kafka:9092 (requires /etc/hosts entry) or localhost:9092
   # Accessible from containers at kafka:9092
   # Uses tmpfs for all data directories - events persist only during container lifetime
-  # To view topics: use IntelliJ Kafka plugin and connect to kafka:9092 or localhost:9092
-  # Note: KAFKA_CREATE_TOPICS env var doesn't work in KRaft mode, use kafka-setup service instead
+  # Topics are auto-created on first use (KAFKA_AUTO_CREATE_TOPICS_ENABLE: true)
+  # To view the topics, you can use IntelliJ Kafka plugin and connect to kafka:9092 or localhost:9092
   kafka:
     image: "apache/kafka:4.1.1"
     hostname: kafka
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
     ports:
-      - "9092:9092"    # internal Docker listener (also reachable from host for simple tools)
-      - "29092:29092"  # external listener for IntelliJ Kafka plugin
+      - "9092:9092"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_HOST://:29092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_LOG_DIRS: /var/lib/kafka/data/logs
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     tmpfs:
       - /var/lib/kafka/data:mode=1777,uid=1000,gid=1000
       - /etc/kafka/secrets:mode=1777,uid=1000,gid=1000
       - /mnt/shared/config:mode=1777,uid=1000,gid=1000
-
-  # One-time setup container that creates required Kafka topics
-  # Runs after kafka is healthy, creates topics, then exits
-  # Uses tmpfs for Kafka image-declared volumes to prevent anonymous volume buildup
-  kafka-setup:
-    image: 'apache/kafka:4.1.1'
-    depends_on:
-      kafka:
-        condition: service_healthy
-    entrypoint: [ ]
-    command: >
-      bash -c '
-      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists \
-        --bootstrap-server kafka:9092 \
-        --topic hermes-mythos \
-        --partitions 1 \
-        --replication-factor 1
-      '
-    tmpfs:
-      - /var/lib/kafka/data
-      - /etc/kafka/secrets
-      - /mnt/shared/config
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
@@ -210,9 +134,6 @@ services:
 volumes:
   # Persistent MongoDB data files (collections, indexes, oplog)
   mongodata:
-    driver: local
-  # MongoDB runtime/config metadata used by WiredTiger and startup internals
-  mongoconfig:
     driver: local
 
 networks:
