@@ -2,14 +2,19 @@
 # MongoDB initialization script for local development
 # This script:
 # 1. Sets up the keyfile with correct permissions in tmpfs
-# 2. Starts MongoDB WITHOUT keyfile to allow initialization
-# 3. Waits for MongoDB and lets Docker entrypoint create root user
-# 4. Initializes the replica set
-# 5. Loads seed data
-# 6. Restarts MongoDB WITH keyfile for secure replica set
-# 7. Brings MongoDB to the foreground
+# 2. Starts MongoDB through official entrypoint with keyfile
+# 3. Lets official first-run bootstrap create root user + run init scripts
+# 4. Waits for MongoDB and initializes replica set on first run
+# 5. Marks first-run initialization as complete
+# 6. Brings MongoDB to the foreground
 
 set -euo pipefail
+
+# Keep mongosh state in /tmp so it does not try to write under /data/db.
+export HOME="/tmp/mongosh-home"
+export XDG_CONFIG_HOME="$HOME/.config"
+export MONGOSH_HISTORY_FILE="/tmp/mongosh-history"
+mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 
 # ==============================================================================
 # STEP 1: Keyfile setup for replica set authentication
@@ -37,26 +42,22 @@ else
 fi
 
 # ==============================================================================
-# STEP 3: Start MongoDB (with or without keyfile based on initialization status)
+# STEP 3: Start MongoDB through official entrypoint
 # ==============================================================================
 if [ "$FIRST_RUN" = true ]; then
-  echo "[3/8] Starting MongoDB WITHOUT keyfile for initialization..."
-  # Let docker-entrypoint.sh handle user creation via MONGO_INITDB_ROOT_* env vars
-  /usr/local/bin/docker-entrypoint.sh mongod \
-    --replSet rs0 \
-    --bind_ip_all \
-    --port 27017 &
+  echo "[3/8] Starting first-run bootstrap with keyfile..."
 else
   echo "[3/8] Starting MongoDB WITH keyfile..."
-  /usr/local/bin/docker-entrypoint.sh mongod \
-    --replSet rs0 \
-    --keyFile "$KEYFILE_DEST" \
-    --bind_ip_all \
-    --port 27017 &
 fi
 
+/usr/local/bin/docker-entrypoint.sh mongod \
+  --replSet rs0 \
+  --keyFile "$KEYFILE_DEST" \
+  --bind_ip_all \
+  --port 27017 &
+
 MONGOD_PID=$!
-echo "✓ MongoDB started with PID $MONGOD_PID"
+echo "✓ MongoDB launcher started (PID $MONGOD_PID)"
 
 # ==============================================================================
 # STEP 4: Wait for MongoDB to be ready
@@ -112,31 +113,13 @@ echo "✓ Replica set is ready"
 # STEP 7: Load seed data (only on first run)
 # ==============================================================================
 if [ "$FIRST_RUN" = true ]; then
-  echo "[7/8] Loading seed data from mongo-init.js..."
-  mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --eval "load('/docker-entrypoint-initdb.d/mongo-init.js')"
-  echo "✓ Seed data loaded successfully"
+  echo "[7/8] Seed data already loaded by docker-entrypoint init scripts"
 
   # Mark as initialized
   touch /data/db/.mongodb_initialized
   echo "✓ Marked MongoDB as initialized"
 
-  # ==============================================================================
-  # STEP 8: Restart with keyfile for security
-  # ==============================================================================
-  echo "[8/8] Restarting MongoDB with keyfile for secure replica set..."
-  echo "  Stopping MongoDB..."
-  kill -SIGTERM $MONGOD_PID
-  wait $MONGOD_PID || true
-
-  echo "  Starting MongoDB with keyfile..."
-  /usr/local/bin/docker-entrypoint.sh mongod \
-    --replSet rs0 \
-    --keyFile "$KEYFILE_DEST" \
-    --bind_ip_all \
-    --port 27017 &
-
-  MONGOD_PID=$!
-  echo "✓ MongoDB restarted with keyfile (PID $MONGOD_PID)"
+  echo "[8/8] MongoDB is already running with keyfile"
 else
   echo "[7/8] Skipping seed data load (already done)"
   echo "[8/8] MongoDB already running with keyfile"
