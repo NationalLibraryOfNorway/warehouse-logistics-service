@@ -9,7 +9,7 @@ services:
   # MongoDB instance for local development with replica set authentication
   # Accessible from host at localhost:27017 and from containers at mongo-db:27017
   # If you add an entry to /etc/hosts, you can access it at mongo-db:27017 on host machine
-  # Uses named volume (mongodata) for data persistence between restarts
+  # Uses named volume (mongo-data) for data persistence between restarts
   # Initialization handled by custom entrypoint script (mongo-entrypoint.sh) that:
   # - Sets up keyfile with correct permissions in tmpfs
   # - Starts MongoDB and configures replica set with authentication
@@ -52,10 +52,10 @@ services:
   # Makes GUI available at: http://localhost:8082
   #
   # When making changes to the realm, export the realm and save it in the keycloak/import folder
-  # docker exec -it wls-local-keycloak-1 /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
-  # docker cp wls-local-keycloak-1:/tmp/mlt-local-realm-export.json ./docker/keycloak/import/mlt-local-realm-export.json
-  # git add docker/keycloak/import/mlt-local-realm-export.json
-  # This connects interactively to the container, uses keycloak export command to export the realm, copies the file to the local machine, and adds it to git
+  # <docker|nerdctl> compose exec keycloak /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
+  # <docker|nerdctl> compose cp keycloak:/tmp/mlt-local-realm-export.json ./keycloak/import/mlt-local-realm-export.json
+  # git add ./keycloak/import/mlt-local-realm-export.json
+  # This uses the service name to exec into the container, exports the realm, copies the file to the local machine, and adds it to git
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
     hostname: keycloak

@@ -15,6 +15,18 @@ const WLS_DB_NAME = env.WLS_DB_NAME || "wls";
 const WLS_DB_USER = env.WLS_DB_USER || "wls";
 const WLS_DB_PASSWORD = env.WLS_DB_PASSWORD || "slw";
 
+// Check for existing user and collections to determine if initialization is needed.
+const appDb = db.getSiblingDB(WLS_DB_NAME);
+const userExists = !!appDb.getUser(WLS_DB_USER);
+const collectionNames = appDb.getCollectionNames();
+const itemsCollectionExists = collectionNames.includes("items");
+const ordersCollectionExists = collectionNames.includes("orders");
+
+if (userExists && itemsCollectionExists && ordersCollectionExists) {
+    log(`Initialization already complete for db=${WLS_DB_NAME}, user=${WLS_DB_USER}; skipping.`);
+    quit(0);
+}
+
 function createWlsUser(appDb) {
     appDb.createUser({
         user: WLS_DB_USER,
@@ -82,18 +94,6 @@ function seedOrdersCollection(appDb) {
         callbackUrl: "https://callback-wls.no/order",
         _class: "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder",
     });
-}
-
-// Check for existing user and collections to determine if initialization is needed.
-const appDb = db.getSiblingDB(WLS_DB_NAME);
-const userExists = !!adminDb.system.users.findOne({ user: WLS_DB_USER, db: WLS_DB_NAME });
-const collectionNames = appDb.getCollectionNames();
-const itemsCollectionExists = collectionNames.includes("items");
-const ordersCollectionExists = collectionNames.includes("orders");
-
-if (userExists && itemsCollectionExists && ordersCollectionExists) {
-    log(`Initialization already complete for db=${WLS_DB_NAME}, user=${WLS_DB_USER}; skipping.`);
-    quit(0);
 }
 
 log("#####################################################################");

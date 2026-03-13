@@ -264,10 +264,10 @@ cd docker
 <docker|nerdctl> compose -f docker/compose.yaml up -d
 ```
 
-Additionally, to use the Mockoon service for mocking and logging callbacks to catalogs systems, you will need to make it discoverable on host machine.
+Additionally, to use the Mockoon service for mocking and logging callbacks to catalogue systems, you will need to make it discoverable on the host machine.
 The default `MONGODB_URI` uses `directConnection=true`, which bypasses replica set host discovery, so a `mongo-db` hosts entry is not strictly required when using the default configuration.
 However, for convenience and choice between `localhost:27017` and `mongo-db:27017` you can add the `mongo-db` entry as shown below.
-You can also add an entry for Kafka to use a have consistent connection string (`kafka:9092`) everywhere.
+You can also add an entry for Kafka to have a consistent connection string (`kafka:9092`) everywhere.
 Add the following lines to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
