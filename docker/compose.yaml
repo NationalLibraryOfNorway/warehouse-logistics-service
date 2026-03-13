@@ -81,19 +81,35 @@ services:
     ports:
       - "9092:9092"
     environment:
+      # KRaft cluster identity — this node is both broker and controller, with a fixed cluster UUID
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+
+      # Listener definitions — three listeners on separate ports:
+      #   PLAINTEXT_HOST:     host access via published port 9092 (advertised as localhost:9092)
+      #   PLAINTEXT_INTERNAL: inter-container access (advertised as kafka:29092, not published)
+      #   CONTROLLER:         internal KRaft consensus traffic only, never advertised
+      KAFKA_LISTENERS: PLAINTEXT_HOST://:9092,PLAINTEXT_INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Listener role assignments
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL  # used for broker-to-broker replication
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER           # used for KRaft leader election / metadata
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093      # single-node quorum (this broker is the only voter)
+
+      # Replication factors — all 1 because this is a single-node cluster
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # Define where to keep Kafka logs and data - using tmpfs for ephemeral storage during container lifetime
       KAFKA_LOG_DIRS: /var/lib/kafka/data/logs
+      KAFKA_DATA_DIR: /var/lib/kafka/data
+
+      # Create topics automatically on first use, so no manual setup is needed for development
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     tmpfs:
       - /var/lib/kafka/data:mode=1777,uid=1000,gid=1000
       - /etc/kafka/secrets:mode=1777,uid=1000,gid=1000

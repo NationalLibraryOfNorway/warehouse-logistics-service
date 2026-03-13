@@ -264,9 +264,10 @@ cd docker
 <docker|nerdctl> compose -f docker/compose.yaml up -d
 ```
 
-Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
-Optionally add an entry for Kafka to use a consistent connection string (`kafka:9092`) from both host and containers.
-MongoDB is already accessible at `localhost:27017` from the host, so a hosts entry is not needed, but for convenience you can include entry for it.
+Additionally, to use the Mockoon service for mocking and logging callbacks to catalogs systems, you will need to make it discoverable on host machine.
+The default `MONGODB_URI` uses `directConnection=true`, which bypasses replica set host discovery, so a `mongo-db` hosts entry is not strictly required when using the default configuration.
+However, for convenience and choice between `localhost:27017` and `mongo-db:27017` you can add the `mongo-db` entry as shown below.
+You can also add an entry for Kafka to use a have consistent connection string (`kafka:9092`) everywhere.
 Add the following lines to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
@@ -339,7 +340,7 @@ However, when deploying to staging or production, they must be set manually.
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
 - `EMAIL_PORT`: Is the port used by the email server (default is `1025`)
-- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls`)
+- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls&directConnection=true`)
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
 - `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `false`)
