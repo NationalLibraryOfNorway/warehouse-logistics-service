@@ -4,15 +4,18 @@
 //     (by running "docker compose down")
 db = db.getSiblingDB('admin');
 
+const LOG_PREFIX = "[mongo-db-entrypoint]  [data-init]";
+const log = (msg) => console.error(`${LOG_PREFIX} ${msg}`);
+
 if (!db.system.users.findOne({ user: "wls" })) {
-    print("#####################################################################");
-    print("##############################  START  ##############################");
-    print("#####################################################################");
+    log("#####################################################################");
+    log("MongoDB initialization script started...");
+    log("#####################################################################");
 
-    print("Creating WLS database, user, and collections...");
+    log("Creating WLS database, user, and collections...");
 
 
-    print("Creating user wls with read-write access to the wls database...")
+    log("Creating user wls with read-write access to the wls database...")
     db = db.getSiblingDB('wls');
     db.createUser(
             {
@@ -23,7 +26,7 @@ if (!db.system.users.findOne({ user: "wls" })) {
     );
 
 
-    print("Creating items collection and inserting sample data...")
+    log("Creating items collection and inserting sample data...")
     db.createCollection("items");
     db.items.insertOne({
         "hostId": "mlt-12345",
@@ -55,7 +58,7 @@ if (!db.system.users.findOne({ user: "wls" })) {
     })
 
 
-    print("Creating orders collection and inserting sample data...")
+    log("Creating orders collection and inserting sample data...")
     db.createCollection("orders")
     db.orders.insertOne({
         "hostName": "AXIELL",
@@ -83,7 +86,7 @@ if (!db.system.users.findOne({ user: "wls" })) {
         "_class": "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder"
     })
 
-    print("#####################################################################");
-    print("###############################  END  ###############################");
-    print("#####################################################################");
+    log("#####################################################################");
+    log("MongoDB initialization script completed!");
+    log("#####################################################################");
 }

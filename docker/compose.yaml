@@ -12,9 +12,8 @@ services:
   # Uses named volume (mongodata) for data persistence between restarts
   # Initialization handled by custom entrypoint script (mongo-entrypoint.sh) that:
   # - Sets up keyfile with correct permissions in tmpfs
-  # - Starts MongoDB with replica set configuration
-  # - Initializes replica set and loads seed data
-  # - All-in-one service, no separate setup container needed
+  # - Starts MongoDB and configures replica set with authentication
+  # - Lets official init scripts load seed data on first bootstrap
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db

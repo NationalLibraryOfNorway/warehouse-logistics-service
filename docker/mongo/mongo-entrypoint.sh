@@ -4,11 +4,31 @@
 # 1. Sets up the keyfile with correct permissions in tmpfs
 # 2. Starts MongoDB through official entrypoint with keyfile
 # 3. Lets official first-run bootstrap create root user + run init scripts
-# 4. Waits for MongoDB and initializes replica set on first run
-# 5. Marks first-run initialization as complete
+# 4. Waits for MongoDB and ensures replica set is initialized (idempotent)
+# 5. Waits for replica set readiness
 # 6. Brings MongoDB to the foreground
 
 set -euo pipefail
+
+LOG_PREFIX="[mongo-db-entrypoint]"
+SCRIPT_LOG_FILE="/tmp/mongo-entrypoint.log"
+
+touch "$SCRIPT_LOG_FILE"
+chmod 600 "$SCRIPT_LOG_FILE"
+
+# Mirror all stderr output (entrypoint + init script stderr) into a dedicated file.
+exec 3>&2
+exec 2> >(tee -a "$SCRIPT_LOG_FILE" >&3)
+
+log() {
+  printf "%s %s\n" "$LOG_PREFIX" "$*" >&2
+}
+
+log_block() {
+  printf "%s #####################################################################\n" "$LOG_PREFIX" >&2
+  printf "%s %s\n" "$LOG_PREFIX" "$*" >&2
+  printf "%s #####################################################################\n" "$LOG_PREFIX" >&2
+}
 
 # Keep mongosh state in /tmp so it does not try to write under /data/db.
 export HOME="/tmp/mongosh-home"
@@ -16,39 +36,35 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export MONGOSH_HISTORY_FILE="/tmp/mongosh-history"
 mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 
+
+log ""
+log_block "Starting MongoDB initialization..."
+log ""
+
+
 # ==============================================================================
 # STEP 1: Keyfile setup for replica set authentication
 # ==============================================================================
-echo "[1/8] Setting up keyfile for replica set authentication..."
+
+
+log "[1/5] Setting up keyfile for replica set authentication..."
 KEYFILE_SRC="/run/mongo-keyfile-src/keyfile.key"
 KEYFILE_DEST="/run/mongo-keyfile/keyfile.key"
 
-[ -f "$KEYFILE_SRC" ] && [ -s "$KEYFILE_SRC" ] || { echo "ERROR: Missing keyfile at $KEYFILE_SRC"; exit 69; }
-cp "$KEYFILE_SRC" "$KEYFILE_DEST" || { echo "ERROR: Failed to copy keyfile to container tmpfs"; exit 67; }
-chmod 400 "$KEYFILE_DEST" || { echo "ERROR: Failed to set permission 400 on $KEYFILE_DEST"; exit 42; }
-chown mongodb:mongodb "$KEYFILE_DEST" || { echo "ERROR: Failed to make mongodb owner of $KEYFILE_DEST"; exit 34; }
+[ -f "$KEYFILE_SRC" ] && [ -s "$KEYFILE_SRC" ] || { log "ERROR: Missing keyfile at $KEYFILE_SRC"; exit 69; }
+cp "$KEYFILE_SRC" "$KEYFILE_DEST" || { log "ERROR: Failed to copy keyfile to container tmpfs"; exit 67; }
+chmod 400 "$KEYFILE_DEST" || { log "ERROR: Failed to set permission 400 on $KEYFILE_DEST"; exit 42; }
+chown mongodb:mongodb "$KEYFILE_DEST" || { log "ERROR: Failed to make mongodb owner of $KEYFILE_DEST"; exit 34; }
 
-echo "✓ Keyfile configured successfully"
+log "✓ Keyfile configured successfully"
 
-# ==============================================================================
-# STEP 2: Check if this is first-time setup
-# ==============================================================================
-FIRST_RUN=false
-if [ ! -f /data/db/.mongodb_initialized ]; then
-  echo "[2/8] First run detected - will initialize MongoDB..."
-  FIRST_RUN=true
-else
-  echo "[2/8] MongoDB already initialized - starting with keyfile..."
-fi
 
 # ==============================================================================
-# STEP 3: Start MongoDB through official entrypoint
+# STEP 2: Start MongoDB through official entrypoint
 # ==============================================================================
-if [ "$FIRST_RUN" = true ]; then
-  echo "[3/8] Starting first-run bootstrap with keyfile..."
-else
-  echo "[3/8] Starting MongoDB WITH keyfile..."
-fi
+
+
+log "[2/5] Starting MongoDB WITH keyfile..."
 
 /usr/local/bin/docker-entrypoint.sh mongod \
   --replSet rs0 \
@@ -57,85 +73,91 @@ fi
   --port 27017 &
 
 MONGOD_PID=$!
-echo "✓ MongoDB launcher started (PID $MONGOD_PID)"
+log "✓ MongoDB launcher started (PID $MONGOD_PID)"
+
 
 # ==============================================================================
-# STEP 4: Wait for MongoDB to be ready
+# STEP 3: Wait for MongoDB to be ready
 # ==============================================================================
-echo "[4/8] Waiting for MongoDB to accept authenticated connections..."
+
+
+log "[3/5] Waiting for MongoDB to accept authenticated connections..."
 until mongosh --quiet \
   -u "$MONGO_INITDB_ROOT_USERNAME" \
   -p "$MONGO_INITDB_ROOT_PASSWORD" \
   --authenticationDatabase admin \
   --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+
   if ! kill -0 $MONGOD_PID 2>/dev/null; then
-    echo "ERROR: MongoDB process died during startup"
+    log "ERROR: MongoDB process died during startup"
     exit 1
   fi
-  echo "  MongoDB not ready yet, retrying in 2s..."
+
+  log "  MongoDB not ready yet, retrying in 2s..."
   sleep 2
 done
-echo "✓ MongoDB is accepting authenticated connections"
+log "✓ MongoDB is accepting authenticated connections"
+
 
 # ==============================================================================
-# STEP 5: Initialize replica set (only on first run)
+# STEP 4: Ensure replica set configuration exists (idempotent)
 # ==============================================================================
-if [ "$FIRST_RUN" = true ]; then
-  echo "[5/8] Initializing replica set..."
-  mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "
-    try {
-      rs.conf();
-      print('✓ Replica set already initialized');
-    } catch(err) {
-      print('  Replica set not initialized, creating...');
-      rs.initiate({
-        _id: 'rs0',
-        members: [{_id: 0, host: 'mongo-db:27017'}]
-      });
-      print('✓ Replica set initialized successfully');
-    }
-  "
-else
-  echo "[5/8] Skipping replica set initialization (already done)"
-fi
+
+
+log "[4/5] Ensuring replica set is initialized..."
+
+mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "
+  try {
+    rs.conf();
+    print('${LOG_PREFIX} ✓ Replica set already initialized');
+  } catch(err) {
+    print('${LOG_PREFIX}   Replica set not initialized, creating...');
+    rs.initiate({
+      _id: 'rs0',
+      members: [{_id: 0, host: 'mongo-db:27017'}]
+    });
+    print('${LOG_PREFIX} ✓ Replica set initialized successfully');
+  }
+"
+
 
 # ==============================================================================
-# STEP 6: Wait for replica set to be ready
+# STEP 5: Wait for replica set to be ready
 # ==============================================================================
-echo "[6/8] Waiting for replica set to be fully ready..."
-until mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --quiet --eval "rs.status().ok" 2>/dev/null | grep -q 1; do
-  echo "  Replica set not ready yet, retrying in 2s..."
+
+log "[5/5] Waiting for replica set to be fully ready..."
+
+until mongosh --quiet \
+  -u "$MONGO_INITDB_ROOT_USERNAME" \
+  -p "$MONGO_INITDB_ROOT_PASSWORD" \
+  --authenticationDatabase admin \
+  --eval "rs.status().ok" 2>/dev/null | grep -q 1; do
+
+  if ! kill -0 $MONGOD_PID 2>/dev/null; then
+    log "ERROR: MongoDB process died during replica set initialization"
+    exit 1
+  fi
+
+  log "  Replica set not ready yet, retrying in 2s..."
   sleep 2
 done
-echo "✓ Replica set is ready"
+log "✓ Replica set is ready"
 
-# ==============================================================================
-# STEP 7: Load seed data (only on first run)
-# ==============================================================================
-if [ "$FIRST_RUN" = true ]; then
-  echo "[7/8] Seed data already loaded by docker-entrypoint init scripts"
 
-  # Mark as initialized
-  touch /data/db/.mongodb_initialized
-  echo "✓ Marked MongoDB as initialized"
+log "MongoDB is running with keyfile"
 
-  echo "[8/8] MongoDB is already running with keyfile"
-else
-  echo "[7/8] Skipping seed data load (already done)"
-  echo "[8/8] MongoDB already running with keyfile"
-fi
 
 # ==============================================================================
 # FINAL: MongoDB is ready
 # ==============================================================================
-echo ""
-echo "=========================================="
-echo "MongoDB initialization complete!"
-echo "Replica set: rs0"
-echo "Listening on: 0.0.0.0:27017"
-echo "Authentication: enabled (keyfile)"
-echo "=========================================="
-echo ""
+
+
+log ""
+log_block "MongoDB initialization complete!"
+log "Replica set: rs0"
+log "Listening on: 0.0.0.0:27017"
+log "Authentication: enabled (keyfile)"
+log ""
 
 # Wait for the MongoDB process
 wait $MONGOD_PID
