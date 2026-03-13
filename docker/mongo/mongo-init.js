@@ -2,9 +2,6 @@
 // This script runs during first container bootstrap, but it also supports
 // partial state recovery if previous setup was interrupted.
 
-// Get a reference to the admin database for management operations
-const adminDb = db.getSiblingDB("admin");
-
 // Logging utility for consistent log formatting
 const LOG_PREFIX = "[mongo-db-entrypoint]  [data-init]";
 const log = (msg) => console.error(`${LOG_PREFIX} ${msg}`);

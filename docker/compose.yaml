@@ -41,7 +41,7 @@ services:
   # Makes GUI available at: http://localhost:8081
   # Useful for testing email sending functionality locally, without spamming actual email accounts
   email:
-    image: haravich/fake-smtp-server:latest
+    image: haravich/fake-smtp-server:20260308
     hostname: email
     ports:
       - "1025:1025"
@@ -76,7 +76,7 @@ services:
   # Topics are auto-created on first use (KAFKA_AUTO_CREATE_TOPICS_ENABLE: true)
   # To view the topics, you can use IntelliJ Kafka plugin and connect to kafka:9092 or localhost:9092
   kafka:
-    image: "apache/kafka:4.1.1"
+    image: apache/kafka:4.1.1
     hostname: kafka
     ports:
       - "9092:9092"
