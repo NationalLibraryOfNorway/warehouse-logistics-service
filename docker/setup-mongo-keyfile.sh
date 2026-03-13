@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KEYFILE="docker/mongo/secrets/keyfile.key"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" >/dev/null 2>&1 && pwd)"
+KEYFILE="$SCRIPT_DIR/mongo/secrets/keyfile.key"
 KEYFILE_DIR="$(dirname "$KEYFILE")"
 KEYFILE_RANDOM_BYTES=756
 

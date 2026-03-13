@@ -237,9 +237,10 @@ This will spin up the following services:
     - Username: `wls`
     - Password: `slw`
 - Kafka: a message queue system for handling inventory statistics messages
-  - Can be accessed at: `http://localhost:9092`
+  - Can be accessed at: `kafka:9092` (requires `/etc/hosts` entry, see below) or `localhost:9092`
   - You can use the Kafka plugin for IntelliJ to view topics, queues, and their contents
     - [Kafka plugin homepage](https://plugins.jetbrains.com/plugin/21704-kafka "Kafka plugin homepage")
+    - Connect to either `kafka:9092` or `localhost:9092` - both work
 - Mockoon: a service used for mocking web server endpoints, used to test callback functionality
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`
@@ -264,8 +265,9 @@ cd docker
 ```
 
 Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
-For ease of use add a line for MongoDB and Kafka too, as it will make your life easier if you want to connect other tools to them, such as MongoDB Compass.
-Add the following line to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
+Optionally add an entry for Kafka to use a consistent connection string (`kafka:9092`) from both host and containers.
+MongoDB is already accessible at `localhost:27017` from the host, so a hosts entry is not needed, but for convenience you can include entry for it.
+Add the following lines to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
 127.0.0.1 callback-wls.no
@@ -283,7 +285,7 @@ To stop the services, run the following command:
 
 # Optional step for clean restart (remove volumes in extra command as `system prune --volumes` does not work)
 <docker|nerdctl> system prune -af
-<docker|nerdctl> volumes prune -af
+<docker|nerdctl> volume prune -af
 ```
 
 ## Deployment Dependencies

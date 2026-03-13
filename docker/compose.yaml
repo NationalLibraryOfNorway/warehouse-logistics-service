@@ -1,4 +1,4 @@
-# This docker-compose file is used for setting up local development environment with all necessary dependencies
+# This docker-compose file is used for setting up a local development environment with all necessary dependencies
 # It includes services for MongoDB, Keycloak, Kafka, and Mockoon for testing callbacks, SynQ, and Kardex compatibility
 
 # Give the docker-compose project a name, which will be used as a prefix for container names and network
@@ -6,14 +6,22 @@ name: wls
 
 # Define what services to set up for local development
 services:
-    # Set up a local mongo instance for local development
+  # MongoDB instance for local development with replica set authentication
+  # Accessible from host at  mongo-db:27017 (requires /etc/hosts entry) or localhost:27017
+  # Accessible from containers at mongo-db:27017
+  # Uses named volumes (mongodata, mongoconfig) for data persistence between restarts
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    # Rootless-safe keyfile flow:
-    # 1) user provides keyfile on host
-    # 2) file is mounted read-only at a staging path
-    # 3) startup copies file to tmpfs and applies strict permissions there
+    # Custom entrypoint for rootless-safe keyfile handling:
+    # The MongoDB image requires a keyfile with specific permissions (400, owned by mongodb user)
+    # to enable replica set authentication. Since we can't control host file ownership in
+    # rootless/multi-user environments, we use this workaround:
+    # 1. Mount host keyfile read-only at /run/mongo-keyfile-src/keyfile.key
+    # 2. Copy it to tmpfs at /run/mongo-keyfile/keyfile.key (tmpfs is writable)
+    # 3. Apply strict permissions (chmod 400) and ownership (chown mongodb:mongodb)
+    # 4. Start mongod with replica set (rs0) using the tmpfs keyfile
+    # This ensures the container can set correct permissions without modifying host files.
     entrypoint: |
       /bin/bash -c '
       set -euo pipefail;
@@ -42,16 +50,23 @@ services:
     volumes:
       - mongoconfig:/data/configdb
       - mongodata:/data/db
-      - mongoshared:/data
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo/secrets/keyfile.key:/run/mongo-keyfile-src/keyfile.key:ro
 
-  # Initialize replica set + seed data after Mongo is healthy
+  # One-time setup container that initializes MongoDB replica set and seeds initial data
+  # This container runs after mongo-db is healthy, performs setup tasks, then exits
+  # Uses tmpfs for all MongoDB image-declared volumes to prevent anonymous volume buildup
   mongo-db-setup:
     image: mongo:8.2.3
     depends_on:
       mongo-db:
         condition: service_healthy
+    # Custom entrypoint that performs MongoDB initialization:
+    # 1. Wait for mongo-db to be fully ready and accepting connections
+    # 2. Initialize the replica set (rs0) if not already initialized
+    #    - Uses try/catch: rs.conf() throws error if not initialized, then runs rs.initiate()
+    # 3. Load and execute the seed data script (mongo-init.js)
+    # This runs once at startup and then the container exits successfully
     entrypoint: |
       /bin/bash -c '
       set -euo pipefail;
@@ -62,17 +77,18 @@ services:
       echo "mongo-db is ready, initializing replica set and seeding data...";
       mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-db:27017\"}]})}";
       mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"';
+    tmpfs:
+      - /data/configdb
+      - /data/db
+      - /data
     volumes:
-      - mongo-setup-config:/data/configdb
-      - mongo-setup-data:/data/db
-      - mongo-setup-shared:/data
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
 
   # Set up a local SMTP server for local development
   # Makes GUI available at: http://localhost:8081
   # Useful for testing email sending functionality locally, without spamming actual email accounts
   email:
-    image: haravich/fake-smtp-server
+    image: haravich/fake-smtp-server:latest
     hostname: email
     ports:
       - "1025:1025"
@@ -99,13 +115,13 @@ services:
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import
 
-  # Set up Kafka for local development
-  # Kafka is used to send history/statistic messages from Hermes to ElasticSearch
-  # To view available topics, you can use "Kafka" plugin for IntelliJ and connect it to localhost:29092
-  #
-  # This version of Kafka (4.1.1) does not require Zookeper, using KRaft instead
-  # The service is configured to use the new features as far as I am aware
-  # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
+  # Kafka broker for local development in KRaft mode (no Zookeeper required)
+  # Used to send history/statistic messages from Hermes to ElasticSearch
+  # Accessible from host at kafka:9092 (requires /etc/hosts entry) or localhost:9092
+  # Accessible from containers at kafka:9092
+  # Uses tmpfs for all data directories - events persist only during container lifetime
+  # To view topics: use IntelliJ Kafka plugin and connect to kafka:9092 or localhost:9092
+  # Note: KAFKA_CREATE_TOPICS env var doesn't work in KRaft mode, use kafka-setup service instead
   kafka:
     image: "apache/kafka:4.1.1"
     hostname: kafka
@@ -130,12 +146,14 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_LOG_DIRS: /var/lib/kafka/data/logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-    volumes:
-      - kafka-data:/var/lib/kafka/data
-      - kafka-secrets:/etc/kafka/secrets
-      - kafka-shared-config:/mnt/shared/config
+    tmpfs:
+      - /var/lib/kafka/data:mode=1777,uid=1000,gid=1000
+      - /etc/kafka/secrets:mode=1777,uid=1000,gid=1000
+      - /mnt/shared/config:mode=1777,uid=1000,gid=1000
 
-  # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
+  # One-time setup container that creates required Kafka topics
+  # Runs after kafka is healthy, creates topics, then exits
+  # Uses tmpfs for Kafka image-declared volumes to prevent anonymous volume buildup
   kafka-setup:
     image: 'apache/kafka:4.1.1'
     depends_on:
@@ -150,10 +168,10 @@ services:
         --partitions 1 \
         --replication-factor 1
       '
-    volumes:
-      - kafka-data:/var/lib/kafka/data:ro
-      - kafka-secrets:/etc/kafka/secrets:ro
-      - kafka-shared-config:/mnt/shared/config:ro
+    tmpfs:
+      - /var/lib/kafka/data
+      - /etc/kafka/secrets
+      - /mnt/shared/config
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
@@ -163,6 +181,7 @@ services:
     ports:
       - "80:8282"
     command: --data /data/wls-callbacks.json --port 8282 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-callbacks.json:/data/wls-callbacks.json
 
@@ -173,6 +192,7 @@ services:
     ports:
       - "8182:8182"
     command: --data /data/wls-kardex.json --port 8182 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-kardex.json:/data/wls-kardex.json
 
@@ -183,6 +203,7 @@ services:
     ports:
       - "8181:8181"
     command: --data /data/wls-synq.json --port 8181 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-synq.json:/data/wls-synq.json
 
@@ -192,27 +213,6 @@ volumes:
     driver: local
   # MongoDB runtime/config metadata used by WiredTiger and startup internals
   mongoconfig:
-    driver: local
-  # Shared mount used by this setup for the keyfile path and init-time artifacts
-  mongoshared:
-    driver: local
-  # Dedicated mongo-setup config volume to avoid anonymous mounts and shared writes
-  mongo-setup-config:
-    driver: local
-  # Dedicated mongo-setup data volume to avoid anonymous mounts and shared writes
-  mongo-setup-data:
-    driver: local
-  # Dedicated mongo-setup /data volume to avoid anonymous mounts and shared writes
-  mongo-setup-shared:
-    driver: local
-  # Persistent Kafka broker data (KRaft metadata + topic data)
-  kafka-data:
-    driver: local
-  # Kafka secret directory declared by the image
-  kafka-secrets:
-    driver: local
-  # Kafka shared config directory declared by the image
-  kafka-shared-config:
     driver: local
 
 networks:
