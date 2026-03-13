@@ -18,7 +18,7 @@ echo "[1/8] Setting up keyfile for replica set authentication..."
 KEYFILE_SRC="/run/mongo-keyfile-src/keyfile.key"
 KEYFILE_DEST="/run/mongo-keyfile/keyfile.key"
 
-[ -s "$KEYFILE_SRC" ] || { echo "ERROR: Missing keyfile at $KEYFILE_SRC"; exit 69; }
+[ -f "$KEYFILE_SRC" ] && [ -s "$KEYFILE_SRC" ] || { echo "ERROR: Missing keyfile at $KEYFILE_SRC"; exit 69; }
 cp "$KEYFILE_SRC" "$KEYFILE_DEST" || { echo "ERROR: Failed to copy keyfile to container tmpfs"; exit 67; }
 chmod 400 "$KEYFILE_DEST" || { echo "ERROR: Failed to set permission 400 on $KEYFILE_DEST"; exit 42; }
 chown mongodb:mongodb "$KEYFILE_DEST" || { echo "ERROR: Failed to make mongodb owner of $KEYFILE_DEST"; exit 34; }
@@ -61,8 +61,12 @@ echo "✓ MongoDB started with PID $MONGOD_PID"
 # ==============================================================================
 # STEP 4: Wait for MongoDB to be ready
 # ==============================================================================
-echo "[4/8] Waiting for MongoDB to accept connections..."
-until mongosh --quiet --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
+echo "[4/8] Waiting for MongoDB to accept authenticated connections..."
+until mongosh --quiet \
+  -u "$MONGO_INITDB_ROOT_USERNAME" \
+  -p "$MONGO_INITDB_ROOT_PASSWORD" \
+  --authenticationDatabase admin \
+  --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
   if ! kill -0 $MONGOD_PID 2>/dev/null; then
     echo "ERROR: MongoDB process died during startup"
     exit 1
@@ -70,7 +74,7 @@ until mongosh --quiet --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
   echo "  MongoDB not ready yet, retrying in 2s..."
   sleep 2
 done
-echo "✓ MongoDB is accepting connections"
+echo "✓ MongoDB is accepting authenticated connections"
 
 # ==============================================================================
 # STEP 5: Initialize replica set (only on first run)
