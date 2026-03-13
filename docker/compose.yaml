@@ -24,6 +24,9 @@ services:
       MONGO_INITDB_DATABASE: wls
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
+      WLS_DB_NAME: wls
+      WLS_DB_USER: wls
+      WLS_DB_PASSWORD: slw
       GLIBC_TUNABLES: glibc.pthread.rseq=1
     tmpfs:
       - /run/mongo-keyfile

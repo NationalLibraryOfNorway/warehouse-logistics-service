@@ -10,16 +10,28 @@
 
 set -euo pipefail
 
+# Define retry parameters for waiting loops
+RETRY_INTERVAL_SECONDS="2"
+MAX_WAIT_SECONDS="60"
+
+# Define log variables and log file
 LOG_PREFIX="[mongo-db-entrypoint]"
 SCRIPT_LOG_FILE="/tmp/mongo-entrypoint.log"
-
 touch "$SCRIPT_LOG_FILE"
 chmod 600 "$SCRIPT_LOG_FILE"
+
+# Keep mongosh state in /tmp so it does not try to write under /data/db.
+export HOME="/tmp/mongosh-home"
+export XDG_CONFIG_HOME="$HOME/.config"
+export MONGOSH_HISTORY_FILE="/tmp/mongosh-history"
+mkdir -p "$HOME" "$XDG_CONFIG_HOME"
 
 # Mirror all stderr output (entrypoint + init script stderr) into a dedicated file.
 exec 3>&2
 exec 2> >(tee -a "$SCRIPT_LOG_FILE" >&3)
 
+
+# Helper functions for logging
 log() {
   printf "%s %s\n" "$LOG_PREFIX" "$*" >&2
 }
@@ -30,11 +42,56 @@ log_block() {
   printf "%s #####################################################################\n" "$LOG_PREFIX" >&2
 }
 
-# Keep mongosh state in /tmp so it does not try to write under /data/db.
-export HOME="/tmp/mongosh-home"
-export XDG_CONFIG_HOME="$HOME/.config"
-export MONGOSH_HISTORY_FILE="/tmp/mongosh-history"
-mkdir -p "$HOME" "$XDG_CONFIG_HOME"
+# Function to check if mongod process is still running while waiting for conditions
+ensure_mongod_running() {
+  local context="$1"
+  if ! kill -0 "$MONGOD_PID" 2>/dev/null; then
+    log "ERROR: MongoDB process died while waiting for ${context}"
+    exit 1
+  fi
+}
+
+# Function to wait for a mongosh eval command to succeed, with retries and timeout
+wait_for_mongosh_eval() {
+  local label="$1"
+  local eval_js="$2"
+  local elapsed=0
+
+  while true; do
+    if mongosh --quiet \
+      -u "$MONGO_INITDB_ROOT_USERNAME" \
+      -p "$MONGO_INITDB_ROOT_PASSWORD" \
+      --authenticationDatabase admin \
+      --eval "$eval_js" >/dev/null 2>&1; then
+      log "✓ ${label}"
+      return 0
+    fi
+
+    ensure_mongod_running "$label"
+
+    if [ "$elapsed" -ge "$MAX_WAIT_SECONDS" ]; then
+      log "ERROR: Timed out waiting for ${label} after ${MAX_WAIT_SECONDS}s"
+      exit 70
+    fi
+
+    log "  ${label} not ready yet, retrying in ${RETRY_INTERVAL_SECONDS}s... (${elapsed}/${MAX_WAIT_SECONDS}s)"
+    sleep "$RETRY_INTERVAL_SECONDS"
+    elapsed=$((elapsed + RETRY_INTERVAL_SECONDS))
+  done
+}
+
+# Function to handle termination signals and forward them to mongod for graceful shutdown
+handle_termination() {
+  log "Received termination signal, forwarding to mongod..."
+  if [ -n "${MONGOD_PID:-}" ] && kill -0 "$MONGOD_PID" 2>/dev/null; then
+    kill -TERM "$MONGOD_PID" 2>/dev/null || true
+    wait "$MONGOD_PID" || true
+  fi
+  exit 143
+}
+
+# Set up traps for termination signals to ensure graceful shutdown
+trap handle_termination TERM INT
 
 
 log ""
@@ -52,9 +109,9 @@ KEYFILE_SRC="/run/mongo-keyfile-src/keyfile.key"
 KEYFILE_DEST="/run/mongo-keyfile/keyfile.key"
 
 [ -f "$KEYFILE_SRC" ] && [ -s "$KEYFILE_SRC" ] || { log "ERROR: Missing keyfile at $KEYFILE_SRC"; exit 69; }
-cp "$KEYFILE_SRC" "$KEYFILE_DEST" || { log "ERROR: Failed to copy keyfile to container tmpfs"; exit 67; }
-chmod 400 "$KEYFILE_DEST" || { log "ERROR: Failed to set permission 400 on $KEYFILE_DEST"; exit 42; }
-chown mongodb:mongodb "$KEYFILE_DEST" || { log "ERROR: Failed to make mongodb owner of $KEYFILE_DEST"; exit 34; }
+cp "$KEYFILE_SRC" "$KEYFILE_DEST"              || { log "ERROR: Failed to copy keyfile to container tmpfs"; exit 67; }
+chmod 400 "$KEYFILE_DEST"                      || { log "ERROR: Failed to set permission 400 on $KEYFILE_DEST"; exit 42; }
+chown mongodb:mongodb "$KEYFILE_DEST"          || { log "ERROR: Failed to make mongodb owner of $KEYFILE_DEST"; exit 34; }
 
 log "✓ Keyfile configured successfully"
 
@@ -82,21 +139,7 @@ log "✓ MongoDB launcher started (PID $MONGOD_PID)"
 
 
 log "[3/5] Waiting for MongoDB to accept authenticated connections..."
-until mongosh --quiet \
-  -u "$MONGO_INITDB_ROOT_USERNAME" \
-  -p "$MONGO_INITDB_ROOT_PASSWORD" \
-  --authenticationDatabase admin \
-  --eval "db.adminCommand('ping')" >/dev/null 2>&1; do
-
-  if ! kill -0 $MONGOD_PID 2>/dev/null; then
-    log "ERROR: MongoDB process died during startup"
-    exit 1
-  fi
-
-  log "  MongoDB not ready yet, retrying in 2s..."
-  sleep 2
-done
-log "✓ MongoDB is accepting authenticated connections"
+wait_for_mongosh_eval "MongoDB authenticated ping" "quit(db.adminCommand('ping').ok === 1 ? 0 : 1)"
 
 
 # ==============================================================================
@@ -127,24 +170,9 @@ mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --auth
 
 log "[5/5] Waiting for replica set to be fully ready..."
 
-until mongosh --quiet \
-  -u "$MONGO_INITDB_ROOT_USERNAME" \
-  -p "$MONGO_INITDB_ROOT_PASSWORD" \
-  --authenticationDatabase admin \
-  --eval "rs.status().ok" 2>/dev/null | grep -q 1; do
+wait_for_mongosh_eval "Replica set readiness" "try { const s = rs.status(); quit(s.ok === 1 ? 0 : 1); } catch (err) { quit(1); }"
 
-  if ! kill -0 $MONGOD_PID 2>/dev/null; then
-    log "ERROR: MongoDB process died during replica set initialization"
-    exit 1
-  fi
-
-  log "  Replica set not ready yet, retrying in 2s..."
-  sleep 2
-done
-log "✓ Replica set is ready"
-
-
-log "MongoDB is running with keyfile"
+log "MongoDB is running with replica set 'rs0' and is ready to accept connections!"
 
 
 # ==============================================================================
