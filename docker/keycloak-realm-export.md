@@ -6,8 +6,8 @@ That way changes will persist even if the container is restarted, and be availab
 
 ```bash
 cd docker
-docker exec -it docker-keycloak-1 /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
-docker cp docker-keycloak-1:/tmp/mlt-local-realm-export.json ./keycloak/import/mlt-local-realm-export.json
+<docker|nerdctl> compose exec keycloak /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
+<docker|nerdctl> compose cp keycloak:/tmp/mlt-local-realm-export.json ./keycloak/import/mlt-local-realm-export.json
 git add ./keycloak/import/mlt-local-realm-export.json
 ```
 

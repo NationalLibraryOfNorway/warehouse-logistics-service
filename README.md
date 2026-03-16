@@ -21,7 +21,8 @@ More features and benefits will be added as the service is developed.
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
       2. [Using Docker](#using-docker)
-      3. [Using an IDE](#using-an-ide)
+      3. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
+      4. [Using an IDE](#using-an-ide)
    2. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
       2. [Running Tests in an IDE](#running-tests-in-an-ide)
@@ -67,7 +68,7 @@ You might also want to check the [GitHub Actions](.github/workflows/deploy-proje
 
 
 The Warehouse Logistics Service is a Spring Boot application that can be run locally or in a container.
-It is recommended to use Docker for local testing, as the service is designed to run in a containerized environment.
+It is recommended to use Docker or containerd (via `nerdctl`) for local testing, as the service is designed to run in a containerized environment.
 Additionally, this service depends on other applications, such as MongoDB, which can be spun up using the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
 For development an IDE such as [IntelliJ IDEA](https://www.jetbrains.com/idea/ "Link to JetBrains IntelliJ IDEA program") is highly recommended.
 
@@ -97,6 +98,13 @@ cp target/wls.jar docker/wls.jar
 docker buildx build --platform linux/amd64 -t wls:latest docker/
 ```
 
+If you need local setup of Docker on Arch Linux, install and enable the required tooling:
+
+```bash
+pacman -S --needed docker docker-buildx docker-compose
+systemctl enable --now docker
+```
+
 ***Caveats:***
 - When building the Docker image outside NLNs network, the build will fail, as it won't be able to access the internal Harbor instance which is used to pull the base image.
   In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-noble` and build the image locally.
@@ -117,8 +125,33 @@ docker pull harbor.nb.no/mlt/wls:<TAG>
 With the image either built or pulled, WLS can be run using the following command:
 
 ```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG>
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
 ```
+
+### Using containerd + BuildKit (nerdctl)
+
+After building the JAR file, it can be used to build an image with `nerdctl` (which uses BuildKit):
+
+```shell
+# Move the jar to the Docker directory
+cp target/wls.jar docker/wls.jar
+
+# Build image with containerd/BuildKit
+nerdctl build --platform linux/amd64 -t wls:latest docker/
+```
+
+If you need local setup of "rootful" `containerd` on Arch Linux, install and enable the required tooling:
+
+```shell
+pacman -S --needed containerd runc nerdctl cni-plugins buildkit iptables-nft rootlesskit
+systemctl enable --now containerd
+systemctl enable --now buildkit
+```
+
+The same caveats from [Using Docker](#using-docker) apply when building outside NLN's network.
+
+With the image either built or pulled, WLS can be run using the same commands as in [Using Docker](#using-docker), just use `nerdctl` instead of `docker`.
 
 ### Using an IDE
 
@@ -189,6 +222,7 @@ The API is accessible at the usual URL, with the `/hermes` suffix.
 
 Regardless of what method you used to run the Hermes WLS, it has other services and applications that it depends on.
 To run these, use the provided [Docker Compose file](docker/compose.yaml "Link to project's Docker compose file").
+The compose stack can be run with either `<docker|nerdctl> compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
@@ -203,40 +237,56 @@ This will spin up the following services:
     - Username: `wls`
     - Password: `slw`
 - Kafka: a message queue system for handling inventory statistics messages
-  - Can be accessed at: `http://localhost:9092`
+  - Can be accessed at: `kafka:9092` (requires `/etc/hosts` entry, see below) or `localhost:9092`
   - You can use the Kafka plugin for IntelliJ to view topics, queues, and their contents
     - [Kafka plugin homepage](https://plugins.jetbrains.com/plugin/21704-kafka "Kafka plugin homepage")
+    - Connect to either `kafka:9092` or `localhost:9092` - both work
 - Mockoon: a service used for mocking web server endpoints, used to test callback functionality
   - Endpoints are available at: `http://localhost:80/item` and `http://localhost:80/order`
   - See below on how to enable mapping `localhost` to `callback-wls.no`
   - To read the logs with request and response data, run:
-    - `docker logs --follow docker-mockoon-1`
-    - Make sure that the container name matches the actual name from running `docker compose`
+    - `<docker|nerdctl> compose logs -f mockoon` to use compose log streaming by service name
+    - `<docker|nerdctl> logs -f wls-mockoon-1` to use container log streaming by container name
+    - Make sure that the container name matches the actual name from running `<docker|nerdctl> compose up`
+    - You can check it using `<docker|nerdctl> ps`
+
+For MongoDB replica set auth in local Compose, provide a keyfile at `docker/mongo/secrets/keyfile.key` before startup.
+The Compose setup mounts this file read-only and copies it into container-local tmpfs at runtime, so host file ownership is never changed.
+Run `bash docker/setup-mongo-keyfile.sh` before startup: it creates the keyfile if missing and validates it if already present.
 
 To start the services, run the following command:
 
 ```shell
 cd docker
-docker compose up -d
+<docker|nerdctl> compose up -d
 
-# Alternatively
-docker compose -f docker/compose.yaml up -d
+# Alternatively from project root
+<docker|nerdctl> compose -f docker/compose.yaml up -d
 ```
 
-Additionally, to use the Mockoon service for mocking and logging callbacks to host systems, you will need to edit your `hosts` file.
-Add the following line to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
+Additionally, to use the Mockoon service for mocking and logging callbacks to catalogue systems, you will need to make it discoverable on the host machine.
+The default `MONGODB_URI` uses `directConnection=true`, which bypasses replica set host discovery, so a `mongo-db` hosts entry is not strictly required when using the default configuration.
+However, for convenience and choice between `localhost:27017` and `mongo-db:27017` you can add the `mongo-db` entry as shown below.
+You can also add an entry for Kafka to have a consistent connection string (`kafka:9092`) everywhere.
+Add the following lines to your `/etc/hosts` file if you are on Linux --- if you are using Windows or Mac switch to a real OS --- and restart your machine:
 
 ```
 127.0.0.1 callback-wls.no
+127.0.0.1 mongo-db
+127.0.0.1 kafka
 ```
 
 To stop the services, run the following command:
 
 ```shell
-docker compose down
+<docker|nerdctl> compose down
 
-# Alternatively
-docker compose -f docker/compose.yaml down
+# Alternatively from project root
+<docker|nerdctl> compose -f docker/compose.yaml down
+
+# Optional step for clean restart (remove volumes in extra command as `system prune --volumes` does not work)
+<docker|nerdctl> system prune -af
+<docker|nerdctl> volume prune -af
 ```
 
 ## Deployment Dependencies
@@ -290,7 +340,7 @@ However, when deploying to staging or production, they must be set manually.
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
 - `EMAIL_PORT`: Is the port used by the email server (default is `1025`)
-- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls`)
+- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls&directConnection=true`)
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
 - `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `false`)
