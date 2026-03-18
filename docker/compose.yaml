@@ -1,53 +1,47 @@
+# This docker-compose file is used for setting up a local development environment with all necessary dependencies
+# It includes services for MongoDB, Keycloak, Kafka, and Mockoon for testing callbacks, SynQ, and Kardex compatibility
+
+# Give the docker-compose project a name, which will be used as a prefix for container names and network
+name: wls
+
 # Define what services to set up for local development
 services:
-    # Set up a local mongo instance for local development
+  # MongoDB instance for local development with replica set authentication
+  # Accessible from host at localhost:27017 and from containers at mongo-db:27017
+  # If you add an entry to /etc/hosts, you can access it at mongo-db:27017 on host machine
+  # Uses named volume (mongo-data) for data persistence between restarts
+  # Initialization handled by custom entrypoint script (mongo-entrypoint.sh) that:
+  # - Sets up keyfile with correct permissions in tmpfs
+  # - Starts MongoDB and configures replica set with authentication
+  # - Lets official init scripts load seed data on first bootstrap
   mongo-db:
     image: mongo:8.2.3 # Same as the version in the prod env
     hostname: mongo-db
-    restart: unless-stopped
-    entrypoint: >
-      /bin/bash -c '
-      openssl rand -base64 756 > /data/keyfile.key &&
-      chmod 400 /data/keyfile.key &&
-      chown mongodb:mongodb /data/keyfile.key &&
-      /usr/local/bin/docker-entrypoint.sh mongod --replSet rs0 --keyFile /data/keyfile.key --bind_ip_all --port 27017'
-    healthcheck:
-      test: ["CMD-SHELL", "mongosh -u root -p toor --quiet --eval \"db.adminCommand('ping')\" || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
+    entrypoint: ["/bin/bash", "/scripts/mongo-entrypoint.sh"]
     ports:
       - "27017:27017"
     environment:
       MONGO_INITDB_DATABASE: wls
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: toor
+      WLS_DB_NAME: wls
+      WLS_DB_USER: wls
+      WLS_DB_PASSWORD: slw
+      GLIBC_TUNABLES: glibc.pthread.rseq=1
+    tmpfs:
+      - /run/mongo-keyfile
+      - /data/configdb
     volumes:
+      - mongo-data:/data/db
+      - ./mongo/mongo-entrypoint.sh:/scripts/mongo-entrypoint.sh:ro
       - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - mongodata:/data/db
-      - mongoconfig:/data/configdb
-      - mongoshared:/data
-
-  # Initialize replica set + seed data after Mongo is healthy
-  mongo-setup:
-    image: mongo:8.2.3
-    depends_on:
-      mongo-db:
-        condition: service_healthy
-    entrypoint: >
-      /bin/bash -c '
-      mongosh -u root -p toor --host mongo-db --eval "try {rs.conf()} catch(err) {rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-db:27017\"}]})}" &&
-      mongosh -u root -p toor --host mongo-db --eval "load(\"/docker-entrypoint-initdb.d/mongo-init.js\")"
-      '
-    volumes:
-      - ./mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo/secrets/keyfile.key:/run/mongo-keyfile-src/keyfile.key:ro
 
   # Set up a local SMTP server for local development
   # Makes GUI available at: http://localhost:8081
   # Useful for testing email sending functionality locally, without spamming actual email accounts
   email:
-    image: haravich/fake-smtp-server
-    restart: unless-stopped
+    image: haravich/fake-smtp-server:20260308
     hostname: email
     ports:
       - "1025:1025"
@@ -58,13 +52,12 @@ services:
   # Makes GUI available at: http://localhost:8082
   #
   # When making changes to the realm, export the realm and save it in the keycloak/import folder
-  # docker exec -it wls-local-keycloak-1 /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
-  # docker cp wls-local-keycloak-1:/tmp/mlt-local-realm-export.json ./docker/keycloak/import/mlt-local-realm-export.json
-  # git add docker/keycloak/import/mlt-local-realm-export.json
-  # This connects interactively to the container, uses keycloak export command to export the realm, copies the file to the local machine, and adds it to git
+  # <docker|nerdctl> compose exec keycloak /opt/keycloak/bin/kc.sh export --file "/tmp/mlt-local-realm-export.json" --users "same_file" --realm "mlt-local"
+  # <docker|nerdctl> compose cp keycloak:/tmp/mlt-local-realm-export.json ./keycloak/import/mlt-local-realm-export.json
+  # git add ./keycloak/import/mlt-local-realm-export.json
+  # This uses the service name to exec into the container, exports the realm, copies the file to the local machine, and adds it to git
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1 # Same as the version in prod env
-    restart: always
     hostname: keycloak
     environment:
       KEYCLOAK_ADMIN: wls
@@ -75,89 +68,102 @@ services:
     volumes:
       - ./keycloak/import:/opt/keycloak/data/import
 
-  # Set up Kafka for local development
-  # Kafka is used to send history/statistic messages from Hermes to ElasticSearch
-  # To view available topics, you can use "Kafka" plugin for IntelliJ and connect it to 127.0.0.1:9092
-  #
-  # This version of Kafka (4.1.1) does not require Zookeper, using KRaft instead
-  # The service is configured to use the new features as far as I am aware
-  # For some reason "KAFKA_CREATE_TOPICS" environment variable does not work, hence the need for "kafka-topic-setup"
+  # Kafka broker for local development in KRaft mode (no Zookeeper required)
+  # Used to send history/statistic messages from Hermes to ElasticSearch
+  # Accessible from host at kafka:9092 (requires /etc/hosts entry) or localhost:9092
+  # Accessible from containers at kafka:9092
+  # Uses tmpfs for all data directories - events persist only during container lifetime
+  # Topics are auto-created on first use (KAFKA_AUTO_CREATE_TOPICS_ENABLE: true)
+  # To view the topics, you can use IntelliJ Kafka plugin and connect to kafka:9092 or localhost:9092
   kafka:
-    image: "apache/kafka:4.1.1"
-    restart: unless-stopped
+    image: apache/kafka:4.1.1
     hostname: kafka
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
     ports:
       - "9092:9092"
     environment:
+      # KRaft cluster identity — this node is both broker and controller, with a fixed cluster UUID
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+
+      # Listener definitions — three listeners on separate ports:
+      #   PLAINTEXT_HOST:     host access via published port 9092 (advertised as localhost:9092)
+      #   PLAINTEXT_INTERNAL: inter-container access (advertised as kafka:29092, not published)
+      #   CONTROLLER:         internal KRaft consensus traffic only, never advertised
+      KAFKA_LISTENERS: PLAINTEXT_HOST://:9092,PLAINTEXT_INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT_HOST:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+
+      # Listener role assignments
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL  # used for broker-to-broker replication
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER           # used for KRaft leader election / metadata
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093      # single-node quorum (this broker is the only voter)
+
+      # Replication factors — all 1 because this is a single-node cluster
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
-  # Easy service that waits for Kafka to start and creates a "hermes-mythos" topic
-  kafka-topic-setup:
-    image: 'apache/kafka:4.1.1'
-    depends_on:
-      kafka:
-        condition: service_healthy
-    entrypoint: [ ]
-    command: >
-      bash -c '
-      /opt/kafka/bin/kafka-topics.sh --create --if-not-exists \
-        --bootstrap-server kafka:9092 \
-        --topic hermes-mythos \
-        --partitions 1 \
-        --replication-factor 1
-      '
+      # Define where to keep Kafka logs and data - using tmpfs for ephemeral storage during container lifetime
+      KAFKA_LOG_DIRS: /var/lib/kafka/data/logs
+      KAFKA_DATA_DIR: /var/lib/kafka/data
+
+      # Create topics automatically on first use, so no manual setup is needed for development
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    tmpfs:
+      - /var/lib/kafka/data:mode=1777,uid=1000,gid=1000
+      - /etc/kafka/secrets:mode=1777,uid=1000,gid=1000
+      - /mnt/shared/config:mode=1777,uid=1000,gid=1000
 
   # Mockoon allows for easy setup of a mock server for receiving POST calls
   # In our case it is used for locally testing the callback functionality
   mockoon:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    hostname: mockoon-callbacks
     ports:
       - "80:8282"
     command: --data /data/wls-callbacks.json --port 8282 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-callbacks.json:/data/wls-callbacks.json
 
   # Also use Mockoon for testing Kardex
   mockoon-kardex:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    hostname: mockoon-kardex
     ports:
       - "8182:8182"
     command: --data /data/wls-kardex.json --port 8182 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-kardex.json:/data/wls-kardex.json
 
   # Also use Mockoon for testing the SynQ Controller
   mockoon-synq:
     image: mockoon/cli:9.5.0
-    restart: always
-    hostname: mockoon
+    hostname: mockoon-synq
     ports:
       - "8181:8181"
     command: --data /data/wls-synq.json --port 8181 --log-transaction
+    stop_grace_period: 1s
     volumes:
       - ./mockoon/wls-synq.json:/data/wls-synq.json
 
 volumes:
-  mongodata:
-  mongoconfig:
-  mongoshared:
+  # Persistent MongoDB data files (collections, indexes, oplog)
+  mongo-data:
+    driver: local
+
+networks:
+  # Pin the default Compose network subnet to avoid host-network overlap.
+  # Without this, Docker may auto-assign a 10.x/172.x subnet that conflicts
+  # with corporate/home routing and causes intermittent service-to-service
+  # failures (e.g. ECONNREFUSED/timeout between containers).
+  default:
+    # Bridge keeps all services isolated while still reachable by service name
+    # (mongo-db, kafka, keycloak, etc.) through Docker's internal DNS.
+    driver: bridge
+    ipam:
+      config:
+        # Chosen private range for stable, conflict-free local networking.
+        - subnet: 172.28.0.0/16
