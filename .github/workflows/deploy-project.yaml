@@ -44,10 +44,7 @@ jobs:
     # Settings/Inputs/Parameters for the action
     with:
       project-name: ${{ vars.PROJECT_NAME }}
-    secrets:
-      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
-      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
-      VAULT_URL: ${{ secrets.NB_VAULT_URL }}
+    secrets: inherit
 
   # This job builds a Docker image with relevant tags and labels and publishes it to Harbor
   build-publish-image:
@@ -59,10 +56,7 @@ jobs:
       project-name: ${{ vars.PROJECT_NAME }}
       dockerfile: ./docker/Dockerfile
       artifact-name: packaged-project
-    secrets:
-      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
-      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
-      VAULT_URL: ${{ secrets.NB_VAULT_URL }}
+    secrets: inherit
 
   # This job deploys the Docker image to the Stage environment
   # It uses a reusable workflow to handle the actual deployment process via ArgoCD
@@ -75,9 +69,7 @@ jobs:
       project-name: ${{ vars.PROJECT_NAME }}
       environment: stage
       image-tag: sha-${{ github.sha }}
-    secrets:
-      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
-      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+    secrets: inherit
 
   # This job deploys the Docker image to the Production environment
   # It uses a reusable workflow to handle the actual deployment process via ArgoCD
@@ -90,6 +82,4 @@ jobs:
       project-name: ${{ vars.PROJECT_NAME }}
       environment: prod
       image-tag: ${{ needs.build-publish-image.outputs.version }}
-    secrets:
-      MLT_ARGO_APP_ID: ${{ secrets.MLT_ARGO_APP_ID }}
-      MLT_ARGO_PRIVATE_KEY: ${{ secrets.MLT_ARGO_PRIVATE_KEY }}
+    secrets: inherit
