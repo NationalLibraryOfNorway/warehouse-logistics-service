@@ -38,7 +38,7 @@ data class NotificationItemPayload(
     @field:Schema(
         description = """Name of the host system that owns the item, and where the request comes from.
             Host system is usually the catalogue that the item is registered in.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "DEPOT"]
+        examples = ["AXIELL", "ALMA", "ASTA", "DEPOT", "DFB"]
     )
     val hostName: HostName,
     @field:Schema(

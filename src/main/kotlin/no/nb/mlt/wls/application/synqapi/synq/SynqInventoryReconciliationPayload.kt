@@ -71,7 +71,7 @@ data class LoadUnit(
     val quantityOnHand: Double,
     @field:Schema(
         description = """Which host system the product belongs to""",
-        examples = ["Axiell", "DEPOT", "Alma", "Asta", "Mellomlager"]
+        examples = ["Axiell", "Alma", "Asta", "Mellomlager"]
     )
     val hostName: String?,
     @field:Schema(
