@@ -71,7 +71,7 @@ data class LoadUnit(
     val quantityOnHand: Double,
     @field:Schema(
         description = """Which host system the product belongs to""",
-        examples = ["Axiell", "Bibliofil", "Alma", "Asta", "Mellomlager"]
+        examples = ["Axiell", "DEPOT", "Alma", "Asta", "Mellomlager"]
     )
     val hostName: String?,
     @field:Schema(
@@ -125,7 +125,6 @@ data class LoadUnit(
             "alma" -> HostName.ALMA
             "asta" -> HostName.ASTA
             "axiell" -> HostName.AXIELL
-            "bibliofil" -> HostName.BIBLIOFIL
             "mellomlager" -> HostName.TEMP_STORAGE
             "unknown" -> HostName.UNKNOWN
             else -> throw InvalidParameterException("Unknown Host Name: $hostName for item: $this")

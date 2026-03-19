@@ -162,6 +162,7 @@ class SpringEmailNotifier(
         when (orderType) {
             Order.Type.LOAN -> "Lån"
             Order.Type.DIGITIZATION -> "Digitalisering"
+            Order.Type.CHANGE -> "Endringsordre"
         }
 
     private fun translateOrderLines(orderLines: List<Order.OrderItem>): List<EmailOrderLine> =

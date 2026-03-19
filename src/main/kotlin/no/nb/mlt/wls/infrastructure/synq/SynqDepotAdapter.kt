@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.infrastructure.synq
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
@@ -8,6 +9,8 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.outbound.StorageSystemFacade
 import org.springframework.stereotype.Component
+
+private val logger = KotlinLogging.logger {}
 
 @Component
 class SynqDepotAdapter(
@@ -38,7 +41,7 @@ class SynqDepotAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.DEPOT
 
     override fun canHandleItem(item: Item): Boolean {
-        // Depot SynQ should only get items from Bibliofil, which has it's own categories and no preferred env.
+        // Depot SynQ should only get items from DEPOT, which has it's own categories and no preferred env.
         // But for safety we check everything just in case, so we don't end up goofing up
 
         if (item.preferredEnvironment != Environment.NONE) return false
@@ -46,9 +49,7 @@ class SynqDepotAdapter(
         if (item.hostName != HostName.DEPOT && item.hostName != HostName.DFB) return false
 
         return when (item.itemCategory) {
-            ItemCategory.MICROFILM -> true
-            ItemCategory.MONOGRAPH -> true
-            ItemCategory.PERIODICAL -> true
+            ItemCategory.MICROFILM, ItemCategory.MONOGRAPH, ItemCategory.PERIODICAL -> true
             else -> false
         }
     }

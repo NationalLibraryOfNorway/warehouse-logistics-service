@@ -558,10 +558,10 @@ class WLSServiceTest {
 
     @Test
     fun `getAllItems should return empty list if no items exist for given host`() {
-        coEvery { itemRepository.getAllItemsForHosts(listOf(HostName.BIBLIOFIL)) } answers { listOf() }
+        coEvery { itemRepository.getAllItemsForHosts(listOf(HostName.DEPOT)) } answers { listOf() }
 
         runTest {
-            val itemListResult = serviceSansTrans.getAllItems(listOf(HostName.BIBLIOFIL))
+            val itemListResult = serviceSansTrans.getAllItems(listOf(HostName.DEPOT))
 
             assertThat(itemListResult).isEmpty()
         }
@@ -602,10 +602,10 @@ class WLSServiceTest {
 
     @Test
     fun `getAllOrders should return empty list if no getAllOrders exist for given host`() {
-        coEvery { orderRepository.getAllOrdersForHosts(listOf(HostName.BIBLIOFIL)) } answers { listOf() }
+        coEvery { orderRepository.getAllOrdersForHosts(listOf(HostName.DEPOT)) } answers { listOf() }
 
         runTest {
-            val orderListResult = serviceSansTrans.getAllOrders(listOf(HostName.BIBLIOFIL))
+            val orderListResult = serviceSansTrans.getAllOrders(listOf(HostName.DEPOT))
 
             assertThat(orderListResult).isEmpty()
         }

@@ -46,7 +46,7 @@ import java.time.Instant
 data class NotificationOrderPayload(
     @field:Schema(
         description = """Name of the host system which made the order.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
+        examples = ["AXIELL", "ALMA", "ASTA", "DEPOT"]
     )
     val hostName: HostName,
     @field:Schema(

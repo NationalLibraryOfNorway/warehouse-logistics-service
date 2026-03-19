@@ -64,4 +64,5 @@ fun toSynqHostname(hostName: HostName): String =
         HostName.AXIELL -> "Axiell"
         HostName.TEMP_STORAGE -> "Mellomlager"
         HostName.UNKNOWN -> throw NotImplementedError("Creating Products for HostName.UNKNOWN is not supported")
+        else -> throw IllegalArgumentException("Unknown host name for SynQ: $hostName")
     }
