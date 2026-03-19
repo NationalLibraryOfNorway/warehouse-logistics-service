@@ -119,7 +119,11 @@ data class Order(
      *
      * @return true if the order status is `DELETED` or `RETURNED`, false otherwise.
      */
-    fun isClosed(): Boolean = status in listOf(Status.DELETED, Status.RETURNED)
+    fun isClosed(): Boolean =
+        when (status) {
+            Status.DELETED, Status.RETURNED -> true
+            else -> false
+        }
 
     private fun setOrderLineStatus(
         itemIds: List<String>,
@@ -239,7 +243,11 @@ data class Order(
          * @return `true` if the status is PICKED or FAILED, `false` otherwise.
          */
         @JsonIgnore
-        fun isPickedOrFailed(): Boolean = this.status in listOf(Status.PICKED, Status.FAILED)
+        fun isPickedOrFailed(): Boolean =
+            when (status) {
+                Status.PICKED, Status.FAILED -> true
+                else -> false
+            }
 
         /**
          * Determines whether the order item's status is considered complete.

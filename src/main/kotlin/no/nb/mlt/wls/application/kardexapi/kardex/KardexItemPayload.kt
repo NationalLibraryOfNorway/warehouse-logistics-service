@@ -22,14 +22,30 @@ interface KardexItemPayload {
      * @throws ValidationException if payload is badly formatted, for example having blank location for non-deletions
      */
     fun validate(): Boolean {
-        if (motiveType in listOf(MotiveType.StockUnavailable, MotiveType.SpaceUnavailable, MotiveType.Shortage)) {
+        if (isInvalid()) {
             return false
         }
-        if (motiveType !in listOf(MotiveType.Deleted, MotiveType.Canceled) && location.isBlank()) {
+
+        if (!isDeleted() && location.isBlank()) {
             throw ValidationException("Location can not be blank for a regular payload")
         }
         return true
     }
+
+    fun isInvalid(): Boolean =
+        when (this.motiveType) {
+            MotiveType.StockUnavailable, MotiveType.SpaceUnavailable, MotiveType.Shortage -> true
+            else -> false
+        }
+
+    /**
+     * Returns true for motives which are related to an order being explicitly deleted, which should still be processed as such.
+     */
+    fun isDeleted(): Boolean =
+        when (this.motiveType) {
+            MotiveType.Deleted, MotiveType.Canceled -> true
+            else -> false
+        }
 }
 
 fun KardexItemPayload.toUpdateItemPayload(): UpdateItem.UpdateItemPayload {
