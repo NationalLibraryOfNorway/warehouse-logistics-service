@@ -6,12 +6,13 @@ package no.nb.mlt.wls.domain.model
  * It includes a method to convert a string representation of a hostname into the corresponding enum value.
  */
 enum class HostName {
+    DFB,
     ALMA,
     ASTA,
+    DEPOT,
     AXIELL,
-    BIBLIOFIL,
-    TEMP_STORAGE,
-    UNKNOWN;
+    UNKNOWN,
+    TEMP_STORAGE;
 
     companion object {
         /**
