@@ -139,12 +139,10 @@ class KardexAdapter(
             if (item.preferredEnvironment == Environment.FRAGILE) {
                 return false
             }
-            return item.itemCategory in
-                listOf(
-                    ItemCategory.FILM,
-                    ItemCategory.PAPER,
-                    ItemCategory.MAGNETIC_TAPE
-                )
+            return when (item.itemCategory) {
+                ItemCategory.FILM, ItemCategory.PAPER, ItemCategory.MAGNETIC_TAPE -> true
+                else -> false
+            }
         }
         return false
     }
