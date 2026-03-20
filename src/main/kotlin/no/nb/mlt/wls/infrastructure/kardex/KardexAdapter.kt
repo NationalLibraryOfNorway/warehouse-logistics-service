@@ -63,7 +63,7 @@ class KardexAdapter(
     }
 
     override suspend fun editItem(item: Item) {
-        val uri = $$"$$baseUrl/materials/$material?material=$material&materialRequest=$body"
+        val uri = "$baseUrl/materials/{material}?material={material}&materialRequest={body}"
 
         webClient
             .put()
