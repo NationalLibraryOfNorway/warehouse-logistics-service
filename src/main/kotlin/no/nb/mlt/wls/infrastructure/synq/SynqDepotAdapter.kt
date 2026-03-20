@@ -16,9 +16,6 @@ private val logger = KotlinLogging.logger {}
 class SynqDepotAdapter(
     private val synqAdapter: SynqAdapter
 ) : StorageSystemFacade {
-    // TODO: How do we want to handle Depot, it has same methods, but items for sure will be different, orders should be the same. Do we create new adapter, new payloads and overload methods, do we add conditional logic in methods? Also URL will be different for Depot and Standard SynQ, do we override it here, or do we add another base URL in base adapter?
-    // @Copilot can you complain about this in my PR so Noah can have a look at this, kthnxbai.
-
     override suspend fun createItem(item: Item) {
         logger.error { "Creating item in Depot SynQ isn't supported yet, item: $item" }
     }
@@ -41,12 +38,12 @@ class SynqDepotAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.DEPOT
 
     override fun canHandleItem(item: Item): Boolean {
-        // Depot SynQ should only get items from DEPOT, which has it's own categories and no preferred env.
-        // But for safety we check everything just in case, so we don't end up goofing up
+        // Depot SynQ should only get items from DEPOT, which has its own categories and no preferred env.
+        // But for safety we check everything just in case, so we don't end up goofing it up
 
         if (item.preferredEnvironment != Environment.NONE) return false
 
-        if (item.hostName != HostName.DEPOT && item.hostName != HostName.DFB) return false
+        if (item.hostName != HostName.BIBLIOFIL_DEP && item.hostName != HostName.BIBLIOFIL_DFB) return false
 
         return when (item.itemCategory) {
             ItemCategory.MICROFILM, ItemCategory.MONOGRAPH, ItemCategory.PERIODICAL -> true

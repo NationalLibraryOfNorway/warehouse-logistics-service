@@ -48,14 +48,6 @@
   "failureFactor" : 30,
   "roles" : {
     "realm" : [ {
-      "id" : "b24bad10-37cb-425d-a452-fef34fbf09d6",
-      "name" : "depot",
-      "description" : "Adds a \"depot\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil Depot",
-      "composite" : false,
-      "clientRole" : false,
-      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
-      "attributes" : { }
-    }, {
       "id" : "64568735-f0af-4b8a-b1b8-17c2a05883f7",
       "name" : "kardex",
       "description" : "Adds a \"kardex\" role to the JWT to identify users/clients permitted to access Kardex endpoints",
@@ -134,9 +126,9 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
-      "id" : "df5fd053-02b4-428d-9cf1-ee70ed1943c8",
-      "name" : "dfb",
-      "description" : "Adds a \"dfb\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil DFB",
+      "id" : "0499c7cc-4a13-484e-81ef-1ea7cc2ac928",
+      "name" : "bibliofil_dep",
+      "description" : "Adds a \"bibliofil_dep\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil Depot",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
@@ -149,10 +141,17 @@
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
+    }, {
+      "id" : "f05dbeaf-051f-4217-9798-f5eb498894c4",
+      "name" : "bibliofil_dfb",
+      "description" : "Adds a \"bibliofil_dfb\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil DFB",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
     } ],
     "client" : {
       "axiell" : [ ],
-      "dfb" : [ ],
       "realm-management" : [ {
         "id" : "a30a6c80-c585-45fe-af9b-c1009aaa25d4",
         "name" : "manage-clients",
@@ -321,8 +320,8 @@
         "containerId" : "d4959811-baeb-46f9-a313-14371c9894f1",
         "attributes" : { }
       } ],
-      "depot" : [ ],
       "security-admin-console" : [ ],
+      "bibliofil_dep" : [ ],
       "account-console" : [ ],
       "hermes-dashboard" : [ ],
       "broker" : [ {
@@ -338,6 +337,7 @@
       "hermes-admin" : [ ],
       "admin-cli" : [ ],
       "kardex" : [ ],
+      "bibliofil_dfb" : [ ],
       "account" : [ {
         "id" : "d2b4e7b3-9555-489b-9343-a734ff98a844",
         "name" : "view-profile",
@@ -510,30 +510,30 @@
     "groups" : [ ]
   }, {
     "id" : "90c39c93-2548-425b-a0f7-aac387980b1b",
-    "username" : "service-account-depot",
+    "username" : "service-account-bibliofil_dep",
     "emailVerified" : false,
     "createdTimestamp" : 1773941918643,
     "enabled" : true,
     "totp" : false,
-    "serviceAccountClientId" : "depot",
+    "serviceAccountClientId" : "bibliofil_dep",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "depot", "order", "item", "default-roles-mlt-realm" ],
+    "realmRoles" : [ "order", "item", "default-roles-mlt-realm", "bibliofil_dep" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
     "id" : "6b50a517-4e5e-4816-abb2-f0d5c8667bf4",
-    "username" : "service-account-dfb",
+    "username" : "service-account-bibliofil_dfb",
     "emailVerified" : false,
     "createdTimestamp" : 1773941872740,
     "enabled" : true,
     "totp" : false,
-    "serviceAccountClientId" : "dfb",
+    "serviceAccountClientId" : "bibliofil_dfb",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "order", "item", "default-roles-mlt-realm", "dfb" ],
+    "realmRoles" : [ "order", "item", "default-roles-mlt-realm", "bibliofil_dfb" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -853,36 +853,8 @@
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
     "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   }, {
-    "id" : "2ce493fb-c784-410d-b03d-53d489653ad7",
-    "clientId" : "broker",
-    "name" : "${client_broker}",
-    "surrogateAuthRequired" : false,
-    "enabled" : true,
-    "alwaysDisplayInConsole" : false,
-    "clientAuthenticatorType" : "client-secret",
-    "redirectUris" : [ ],
-    "webOrigins" : [ ],
-    "notBefore" : 0,
-    "bearerOnly" : true,
-    "consentRequired" : false,
-    "standardFlowEnabled" : true,
-    "implicitFlowEnabled" : false,
-    "directAccessGrantsEnabled" : false,
-    "serviceAccountsEnabled" : false,
-    "publicClient" : false,
-    "frontchannelLogout" : false,
-    "protocol" : "openid-connect",
-    "attributes" : {
-      "post.logout.redirect.uris" : "+"
-    },
-    "authenticationFlowBindingOverrides" : { },
-    "fullScopeAllowed" : false,
-    "nodeReRegistrationTimeout" : 0,
-    "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
-    "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
-  }, {
     "id" : "04ff604f-0c52-4186-ba5d-b75c5f249081",
-    "clientId" : "depot",
+    "clientId" : "bibliofil_dep",
     "name" : "Bibliofil Depot (Local Client)",
     "description" : "A local development version of the client for Bibliofil Depot to use in communication with Hermes WLS",
     "rootUrl" : "",
@@ -892,7 +864,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "depot",
+    "secret" : "bibliofil_dep",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -926,6 +898,7 @@
       "config" : {
         "user.session.note" : "clientHost",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientHost",
@@ -940,6 +913,7 @@
       "config" : {
         "user.session.note" : "client_id",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "client_id",
@@ -954,6 +928,7 @@
       "config" : {
         "user.session.note" : "clientAddress",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientAddress",
@@ -964,7 +939,7 @@
     "optionalClientScopes" : [ ]
   }, {
     "id" : "07f3d954-da6f-4d41-b11c-56413777fdb3",
-    "clientId" : "dfb",
+    "clientId" : "bibliofil_dfb",
     "name" : "Bibliofil DFB (Local Client)",
     "description" : "A local development version of the client for Bibliofil DFB to use in communication with Hermes WLS",
     "rootUrl" : "",
@@ -974,7 +949,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "dfb",
+    "secret" : "bibliofil_dfb",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -1008,6 +983,7 @@
       "config" : {
         "user.session.note" : "client_id",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "client_id",
@@ -1022,6 +998,7 @@
       "config" : {
         "user.session.note" : "clientHost",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientHost",
@@ -1036,6 +1013,7 @@
       "config" : {
         "user.session.note" : "clientAddress",
         "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
         "id.token.claim" : "true",
         "access.token.claim" : "true",
         "claim.name" : "clientAddress",
@@ -1044,6 +1022,34 @@
     } ],
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
     "optionalClientScopes" : [ ]
+  }, {
+    "id" : "2ce493fb-c784-410d-b03d-53d489653ad7",
+    "clientId" : "broker",
+    "name" : "${client_broker}",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "redirectUris" : [ ],
+    "webOrigins" : [ ],
+    "notBefore" : 0,
+    "bearerOnly" : true,
+    "consentRequired" : false,
+    "standardFlowEnabled" : true,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : false,
+    "publicClient" : false,
+    "frontchannelLogout" : false,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "post.logout.redirect.uris" : "+"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : false,
+    "nodeReRegistrationTimeout" : 0,
+    "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
+    "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
     "id" : "28ceef31-4cda-46e4-93c9-0ea2b57421f3",
     "clientId" : "hermes-admin",
@@ -2055,7 +2061,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-role-list-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -2064,7 +2070,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "saml-user-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {

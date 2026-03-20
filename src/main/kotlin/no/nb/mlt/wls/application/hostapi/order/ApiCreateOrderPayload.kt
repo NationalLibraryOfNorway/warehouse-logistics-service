@@ -47,7 +47,7 @@ import org.hibernate.validator.constraints.URL
 data class ApiCreateOrderPayload(
     @field:Schema(
         description = """Name of the host system which made the order.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "DEPOT", "DFB"]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL_DEP", "BIBLIOFIL_DFB"]
     )
     @field:NotNull
     val hostName: HostName,
