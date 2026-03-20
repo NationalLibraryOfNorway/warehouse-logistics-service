@@ -56,14 +56,6 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
-      "id" : "6834db56-225f-4e0a-99d8-dd4ae42a5b63",
-      "name" : "bibliofil",
-      "description" : "Adds a \"bibliofil\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil",
-      "composite" : false,
-      "clientRole" : false,
-      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
-      "attributes" : { }
-    }, {
       "id" : "a4e99e98-ede2-4cb6-8ec8-344f584443ac",
       "name" : "order",
       "description" : "Adds an \"order\" role to the JWT to identify users/clients permitted to access order endpoints",
@@ -134,9 +126,25 @@
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
       "attributes" : { }
     }, {
+      "id" : "0499c7cc-4a13-484e-81ef-1ea7cc2ac928",
+      "name" : "bibliofil_dep",
+      "description" : "Adds a \"bibliofil_dep\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil Depot",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
       "id" : "cf49fdba-4f23-4306-bea7-f3e132e803af",
       "name" : "axiell",
       "description" : "Adds an \"axiell\" role to the JWT to identify users/clients permitted to access material owned by Axiell",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
+      "attributes" : { }
+    }, {
+      "id" : "f05dbeaf-051f-4217-9798-f5eb498894c4",
+      "name" : "bibliofil_dfb",
+      "description" : "Adds a \"bibliofil_dfb\" role to the JWT to identify users/clients permitted to access material owned by Bibliofil DFB",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
@@ -312,8 +320,8 @@
         "containerId" : "d4959811-baeb-46f9-a313-14371c9894f1",
         "attributes" : { }
       } ],
-      "bibliofil" : [ ],
       "security-admin-console" : [ ],
+      "bibliofil_dep" : [ ],
       "account-console" : [ ],
       "hermes-dashboard" : [ ],
       "broker" : [ {
@@ -329,6 +337,7 @@
       "hermes-admin" : [ ],
       "admin-cli" : [ ],
       "kardex" : [ ],
+      "bibliofil_dfb" : [ ],
       "account" : [ {
         "id" : "d2b4e7b3-9555-489b-9343-a734ff98a844",
         "name" : "view-profile",
@@ -500,17 +509,31 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "bd86a0a8-218c-45ef-b89c-851bd90089da",
-    "username" : "service-account-bibliofil",
+    "id" : "90c39c93-2548-425b-a0f7-aac387980b1b",
+    "username" : "service-account-bibliofil_dep",
     "emailVerified" : false,
-    "createdTimestamp" : 1770037041231,
+    "createdTimestamp" : 1773941918643,
     "enabled" : true,
     "totp" : false,
-    "serviceAccountClientId" : "bibliofil",
+    "serviceAccountClientId" : "bibliofil_dep",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "bibliofil", "order", "item" ],
+    "realmRoles" : [ "order", "item", "default-roles-mlt-realm", "bibliofil_dep" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
+    "id" : "6b50a517-4e5e-4816-abb2-f0d5c8667bf4",
+    "username" : "service-account-bibliofil_dfb",
+    "emailVerified" : false,
+    "createdTimestamp" : 1773941872740,
+    "enabled" : true,
+    "totp" : false,
+    "serviceAccountClientId" : "bibliofil_dfb",
+    "credentials" : [ ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "order", "item", "default-roles-mlt-realm", "bibliofil_dfb" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -830,10 +853,10 @@
     "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
     "optionalClientScopes" : [ "web-origins", "acr", "address", "phone", "profile", "offline_access", "microprofile-jwt", "email" ]
   }, {
-    "id" : "5c8c5a23-03ec-4130-9c3e-978a94b8ed43",
-    "clientId" : "bibliofil",
-    "name" : "Bibliofil (Local Client)",
-    "description" : "A local development version of the client for Bibliofil to use in communication with Hermes WLS",
+    "id" : "04ff604f-0c52-4186-ba5d-b75c5f249081",
+    "clientId" : "bibliofil_dep",
+    "name" : "Bibliofil Depot (Local Client)",
+    "description" : "A local development version of the client for Bibliofil Depot to use in communication with Hermes WLS",
     "rootUrl" : "",
     "adminUrl" : "",
     "baseUrl" : "",
@@ -841,7 +864,7 @@
     "enabled" : true,
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
-    "secret" : "bibliofil",
+    "secret" : "bibliofil_dep",
     "redirectUris" : [ "*" ],
     "webOrigins" : [ "*" ],
     "notBefore" : 0,
@@ -849,14 +872,14 @@
     "consentRequired" : false,
     "standardFlowEnabled" : false,
     "implicitFlowEnabled" : false,
-    "directAccessGrantsEnabled" : true,
+    "directAccessGrantsEnabled" : false,
     "serviceAccountsEnabled" : true,
     "publicClient" : false,
     "frontchannelLogout" : true,
     "protocol" : "openid-connect",
     "attributes" : {
       "oidc.ciba.grant.enabled" : "false",
-      "client.secret.creation.time" : "1770036936",
+      "client.secret.creation.time" : "1773941918",
       "backchannel.logout.session.required" : "true",
       "post.logout.redirect.uris" : "*",
       "oauth2.device.authorization.grant.enabled" : "false",
@@ -867,22 +890,7 @@
     "fullScopeAllowed" : true,
     "nodeReRegistrationTimeout" : -1,
     "protocolMappers" : [ {
-      "id" : "93dc62fc-1e8d-49b8-8667-6b8a95979ce4",
-      "name" : "Client ID",
-      "protocol" : "openid-connect",
-      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
-      "consentRequired" : false,
-      "config" : {
-        "user.session.note" : "client_id",
-        "introspection.token.claim" : "true",
-        "userinfo.token.claim" : "true",
-        "id.token.claim" : "true",
-        "access.token.claim" : "true",
-        "claim.name" : "client_id",
-        "jsonType.label" : "String"
-      }
-    }, {
-      "id" : "9932f8e9-a507-4385-b8bb-95c6cd0e38ac",
+      "id" : "43f576aa-5eb0-4c5b-9908-d875b5f1d407",
       "name" : "Client Host",
       "protocol" : "openid-connect",
       "protocolMapper" : "oidc-usersessionmodel-note-mapper",
@@ -897,7 +905,107 @@
         "jsonType.label" : "String"
       }
     }, {
-      "id" : "d9c0d914-57de-41ed-aa12-bdbd75d47107",
+      "id" : "41655251-e934-4bf1-97dc-5c79596750a3",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "d70e2482-2e23-4306-bc8a-f426314a432c",
+      "name" : "Client IP Address",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientAddress",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientAddress",
+        "jsonType.label" : "String"
+      }
+    } ],
+    "defaultClientScopes" : [ "roles", "wls-audience", "wls-subject" ],
+    "optionalClientScopes" : [ ]
+  }, {
+    "id" : "07f3d954-da6f-4d41-b11c-56413777fdb3",
+    "clientId" : "bibliofil_dfb",
+    "name" : "Bibliofil DFB (Local Client)",
+    "description" : "A local development version of the client for Bibliofil DFB to use in communication with Hermes WLS",
+    "rootUrl" : "",
+    "adminUrl" : "",
+    "baseUrl" : "",
+    "surrogateAuthRequired" : false,
+    "enabled" : true,
+    "alwaysDisplayInConsole" : false,
+    "clientAuthenticatorType" : "client-secret",
+    "secret" : "bibliofil_dfb",
+    "redirectUris" : [ "*" ],
+    "webOrigins" : [ "*" ],
+    "notBefore" : 0,
+    "bearerOnly" : false,
+    "consentRequired" : false,
+    "standardFlowEnabled" : false,
+    "implicitFlowEnabled" : false,
+    "directAccessGrantsEnabled" : false,
+    "serviceAccountsEnabled" : true,
+    "publicClient" : false,
+    "frontchannelLogout" : false,
+    "protocol" : "openid-connect",
+    "attributes" : {
+      "oidc.ciba.grant.enabled" : "false",
+      "client.secret.creation.time" : "1773941872",
+      "backchannel.logout.session.required" : "true",
+      "post.logout.redirect.uris" : "*",
+      "oauth2.device.authorization.grant.enabled" : "false",
+      "display.on.consent.screen" : "false",
+      "backchannel.logout.revoke.offline.tokens" : "false"
+    },
+    "authenticationFlowBindingOverrides" : { },
+    "fullScopeAllowed" : true,
+    "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "904a134f-a59e-4bda-a84b-0852493ccd8b",
+      "name" : "Client ID",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "client_id",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "client_id",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "871009c7-05be-403a-8fa3-993f3ef4b654",
+      "name" : "Client Host",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usersessionmodel-note-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "user.session.note" : "clientHost",
+        "introspection.token.claim" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "clientHost",
+        "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "dda72684-1b96-4b65-9a52-e16e9da82f3f",
       "name" : "Client IP Address",
       "protocol" : "openid-connect",
       "protocolMapper" : "oidc-usersessionmodel-note-mapper",
@@ -1031,7 +1139,7 @@
     "id" : "eee2ac64-4fd2-4a43-8cf1-29476ba84c24",
     "clientId" : "hermes-dashboard",
     "name" : "Hermes Dashboard (Local Client)",
-    "description" : "A local version of the client used by the Hermes Dashboard app to authenticate users",
+    "description" : "A local development version of the client used by the Hermes Dashboard app to authenticate users",
     "rootUrl" : "",
     "adminUrl" : "",
     "baseUrl" : "",
@@ -1953,7 +2061,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-full-name-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper", "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-role-list-mapper" ]
       }
     }, {
       "id" : "85a712b7-0975-406f-ba2e-c9a99625cfad",
@@ -1962,7 +2070,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-address-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "saml-user-property-mapper", "oidc-address-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {

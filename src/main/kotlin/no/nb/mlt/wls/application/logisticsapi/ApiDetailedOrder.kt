@@ -73,7 +73,7 @@ import org.hibernate.validator.constraints.URL
 data class ApiDetailedOrder(
     @field:Schema(
         description = """Name of the host system which made the order.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL_DEP", "BIBLIOFIL_DFB"]
     )
     @field:NotNull(message = "The order's host name is required, and can not be blank")
     val hostName: HostName,
@@ -157,7 +157,7 @@ data class DetailedOrderItem(
     @field:Schema(
         description = """Name of the host system that owns the item, and where the request comes from.
             Host system is usually the catalogue that the item is registered in.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL"]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL_DEP", "BIBLIOFIL_DFB"]
     )
     val hostName: HostName,
     @field:Schema(

@@ -323,9 +323,11 @@ data class Order(
      * Represents the type of the order.
      * It specifies whether the order is related to borrowing items (LOAN)
      * or is associated with digitization requests (DIGITIZATION).
+     * CHANGE orders are for relocating Items based on changes to their metadata.
      */
     enum class Type {
         LOAN,
+        CHANGE,
         DIGITIZATION
     }
 }
