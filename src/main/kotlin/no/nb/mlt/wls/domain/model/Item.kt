@@ -6,7 +6,7 @@ import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 private val logger = KotlinLogging.logger {}
 
 /**
- * Marks the location of an item that is on loan with a borrower.
+ * Marks the location of an item that is on loan to a borrower.
  * Ensures we use the same value across the application to avoid confusion.
  */
 const val ON_LOAN_LOCATION = "ON_LOAN"
