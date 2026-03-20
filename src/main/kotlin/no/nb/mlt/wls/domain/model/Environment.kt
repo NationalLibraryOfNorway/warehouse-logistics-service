@@ -5,7 +5,7 @@ package no.nb.mlt.wls.domain.model
  * It **is not** a guarantee that the object will be stored there.
  */
 enum class Environment {
+    NONE,
     FREEZE,
-    FRAGILE,
-    NONE
+    FRAGILE
 }

@@ -7,14 +7,17 @@ package no.nb.mlt.wls.domain.model
  * Unknown category is used for unknown items we receive in an order.
  */
 enum class ItemCategory {
-    PAPER,
     DISC,
     FILM,
-    EQUIPMENT,
-    BULK_ITEMS,
-    MAGNETIC_TAPE,
+    PAPER,
     PHOTO,
-    UNKNOWN;
+    UNKNOWN,
+    EQUIPMENT,
+    MICROFILM,
+    MONOGRAPH,
+    BULK_ITEMS,
+    PERIODICAL,
+    MAGNETIC_TAPE;
 
     companion object {
         /**

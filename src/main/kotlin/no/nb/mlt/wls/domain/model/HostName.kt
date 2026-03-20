@@ -9,9 +9,10 @@ enum class HostName {
     ALMA,
     ASTA,
     AXIELL,
-    BIBLIOFIL,
+    UNKNOWN,
     TEMP_STORAGE,
-    UNKNOWN;
+    BIBLIOFIL_DEP,
+    BIBLIOFIL_DFB;
 
     companion object {
         /**

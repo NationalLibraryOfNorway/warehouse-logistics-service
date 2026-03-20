@@ -2,7 +2,8 @@ package no.nb.mlt.wls.domain.model
 
 enum class AssociatedStorage {
     SYNQ,
-    AUTOSTORE,
+    DEPOT,
     KARDEX,
-    UNKNOWN
+    UNKNOWN,
+    AUTOSTORE
 }
