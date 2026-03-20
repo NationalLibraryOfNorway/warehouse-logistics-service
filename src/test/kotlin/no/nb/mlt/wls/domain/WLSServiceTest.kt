@@ -16,7 +16,7 @@ import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.Packaging
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
-import no.nb.mlt.wls.domain.model.WITH_LENDER_LOCATION
+import no.nb.mlt.wls.domain.model.ON_LOAN_LOCATION
 import no.nb.mlt.wls.domain.model.events.catalog.CatalogEvent
 import no.nb.mlt.wls.domain.model.events.catalog.ItemEvent
 import no.nb.mlt.wls.domain.model.events.catalog.OrderEvent
@@ -209,7 +209,7 @@ class WLSServiceTest {
             createTestItem(
                 hostName = startingItem.hostName,
                 hostId = startingItem.hostId,
-                location = WITH_LENDER_LOCATION,
+                location = ON_LOAN_LOCATION,
                 associatedStorage = AssociatedStorage.SYNQ,
                 quantity = 0
             )
@@ -241,7 +241,7 @@ class WLSServiceTest {
     @Test
     fun `moveItem should change item's location and quantity`() {
         val startingItem = createTestItem(location = "SYNQ_WAREHOUSE", quantity = 1, associatedStorage = AssociatedStorage.SYNQ)
-        val expectedItem = startingItem.copy(location = WITH_LENDER_LOCATION, quantity = 0)
+        val expectedItem = startingItem.copy(location = ON_LOAN_LOCATION, quantity = 0)
         val moveItemPayload = MoveItemPayload(expectedItem.hostName, expectedItem.hostId, -1, expectedItem.location, expectedItem.associatedStorage)
         val itemMovedEvent = ItemEvent(expectedItem)
 
@@ -276,7 +276,7 @@ class WLSServiceTest {
 
     @Test
     fun `pickItems should update items and send callbacks`() {
-        val expectedItem = createTestItem(quantity = 0, location = WITH_LENDER_LOCATION)
+        val expectedItem = createTestItem(quantity = 0, location = ON_LOAN_LOCATION)
         val pickedItemsMap = mapOf(expectedItem.hostId to 1)
         val itemPickedEvent = ItemEvent(expectedItem)
 
@@ -662,7 +662,7 @@ class WLSServiceTest {
 
     @Test
     fun `pickOrderItems with duplicate lines should only generate one event`() {
-        val pickedItem = createTestItem(location = WITH_LENDER_LOCATION, quantity = 0)
+        val pickedItem = createTestItem(location = ON_LOAN_LOCATION, quantity = 0)
         val order =
             createTestOrder(
                 orderLine =
@@ -714,7 +714,7 @@ class WLSServiceTest {
         val item1 = createTestItem()
         val item2 = createTestItem(hostId = "testItem-02")
         val itemsToPick = listOf(item1.hostId)
-        val pickedItem = createTestItem(location = WITH_LENDER_LOCATION, quantity = 0)
+        val pickedItem = createTestItem(location = ON_LOAN_LOCATION, quantity = 0)
         val order =
             createTestOrder(
                 orderLine =

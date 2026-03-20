@@ -6,10 +6,10 @@ import no.nb.mlt.wls.domain.ports.inbound.exceptions.ValidationException
 private val logger = KotlinLogging.logger {}
 
 /**
- * Marks the location of an item that is with a lender.
+ * Marks the location of an item that is on loan with a borrower.
  * Ensures we use the same value across the application to avoid confusion.
  */
-const val WITH_LENDER_LOCATION = "WITH_LENDER"
+const val ON_LOAN_LOCATION = "ON_LOAN"
 
 /**
  * Marks the location of an item when we don't know where it is.
@@ -65,7 +65,7 @@ data class Item(
      * Picks a specified amount of items from the stock.
      * If the amount picked exceeds the available quantity, it logs an error and sets the quantity
      * to zero, indicating that the item is no longer available.
-     * If after picking the quantity becomes zero, it sets the location to [WITH_LENDER_LOCATION].
+     * If after picking the quantity becomes zero, it sets the location to [ON_LOAN_LOCATION].
      *
      * @param amountPicked The number of items to pick from the stock.
      * @return The updated Item instance with the new quantity.
@@ -85,7 +85,7 @@ data class Item(
 
         val quantity = Math.clamp(itemsInStockQuantity.minus(amountPicked).toLong(), 0, Int.MAX_VALUE)
         if (quantity == 0) {
-            location = WITH_LENDER_LOCATION
+            location = ON_LOAN_LOCATION
         }
 
         return this.copy(
@@ -103,7 +103,7 @@ data class Item(
      * Constraints:
      * - If [quantity] is not zero, then the [location] can not be null.
      * - Updates from other storage systems are ignored if the quantity is zero.
-     * - Updates where [location] is null and current location is [WITH_LENDER_LOCATION] will be ignored.
+     * - Updates where [location] is null and current location is [ON_LOAN_LOCATION] will be ignored.
      *
      * @param quantity The new quantity to set for the item.
      * @param location The new location to set for the item.
@@ -125,8 +125,8 @@ data class Item(
             throw ValidationException("Location must be set when quantity is not zero")
         }
 
-        // do not override with lender location
-        if (location == null && this.location == WITH_LENDER_LOCATION) {
+        // do not override with on loan location
+        if (location == null && this.location == ON_LOAN_LOCATION) {
             return this
         }
 
