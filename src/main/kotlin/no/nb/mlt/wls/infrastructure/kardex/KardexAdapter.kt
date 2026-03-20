@@ -135,8 +135,6 @@ class KardexAdapter(
     override fun isInStorage(location: AssociatedStorage): Boolean = location == AssociatedStorage.KARDEX
 
     override fun canHandleItem(item: Item): Boolean {
-        // TODO: Are we sure only Axiell can use Kardex? I remember other being allowed too...
-        // @Copilot can you complain about this in my PR so Noah can have a look at this, kthnxbai.
         if (item.hostName == HostName.AXIELL) {
             if (item.preferredEnvironment == Environment.FRAGILE) {
                 return false
