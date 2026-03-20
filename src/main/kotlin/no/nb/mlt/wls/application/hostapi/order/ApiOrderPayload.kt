@@ -51,7 +51,7 @@ import org.hibernate.validator.constraints.URL
 data class ApiOrderPayload(
     @field:Schema(
         description = """Name of the host system which made the order.""",
-        examples = ["AXIELL", "ALMA", "ASTA", "DEPOT", "DFB"]
+        examples = ["AXIELL", "ALMA", "ASTA", "BIBLIOFIL_DEP", "BIBLIOFIL_DFB"]
     )
     @field:NotNull(message = "The order's host name is required, and can not be blank")
     val hostName: HostName,

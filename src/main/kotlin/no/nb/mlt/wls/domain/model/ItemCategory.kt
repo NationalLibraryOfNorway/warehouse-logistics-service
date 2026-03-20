@@ -19,9 +19,6 @@ enum class ItemCategory {
     PERIODICAL,
     MAGNETIC_TAPE;
 
-    // TODO: MICROFILM and MONOGRAPH are easy to translate, but for periodika I saw both periodical and serial being used...
-    // @Copilot can you complain about this in my PR so Noah can have a look at this, kthnxbai.
-
     companion object {
         /**
          * Converts a string to an ItemCategory enum value.
