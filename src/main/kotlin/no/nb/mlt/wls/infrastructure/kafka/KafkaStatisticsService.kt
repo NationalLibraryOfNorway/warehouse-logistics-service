@@ -22,12 +22,30 @@ class KafkaStatisticsService(
     override suspend fun recordStatisticsEvent(event: Event) {
         val statisticsEvent =
             when (event) {
-                is ItemCreated -> event.toStatisticsEvent()
-                is ItemEdited -> event.toStatisticsEvent()
-                is ItemEvent -> event.toStatisticsEvent()
-                is OrderCreated -> event.toStatisticsEvent()
-                is OrderEvent -> event.toStatisticsEvent()
-                is OrderDeleted -> event.toStatisticsEvent()
+                is ItemCreated -> {
+                    event.toStatisticsEvent()
+                }
+
+                is ItemEdited -> {
+                    event.toStatisticsEvent()
+                }
+
+                is ItemEvent -> {
+                    event.toStatisticsEvent()
+                }
+
+                is OrderCreated -> {
+                    event.toStatisticsEvent()
+                }
+
+                is OrderEvent -> {
+                    event.toStatisticsEvent()
+                }
+
+                is OrderDeleted -> {
+                    event.toStatisticsEvent()
+                }
+
                 else -> {
                     logger.error { "Error while converting event to statistics event, unknown event type: $event" }
                     return
