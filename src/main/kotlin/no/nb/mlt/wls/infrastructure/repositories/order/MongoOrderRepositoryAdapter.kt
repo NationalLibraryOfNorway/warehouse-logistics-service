@@ -81,13 +81,17 @@ class MongoOrderRepositoryAdapter(
                 logger.error { "Order was not marked as deleted. $order" }
                 return false
             }
+
             1L -> {
                 logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was marked as deleted." }
                 return true
             }
-            else -> throw RepositoryException(
-                "MongoOrderRepository modified too many orders. Modified $modified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
-            )
+
+            else -> {
+                throw RepositoryException(
+                    "MongoOrderRepository modified too many orders. Modified $modified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
+                )
+            }
         }
     }
 
@@ -120,13 +124,17 @@ class MongoOrderRepositoryAdapter(
                 logger.warn { "Order was not updated. $order" }
                 return false
             }
+
             1L -> {
                 logger.debug { "Order ${order.hostOrderId} for ${order.hostName} was updated." }
                 return true
             }
-            else -> throw RepositoryException(
-                "MongoOrderRepository modified too many orders. Modified $ordersModified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
-            )
+
+            else -> {
+                throw RepositoryException(
+                    "MongoOrderRepository modified too many orders. Modified $ordersModified orders with ID: ${order.hostOrderId}, and hostname: ${order.hostName}"
+                )
+            }
         }
     }
 

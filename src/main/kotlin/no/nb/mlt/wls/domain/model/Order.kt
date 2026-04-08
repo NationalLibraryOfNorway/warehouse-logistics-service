@@ -199,7 +199,9 @@ data class Order(
                 updateStatus(Status.NOT_STARTED)
             }
 
-            else -> updateStatus(Status.IN_PROGRESS)
+            else -> {
+                updateStatus(Status.IN_PROGRESS)
+            }
         }
     }
 
