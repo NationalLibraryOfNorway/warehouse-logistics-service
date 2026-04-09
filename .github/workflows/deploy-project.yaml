@@ -40,7 +40,7 @@ jobs:
     name: Build and Validate the Project
     # Reference of which workflow this job should use. We use the same process for building apps with Maven across
     # all of our projects.
-    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/maven-build-and-upload.yml@v1
+    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/maven-build-and-upload.yml@v2
     # Settings/Inputs/Parameters for the action
     with:
       project-name: ${{ vars.PROJECT_NAME }}
@@ -49,7 +49,7 @@ jobs:
   # This job builds a Docker image with relevant tags and labels and publishes it to Harbor
   build-publish-image:
     name: Build and publish the Docker Image
-    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/docker-build-and-push.yml@v1
+    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/docker-build-and-push.yml@v2
     needs: test-upload-build
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     with:
@@ -64,7 +64,7 @@ jobs:
     name: Deploy to Stage
     needs: build-publish-image
     if: github.ref == 'refs/heads/main'
-    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/deploy-to-environment.yml@v1
+    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/deploy-to-environment.yml@v2
     with:
       project-name: ${{ vars.PROJECT_NAME }}
       environment: stage
@@ -77,7 +77,7 @@ jobs:
     name: Deploy to Prod
     needs: build-publish-image
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/deploy-to-environment.yml@v1
+    uses: NationalLibraryOfNorway/mlt-workflows/.github/workflows/deploy-to-environment.yml@v2
     with:
       project-name: ${{ vars.PROJECT_NAME }}
       environment: prod
