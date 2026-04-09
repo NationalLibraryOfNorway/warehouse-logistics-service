@@ -21,6 +21,7 @@ import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
@@ -75,6 +76,7 @@ class WLSService(
     UpdateOrderStatus,
     MoveItem,
     PickOrderItems,
+    CancelOrderItems,
     PickItems,
     ReportItemAsMissing,
     SynchronizeItems {
@@ -298,6 +300,34 @@ class WLSService(
             val updatedOrder = getOrderOrThrow(hostName, orderId)
             if (updatedOrder.isPicked()) {
                 emailService.createOrderCompletion(updatedOrder = updatedOrder)
+            }
+        }
+    }
+
+    override suspend fun cancelOrderItems(
+        hostName: HostName,
+        hostOrderId: String,
+        cancelledItemIds: List<String>
+    ) {
+        val order = getOrderOrThrow(hostName, hostOrderId)
+        val cancelledOrder = order.cancelLines(cancelledItemIds)
+
+        val catalogEvent =
+            transactionPort.executeInTransaction {
+                if (orderRepository.updateOrder(cancelledOrder)) {
+                    logger.info { "The following order lines were cancelled from $hostOrderId: $cancelledItemIds" }
+                    catalogEventRepository.save(OrderEvent(cancelledOrder))
+                } else {
+                    logger.error { "Order $hostOrderId was unchanged after cancelling items $cancelledItemIds for it" }
+                    null
+                }
+            }
+
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+            val updatedOrder = getOrderOrThrow(hostName, hostOrderId)
+            if (updatedOrder.isDeleted()) {
+                emailService.createOrderCancellation(updatedOrder)
             }
         }
     }

@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.GetItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
@@ -27,6 +28,7 @@ class KardexController(
     private val updateItem: UpdateItem,
     private val synchronizeItems: SynchronizeItems,
     private val pickOrderItems: PickOrderItems,
+    private val cancelOrderItems: CancelOrderItems,
     private val getItems: GetItems
 ) {
     @PostMapping("material-update")
@@ -55,15 +57,18 @@ class KardexController(
         transactionPayloads.forEach { payload ->
             val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
             val resolvedHostName = getHostNameForItem(payload.hostName, payload.hostId)
-            val validPayload = payload.copy(hostName = resolvedHostName.toString())
-            updateItem.updateItem(validPayload.toUpdateItemPayload())
+            val hostPayload = payload.copy(hostName = resolvedHostName.toString())
+            updateItem.updateItem(hostPayload.toUpdateItemPayload())
             try {
-                pickOrderItems.pickOrderItems(resolvedHostName, validPayload.mapToOrderItems(), normalizedOrderId)
+                if (hostPayload.isDeleted()) {
+                    cancelOrderItems.cancelOrderItems(resolvedHostName, normalizedOrderId, hostPayload.mapToOrderItems())
+                }
+                pickOrderItems.pickOrderItems(resolvedHostName, hostPayload.mapToOrderItems(), normalizedOrderId)
             } catch (_: OrderNotFoundException) {
                 // Since Kardex sends us "order" updates for its pick history, any manual picks will
                 // not have an order in Hermes, and will always fail.
                 logger.warn {
-                    "Order with ID $normalizedOrderId was not found, but item ${validPayload.hostId} was updated."
+                    "Order with ID $normalizedOrderId was not found, but item ${hostPayload.hostId} was updated."
                 }
             }
         }

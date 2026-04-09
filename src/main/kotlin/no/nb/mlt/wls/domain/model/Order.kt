@@ -63,12 +63,7 @@ data class Order(
      * @throws ValidationException If any of the specified item IDs do not exist in the order.
      */
     fun markMissing(itemIds: List<String>): Order {
-        val validLines =
-            this.orderLine
-                .filter { itemIds.contains(it.hostId) }
-                .filter { it.status == OrderItem.Status.NOT_STARTED }
-                .map { it.hostId }
-
+        val validLines = findValidOrderLines(itemIds)
         return this.setOrderLineStatus(validLines, OrderItem.Status.MISSING)
     }
 
@@ -80,6 +75,28 @@ data class Order(
      */
     @Throws(IllegalOrderStateException::class)
     fun delete(): Order = updateStatus(Status.DELETED)
+
+    /**
+     * Updates the status of the specified order items to `FAILED`.
+     *
+     * @param itemIds The list of unique identifiers for the items to be marked as `FAILED`.
+     * @return The updated instance of the order with the affected item's statuses set to `FAILED`.
+     * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
+     * @throws ValidationException If any of the specified item IDs do not exist in the order.
+     */
+    fun cancelLines(itemIds: List<String>): Order {
+        val validLines = findValidOrderLines(itemIds)
+        return this.setOrderLineStatus(validLines, OrderItem.Status.FAILED)
+    }
+
+    /**
+     * Filters a list of order lines on this order that are valid to update.
+     * This only includes order items which are 'NOT_STARTED', since any other status is effectively final.
+     */
+    private fun findValidOrderLines(itemIds: List<String>): List<String> = this.orderLine
+            .filter { itemIds.contains(it.hostId) }
+            .filter { it.status == OrderItem.Status.NOT_STARTED }
+            .map { it.hostId }
 
     /**
      * Updates the status of the order to the specified new status.
@@ -124,6 +141,8 @@ data class Order(
             Status.DELETED, Status.RETURNED -> true
             else -> false
         }
+
+    fun isDeleted(): Boolean = status == Status.DELETED
 
     private fun setOrderLineStatus(
         itemIds: List<String>,
@@ -193,6 +212,10 @@ data class Order(
 
             orderLine.all(OrderItem::isPickedOrFailed) -> {
                 updateStatus(Status.COMPLETED)
+            }
+
+            orderLine.all(OrderItem::isFailed) -> {
+                updateStatus(Status.DELETED)
             }
 
             orderLine.all(OrderItem::isNotStarted) -> {
@@ -275,6 +298,14 @@ data class Order(
          */
         @JsonIgnore
         fun isNotStarted(): Boolean = this.status == Status.NOT_STARTED
+
+        /**
+         * Determines whether all the order item's status is FAILED.
+         *
+         * @return true if the status is FAILED, false otherwise.
+         */
+        @JsonIgnore
+        fun isFailed(): Boolean = this.status == Status.FAILED
     }
 
     /**
