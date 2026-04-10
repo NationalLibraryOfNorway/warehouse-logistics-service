@@ -68,7 +68,7 @@ class InventoryNotifierAdapter(
     ) {
         getAppropriateWebClient(hostName)
             .post()
-            .uri(UriComponentsBuilder.fromUriString(callbackUrl).build().toUri())
+            .uri(UriComponentsBuilder.fromUriString(callbackUrl).build(true).toUri())
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
