@@ -39,8 +39,13 @@ class KardexAdapter(
     override suspend fun createItem(item: Item) {
         webClient
             .post()
-            .uri(UriComponentsBuilder.fromUriString(baseUrl).pathSegment("materials").build().toUri())
-            .bodyValue(item.toKardexPayload())
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("materials")
+                    .build()
+                    .toUri()
+            ).bodyValue(item.toKardexPayload())
             .retrieve()
             .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
@@ -61,12 +66,14 @@ class KardexAdapter(
     }
 
     override suspend fun editItem(item: Item) {
-        val uri = UriComponentsBuilder.fromUriString(baseUrl)
-            .pathSegment("materials", "{material}")
-            .queryParam("material", "{material}")
-            .queryParam("materialRequest", "{body}")
-            .buildAndExpand(item.hostId, item.hostId, item.toKardexPayload())
-            .toUri()
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(baseUrl)
+                .pathSegment("materials", "{material}")
+                .queryParam("material", "{material}")
+                .queryParam("materialRequest", "{body}")
+                .buildAndExpand(item.hostId, item.hostId, item.toKardexPayload())
+                .toUri()
 
         webClient
             .put()
@@ -93,8 +100,13 @@ class KardexAdapter(
     override suspend fun createOrder(order: Order) {
         webClient
             .post()
-            .uri(UriComponentsBuilder.fromUriString(baseUrl).pathSegment("orders").build().toUri())
-            .bodyValue(order.toKardexOrderPayload())
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("orders")
+                    .build()
+                    .toUri()
+            ).bodyValue(order.toKardexOrderPayload())
             .retrieve()
             .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
@@ -120,8 +132,13 @@ class KardexAdapter(
     ) {
         webClient
             .delete()
-            .uri(UriComponentsBuilder.fromUriString(baseUrl).pathSegment("orders", "{orderId}").buildAndExpand(orderId).toUri())
-            .retrieve()
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("orders", "{orderId}")
+                    .buildAndExpand(orderId)
+                    .toUri()
+            ).retrieve()
             .toEntity<String>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
