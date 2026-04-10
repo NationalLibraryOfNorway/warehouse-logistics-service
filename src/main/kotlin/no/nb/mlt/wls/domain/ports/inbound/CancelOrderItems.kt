@@ -11,5 +11,9 @@ import no.nb.mlt.wls.domain.model.Order.OrderItem
  * in a storage system.
  */
 fun interface CancelOrderItems {
-    suspend fun cancelOrderItems(hostName: HostName, hostOrderId: String, cancelledItemIds: List<String>)
+    suspend fun cancelOrderItems(
+        hostName: HostName,
+        hostOrderId: String,
+        cancelledItemIds: List<String>
+    )
 }

@@ -93,7 +93,8 @@ data class Order(
      * Filters a list of order lines on this order that are valid to update.
      * This only includes order items which are 'NOT_STARTED', since any other status is effectively final.
      */
-    private fun findValidOrderLines(itemIds: List<String>): List<String> = this.orderLine
+    private fun findValidOrderLines(itemIds: List<String>): List<String> =
+        this.orderLine
             .filter { itemIds.contains(it.hostId) }
             .filter { it.status == OrderItem.Status.NOT_STARTED }
             .map { it.hostId }
