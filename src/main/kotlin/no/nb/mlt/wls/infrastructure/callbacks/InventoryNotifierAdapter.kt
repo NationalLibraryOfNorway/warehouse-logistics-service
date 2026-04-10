@@ -17,7 +17,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import org.springframework.web.reactive.function.client.bodyToMono
+import org.springframework.web.util.UriComponentsBuilder
 import java.time.Instant
 import java.util.*
 import javax.crypto.Mac
@@ -68,7 +68,7 @@ class InventoryNotifierAdapter(
     ) {
         getAppropriateWebClient(hostName)
             .post()
-            .uri(callbackUrl)
+            .uri(UriComponentsBuilder.fromUriString(callbackUrl).build().toUri())
             .bodyValue(payload)
             .headers {
                 it.contentType = MediaType.APPLICATION_JSON
