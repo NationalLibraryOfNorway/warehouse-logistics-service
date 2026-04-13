@@ -212,7 +212,7 @@ data class Order(
             }
 
             orderLine.all(OrderItem::isFailed) -> {
-                updateStatus(Status.DELETED)
+                this.copy(status = Status.DELETED)
             }
 
             orderLine.all(OrderItem::isPickedOrFailed) -> {

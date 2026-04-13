@@ -94,6 +94,31 @@ class OrderModelValidationTest {
         assertThat(failedOrder.status).isEqualTo(Order.Status.DELETED)
     }
 
+    @Test
+    fun `order with all lines cancelled in multiple batches should be marked as DELETED`() {
+        val order =
+            createTestOrder(
+                orderLine =
+                    listOf(
+                        Order.OrderItem("item1", Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem("item2", Order.OrderItem.Status.NOT_STARTED),
+                        Order.OrderItem("item3", Order.OrderItem.Status.NOT_STARTED)
+                    )
+            )
+
+        // First batch: cancel some lines, order becomes IN_PROGRESS
+        val inProgressOrder = order.cancelLines(listOf("item1"))
+        assertThat(inProgressOrder.status).isEqualTo(Order.Status.IN_PROGRESS)
+        assertThat(inProgressOrder.orderLine[0].status).isEqualTo(Order.OrderItem.Status.FAILED)
+
+        // Second batch: cancel remaining lines, order should become DELETED (not throw)
+        val deletedOrder = inProgressOrder.cancelLines(listOf("item2", "item3"))
+        assertThat(deletedOrder.status).isEqualTo(Order.Status.DELETED)
+        deletedOrder.orderLine.forEach {
+            assertThat(it.status).isEqualTo(Order.OrderItem.Status.FAILED)
+        }
+    }
+
     private val testItem = createTestItem()
 
     private val testOrder = createTestOrder()
