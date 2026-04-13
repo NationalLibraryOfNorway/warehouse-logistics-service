@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import org.springframework.web.reactive.function.client.toEntity
+import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
-import java.net.URI
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
@@ -30,13 +30,17 @@ class SynqAdapter(
     private val timeoutProperties: TimeoutProperties
 ) {
     suspend fun createItem(synqProductPayload: SynqProductPayload) {
-        val uri = URI.create("$baseUrl/nbproducts")
         webClient
             .post()
-            .uri(uri)
-            .bodyValue(synqProductPayload)
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("nbproducts")
+                    .build()
+                    .toUri()
+            ).bodyValue(synqProductPayload)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError {
                 if (it is TimeoutException) {
@@ -64,7 +68,12 @@ class SynqAdapter(
     }
 
     suspend fun editItem(product: SynqProductPayload) {
-        val uri = URI.create("$baseUrl/nbproducts/${product.owner}/${product.productId}")
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(baseUrl)
+                .pathSegment("nbproducts", "{owner}", "{productId}")
+                .buildAndExpand(product.owner, product.productId)
+                .toUri()
 
         webClient
             .put()
@@ -85,13 +94,17 @@ class SynqAdapter(
     }
 
     suspend fun createOrder(synqOrderPayload: SynqOrderPayload) {
-        val uri = URI.create("$baseUrl/orders/batch")
         // Wrap the order like SynQ likes it
         val synqOrder = SynqOrder(listOf(synqOrderPayload))
         webClient
             .post()
-            .uri(uri)
-            .bodyValue(synqOrder)
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("orders", "batch")
+                    .build()
+                    .toUri()
+            ).bodyValue(synqOrder)
             .retrieve()
             .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
@@ -127,11 +140,18 @@ class SynqAdapter(
         owner: SynqOwner,
         synqOrderId: String
     ) {
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(baseUrl)
+                .pathSegment("orders", "{owner}", "{synqOrderId}")
+                .buildAndExpand(owner, synqOrderId)
+                .toUri()
+
         webClient
             .delete()
-            .uri(URI.create("$baseUrl/orders/$owner/$synqOrderId"))
+            .uri(uri)
             .retrieve()
-            .toEntity(SynqError::class.java)
+            .toEntity<SynqError>()
             .timeout(timeoutProperties.storage)
             .doOnError {
                 if (it is TimeoutException) {
