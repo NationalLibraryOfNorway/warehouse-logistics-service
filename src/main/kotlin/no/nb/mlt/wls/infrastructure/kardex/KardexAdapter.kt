@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProp
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.toEntity
-import java.net.URI
+import org.springframework.web.util.UriComponentsBuilder
 import java.util.concurrent.TimeoutException
 
 private val logger = KotlinLogging.logger {}
@@ -37,12 +37,15 @@ class KardexAdapter(
     private val timeoutProperties: TimeoutProperties
 ) : StorageSystemFacade {
     override suspend fun createItem(item: Item) {
-        val uri = URI.create("$baseUrl/materials")
-
         webClient
             .post()
-            .uri(uri)
-            .bodyValue(item.toKardexPayload())
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("materials")
+                    .build()
+                    .toUri()
+            ).bodyValue(item.toKardexPayload())
             .retrieve()
             .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
@@ -63,11 +66,18 @@ class KardexAdapter(
     }
 
     override suspend fun editItem(item: Item) {
-        val uri = "$baseUrl/materials/{material}?material={material}&materialRequest={body}"
+        val uri =
+            UriComponentsBuilder
+                .fromUriString(baseUrl)
+                .pathSegment("materials", "{material}")
+                .queryParam("material", "{material}")
+                .queryParam("materialRequest", "{body}")
+                .buildAndExpand(item.hostId, item.hostId, item.toKardexPayload())
+                .toUri()
 
         webClient
             .put()
-            .uri(uri, item.hostId, item.hostId, item.toKardexPayload())
+            .uri(uri)
             .retrieve()
             .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
@@ -88,12 +98,15 @@ class KardexAdapter(
     }
 
     override suspend fun createOrder(order: Order) {
-        val uri = URI.create("$baseUrl/orders")
-
         webClient
             .post()
-            .uri(uri)
-            .bodyValue(order.toKardexOrderPayload())
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("orders")
+                    .build()
+                    .toUri()
+            ).bodyValue(order.toKardexOrderPayload())
             .retrieve()
             .toEntity<KardexResponse>()
             .timeout(timeoutProperties.storage)
@@ -117,12 +130,15 @@ class KardexAdapter(
         orderId: String,
         hostName: HostName
     ) {
-        val uri = URI.create("$baseUrl/orders/$orderId")
-
         webClient
             .delete()
-            .uri(uri)
-            .retrieve()
+            .uri(
+                UriComponentsBuilder
+                    .fromUriString(baseUrl)
+                    .pathSegment("orders", "{orderId}")
+                    .buildAndExpand(orderId)
+                    .toUri()
+            ).retrieve()
             .toEntity<String>()
             .timeout(timeoutProperties.storage)
             .doOnError(TimeoutException::class.java) {
