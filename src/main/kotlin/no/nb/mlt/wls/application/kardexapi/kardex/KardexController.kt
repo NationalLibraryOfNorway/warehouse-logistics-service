@@ -58,18 +58,26 @@ class KardexController(
             val normalizedOrderId = normalizeOrderId(payload.hostOrderId)
             val resolvedHostName = getHostNameForItem(payload.hostName, payload.hostId)
             val hostPayload = payload.copy(hostName = resolvedHostName.toString())
+            var wasUpdated = false
             try {
                 if (hostPayload.isDeleted()) {
                     cancelOrderItems.cancelOrderItems(resolvedHostName, normalizedOrderId, hostPayload.mapToOrderItems())
                 } else {
+                    wasUpdated = true
                     updateItem.updateItem(hostPayload.toUpdateItemPayload())
                     pickOrderItems.pickOrderItems(resolvedHostName, hostPayload.mapToOrderItems(), normalizedOrderId)
                 }
             } catch (_: OrderNotFoundException) {
                 // Since Kardex sends us "order" updates for its pick history, any manual picks will
                 // not have an order in Hermes, and will always fail.
-                logger.warn {
-                    "Order with ID $normalizedOrderId was not found, but item ${hostPayload.hostId} was updated."
+                if (wasUpdated) {
+                    logger.warn {
+                        "Order with ID $normalizedOrderId was not found, but item ${hostPayload.hostId} was updated."
+                    }
+                } else {
+                    logger.warn {
+                        "Order with ID $normalizedOrderId was not found, and no items were updated."
+                    }
                 }
             }
         }
