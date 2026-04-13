@@ -259,10 +259,11 @@ class KardexControllerTest(
     @Test
     fun `order update works with bulk payloads`() {
         runTest {
-            val expectedOrderLine = listOf(
-                Order.OrderItem(testOrder.orderLine.first().hostId, Order.OrderItem.Status.PICKED),
-                Order.OrderItem(testOrder.orderLine.last().hostId, Order.OrderItem.Status.FAILED)
-            )
+            val expectedOrderLine =
+                listOf(
+                    Order.OrderItem(testOrder.orderLine.first().hostId, Order.OrderItem.Status.PICKED),
+                    Order.OrderItem(testOrder.orderLine.last().hostId, Order.OrderItem.Status.FAILED)
+                )
 
             webTestClient
                 .mutateWith(csrf())
@@ -276,8 +277,7 @@ class KardexControllerTest(
                         transactionPayload, // intentional duplicate message, the system should handle this
                         transactionPayload.copy(hostId = expectedOrderLine.last().hostId, location = "", motiveType = MotiveType.Deleted)
                     )
-                )
-                .exchange()
+                ).exchange()
                 .expectStatus()
                 .isOk
 
@@ -286,7 +286,8 @@ class KardexControllerTest(
                 .isNotNull
                 .extracting("status", "orderLine")
                 .containsExactly(
-                    Status.COMPLETED, expectedOrderLine
+                    Status.COMPLETED,
+                    expectedOrderLine
                 )
         }
     }
