@@ -8,6 +8,7 @@ import no.nb.mlt.wls.application.hostapi.order.toApiPayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.Order
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -77,6 +78,20 @@ class OrderModelValidationTest {
     fun `order with invalid address should fail validation`() {
         val invalidOrder = validOrder.copy(address = validOrderPayloadAddress.copy(recipient = ""))
         assert(validator.validate(invalidOrder).isNotEmpty())
+    }
+
+    @Test
+    fun `order with all failed or picked lines should be marked as COMPLETED`() {
+        val order = testOrder.copy().pick(listOf(testOrder.orderLine.last().hostId))
+        val failedOrder = order.cancelLines(listOf(testOrder.orderLine.first().hostId))
+        assertThat(failedOrder.status).isEqualTo(Order.Status.COMPLETED)
+    }
+
+    @Test
+    fun `order with all failed lines should be marked as DELETED`() {
+        val order = testOrder.copy()
+        val failedOrder = order.cancelLines(testOrder.orderLine.map { it.hostId })
+        assertThat(failedOrder.status).isEqualTo(Order.Status.DELETED)
     }
 
     private val testItem = createTestItem()

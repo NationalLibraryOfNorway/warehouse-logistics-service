@@ -203,24 +203,24 @@ data class Order(
     private fun updateStatusFromOrderLines(): Order {
         // This might benefit from a small refactor of sorts
         return when {
+            orderLine.all(OrderItem::isNotStarted) -> {
+                updateStatus(Status.NOT_STARTED)
+            }
+
             orderLine.all(OrderItem::isReturned) -> {
                 updateStatus(Status.RETURNED)
-            }
-
-            orderLine.all(OrderItem::isComplete) -> {
-                updateStatus(Status.COMPLETED)
-            }
-
-            orderLine.all(OrderItem::isPickedOrFailed) -> {
-                updateStatus(Status.COMPLETED)
             }
 
             orderLine.all(OrderItem::isFailed) -> {
                 updateStatus(Status.DELETED)
             }
 
-            orderLine.all(OrderItem::isNotStarted) -> {
-                updateStatus(Status.NOT_STARTED)
+            orderLine.all(OrderItem::isPickedOrFailed) -> {
+                updateStatus(Status.COMPLETED)
+            }
+
+            orderLine.all(OrderItem::isComplete) -> {
+                updateStatus(Status.COMPLETED)
             }
 
             else -> {
