@@ -11,6 +11,8 @@ import no.nb.mlt.wls.domain.model.Order
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.springframework.data.mongodb.core.query.update
 
 class OrderModelValidationTest {
     private lateinit var validator: Validator
@@ -92,6 +94,15 @@ class OrderModelValidationTest {
         val order = testOrder.copy()
         val failedOrder = order.cancelLines(testOrder.orderLine.map { it.hostId })
         assertThat(failedOrder.status).isEqualTo(Order.Status.DELETED)
+    }
+
+    @Test
+    fun `order in progress should let you delete items that are NOT_STARTED`() {
+        val order = testOrder.copy(status = Order.Status.IN_PROGRESS)
+        assertDoesNotThrow {
+            val updatedOrder = order.cancelLines(listOf(testOrder.orderLine.first().hostId))
+            assertThat(updatedOrder.orderLine.first().status).isEqualTo(Order.OrderItem.Status.FAILED)
+        }
     }
 
     private val testItem = createTestItem()
