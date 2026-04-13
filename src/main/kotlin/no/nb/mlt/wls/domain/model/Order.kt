@@ -301,7 +301,7 @@ data class Order(
         fun isNotStarted(): Boolean = this.status == Status.NOT_STARTED
 
         /**
-         * Determines whether all the order item's status is FAILED.
+         * Determines whether the order item's status is FAILED.
          *
          * @return true if the status is FAILED, false otherwise.
          */
