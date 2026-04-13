@@ -44,6 +44,8 @@ class SynqStandardAdapter(
     override fun canHandleItem(item: Item): Boolean {
         if (item.preferredEnvironment == Environment.FRAGILE) return false
 
+        if (item.hostName == HostName.BIBLIOFIL_DEP || item.hostName == HostName.BIBLIOFIL_DFB) return false
+
         // SynQ can handle both NONE and FREEZE environments, so this is not checked
         return when (item.itemCategory) {
             ItemCategory.PAPER -> true
