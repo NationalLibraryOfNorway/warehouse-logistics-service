@@ -192,10 +192,10 @@ data class Order(
      *
      * The method evaluates the status of every [OrderItem] in the `orderLine` collection and updates the overall
      * order status accordingly:
-     * - If all [OrderItem] are marked as `RETURNED`, the order status is updated to `RETURNED`.
-     * - If all [OrderItem] are marked as `COMPLETE`, the order status is updated to `COMPLETED`.
-     * - If all [OrderItem] are either `PICKED` or `FAILED`, the order status is also updated to `COMPLETED`.
      * - If all [OrderItem] have a status of `NOT_STARTED`, the order status is updated to `NOT_STARTED`.
+     * - If all [OrderItem] are marked as `RETURNED`, the order status is updated to `RETURNED`.
+     * - If all [OrderItem] are marked as `FAILED`, the order status is updated to `DELETED`.
+     * - If all [OrderItem] are either `PICKED`, `FAILED`, or 'RETURNED' the order status is also updated to `COMPLETED`.
      * - For all other combinations of [OrderItem] statuses, the order status is updated to `IN_PROGRESS`.
      *
      * @return The updated [Order] instance with its new status.
