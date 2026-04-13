@@ -82,7 +82,6 @@ data class Order(
      * @param itemIds The list of unique identifiers for the items to be marked as `FAILED`.
      * @return The updated instance of the order with the affected item's statuses set to `FAILED`.
      * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
-     * @throws ValidationException If any of the specified item IDs do not exist in the order.
      */
     fun cancelLines(itemIds: List<String>): Order {
         val validLines = findValidOrderLines(itemIds)
@@ -92,6 +91,7 @@ data class Order(
     /**
      * Filters a list of order lines on this order that are valid to update.
      * This only includes order items which are 'NOT_STARTED', since any other status is effectively final.
+     * Unknown ids are ignored.
      */
     private fun findValidOrderLines(itemIds: List<String>): List<String> =
         this.orderLine
@@ -277,9 +277,9 @@ data class Order(
 
         /**
          * Determines whether the order item's status is considered complete.
-         * A status is considered complete if it is PICKED, FAILED, or RETURNED.
+         * A status is considered complete if it is PICKED, FAILED, MISSING, or RETURNED.
          *
-         * @return `true` if the status is PICKED, FAILED, or RETURNED, `false` if the status is NOT_STARTED.
+         * @return `false` if the status is NOT_STARTED, 'true' otherwise.
          */
         @JsonIgnore
         fun isComplete(): Boolean = this.status != Status.NOT_STARTED
