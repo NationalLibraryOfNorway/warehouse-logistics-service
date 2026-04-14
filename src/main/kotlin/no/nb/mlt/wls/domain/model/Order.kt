@@ -195,7 +195,7 @@ data class Order(
      * - If all [OrderItem] have a status of `NOT_STARTED`, the order status is updated to `NOT_STARTED`.
      * - If all [OrderItem] are marked as `RETURNED`, the order status is updated to `RETURNED`.
      * - If all [OrderItem] are marked as `FAILED`, the order status is updated to `DELETED`.
-     * - If all [OrderItem] are either `PICKED`, `FAILED`, or 'RETURNED' the order status is also updated to `COMPLETED`.
+     * - If all [OrderItem] are either `PICKED`, `FAILED`, 'MISSING', or 'RETURNED' the order status is updated to `COMPLETED`.
      * - For all other combinations of [OrderItem] statuses, the order status is updated to `IN_PROGRESS`.
      *
      * @return The updated [Order] instance with its new status.
@@ -215,6 +215,8 @@ data class Order(
                 updateStatus(Status.DELETED)
             }
 
+            // might be able to be combined with the check below
+            // do it later when we know for sure we won't add any new statuses
             orderLine.all(OrderItem::isPickedOrFailed) -> {
                 updateStatus(Status.COMPLETED)
             }
