@@ -97,11 +97,11 @@ class OrderModelValidationTest {
     }
 
     @Test
-    fun `order in progress should let you delete items that are NOT_STARTED`() {
+    fun `order in progress where all lines fail should be marked as DELETED`() {
         val order = testOrder.copy(status = Order.Status.IN_PROGRESS)
         assertDoesNotThrow {
-            val updatedOrder = order.cancelLines(listOf(testOrder.orderLine.first().hostId))
-            assertThat(updatedOrder.orderLine.first().status).isEqualTo(Order.OrderItem.Status.FAILED)
+            val updatedOrder = order.cancelLines(order.orderLine.map { it.hostId })
+            assertThat(updatedOrder.status).isEqualTo(Order.Status.DELETED)
         }
     }
 
