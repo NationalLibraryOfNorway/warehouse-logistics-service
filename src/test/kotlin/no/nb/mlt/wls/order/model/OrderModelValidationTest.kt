@@ -12,7 +12,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.springframework.data.mongodb.core.query.update
 
 class OrderModelValidationTest {
     private lateinit var validator: Validator
@@ -25,13 +24,13 @@ class OrderModelValidationTest {
 
     @Test
     fun `valid orderLine should pass validation`() {
-        assert(validator.validate(validOrderLine).isEmpty())
+        assertThat(validator.validate(validOrderLine)).isEmpty()
     }
 
     @Test
     fun `orderLine with blank hostId should fail validation`() {
         val orderLine = validOrderLine.copy(hostId = "")
-        assert(validator.validate(orderLine).isNotEmpty())
+        assertThat(validator.validate(orderLine)).isNotEmpty
     }
 
     @Test
@@ -43,43 +42,44 @@ class OrderModelValidationTest {
     fun `address with blank fields should fail validation`() {
         val invalidAddress = validOrderPayloadAddress.copy(recipient = "", city = "")
         val validationErrors = validator.validate(invalidAddress)
-        assert(validationErrors.isNotEmpty())
-        assert(validationErrors.size == 2)
+        assertThat(validationErrors)
+            .isNotEmpty
+            .hasSize(2)
     }
 
     @Test
     fun `valid order should pass validation`() {
-        assert(validator.validate(validOrder).isEmpty())
+        assertThat(validator.validate(validOrder)).isEmpty()
     }
 
     @Test
     fun `order with blank hostOrderId should fail validation`() {
         val invalidOrder = validOrder.copy(hostOrderId = "")
-        assert(validator.validate(invalidOrder).isNotEmpty())
+        assertThat(validator.validate(invalidOrder)).isNotEmpty
     }
 
     @Test
     fun `order with empty orderLine should fail validation`() {
         val invalidOrder = validOrder.copy(orderLine = emptyList())
-        assert(validator.validate(invalidOrder).isNotEmpty())
+        assertThat(validator.validate(invalidOrder)).isNotEmpty
     }
 
     @Test
     fun `order with invalid callback URL should fail validation`() {
         val invalidOrder = validOrder.copy(callbackUrl = "")
-        assert(validator.validate(invalidOrder).isNotEmpty())
+        assertThat(validator.validate(invalidOrder)).isNotEmpty
     }
 
     @Test
     fun `order with invalid orderLine should fail validation`() {
         val invalidOrder = validOrder.copy(orderLine = listOf(OrderLine(hostId = "", status = null)))
-        assert(validator.validate(invalidOrder).isNotEmpty())
+        assertThat(validator.validate(invalidOrder)).isNotEmpty
     }
 
     @Test
     fun `order with invalid address should fail validation`() {
         val invalidOrder = validOrder.copy(address = validOrderPayloadAddress.copy(recipient = ""))
-        assert(validator.validate(invalidOrder).isNotEmpty())
+        assertThat(validator.validate(invalidOrder)).isNotEmpty
     }
 
     @Test
