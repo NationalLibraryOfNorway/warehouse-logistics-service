@@ -13,15 +13,12 @@ import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order.Status
 import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
-import no.nb.mlt.wls.domain.ports.inbound.GetItems
-import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
-import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
@@ -43,8 +40,6 @@ class SynqController(
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
     private val updateOrderStatus: UpdateOrderStatus,
-    private val getOrder: GetOrder,
-    private val getItems: GetItems,
     private val cancelOrderItems: CancelOrderItems,
     private val synchronizeItems: SynchronizeItems
 ) {
@@ -284,19 +279,12 @@ class SynqController(
         val status = orderUpdatePayload.getConvertedStatus()
         if (status == Status.DELETED) {
             val hostName = HostName.fromString(orderUpdatePayload.hostName)
-            val order =
-                getOrder.getOrder(hostName, orderIdWithoutPrefix) ?: throw OrderNotFoundException("Could not find order for cancelling order lines")
-            val orderItemIds =
-                getItems
-                    .getItemsByIds(hostName, order.orderLine.map { it.hostId })
-                    .mapNotNull { item ->
-                        if (item.associatedStorage == AssociatedStorage.SYNQ) item else null
-                    }.map { it.hostId }
-            cancelOrderItems.cancelOrderItems(
+            val storage = computeStorageFromPrefix(orderId)
+            cancelOrderItems.cancelByAssociatedStorage(
                 hostName,
                 orderIdWithoutPrefix,
-                orderItemIds
-            )
+                storage
+                )
         } else {
             updateOrderStatus.updateOrderStatus(
                 HostName.fromString(orderUpdatePayload.hostName),
@@ -398,4 +386,18 @@ private fun normalizeOrderId(orderId: String): String {
         logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
     }
     return orderIdWithoutPrefix
+}
+
+/**
+ * Uses the prefix on an order ID to determine which storage it came from
+ */
+fun computeStorageFromPrefix(orderId: String): AssociatedStorage {
+    val segments = orderId.split(DELIMITER)
+    require(segments.size >= 2) { "Invalid order id does not contain prefix: $orderId" }
+    val prefix = segments[0]
+    if (prefix.endsWith("-AS")) return AssociatedStorage.AUTOSTORE
+    if (prefix.endsWith("-DP")) return AssociatedStorage.DEPOT
+    if (prefix.endsWith("-SD")) return AssociatedStorage.SYNQ
+    if (prefix.endsWith("-KD")) return AssociatedStorage.KARDEX
+    throw IllegalArgumentException("Invalid order id does not contain prefix: $orderId")
 }

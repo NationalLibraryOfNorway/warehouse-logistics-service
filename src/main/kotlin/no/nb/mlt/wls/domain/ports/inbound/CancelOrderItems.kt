@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.domain.ports.inbound
 
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order.OrderItem
 
@@ -10,10 +11,16 @@ import no.nb.mlt.wls.domain.model.Order.OrderItem
  * This happens in some scenarios if a storage operator manually cancels an order
  * in a storage system.
  */
-fun interface CancelOrderItems {
+interface CancelOrderItems {
     suspend fun cancelOrderItems(
         hostName: HostName,
         hostOrderId: String,
         cancelledItemIds: List<String>
+    )
+
+    suspend fun cancelByAssociatedStorage(
+        hostName: HostName,
+        hostOrderId: String,
+        associatedStorage: AssociatedStorage
     )
 }

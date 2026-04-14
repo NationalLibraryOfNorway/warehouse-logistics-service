@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.ports.inbound.exceptions.IllegalOrderStateException
+import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 
 @Schema(
     description = """Payload with updated status information for an order placed in SynQ.""",
