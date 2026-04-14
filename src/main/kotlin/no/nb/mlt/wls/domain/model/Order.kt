@@ -118,8 +118,7 @@ data class Order(
         // Picked orders cannot be set to in progress
         val isInvalidProgression =
             (newStatus == Status.NOT_STARTED) ||
-                (newStatus == Status.IN_PROGRESS && isPicked()) ||
-                (newStatus == Status.DELETED && status != Status.NOT_STARTED)
+                (newStatus == Status.IN_PROGRESS && isPicked())
 
         if (isInvalidProgression) {
             throw IllegalOrderStateException(
