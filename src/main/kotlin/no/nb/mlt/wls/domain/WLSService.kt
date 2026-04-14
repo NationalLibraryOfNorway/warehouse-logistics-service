@@ -322,17 +322,21 @@ class WLSService(
     ) {
         val order = getOrderOrThrow(hostName, hostOrderId)
         val items = getItemsByIds(hostName, order.orderLine.map { it.hostId })
-        val cancelledLines = items
-            .filter { it.associatedStorage == associatedStorage }
-            .map { it.hostId }
+        val cancelledLines =
+            items
+                .filter { it.associatedStorage == associatedStorage }
+                .map { it.hostId }
         val cancelledOrder = order.cancelLines(cancelledLines)
         processCancelledOrder(cancelledOrder, hostOrderId, cancelledLines)
     }
 
-    private suspend fun processCancelledOrder(cancelledOrder: Order, hostOrderId: String, cancelledLines: List<String>, ) {
+    private suspend fun processCancelledOrder(
+        cancelledOrder: Order,
+        hostOrderId: String,
+        cancelledLines: List<String>
+    ) {
         val catalogEvent =
             transactionPort.executeInTransaction {
-
                 if (orderRepository.updateOrder(cancelledOrder)) {
                     logger.info { "The following order lines were cancelled from $hostOrderId: $cancelledLines" }
                     catalogEventRepository.save(OrderEvent(cancelledOrder))

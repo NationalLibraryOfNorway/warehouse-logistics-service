@@ -284,7 +284,7 @@ class SynqController(
                 hostName,
                 orderIdWithoutPrefix,
                 storage
-                )
+            )
         } else {
             updateOrderStatus.updateOrderStatus(
                 HostName.fromString(orderUpdatePayload.hostName),
