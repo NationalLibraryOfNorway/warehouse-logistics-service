@@ -399,5 +399,5 @@ fun computeStorageFromPrefix(orderId: String): AssociatedStorage {
     if (prefix.endsWith("-DP")) return AssociatedStorage.DEPOT
     if (prefix.endsWith("-SD")) return AssociatedStorage.SYNQ
     if (prefix.endsWith("-KD")) return AssociatedStorage.KARDEX
-    throw IllegalArgumentException("Invalid order id does not contain prefix: $orderId")
+    throw IllegalArgumentException("Order id contains unknown prefix: $orderId")
 }
