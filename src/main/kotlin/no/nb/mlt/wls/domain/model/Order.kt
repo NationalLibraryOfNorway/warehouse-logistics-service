@@ -74,7 +74,10 @@ data class Order(
      * @throws IllegalOrderStateException if the current status prohibits the deletion of the order.
      */
     @Throws(IllegalOrderStateException::class)
-    fun delete(): Order = updateStatus(Status.DELETED)
+    fun delete(): Order {
+        if (this.status != Status.NOT_STARTED) throw IllegalOrderStateException("The order can not be deleted, as its current status is $status")
+        return updateStatus(Status.DELETED)
+    }
 
     /**
      * Updates the status of the specified order items to `FAILED`.
