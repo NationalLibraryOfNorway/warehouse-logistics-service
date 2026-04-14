@@ -9,13 +9,19 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order.Status
+import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
+import no.nb.mlt.wls.domain.ports.inbound.GetItems
+import no.nb.mlt.wls.domain.ports.inbound.GetOrder
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.SynchronizeItems
 import no.nb.mlt.wls.domain.ports.inbound.UpdateItem
 import no.nb.mlt.wls.domain.ports.inbound.UpdateOrderStatus
+import no.nb.mlt.wls.domain.ports.inbound.exceptions.OrderNotFoundException
 import no.nb.mlt.wls.domain.ports.outbound.DELIMITER
 import no.nb.mlt.wls.infrastructure.synq.SynqOwner
 import org.springframework.http.ResponseEntity
@@ -37,6 +43,9 @@ class SynqController(
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
     private val updateOrderStatus: UpdateOrderStatus,
+    private val getOrder: GetOrder,
+    private val getItems: GetItems,
+    private val cancelOrderItems: CancelOrderItems,
     private val synchronizeItems: SynchronizeItems
 ) {
     @Operation(
@@ -272,11 +281,29 @@ class SynqController(
             return ResponseEntity.ok().build()
         }
 
-        updateOrderStatus.updateOrderStatus(
-            HostName.fromString(orderUpdatePayload.hostName),
-            orderIdWithoutPrefix,
-            orderUpdatePayload.getConvertedStatus()
-        )
+        val status = orderUpdatePayload.getConvertedStatus()
+        if (status == Status.DELETED) {
+            val hostName = HostName.fromString(orderUpdatePayload.hostName)
+            val order =
+                getOrder.getOrder(hostName, orderIdWithoutPrefix) ?: throw OrderNotFoundException("Could not find order for cancelling order lines")
+            val orderItemIds =
+                getItems
+                    .getItemsByIds(hostName, order.orderLine.map { it.hostId })
+                    .mapNotNull { item ->
+                        if (item.associatedStorage == AssociatedStorage.SYNQ) item else null
+                    }.map { it.hostId }
+            cancelOrderItems.cancelOrderItems(
+                hostName,
+                orderIdWithoutPrefix,
+                orderItemIds
+            )
+        } else {
+            updateOrderStatus.updateOrderStatus(
+                HostName.fromString(orderUpdatePayload.hostName),
+                orderIdWithoutPrefix,
+                status
+            )
+        }
 
         return ResponseEntity.ok().build()
     }

@@ -16,6 +16,7 @@ import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatus
 import no.nb.mlt.wls.application.synqapi.synq.SynqOrderStatusUpdatePayload
 import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
@@ -27,6 +28,7 @@ import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
 import no.nb.mlt.wls.infrastructure.synq.toSynqHostname
 import no.nb.mlt.wls.infrastructure.synq.toSynqOwner
+import no.nb.mlt.wls.orderLineFromItems
 import no.nb.mlt.wls.toMovedProduct
 import no.nb.mlt.wls.toProduct
 import org.assertj.core.api.Assertions.assertThat
@@ -198,6 +200,41 @@ class SynqControllerTest(
             assertThat(result.orderLine).isEqualTo(order.orderLine)
             // and the status should not have been updated
             assertThat(result.status).isNotEqualTo(Order.Status.COMPLETED)
+        }
+    }
+
+    @Test
+    fun `updateOrder does not set status to cancelled with mixed orders`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_synq")))
+                .put()
+                .uri("/order-update/{owner}/{hostOrderId}", synqOwner, cancelOrderIdInSynq)
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(orderStatusCancelledPayload)
+                .exchange()
+                .expectStatus()
+                .isOk
+
+            val expectedOrderLines =
+                listOf(
+                    Order.OrderItem(testItem3.hostId, Order.OrderItem.Status.FAILED),
+                    Order.OrderItem(testItem4.hostId, Order.OrderItem.Status.NOT_STARTED)
+                )
+
+            val order =
+                orderRepository
+                    .findByHostNameAndHostOrderId(
+                        testOrderToBeCancelled.hostName,
+                        testOrderToBeCancelled.hostOrderId
+                    ).awaitSingle()
+            assertThat(order.orderLine)
+                .isNotEmpty
+                .isEqualTo(expectedOrderLines)
+            assertThat(order.status)
+                .isNotEqualTo(Order.Status.DELETED)
+                .isEqualTo(Order.Status.IN_PROGRESS)
         }
     }
 
@@ -438,6 +475,9 @@ class SynqControllerTest(
 
     private val testItem3 = createTestItem(hostId = "testItem3", location = "AutoStore_Warehouse", quantity = 1)
 
+    private val testItem4 =
+        createTestItem(hostId = "testItem4", associatedStorage = AssociatedStorage.KARDEX, location = "Somewhere Else", quantity = 1)
+
     private val testProduct1 = testItem1.toProduct()
 
     private val testProduct2 = testItem2.toProduct()
@@ -446,14 +486,25 @@ class SynqControllerTest(
 
     private val order = createTestOrder()
 
+    private val testOrderToBeCancelled = createTestOrder(hostOrderId = "cancel-order", orderLine = orderLineFromItems(testItem3, testItem4))
+
     private val synqOwner = toSynqOwner(order.hostName)
 
     private val orderIdInSynq = "${order.hostName.toString().uppercase()}-SD---${order.hostOrderId}"
+    private val cancelOrderIdInSynq = "${testOrderToBeCancelled.hostName.toString().uppercase()}-SD---${testOrderToBeCancelled.hostOrderId}"
 
     private val orderStatusUpdatePayload =
         SynqOrderStatusUpdatePayload(
             prevStatus = SynqOrderStatus.ALLOCATED,
             status = SynqOrderStatus.RELEASED,
+            hostName = toSynqHostname(HostName.AXIELL),
+            warehouse = "Sikringmagasin_2"
+        )
+
+    private val orderStatusCancelledPayload =
+        SynqOrderStatusUpdatePayload(
+            prevStatus = SynqOrderStatus.ALLOCATED,
+            status = SynqOrderStatus.CANCELLED,
             hostName = toSynqHostname(HostName.AXIELL),
             warehouse = "Sikringmagasin_2"
         )
@@ -491,10 +542,13 @@ class SynqControllerTest(
             itemRepository
                 .deleteAll()
                 .thenMany(
-                    itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem(), testItem3.toMongoItem()))
+                    itemRepository.saveAll(listOf(testItem1.toMongoItem(), testItem2.toMongoItem(), testItem3.toMongoItem(), testItem4.toMongoItem()))
                 ).awaitLast()
 
-            orderRepository.deleteAll().then(orderRepository.save(order.toMongoOrder())).awaitSingle()
+            orderRepository
+                .deleteAll()
+                .thenMany(orderRepository.saveAll(listOf(order.toMongoOrder(), testOrderToBeCancelled.toMongoOrder())))
+                .awaitLast()
         }
     }
 }
