@@ -280,7 +280,7 @@ data class Order(
          * Determines whether the order item's status is considered complete.
          * A status is considered complete if it is PICKED, FAILED, MISSING, or RETURNED.
          *
-         * @return `false` if the status is NOT_STARTED, 'true' otherwise.
+         * @return `false` if the status is NOT_STARTED, `true` otherwise.
          */
         @JsonIgnore
         fun isComplete(): Boolean = this.status != Status.NOT_STARTED
