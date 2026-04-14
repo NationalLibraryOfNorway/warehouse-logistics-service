@@ -57,10 +57,9 @@ data class Order(
     /**
      * Updates the status of the specified order items to `MISSING`.
      *
-     * @param itemIds The list of unique identifiers for the items to be marked as `MISSING`.
-     * @return The updated instance of the order with the affected item's statuses set to `MISSING`.
+     * @param itemIds The list of unique identifiers for the items to be marked as `MISSING`. Unknown item IDs are ignored.
+     * @return The updated instance of the order with the matching valid order lines set to `MISSING`.
      * @throws IllegalOrderStateException If the order is already closed or completed, prohibiting status changes.
-     * @throws ValidationException If any of the specified item IDs do not exist in the order.
      */
     fun markMissing(itemIds: List<String>): Order {
         val validLines = findValidOrderLines(itemIds)
