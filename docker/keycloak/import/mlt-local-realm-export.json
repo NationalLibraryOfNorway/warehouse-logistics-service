@@ -98,7 +98,7 @@
     }, {
       "id" : "253b61c5-8c7a-4c5f-b254-fea5770ae0d6",
       "name" : "hermes-admin",
-      "description" : "Adds a \"hermes-admin\" role to the JWT to identify users/clients permitted to access admin-only endpoints\t",
+      "description" : "Adds a \"hermes-admin\" role to the JWT to identify users/clients permitted to access admin-only endpoints",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "c87b4b7b-5d42-4304-aec1-68b6817a7025",
