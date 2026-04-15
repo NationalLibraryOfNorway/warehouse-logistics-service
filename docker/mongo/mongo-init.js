@@ -6,11 +6,13 @@
 const LOG_PREFIX = "[mongo-db-entrypoint]  [data-init]";
 const log = (msg) => console.error(`${LOG_PREFIX} ${msg}`);
 
-// Read configuration from environment variables with defaults
-const env = typeof process !== "undefined" && process.env ? process.env : {};
-const WLS_DB_NAME = env.WLS_DB_NAME || "wls";
-const WLS_DB_USER = env.WLS_DB_USER || "wls";
-const WLS_DB_PASSWORD = env.WLS_DB_PASSWORD || "slw";
+// Hardcoded database configuration for local bootstrap.
+const WLS_DB_NAME = "wls";
+const WLS_DB_USER = "wls";
+const WLS_DB_PASSWORD = "slw";
+const MOVEIT_DB_NAME = "moveit";
+const MOVEIT_DB_USER = "moveit";
+const MOVEIT_DB_PASSWORD = "tievom";
 
 // Check for existing user and collections to determine if initialization is needed.
 const appDb = db.getSiblingDB(WLS_DB_NAME);
@@ -18,9 +20,23 @@ const userExists = !!appDb.getUser(WLS_DB_USER);
 const collectionNames = appDb.getCollectionNames();
 const itemsCollectionExists = collectionNames.includes("items");
 const ordersCollectionExists = collectionNames.includes("orders");
+const moveitDb = db.getSiblingDB(MOVEIT_DB_NAME);
+const moveitUserExists = !!moveitDb.getUser(MOVEIT_DB_USER);
+const moveitCollectionNames = moveitDb.getCollectionNames();
+const accountsCollectionExists = moveitCollectionNames.includes("accounts");
+const userSessionsCollectionExists = moveitCollectionNames.includes("user-sessions");
+const usersCollectionExists = moveitCollectionNames.includes("users");
 
-if (userExists && itemsCollectionExists && ordersCollectionExists) {
-    log(`Initialization already complete for db=${WLS_DB_NAME}, user=${WLS_DB_USER}; skipping.`);
+if (
+    userExists
+    && itemsCollectionExists
+    && ordersCollectionExists
+    && moveitUserExists
+    && accountsCollectionExists
+    && userSessionsCollectionExists
+    && usersCollectionExists
+) {
+    log(`Initialization already complete for db=${WLS_DB_NAME} and db=${MOVEIT_DB_NAME}; skipping.`);
     quit(0);
 }
 
@@ -93,6 +109,20 @@ function seedOrdersCollection(appDb) {
     });
 }
 
+function createMoveitUser(moveitDb) {
+    moveitDb.createUser({
+        user: MOVEIT_DB_USER,
+        pwd: MOVEIT_DB_PASSWORD,
+        roles: [{ role: "readWrite", db: MOVEIT_DB_NAME }],
+    });
+}
+
+function ensureMoveitCollection(moveitDb, collectionName) {
+    if (!moveitDb.getCollectionNames().includes(collectionName)) {
+        moveitDb.createCollection(collectionName);
+    }
+}
+
 log("#####################################################################");
 log("MongoDB initialization script started...");
 log("#####################################################################");
@@ -119,6 +149,17 @@ if (!ordersCollectionExists) {
 
 log("Orders collection ready and seeded with sample data")
 
+
+if (!moveitUserExists) {
+    log(`Creating user ${MOVEIT_DB_USER} with read-write access to the ${MOVEIT_DB_NAME} database...`);
+    createMoveitUser(moveitDb);
+}
+
+ensureMoveitCollection(moveitDb, "accounts");
+ensureMoveitCollection(moveitDb, "user-sessions");
+ensureMoveitCollection(moveitDb, "users");
+
+log(`Moveit database ready with collections: accounts, user-sessions, users`);
 
 log("#####################################################################");
 log("MongoDB initialization script completed!");
