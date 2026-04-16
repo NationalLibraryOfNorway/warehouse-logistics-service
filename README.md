@@ -180,10 +180,10 @@ With the image either built or pulled, WLS can be run using the following comman
 
 ```shell
 # For pulled image
-docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:<TAG>
+docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:<TAG>
 
 # For locally built image
-docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:local
+docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
 ```
 
 ### Using containerd + BuildKit (nerdctl)
@@ -212,10 +212,10 @@ With the image either built or pulled, WLS can be run using the following comman
 
 ```shell
 # For pulled image
-nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:<TAG>
+nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:<TAG>
 
 # For locally built image
-nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:local
+nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
 ```
 
 ### Using an IDE
