@@ -12,7 +12,7 @@ SPRING_PROFILE ?= local-dev
 
 # .PHONY marks non-file targets so make always runs the recipe,
 # even if a file with the same name exists in the working directory.
-.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run stop logs startup shutdown cleanup restart clean-restart
+.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run stop logs startup shutdown refresh cleanup restart clean-restart
 
 
 # Dependencies (docker compose stack used by the app):

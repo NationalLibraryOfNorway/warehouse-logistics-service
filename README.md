@@ -411,11 +411,11 @@ However, when deploying to staging or production, they must be set manually.
   - `w=majority`: write concern; waits for acknowledgement from a majority of replica set members before confirming
   - `journal=true`: write concern; waits until the primary has written the operation to its journal
   - `retryWrites=true`: automatically retries eligible write operations once on a network error
-  For local single-host connections only, you may additionally append `directConnection=true` to bypass replica set discovery and monitoring.  
-  For multi-host replica sets, list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
+  For local single-host connections, the default URI above already includes `directConnection=true` to bypass replica set discovery and monitoring.  
+  For multi-host replica sets, omit `directConnection=true` and list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
-- `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `false`)
+- `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `true`)
 - `KARDEX_BASE_URL`: Is the base URL used for communicating against Kardex (default is `http://localhost:8182/kardex`)
 - `LOGISTICS_ENABLED`: Is used to enable or disable the Logistics API (default is `true`)
 - `ORDER_HANDLER_EMAIL`: Is the email address where orders are sent to (default is `daniel@mlt.hermes.no`)
