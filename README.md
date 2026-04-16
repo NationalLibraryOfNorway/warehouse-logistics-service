@@ -20,9 +20,10 @@ More features and benefits will be added as the service is developed.
 3. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-      2. [Using Docker](#using-docker)
-      3. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
-      4. [Using an IDE](#using-an-ide)
+    2. [Using Make (Optional)](#using-make-optional)
+    3. [Using Docker](#using-docker)
+    4. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
+    5. [Using an IDE](#using-an-ide)
    2. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
       2. [Running Tests in an IDE](#running-tests-in-an-ide)
@@ -82,8 +83,60 @@ Use these commands to build and run the application locally:
 # Package the application, will execute the tests too
 mvn clean package
 
+# Package the application and skip tests
+mvn clean package -DskipTests
+
 # Run it locally
 java -jar target/wls.jar
+```
+
+Tests in this project use Testcontainers and require a working Docker runtime (raw containerd won't work, Podman and similar require setup) available on your machine.
+
+### Using Make (Optional)
+
+If you prefer `make`, you can wrap the same Maven and `nerdctl` or `docker` commands in local helper targets.
+The repository includes these targets in a dedicated [Makefile](Makefile), with overridable variables for `CONTAINER_RUNTIME`, `COMPOSE_FILE`, `COMPOSE_CMD`, `IMAGE`, `APP_CONTAINER`, and `SPRING_PROFILE`.
+
+You can override settings like `CONTAINER_RUNTIME` per command invocation:
+
+```shell
+# Use Docker runtime for a single command
+make CONTAINER_RUNTIME=docker deps-up
+
+# Make all commands use Docker runtime by default
+export CONTAINER_RUNTIME=docker
+make deps-up
+```
+
+Most useful targets:
+
+- `make deps-up`: start local dependencies from `docker/compose.yaml` (MongoDB, Kafka, Keycloak, etc.)
+- `make deps-down`: stop local dependencies
+- `make test`: run tests (`mvn clean verify`) with the configured Spring profile
+- `make package`: build the JAR file
+- `make image`: build the application container image
+- `make run`: run the application container from the local image
+- `make stop`: stop the application container
+- `make startup`: run `deps-up`, `package`, `image`, and `run` in sequence
+
+**Important:** The application container needs access to the dependencies created by `deps-up`.
+Run `make deps-up` before `make run`, or use `make startup` to start everything together.
+
+Examples:
+
+```shell
+# Option 1: Start dependencies first, then run the app separately
+make deps-up
+make test
+make package
+make image
+make run
+make stop
+make deps-down
+
+# Option 2: Start everything at once (recommended)
+make startup
+make stop
 ```
 
 ### Using Docker
@@ -95,7 +148,7 @@ After building the JAR file, it can be used to build a Docker image using the fo
 cp target/wls.jar docker/wls.jar
 
 # Use Docker Buildx to build the Docker Image
-docker buildx build --platform linux/amd64 -t wls:latest docker/
+docker buildx build --platform linux/amd64 -t wls:local docker/
 ```
 
 If you need local setup of Docker on Arch Linux, install and enable the required tooling:
@@ -106,7 +159,8 @@ systemctl enable --now docker
 ```
 
 ***Caveats:***
-- When building the Docker image outside NLNs network, the build will fail, as it won't be able to access the internal Harbor instance which is used to pull the base image.
+- When building the Docker image outside NLNs network, the build will fail.
+  That's because it won't be able to access the internal Harbor instance which is used to pull the base image.
   In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-noble` and build the image locally.
 - Do not attempt to push the image to Harbor manually, as it will fail.
   The image is built and pushed to Harbor automatically by the CI/CD pipeline.
@@ -115,18 +169,21 @@ A pre-built image can be found on NLNs internal Harbor instance under the `mlt` 
 The images are built based on the `main` branch as well as project `tags`, and can be pulled using the following command:
 
 ```shell
-# Pull the latest image
-docker pull harbor.nb.no/mlt/wls:latest
+# Pull the latest main branch image
+docker pull harbor.nb.no/mlt/wls:main
 
 # Or pull a specific tag (either a GitHub tag or "main" for the latest main branch image)
 docker pull harbor.nb.no/mlt/wls:<TAG>
 ```
 
-With the image either built or pulled, WLS can be run using the following command:
+With the image either built or pulled, WLS can be run using the following commands:
 
 ```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
+# For pulled image
+docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:<TAG>
+
+# For locally built image
+docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:local
 ```
 
 ### Using containerd + BuildKit (nerdctl)
@@ -138,7 +195,7 @@ After building the JAR file, it can be used to build an image with `nerdctl` (wh
 cp target/wls.jar docker/wls.jar
 
 # Build image with containerd/BuildKit
-nerdctl build --platform linux/amd64 -t wls:latest docker/
+nerdctl build --platform linux/amd64 -t wls:local docker/
 ```
 
 If you need local setup of "rootful" `containerd` on Arch Linux, install and enable the required tooling:
@@ -151,7 +208,15 @@ systemctl enable --now buildkit
 
 The same caveats from [Using Docker](#using-docker) apply when building outside NLN's network.
 
-With the image either built or pulled, WLS can be run using the same commands as in [Using Docker](#using-docker), just use `nerdctl` instead of `docker`.
+With the image either built or pulled, WLS can be run using the following commands:
+
+```shell
+# For pulled image
+nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:<TAG>
+
+# For locally built image
+nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:local
+```
 
 ### Using an IDE
 
@@ -173,6 +238,8 @@ To run the tests, use the following command:
 ```shell
 mvn clean test
 ```
+
+The test suite depends on Testcontainers, so a working Docker runtime (raw containerd won't work, Podman and similar require setup) available on your machine.
 
 It should run all the tests in the project and provide a report at the end.
 You can see the results in both the console and in the `target/surefire-reports` directory.
@@ -226,9 +293,13 @@ The compose stack can be run with either `<docker|nerdctl> compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
-  - Use the following credentials to log in:
-    - Username: `wls`
-    - Password: `slw`
+  - The compose setup provisions two databases:
+    - **wls**: main application database used by Hermes WLS
+      - Username: `wls`, Password: `slw`
+      - Example URI: `mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`
+    - **moveit**: MoveIt companion database (MoveIt depends on WLS to function)
+      - Username: `moveit`, Password: `tievom`
+      - Example URI: `mongodb://moveit:tievom@localhost/moveit?replicaSet=rs0&authSource=moveit&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`
 - Email: uses a fake SMTP server for testing email functionality locally
     - Can be accessed at: `http://localhost:1080`
 - Keycloak: authentication and authorization service for the application
@@ -340,7 +411,16 @@ However, when deploying to staging or production, they must be set manually.
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
 - `EMAIL_PORT`: Is the port used by the email server (default is `1025`)
-- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls&directConnection=true`)
+- `MONGODB_URI`: Is the connection URI for our MongoDB instances (default is `mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`).
+  The URI options used are used in local, staging, and production environments, and are as follows:
+  - `replicaSet=rs0`: name of the replica set; required for transactions and change streams
+  - `authSource=wls`: database used to authenticate the connecting user
+  - `readPreference=primary`: always read from the primary replica set member
+  - `w=majority`: write concern; waits for acknowledgement from a majority of replica set members before confirming
+  - `journal=true`: write concern; waits until the primary has written the operation to its journal
+  - `retryWrites=true`: automatically retries eligible write operations once on a network error
+  - `directConnection=true`: forces the driver to connect directly to the specified host; bypasses replica set discovery and monitoring, used for local connections **only**
+  For multi-host replica sets, list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
 - `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `false`)

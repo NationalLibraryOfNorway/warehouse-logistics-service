@@ -45,7 +45,6 @@ spring:
 
   mongodb:
     uri: ${MONGODB_URI:mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true}
-
 server:
   port: 8080
   shutdown: graceful

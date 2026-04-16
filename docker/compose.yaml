@@ -161,6 +161,7 @@ networks:
     # Bridge keeps all services isolated while still reachable by service name
     # (mongo-db, kafka, keycloak, etc.) through Docker's internal DNS.
     driver: bridge
+    name: wls
     ipam:
       config:
         # Chosen private range for stable, conflict-free local networking.
