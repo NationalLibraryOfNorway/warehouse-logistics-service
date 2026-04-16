@@ -300,6 +300,19 @@ class InventoryNotifierAdapterTest {
             }
         }
 
+    @Test
+    fun `should preserve percent-encoded characters in callback URL`() =
+        runTest {
+            val encodedUrl = mockWebServer.url("/callback?param=value%2Fmore").toString()
+            val item = createTestItem(callbackUrl = encodedUrl)
+            mockWebServer.enqueue(MockResponse().setResponseCode(200))
+
+            inventoryNotifierAdapter.itemChanged(item, timestamp, messageId)
+            val request = mockWebServer.takeRequest()
+
+            assertEquals("/callback?param=value%2Fmore", request.path)
+        }
+
     private val itemCallbackPath = "/item-callback"
 
     private val orderCallbackPath = "/order-callback"
