@@ -1,6 +1,10 @@
+/// <reference types="@mongosh/shell-api" />
+/** @typedef {import('@mongosh/shell-api').Database} Db */
+
 // Create WLS database, user, and collections, seeding them with sample data.
 // Create MoveIt database, user, and collections, as they belong together, and MoveIt needs WLS to function.
 // Each function is idempotent: it checks whether its target already exists before acting, so the script is safe to re-run at any time.
+
 
 // Logging utility for consistent log formatting
 const LOG_PREFIX = "[mongo-db-entrypoint]  [data-init]";
@@ -251,9 +255,9 @@ function seedItemsCollection(db) {
             confidential: false,
             _class: "no.nb.mlt.wls.infrastructure.repositories.item.MongoItem",
         }
-    ]).finally(
-            () =>log("...seeded items collection with sample data.")
-    );
+    ])
+
+    log("...seeded items collection with sample data.");
 }
 
 /**
@@ -293,9 +297,9 @@ function seedOrdersCollection(db) {
         },
         callbackUrl: "https://callback-wls.no/order",
         _class: "no.nb.mlt.wls.infrastructure.repositories.order.MongoOrder",
-    }).finally(
-            () => log("...seeded orders collection with sample data.")
-    );
+    })
+
+    log("...seeded orders collection with sample data.");
 }
 
 /**
