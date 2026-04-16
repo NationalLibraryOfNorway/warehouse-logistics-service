@@ -147,8 +147,8 @@ After building the JAR file, it can be used to build a Docker image using the fo
 # Move the jar to the Docker directory
 cp target/wls.jar docker/wls.jar
 
-# Use Docker Buildx to build the Docker Image
-docker buildx build --platform linux/amd64 -t wls:local docker/
+# Build a local image
+docker build -t wls:local docker/
 ```
 
 If you need local setup of Docker on Arch Linux, install and enable the required tooling:
@@ -186,8 +186,8 @@ After building the JAR file, it can be used to build an image with `nerdctl` (wh
 # Move the jar to the Docker directory
 cp target/wls.jar docker/wls.jar
 
-# Build image with containerd/BuildKit
-nerdctl build --platform linux/amd64 -t wls:local docker/
+# Build a local image
+nerdctl build -t wls:local docker/
 ```
 
 If you need local setup of "rootful" `containerd` on Arch Linux, install and enable the required tooling:

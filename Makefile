@@ -51,7 +51,7 @@ package:
 # App targets (build and run local application container):
 image:
 	@cp target/wls.jar docker/wls.jar
-	$(CONTAINER_RUNTIME) build --platform linux/amd64 -t $(IMAGE) docker/
+	$(CONTAINER_RUNTIME) build -t $(IMAGE) docker/
 	@rm docker/wls.jar
 	@echo "Built image: $(IMAGE)"
 
