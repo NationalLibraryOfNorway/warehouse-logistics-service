@@ -74,25 +74,9 @@ function ensureCollectionExists(db, database, collection) {
 }
 
 /**
- * Checks if the given collection has any custom indexes defined.
- *
- * This means that the collection has more than one index, as the default `_id_` index is always present.
- * Although `mongosh -> Db.collection.createIndex(...)` will not overwrite existing indexes, there's no point in doing unnecessary work.
- *
- * @param {Db}     db         - The initialized MongoDB connection object for interaction with the database
- * @param {string} collection - The collection name
- *
- * @return {boolean} - True if the collection has custom indexes, false otherwise
- */
-function hasCustomIndexes(db, collection) {
-    return db[`${collection}`].getIndexes().length > 1;
-}
-
-/**
  * Creates the necessary indexes for the "wls" database collections to optimize query performance.
  *
  * This ensures optimized queries for collections in WLS DB, closely mimicking production setup.
- * It first checks if custom indexes are already present for each collection before creating new ones.
  *
  * In the case of `items` and `orders` collections, compound indexes are created for unique and ascending sorting.
  * This ensures that the DB does not accept duplicate entries (unique host and id).
@@ -116,39 +100,33 @@ function hasCustomIndexes(db, collection) {
  *   - `processedTimestamp` (descending)
  */
 function createIndexesForWlsCollections() {
-    if (!hasCustomIndexes(wlsDb, "items")) {
-        log("Creating indexes for wls.items collection...");
+    log("Creating indexes for wls.items collection...");
 
-        wlsDb["items"].createIndex({hostName: 1, hostId: -1}, {name: "host-asc_id-desc_unique_index", unique: true});
-        wlsDb["items"].createIndex({hostName: 1}, {name: "host-asc_index"});
-        wlsDb["items"].createIndex({hostId: 1}, {name: "id-asc_index"});
-        wlsDb["items"].createIndex({location: 1}, {name: "location-asc_index"});
-        wlsDb["items"].createIndex({itemCategory: 1}, {name: "item-category-asc_index"});
-        wlsDb["items"].createIndex({associatedStorage: 1}, {name: "associated-storage-asc_index"});
+    wlsDb["items"].createIndex({hostName: 1, hostId: -1}, {name: "host-asc_id-desc_unique_index", unique: true});
+    wlsDb["items"].createIndex({hostName: 1}, {name: "host-asc_index"});
+    wlsDb["items"].createIndex({hostId: 1}, {name: "id-asc_index"});
+    wlsDb["items"].createIndex({location: 1}, {name: "location-asc_index"});
+    wlsDb["items"].createIndex({itemCategory: 1}, {name: "item-category-asc_index"});
+    wlsDb["items"].createIndex({associatedStorage: 1}, {name: "associated-storage-asc_index"});
 
-        log("...indexes created.");
-    }
+    log("...indexes created.");
+    log("Creating indexes for orders collection...");
 
-    if (!hasCustomIndexes(wlsDb, "orders")) {
-        log("Creating indexes for orders collection...");
+    wlsDb["orders"].createIndex({hostName: 1, hostOrderId: -1}, {name: "host-asc_id-desc_unique_index", unique: true});
+    wlsDb["orders"].createIndex({hostName: 1}, {name: "host-asc_index"});
+    wlsDb["orders"].createIndex({hostOrderId: 1}, {name: "id-asc_index"});
+    wlsDb["orders"].createIndex({status: 1}, {name: "status-asc_index"});
+    wlsDb["orders"].createIndex({orderType: 1}, {name: "order-type-asc_index"});
 
-        wlsDb["orders"].createIndex({hostName: 1, hostOrderId: -1}, {name: "host-asc_id-desc_unique_index", unique: true});
-        wlsDb["orders"].createIndex({hostName: 1}, {name: "host-asc_index"});
-        wlsDb["orders"].createIndex({hostOrderId: 1}, {name: "id-asc_index"});
-        wlsDb["orders"].createIndex({status: 1}, {name: "status-asc_index"});
-        wlsDb["orders"].createIndex({orderType: 1}, {name: "order-type-asc_index"});
+    log("...indexes created.");
 
-        log("...indexes created.");
-    }
     ["catalog-events", "storage-events", "email-events"].forEach((collection) => {
-        if (!hasCustomIndexes(wlsDb, collection)) {
-            log(`Creating indexes for ${collection} collection...`);
+        log(`Creating indexes for ${collection} collection...`);
 
-            wlsDb[`${collection}`].createIndex({createdTimestamp: -1}, {name: "created-timestamp-desc_index"});
-            wlsDb[`${collection}`].createIndex({processedTimestamp: -1}, {name: "processed-timestamp-desc_index"});
+        wlsDb[`${collection}`].createIndex({createdTimestamp: -1}, {name: "created-timestamp-desc_index"});
+        wlsDb[`${collection}`].createIndex({processedTimestamp: -1}, {name: "processed-timestamp-desc_index"});
 
-            log(`...indexes created for ${collection} collection.`);
-        }
+        log(`...indexes created for ${collection} collection.`);
     });
 }
 
@@ -156,7 +134,6 @@ function createIndexesForWlsCollections() {
  * Creates the necessary indexes for the "moveit" database collections to optimize query performance.
  *
  * This ensures optimized queries for collections in MoveIt DB, closely mimicking production setup.
- * It first checks if custom indexes are already present for each collection before creating new ones.
  *
  * Here are the indexes created for each collection:
  * - `users` collection:
@@ -168,23 +145,19 @@ function createIndexesForWlsCollections() {
  * @return {void} This method does not return a value.
  */
 function createIndexesForMoveitCollections() {
-    if (!hasCustomIndexes(moveitDb, "users")) {
-        log("Creating indexes for moveit.users collection...");
+    log("Creating indexes for moveit.users collection...");
 
-        moveitDb["users"].createIndex({email: 1}, {name: "email-asc_index"});
-        moveitDb["users"].createIndex({name: 1}, {name: "name-asc_index"});
+    moveitDb["users"].createIndex({email: 1}, {name: "email-asc_index"});
+    moveitDb["users"].createIndex({name: 1}, {name: "name-asc_index"});
 
-        log("...indexes created.");
-    }
+    log("...indexes created.");
 
     ["accounts", "user-sessions"].forEach((collection) => {
-        if (!hasCustomIndexes(moveitDb, collection)) {
-            log(`Creating indexes for ${collection} collection...`);
+        log(`Creating indexes for ${collection} collection...`);
 
-            moveitDb[`${collection}`].createIndex({expires_at: -1}, {name: "expires-at-desc_index"});
+        moveitDb[`${collection}`].createIndex({expires_at: -1}, {name: "expires-at-desc_index"});
 
-            log(`...indexes created for ${collection} collection.`);
-        }
+        log(`...indexes created for ${collection} collection.`);
     });
 }
 

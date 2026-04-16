@@ -166,24 +166,16 @@ systemctl enable --now docker
   The image is built and pushed to Harbor automatically by the CI/CD pipeline.
 
 A pre-built image can be found on NLNs internal Harbor instance under the `mlt` namespace.
-The images are built based on the `main` branch as well as project `tags`, and can be pulled using the following command:
-
-```shell
-# Pull the latest main branch image
-docker pull harbor.nb.no/mlt/wls:main
-
-# Or pull a specific tag (either a GitHub tag or "main" for the latest main branch image)
-docker pull harbor.nb.no/mlt/wls:<TAG>
-```
+The images are built based on the `main` branch, tag releases (`vX.Y.Z`), and hash of the commit that triggered the build.
 
 With the image either built or pulled, WLS can be run using the following commands:
 
 ```shell
 # For pulled image
-docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:<TAG>
+docker run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host harbor.nb.no/mlt/wls:<TAG>
 
 # For locally built image
-docker run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
+docker run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
 ```
 
 ### Using containerd + BuildKit (nerdctl)
@@ -212,10 +204,10 @@ With the image either built or pulled, WLS can be run using the following comman
 
 ```shell
 # For pulled image
-nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:<TAG>
+nerdctl run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host harbor.nb.no/mlt/wls:<TAG>
 
 # For locally built image
-nerdctl run --rm -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
+nerdctl run --rm  -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
 ```
 
 ### Using an IDE

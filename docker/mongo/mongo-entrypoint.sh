@@ -164,7 +164,7 @@ wait_for_mongosh_eval "Replica set initialization" "
     quit(1);
   }
 "
-log "✓ Replica set initialized"
+log "✓ Replica set ready (either already initialized or just initiated successfully)"
 
 
 # ==============================================================================

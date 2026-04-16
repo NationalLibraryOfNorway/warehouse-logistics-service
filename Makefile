@@ -56,7 +56,7 @@ image:
 	@echo "Built image: $(IMAGE)"
 
 run:
-	$(CONTAINER_RUNTIME) run -d --name $(APP_CONTAINER) -p 8080:8080 -e SPRING_PROFILES_ACTIVE="$(SPRING_PROFILE)" --network host $(IMAGE)
+	$(CONTAINER_RUNTIME) run -d --name $(APP_CONTAINER) -e SPRING_PROFILES_ACTIVE="$(SPRING_PROFILE)" --network host $(IMAGE)
 	@echo 'Hermes running at: http://localhost:8080/hermes, swagger on http://localhost:8080/hermes/swagger'
 
 stop:
