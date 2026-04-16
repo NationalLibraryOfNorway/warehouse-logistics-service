@@ -231,7 +231,7 @@ To run the tests, use the following command:
 mvn clean test
 ```
 
-The test suite depends on Testcontainers, so a working Docker runtime (raw containerd won't work, Podman and similar require setup) available on your machine.
+See the note in [Using Maven](#using-maven) about the Docker runtime requirement for Testcontainers.
 
 It should run all the tests in the project and provide a report at the end.
 You can see the results in both the console and in the `target/surefire-reports` directory.
@@ -398,7 +398,7 @@ When running the application locally, or in a pipeline, all of these variables a
 However, when deploying to staging or production, they must be set manually.
 
 - `KAFKA_BOOTSTRAP_SERVERS`: Is used to set the Kafka bootstrap servers (default is `localhost:9092`)
-- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/auth/realms/wls`)
+- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/realms/wls`)
 - `KEYCLOAK_TOKEN_AUD`: Is used to set the audience of the Keycloak JWT token, it must match with the issued token audience value, which is different between environments (default is `http://localhost:8080`)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
@@ -411,7 +411,7 @@ However, when deploying to staging or production, they must be set manually.
   - `w=majority`: write concern; waits for acknowledgement from a majority of replica set members before confirming
   - `journal=true`: write concern; waits until the primary has written the operation to its journal
   - `retryWrites=true`: automatically retries eligible write operations once on a network error
-  For local single-host connections, the default URI above already includes `directConnection=true` to bypass replica set discovery and monitoring.  
+  For local single-host connections, the default URI above already includes `directConnection=true` to bypass replica set discovery and monitoring.
   For multi-host replica sets, omit `directConnection=true` and list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
