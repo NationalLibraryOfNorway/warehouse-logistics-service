@@ -83,14 +83,14 @@ function ensureCollectionExists(db, database, collection) {
  *
  * Here are the indexes created for each collection:
  * - `items` collection:
- *   - `hostName` + `hostId` (unique, ascending)
+ *   - `hostName` + `hostId` (unique, descending ID)
  *   - `hostName` (ascending)
  *   - `hostId` (ascending)
  *   - `location` (ascending)
  *   - `itemCategory` (ascending)
  *   - `associatedStorage` (ascending)
  * - `orders` collection:
- *   - `hostName` + `hostOrderId` (unique, ascending)
+ *   - `hostName` + `hostOrderId` (unique, descending ID)
  *   - `hostName` (ascending)
  *   - `hostOrderId` (ascending)
  *   - `status` (ascending)
@@ -313,8 +313,6 @@ function initializeCollections() {
  *
  * For the `items` and `orders` collections, custom compound and single-field indexes are created.
  * For event-based collections, timestamp indexes (both `createdTimestamp` and `processedTimestamp`) are established.
- *
- * The function checks for any existing custom indexes before creating new ones to avoid duplication.
  */
 function indexCollections() {
     log("Creating indexes for all collections as needed...");

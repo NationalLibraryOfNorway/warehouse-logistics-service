@@ -293,7 +293,7 @@ This will spin up the following services:
       - Username: `moveit`, Password: `tievom`
       - Example URI: `mongodb://moveit:tievom@localhost/moveit?replicaSet=rs0&authSource=moveit&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`
 - Email: uses a fake SMTP server for testing email functionality locally
-    - Can be accessed at: `http://localhost:1080`
+    - Can be accessed at: `http://localhost:8081`
 - Keycloak: authentication and authorization service for the application
   - Can be accessed at: `http://localhost:8082`
   - Use the following credentials to log in:
@@ -411,7 +411,7 @@ However, when deploying to staging or production, they must be set manually.
   - `w=majority`: write concern; waits for acknowledgement from a majority of replica set members before confirming
   - `journal=true`: write concern; waits until the primary has written the operation to its journal
   - `retryWrites=true`: automatically retries eligible write operations once on a network error
-  - `directConnection=true`: forces the driver to connect directly to the specified host; bypasses replica set discovery and monitoring, used for local connections **only**
+  For local single-host connections only, you may additionally append `directConnection=true` to bypass replica set discovery and monitoring.  
   For multi-host replica sets, list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
