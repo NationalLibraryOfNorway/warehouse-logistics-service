@@ -44,7 +44,7 @@ spring:
           writetimeout: ${TIMEOUT_SMTP:8000}
 
   mongodb:
-    uri: ${MONGODB_URI:mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls&directConnection=true}
+    uri: ${MONGODB_URI:mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true}
 
 server:
   port: 8080
