@@ -54,7 +54,7 @@ management:
     web:
       base-path: /actuator
       exposure:
-        include: prometheus,health,info
+        include: health,info
   endpoint:
     health:
       show-details: always

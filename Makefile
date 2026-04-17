@@ -1,4 +1,4 @@
-# Overwritable options:
+# Overwritable options
 # Use `make VAR=value <target>` to override defaults for this invocation.
 # Export variables to override defaults for all invocations in the current shell session: `export VAR=value`
 
@@ -12,70 +12,85 @@ SPRING_PROFILE ?= local-dev
 
 # .PHONY marks non-file targets so make always runs the recipe,
 # even if a file with the same name exists in the working directory.
-.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run stop logs startup shutdown refresh cleanup restart clean-restart
+.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run rm list logs start shutdown refresh cleanup restart clean-restart
 
 
-# Dependencies (docker compose stack used by the app):
+# Dependencies (docker compose stack used by the app)
 deps-up:
-	$(COMPOSE_CMD) up -d
-	@echo 'keycloak: http://localhost:8082'
-	@echo 'maildev: http://localhost:8081'
+	@$(COMPOSE_CMD) up -d
 
 deps-down:
-	$(COMPOSE_CMD) down
+	@$(COMPOSE_CMD) down
 
 deps-clean:
-	$(COMPOSE_CMD) down --remove-orphans --volumes
+	@$(COMPOSE_CMD) down --remove-orphans --volumes
 
 deps-list:
-	$(COMPOSE_CMD) ps -a
+	@$(COMPOSE_CMD) ps -a
 
 deps-logs:
-	$(COMPOSE_CMD) logs -f
+	@$(COMPOSE_CMD) logs -f
 
 
-# Maven targets:
+# Maven targets
 spotless:
-	mvn spotless:apply
+	@mvn spotless:apply
 
 clean:
-	mvn clean
+	@mvn clean
 
 test:
-	mvn verify -e -Dspring.profiles.active="$(SPRING_PROFILE)"
+	@echo '<?xml version="1.0" encoding="UTF-8"?><configuration><root level="OFF"/></configuration>' > src/test/resources/logback-test.xml
+	@SPRING_MAIN_BANNER_MODE=off mvn verify -Dspring.profiles.active="$(SPRING_PROFILE)" || rm -f src/test/resources/logback-test.xml
+	@mvn surefire-report:report-only
+	@xdg-open target/site/surefire-report.html
 
 package:
-	mvn package -DskipTests
+	@mvn package -DskipTests
 
 
-# App targets (build and run local application container):
+# App targets (build and run local application container)
 image:
+	@echo 'Building image: $(IMAGE) from target/wls.jar ...'
 	@cp target/wls.jar docker/wls.jar
-	$(CONTAINER_RUNTIME) build -t $(IMAGE) docker/
+	@$(CONTAINER_RUNTIME) build -t $(IMAGE) docker/
 	@rm docker/wls.jar
-	@echo "Built image: $(IMAGE)"
 
 run:
-	$(CONTAINER_RUNTIME) run -d --name $(APP_CONTAINER) -e SPRING_PROFILES_ACTIVE="$(SPRING_PROFILE)" --network host $(IMAGE)
+	@echo 'Starting $(APP_CONTAINER) with profile: $(SPRING_PROFILE)'
+	@$(CONTAINER_RUNTIME) run -d --name $(APP_CONTAINER) -e SPRING_PROFILES_ACTIVE="$(SPRING_PROFILE)" --network host $(IMAGE) 1>/dev/null
 	@echo 'Hermes running at: http://localhost:8080/hermes, swagger on http://localhost:8080/hermes/swagger'
+	@echo 'Connect to MongoDB with: mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true'
+	@echo 'Fake Email GUI at: http://localhost:8081'
+	@echo 'Keycloak GUI at: http://localhost:8082'
 
-stop:
-	@$(CONTAINER_RUNTIME) stop $(APP_CONTAINER) >/dev/null 2>&1 || true
+rm:
+	@echo "Stopping: $(APP_CONTAINER)"
 	@$(CONTAINER_RUNTIME) rm -f $(APP_CONTAINER) >/dev/null 2>&1 || true
+	@echo "Stopped: $(APP_CONTAINER)"
+
+list:
+	@$(CONTAINER_RUNTIME) ps -a --filter "name=$(APP_CONTAINER)"
 
 logs:
-	$(CONTAINER_RUNTIME) logs -f $(APP_CONTAINER)
+	@$(CONTAINER_RUNTIME) logs -f $(APP_CONTAINER)
 
 
-# Composed targets (combined workflows):
-startup: deps-up package image run
+# Composed targets (combined workflows)
+# Spin up everything, useful for the first time run or after a cleanup
+start: deps-up package image run
 
-shutdown: stop deps-down
+# Stop the app and dependencies, but keep volumes for data persistence
+stop: rm deps-down
 
-refresh: stop run
+# Refresh app, useful for quick code iterations
+refresh: rm package image run
 
-restart: shutdown startup
+# Stop everything and remove volumes, useful if app or dependencies need restart
+restart: stop deps-up run
 
-cleanup: stop deps-clean
+# Clean both app build dir and dependencies, useful for a full reset and clean of the environment
+cleanup: stop clean deps-clean
 
-clean-restart: cleanup startup
+# Reset everything and restart the app, useful for clean slate development or troubleshooting
+clean-restart: cleanup start
