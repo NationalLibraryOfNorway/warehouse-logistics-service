@@ -41,9 +41,8 @@ clean:
 
 test:
 	@echo '<?xml version="1.0" encoding="UTF-8"?><configuration><root level="OFF"/></configuration>' > src/test/resources/logback-test.xml
-	@SPRING_MAIN_BANNER_MODE=off mvn verify -Dspring.profiles.active="$(SPRING_PROFILE)" || rm -f src/test/resources/logback-test.xml
-	@mvn surefire-report:report-only
-	@xdg-open target/site/surefire-report.html
+	@SPRING_MAIN_BANNER_MODE=off mvn verify -Dspring.profiles.active="$(SPRING_PROFILE)"; status=$$?; rm -f src/test/resources/logback-test.xml; exit $$status
+	@xdg-open target/reports/surefire.html
 
 package:
 	@mvn package -DskipTests

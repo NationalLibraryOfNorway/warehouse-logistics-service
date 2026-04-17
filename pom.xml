@@ -376,7 +376,7 @@
         <executions>
           <execution>
             <id>generate-test-report</id>
-            <phase>verify</phase>
+            <phase>test</phase>
             <goals>
               <goal>report-only</goal>
             </goals>
