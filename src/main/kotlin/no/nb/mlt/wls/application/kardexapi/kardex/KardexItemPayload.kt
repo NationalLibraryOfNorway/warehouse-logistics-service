@@ -1,5 +1,6 @@
 package no.nb.mlt.wls.application.kardexapi.kardex
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import io.github.oshai.kotlinlogging.KotlinLogging
 import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
@@ -32,6 +33,7 @@ interface KardexItemPayload {
         return true
     }
 
+    @JsonIgnore
     fun isInvalid(): Boolean =
         when (this.motiveType) {
             MotiveType.StockUnavailable, MotiveType.SpaceUnavailable, MotiveType.Shortage -> true
@@ -41,6 +43,7 @@ interface KardexItemPayload {
     /**
      * Returns true for motives which are related to an order being explicitly deleted, which should still be processed as such.
      */
+    @JsonIgnore
     fun isDeleted(): Boolean =
         when (this.motiveType) {
             MotiveType.Deleted, MotiveType.Canceled -> true

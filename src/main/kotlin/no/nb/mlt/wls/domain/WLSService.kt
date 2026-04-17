@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.Environment
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Item
@@ -21,6 +22,7 @@ import no.nb.mlt.wls.domain.model.events.storage.OrderCreated
 import no.nb.mlt.wls.domain.model.events.storage.OrderDeleted
 import no.nb.mlt.wls.domain.model.events.storage.StorageEvent
 import no.nb.mlt.wls.domain.ports.inbound.AddNewItem
+import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrder
 import no.nb.mlt.wls.domain.ports.inbound.CreateOrderDTO
 import no.nb.mlt.wls.domain.ports.inbound.DeleteOrder
@@ -75,6 +77,7 @@ class WLSService(
     UpdateOrderStatus,
     MoveItem,
     PickOrderItems,
+    CancelOrderItems,
     PickItems,
     ReportItemAsMissing,
     SynchronizeItems {
@@ -298,6 +301,56 @@ class WLSService(
             val updatedOrder = getOrderOrThrow(hostName, orderId)
             if (updatedOrder.isPicked()) {
                 emailService.createOrderCompletion(updatedOrder = updatedOrder)
+            }
+        }
+    }
+
+    override suspend fun cancelOrderItems(
+        hostName: HostName,
+        hostOrderId: String,
+        cancelledItemIds: List<String>
+    ) {
+        val order = getOrderOrThrow(hostName, hostOrderId)
+        val cancelledOrder = order.cancelLines(cancelledItemIds)
+        processCancelledOrder(cancelledOrder, hostOrderId, cancelledItemIds)
+    }
+
+    override suspend fun cancelByAssociatedStorage(
+        hostName: HostName,
+        hostOrderId: String,
+        associatedStorage: AssociatedStorage
+    ) {
+        val order = getOrderOrThrow(hostName, hostOrderId)
+        val items = getItemsByIds(hostName, order.orderLine.map { it.hostId })
+        val cancelledLines =
+            items
+                .filter { it.associatedStorage == associatedStorage }
+                .map { it.hostId }
+        val cancelledOrder = order.cancelLines(cancelledLines)
+        processCancelledOrder(cancelledOrder, hostOrderId, cancelledLines)
+    }
+
+    private suspend fun processCancelledOrder(
+        cancelledOrder: Order,
+        hostOrderId: String,
+        cancelledLines: List<String>
+    ) {
+        val catalogEvent =
+            transactionPort.executeInTransaction {
+                if (orderRepository.updateOrder(cancelledOrder)) {
+                    logger.info { "The following order lines were cancelled from $hostOrderId: $cancelledLines" }
+                    catalogEventRepository.save(OrderEvent(cancelledOrder))
+                } else {
+                    logger.error { "Order $hostOrderId was unchanged after cancelling items $cancelledLines for it" }
+                    null
+                }
+            }
+
+        if (catalogEvent != null) {
+            processCatalogEventAsync(catalogEvent)
+            val updatedOrder = getOrderOrThrow(cancelledOrder.hostName, cancelledOrder.hostOrderId)
+            if (updatedOrder.isDeleted()) {
+                emailService.createOrderCancellation(updatedOrder)
             }
         }
     }

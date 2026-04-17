@@ -15,11 +15,13 @@ import no.nb.mlt.wls.createTestItem
 import no.nb.mlt.wls.createTestOrder
 import no.nb.mlt.wls.domain.model.HostName
 import no.nb.mlt.wls.domain.model.Order
+import no.nb.mlt.wls.domain.model.Order.Status
 import no.nb.mlt.wls.domain.model.UNKNOWN_LOCATION
 import no.nb.mlt.wls.infrastructure.repositories.item.ItemMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.item.toMongoItem
 import no.nb.mlt.wls.infrastructure.repositories.order.OrderMongoRepository
 import no.nb.mlt.wls.infrastructure.repositories.order.toMongoOrder
+import no.nb.mlt.wls.infrastructure.repositories.order.toOrder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -224,6 +226,69 @@ class KardexControllerTest(
             val item = itemRepository.findByHostNameAndHostId(testItem1.hostName, testItem1.hostId).awaitSingle()
             assert(item.quantity == transactionPayload.quantity.toInt())
             assert(item.quantity != testItem1.quantity)
+        }
+    }
+
+    @Test
+    fun `order update with blank location succeeds if it is deleted or cancelled`() {
+        runTest {
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(transactionPayload.copy(location = "", motiveType = MotiveType.Deleted)))
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(listOf(transactionPayload.copy(location = "", motiveType = MotiveType.Canceled)))
+                .exchange()
+                .expectStatus()
+                .isOk
+        }
+    }
+
+    @Test
+    fun `order update works with bulk payloads`() {
+        runTest {
+            val expectedOrderLine =
+                listOf(
+                    Order.OrderItem(testOrder.orderLine.first().hostId, Order.OrderItem.Status.PICKED),
+                    Order.OrderItem(testOrder.orderLine.last().hostId, Order.OrderItem.Status.FAILED)
+                )
+
+            webTestClient
+                .mutateWith(csrf())
+                .mutateWith(mockJwt().authorities(SimpleGrantedAuthority("ROLE_kardex")))
+                .post()
+                .uri("/order-update")
+                .accept(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    listOf(
+                        transactionPayload, // simulates pick
+                        transactionPayload, // intentional duplicate message, the system should handle this
+                        transactionPayload.copy(hostId = expectedOrderLine.last().hostId, location = "", motiveType = MotiveType.Deleted)
+                    )
+                ).exchange()
+                .expectStatus()
+                .isOk
+
+            val order = orderRepository.findByHostNameAndHostOrderId(testOrder.hostName, testOrder.hostOrderId).awaitSingle().toOrder()
+            assertThat(order)
+                .isNotNull
+                .extracting("status", "orderLine")
+                .containsExactly(
+                    Status.COMPLETED,
+                    expectedOrderLine
+                )
         }
     }
 

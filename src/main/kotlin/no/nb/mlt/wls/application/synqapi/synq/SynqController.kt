@@ -9,7 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import no.nb.mlt.wls.domain.model.AssociatedStorage
 import no.nb.mlt.wls.domain.model.HostName
+import no.nb.mlt.wls.domain.model.Order.Status
+import no.nb.mlt.wls.domain.ports.inbound.CancelOrderItems
 import no.nb.mlt.wls.domain.ports.inbound.MoveItem
 import no.nb.mlt.wls.domain.ports.inbound.PickItems
 import no.nb.mlt.wls.domain.ports.inbound.PickOrderItems
@@ -37,6 +40,7 @@ class SynqController(
     private val pickItems: PickItems,
     private val pickOrderItems: PickOrderItems,
     private val updateOrderStatus: UpdateOrderStatus,
+    private val cancelOrderItems: CancelOrderItems,
     private val synchronizeItems: SynchronizeItems
 ) {
     @Operation(
@@ -272,11 +276,22 @@ class SynqController(
             return ResponseEntity.ok().build()
         }
 
-        updateOrderStatus.updateOrderStatus(
-            HostName.fromString(orderUpdatePayload.hostName),
-            orderIdWithoutPrefix,
-            orderUpdatePayload.getConvertedStatus()
-        )
+        val status = orderUpdatePayload.getConvertedStatus()
+        if (status == Status.DELETED) {
+            val hostName = HostName.fromString(orderUpdatePayload.hostName)
+            val storage = computeStorageFromPrefix(orderId)
+            cancelOrderItems.cancelByAssociatedStorage(
+                hostName,
+                orderIdWithoutPrefix,
+                storage
+            )
+        } else {
+            updateOrderStatus.updateOrderStatus(
+                HostName.fromString(orderUpdatePayload.hostName),
+                orderIdWithoutPrefix,
+                status
+            )
+        }
 
         return ResponseEntity.ok().build()
     }
@@ -371,4 +386,18 @@ private fun normalizeOrderId(orderId: String): String {
         logger.warn { "Order ID $orderId doesn't have a prefix, might not be our order, trying regardless" }
     }
     return orderIdWithoutPrefix
+}
+
+/**
+ * Uses the prefix on an order ID to determine which storage it came from
+ */
+fun computeStorageFromPrefix(orderId: String): AssociatedStorage {
+    val segments = orderId.split(DELIMITER)
+    require(segments.size >= 2) { "Invalid order id does not contain prefix: $orderId" }
+    val prefix = segments[0]
+    if (prefix.endsWith("-AS")) return AssociatedStorage.AUTOSTORE
+    if (prefix.endsWith("-DP")) return AssociatedStorage.DEPOT
+    if (prefix.endsWith("-SD")) return AssociatedStorage.SYNQ
+    if (prefix.endsWith("-KD")) return AssociatedStorage.KARDEX
+    throw IllegalArgumentException("Order id contains unknown prefix: $orderId")
 }
