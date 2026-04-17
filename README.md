@@ -398,7 +398,7 @@ When running the application locally, or in a pipeline, all of these variables a
 However, when deploying to staging or production, they must be set manually.
 
 - `KAFKA_BOOTSTRAP_SERVERS`: Is used to set the Kafka bootstrap servers (default is `localhost:9092`)
-- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/realms/wls`)
+- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/realms/mlt-local`)
 - `KEYCLOAK_TOKEN_AUD`: Is used to set the audience of the Keycloak JWT token, it must match with the issued token audience value, which is different between environments (default is `http://localhost:8080`)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
