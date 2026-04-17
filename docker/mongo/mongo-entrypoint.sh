@@ -149,19 +149,22 @@ wait_for_mongosh_eval "MongoDB authenticated ping" "quit(db.adminCommand('ping')
 
 log "[4/5] Ensuring replica set is initialized..."
 
-mongosh -u "$MONGO_INITDB_ROOT_USERNAME" -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "
+# Wait for the real mongod (with --replSet) to be ready, then initialize the replica set if needed.
+# Step 3's ping may have succeeded against the bootstrap mongod (no replSet, no auth) before it
+# shut down. By the time we reach here, the real mongod may still be starting up, so we retry.
+wait_for_mongosh_eval "Replica set initialization" "
   try {
     rs.conf();
-    print('${LOG_PREFIX} ✓ Replica set already initialized');
+    quit(0);
   } catch(err) {
-    print('${LOG_PREFIX}   Replica set not initialized, creating...');
-    rs.initiate({
-      _id: 'rs0',
-      members: [{_id: 0, host: 'mongo-db:27017'}]
-    });
-    print('${LOG_PREFIX} ✓ Replica set initialized successfully');
+    if (err.codeName === 'NotYetInitialized' || err.code === 94) {
+      rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo-db:27017' }] });
+      quit(0);
+    }
+    quit(1);
   }
 "
+log "✓ Replica set ready (either already initialized or just initiated successfully)"
 
 
 # ==============================================================================

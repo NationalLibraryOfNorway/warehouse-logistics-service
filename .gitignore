@@ -29,8 +29,6 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
 
 ### Other ###
 # Some people really like their git patches...
@@ -38,3 +36,6 @@ build/
 
 # MongoDB container replica-set keyfile
 **/keyfile.key
+
+# Ignore file used to suppress logs during tests
+src/test/resources/logback-test.xml

@@ -7,20 +7,26 @@ import no.nb.mlt.wls.domain.model.Item
 import no.nb.mlt.wls.domain.model.ItemCategory
 import no.nb.mlt.wls.domain.model.Packaging
 import org.springframework.data.mongodb.core.index.CompoundIndex
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = "items")
-@CompoundIndex(unique = true, def = "{'hostName':1,'hostId':1}")
+@CompoundIndex(name = "host-asc_id-desc_unique_index", unique = true, def = "{'hostName':1,'hostId':-1}")
 data class MongoItem(
+    @Indexed(name = "id-asc_index")
     val hostId: String,
+    @Indexed(name = "host-asc_index")
     val hostName: HostName,
     val description: String,
+    @Indexed(name = "item-category-asc_index")
     val itemCategory: ItemCategory,
     val preferredEnvironment: Environment,
     val packaging: Packaging,
     val callbackUrl: String?,
+    @Indexed(name = "location-asc_index")
     val location: String,
     val quantity: Int,
+    @Indexed(name = "associated-storage-asc_index")
     val associatedStorage: AssociatedStorage,
     val confidential: Boolean
 )

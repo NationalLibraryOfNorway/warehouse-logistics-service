@@ -16,27 +16,28 @@ More features and benefits will be added as the service is developed.
 
 
 1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse--logistics-service)
-2. [Technologies](#technologies)
-3. [Running the Application](#running-the-application)
+1. [Technologies](#technologies)
+1. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-      2. [Using Docker](#using-docker)
-      3. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
-      4. [Using an IDE](#using-an-ide)
-   2. [Running Tests](#running-tests)
+      1. [Using Make](#using-make)
+      1. [Using Docker](#using-docker)
+      1. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
+      1. [Using an IDE](#using-an-ide)
+   1. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
-      2. [Running Tests in an IDE](#running-tests-in-an-ide)
-4. [Usage](#usage)
-5. [Dependencies](#dependencies)
+      1. [Running Tests in an IDE](#running-tests-in-an-ide)
+1. [Usage](#usage)
+1. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
-   2. [Deployment Dependencies](#deployment-dependencies)
-6. [Development](#development)
-7. [Configuration](#configuration)
-8. [Deployment](#deployment)
+   1. [Deployment Dependencies](#deployment-dependencies)
+1. [Development](#development)
+1. [Configuration](#configuration)
+1. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
-   2. [Deploying to Production Environment](#deploying-to-production-environment)
-9. [Contact](#contact)
-10. [License](#license)
+   1. [Deploying to Production Environment](#deploying-to-production-environment)
+1. [Contact](#contact)
+1. [License](#license)
 
 
 # Technologies
@@ -82,9 +83,49 @@ Use these commands to build and run the application locally:
 # Package the application, will execute the tests too
 mvn clean package
 
+# Package the application and skip tests
+mvn clean package -DskipTests
+
 # Run it locally
 java -jar target/wls.jar
 ```
+
+Tests in this project use Testcontainers and require a working Docker runtime (raw containerd won't work, Podman and similar require setup) available on your machine.
+
+### Using Make
+
+If you prefer `make`, you can wrap the same Maven and `nerdctl` or `docker` commands in local helper targets.
+The repository includes these targets in a dedicated [Makefile](Makefile).
+It comes with sane defaults that should work for most users, but allows you to override them:
+- `CONTAINER_RUNTIME` What runtime to use (default is `nerdctl`, most likely to require adjustment)
+- `COMPOSE_FILE` Path to the compose file (default is `docker/compose.yaml`)
+- `COMPOSE_CMD` Base command for working with compose (default is `$(CONTAINER_RUNTIME) compose -f $(COMPOSE_FILE)`)
+- `IMAGE` Name for the built application image (default is `wls:local`)
+- `APP_CONTAINER` Name for the application container (default is `wls-local`)
+- `SPRING_PROFILE` Spring profile to use (default is `local-dev`)
+
+You can override these variables like this:
+
+```shell
+# Use Docker runtime for a single command
+make CONTAINER_RUNTIME=docker deps-up
+
+# Make all commands use Docker runtime by default
+export CONTAINER_RUNTIME=docker
+make deps-up
+make test
+...
+```
+
+Most useful targets:
+
+- `start`: Start the app and its dependencies, but no tests, useful for spinning up full environment
+- `stop`: Stop the app and its dependencies, without cleanup, useful for stopping for a while
+- `refresh`: Refresh the app, keep dependencies running, but rebuild the app image, useful for testing changes as you work
+- `restart`: Stop everything and restart, useful if app or dependencies need a restart
+- `cleanup`: Stop, then clean up everything, but do not restart, useful for a full reset or if you want to get rid of everything
+- `clean-restart`: Same as cleanup, but will also restart the environment, useful if some remaining state is causing issues, or you made changes that you want to remove
+- `git`: Commit and push to remote repo, runs Spotless, does tests, makes a commit and pushes, safety checks to prevent working on `main`
 
 ### Using Docker
 
@@ -94,8 +135,8 @@ After building the JAR file, it can be used to build a Docker image using the fo
 # Move the jar to the Docker directory
 cp target/wls.jar docker/wls.jar
 
-# Use Docker Buildx to build the Docker Image
-docker buildx build --platform linux/amd64 -t wls:latest docker/
+# Build a local image
+docker build -t wls:local docker/
 ```
 
 If you need local setup of Docker on Arch Linux, install and enable the required tooling:
@@ -106,27 +147,23 @@ systemctl enable --now docker
 ```
 
 ***Caveats:***
-- When building the Docker image outside NLNs network, the build will fail, as it won't be able to access the internal Harbor instance which is used to pull the base image.
+- When building the Docker image outside NLNs network, the build will fail.
+  That's because it won't be able to access the internal Harbor instance which is used to pull the base image.
   In this case change the `FROM` line in the [Dockerfile](docker/Dockerfile "Link to project's Dockerfile") to `FROM eclipse-temurin:21-jdk-noble` and build the image locally.
 - Do not attempt to push the image to Harbor manually, as it will fail.
   The image is built and pushed to Harbor automatically by the CI/CD pipeline.
 
 A pre-built image can be found on NLNs internal Harbor instance under the `mlt` namespace.
-The images are built based on the `main` branch as well as project `tags`, and can be pulled using the following command:
+The images are built based on the `main` branch, tag releases (`vX.Y.Z`), and hash of the commit that triggered the build.
+
+With the image either built or pulled, WLS can be run using the following commands:
 
 ```shell
-# Pull the latest image
-docker pull harbor.nb.no/mlt/wls:latest
+# For pulled image
+docker run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host harbor.nb.no/mlt/wls:<TAG>
 
-# Or pull a specific tag (either a GitHub tag or "main" for the latest main branch image)
-docker pull harbor.nb.no/mlt/wls:<TAG>
-```
-
-With the image either built or pulled, WLS can be run using the following command:
-
-```shell
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" harbor.nb.no/mlt/wls:<TAG> # For pulled image
-docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE="local-dev" wls:latest # For locally built image
+# For locally built image
+docker run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
 ```
 
 ### Using containerd + BuildKit (nerdctl)
@@ -137,8 +174,8 @@ After building the JAR file, it can be used to build an image with `nerdctl` (wh
 # Move the jar to the Docker directory
 cp target/wls.jar docker/wls.jar
 
-# Build image with containerd/BuildKit
-nerdctl build --platform linux/amd64 -t wls:latest docker/
+# Build a local image
+nerdctl build -t wls:local docker/
 ```
 
 If you need local setup of "rootful" `containerd` on Arch Linux, install and enable the required tooling:
@@ -151,7 +188,15 @@ systemctl enable --now buildkit
 
 The same caveats from [Using Docker](#using-docker) apply when building outside NLN's network.
 
-With the image either built or pulled, WLS can be run using the same commands as in [Using Docker](#using-docker), just use `nerdctl` instead of `docker`.
+With the image either built or pulled, WLS can be run using the following commands:
+
+```shell
+# For pulled image
+nerdctl run --rm -e SPRING_PROFILES_ACTIVE="local-dev" --network host harbor.nb.no/mlt/wls:<TAG>
+
+# For locally built image
+nerdctl run --rm  -e SPRING_PROFILES_ACTIVE="local-dev" --network host wls:local
+```
 
 ### Using an IDE
 
@@ -173,6 +218,8 @@ To run the tests, use the following command:
 ```shell
 mvn clean test
 ```
+
+See the note in [Using Maven](#using-maven) about the Docker runtime requirement for Testcontainers.
 
 It should run all the tests in the project and provide a report at the end.
 You can see the results in both the console and in the `target/surefire-reports` directory.
@@ -226,11 +273,15 @@ The compose stack can be run with either `<docker|nerdctl> compose`.
 This will spin up the following services:
 
 - MongoDB: database for the application
-  - Use the following credentials to log in:
-    - Username: `wls`
-    - Password: `slw`
+  - The compose setup provisions two databases:
+    - **wls**: main application database used by Hermes WLS
+      - Username: `wls`, Password: `slw`
+      - Example URI: `mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`
+    - **moveit**: MoveIt companion database (MoveIt depends on WLS to function)
+      - Username: `moveit`, Password: `tievom`
+      - Example URI: `mongodb://moveit:tievom@localhost/moveit?replicaSet=rs0&authSource=moveit&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`
 - Email: uses a fake SMTP server for testing email functionality locally
-    - Can be accessed at: `http://localhost:1080`
+    - Can be accessed at: `http://localhost:8081`
 - Keycloak: authentication and authorization service for the application
   - Can be accessed at: `http://localhost:8082`
   - Use the following credentials to log in:
@@ -335,15 +386,24 @@ When running the application locally, or in a pipeline, all of these variables a
 However, when deploying to staging or production, they must be set manually.
 
 - `KAFKA_BOOTSTRAP_SERVERS`: Is used to set the Kafka bootstrap servers (default is `localhost:9092`)
-- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/auth/realms/wls`)
+- `KEYCLOAK_ISSUER_URI`: Is used to point at the Keycloak server used for authentication (default is `http://localhost:8082/realms/mlt-local`)
 - `KEYCLOAK_TOKEN_AUD`: Is used to set the audience of the Keycloak JWT token, it must match with the issued token audience value, which is different between environments (default is `http://localhost:8080`)
 - `SPRING_PROFILES_ACTIVE`: Is used to set the active Spring profile, use `local-dev`, `stage` or `prod` (default is `pipeline`)
 - `EMAIL_SERVER`: Is the URL to email server used to send emails (default is `localhost`)
 - `EMAIL_PORT`: Is the port used by the email server (default is `1025`)
-- `MONGODB_URI`: Is the connection URI for our MongoDB instances, in form `mongodb://username:password@host1:27017,host2:27017,host3:27017/database` (default is `mongodb://wls:slw@localhost:27017/wls?replicaSet=rs0&authSource=wls&directConnection=true`)
+- `MONGODB_URI`: Is the connection URI for our MongoDB instances (default is `mongodb://wls:slw@localhost/wls?replicaSet=rs0&authSource=wls&readPreference=primary&w=majority&journal=true&retryWrites=true&directConnection=true`).
+  The URI options used are used in local, staging, and production environments, and are as follows:
+  - `replicaSet=rs0`: name of the replica set; required for transactions and change streams
+  - `authSource=wls`: database used to authenticate the connecting user
+  - `readPreference=primary`: always read from the primary replica set member
+  - `w=majority`: write concern; waits for acknowledgement from a majority of replica set members before confirming
+  - `journal=true`: write concern; waits until the primary has written the operation to its journal
+  - `retryWrites=true`: automatically retries eligible write operations once on a network error
+  For local single-host connections, the default URI above already includes `directConnection=true` to bypass replica set discovery and monitoring.
+  For multi-host replica sets, omit `directConnection=true` and list all hosts: `mongodb://<user>:<pass>@<host1>,<host2>,<host3>/<database>?...`
 - `CALLBACK_SECRET`: Is the secret key used for signing outgoing callbacks (default is `superdupersecretkey`)
 - `SYNQ_BASE_URL`: Is the base URL used for communicating against SynQ (default is `http://localhost:8181/synq/resources`)
-- `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `false`)
+- `KARDEX_ENABLED`: Is used to enable or disable the Kardex adapter (default is `true`)
 - `KARDEX_BASE_URL`: Is the base URL used for communicating against Kardex (default is `http://localhost:8182/kardex`)
 - `LOGISTICS_ENABLED`: Is used to enable or disable the Logistics API (default is `true`)
 - `ORDER_HANDLER_EMAIL`: Is the email address where orders are sent to (default is `daniel@mlt.hermes.no`)
