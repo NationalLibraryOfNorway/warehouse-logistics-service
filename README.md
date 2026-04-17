@@ -16,28 +16,28 @@ More features and benefits will be added as the service is developed.
 
 
 1. [Hermes the Warehouse \& Logistics Service](#hermes-the-warehouse--logistics-service)
-2. [Technologies](#technologies)
-3. [Running the Application](#running-the-application)
+1. [Technologies](#technologies)
+1. [Running the Application](#running-the-application)
    1. [Building and Running Locally](#building-and-running-locally)
       1. [Using Maven](#using-maven)
-    2. [Using Make (Optional)](#using-make-optional)
-    3. [Using Docker](#using-docker)
-    4. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
-    5. [Using an IDE](#using-an-ide)
-   2. [Running Tests](#running-tests)
+      1. [Using Make](#using-make)
+      1. [Using Docker](#using-docker)
+      1. [Using containerd + BuildKit (nerdctl)](#using-containerd--buildkit-nerdctl)
+      1. [Using an IDE](#using-an-ide)
+   1. [Running Tests](#running-tests)
       1. [Running Tests in the Pipeline](#running-tests-in-the-pipeline)
-      2. [Running Tests in an IDE](#running-tests-in-an-ide)
-4. [Usage](#usage)
-5. [Dependencies](#dependencies)
+      1. [Running Tests in an IDE](#running-tests-in-an-ide)
+1. [Usage](#usage)
+1. [Dependencies](#dependencies)
    1. [Local Dependencies](#local-dependencies)
-   2. [Deployment Dependencies](#deployment-dependencies)
-6. [Development](#development)
-7. [Configuration](#configuration)
-8. [Deployment](#deployment)
+   1. [Deployment Dependencies](#deployment-dependencies)
+1. [Development](#development)
+1. [Configuration](#configuration)
+1. [Deployment](#deployment)
    1. [Deploying to Staging Environment](#deploying-to-staging-environment)
-   2. [Deploying to Production Environment](#deploying-to-production-environment)
-9. [Contact](#contact)
-10. [License](#license)
+   1. [Deploying to Production Environment](#deploying-to-production-environment)
+1. [Contact](#contact)
+1. [License](#license)
 
 
 # Technologies
@@ -92,12 +92,19 @@ java -jar target/wls.jar
 
 Tests in this project use Testcontainers and require a working Docker runtime (raw containerd won't work, Podman and similar require setup) available on your machine.
 
-### Using Make (Optional)
+### Using Make
 
 If you prefer `make`, you can wrap the same Maven and `nerdctl` or `docker` commands in local helper targets.
-The repository includes these targets in a dedicated [Makefile](Makefile), with overridable variables for `CONTAINER_RUNTIME`, `COMPOSE_FILE`, `COMPOSE_CMD`, `IMAGE`, `APP_CONTAINER`, and `SPRING_PROFILE`.
+The repository includes these targets in a dedicated [Makefile](Makefile).
+It comes with sane defaults that should work for most users, but allows you to override them:
+- `CONTAINER_RUNTIME` What runtime to use (default is `nerdctl`, most likely to require adjustment)
+- `COMPOSE_FILE` Path to the compose file (default is `docker/compose.yaml`)
+- `COMPOSE_CMD` Base command for working with compose (default is `$(CONTAINER_RUNTIME) compose -f $(COMPOSE_FILE)`)
+- `IMAGE` Name for the built application image (default is `wls:local`)
+- `APP_CONTAINER` Name for the application container (default is `wls-local`)
+- `SPRING_PROFILE` Spring profile to use (default is `local-dev`)
 
-You can override settings like `CONTAINER_RUNTIME` per command invocation:
+You can override these variables like this:
 
 ```shell
 # Use Docker runtime for a single command
@@ -106,38 +113,19 @@ make CONTAINER_RUNTIME=docker deps-up
 # Make all commands use Docker runtime by default
 export CONTAINER_RUNTIME=docker
 make deps-up
+make test
+...
 ```
 
 Most useful targets:
 
-- `make deps-up`: start local dependencies from `docker/compose.yaml` (MongoDB, Kafka, Keycloak, etc.)
-- `make deps-down`: stop local dependencies
-- `make test`: run tests (`mvn clean verify`) with the configured Spring profile
-- `make package`: build the JAR file
-- `make image`: build the application container image
-- `make run`: run the application container from the local image
-- `make stop`: stop the application container
-- `make startup`: run `deps-up`, `package`, `image`, and `run` in sequence
-
-**Important:** The application container needs access to the dependencies created by `deps-up`.
-Run `make deps-up` before `make run`, or use `make startup` to start everything together.
-
-Examples:
-
-```shell
-# Option 1: Start dependencies first, then run the app separately
-make deps-up
-make test
-make package
-make image
-make run
-make stop
-make deps-down
-
-# Option 2: Start everything at once (recommended)
-make startup
-make stop
-```
+- `start`: Start the app and its dependencies, but no tests, useful for spinning up full environment
+- `stop`: Stop the app and its dependencies, without cleanup, useful for stopping for a while
+- `refresh`: Refresh the app, keep dependencies running, but rebuild the app image, useful for testing changes as you work
+- `restart`: Stop everything and restart, useful if app or dependencies need a restart
+- `cleanup`: Stop, then clean up everything, but do not restart, useful for a full reset or if you want to get rid of everything
+- `clean-restart`: Same as cleanup, but will also restart the environment, useful if some remaining state is causing issues, or you made changes that you want to remove
+- `git`: Commit and push to remote repo, runs Spotless, does tests, makes a commit and pushes, safety checks to prevent working on `main`
 
 ### Using Docker
 

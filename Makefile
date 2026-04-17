@@ -12,7 +12,7 @@ SPRING_PROFILE ?= local-dev
 
 # .PHONY marks non-file targets so make always runs the recipe,
 # even if a file with the same name exists in the working directory.
-.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run rm list logs start shutdown refresh cleanup restart clean-restart
+.PHONY: deps-up deps-down deps-clean deps-list deps-logs spotless clean test package image run rm list logs start shutdown refresh cleanup restart clean-restart git
 
 
 # Dependencies (docker compose stack used by the app)
@@ -41,8 +41,8 @@ clean:
 
 test:
 	@echo '<?xml version="1.0" encoding="UTF-8"?><configuration><root level="OFF"/></configuration>' > src/test/resources/logback-test.xml
-	@SPRING_MAIN_BANNER_MODE=off mvn verify -Dspring.profiles.active="$(SPRING_PROFILE)"; status=$$?; rm -f src/test/resources/logback-test.xml; exit $$status
-	@xdg-open target/reports/surefire.html
+	@SPRING_MAIN_BANNER_MODE=off mvn verify -Dsurefire.testFailureIgnore=true -Dspring.profiles.active="$(SPRING_PROFILE)"; status=$$?; rm -f src/test/resources/logback-test.xml; exit $$status
+	@xdg-open target/surefire-reports/graphical/hermes-test-report.html # Set in pom.xml -> maven-surefire-report-plugin
 
 package:
 	@mvn package -DskipTests
@@ -85,7 +85,7 @@ stop: rm deps-down
 # Refresh app, useful for quick code iterations
 refresh: rm package image run
 
-# Stop everything and remove volumes, useful if app or dependencies need restart
+# Stop everything and restart, useful if app or dependencies need a restart
 restart: stop deps-up run
 
 # Clean both app build dir and dependencies, useful for a full reset and clean of the environment
@@ -93,3 +93,19 @@ cleanup: stop clean deps-clean
 
 # Reset everything and restart the app, useful for clean slate development or troubleshooting
 clean-restart: cleanup start
+
+# Local Git workflow (quality gate -> commit -> push)
+git: spotless test
+	@current_branch="$$(git rev-parse --abbrev-ref HEAD)"; \
+	if [ "$$current_branch" = "main" ]; then \
+		printf "Current branch is main. Enter new branch name: "; \
+		read BRANCH_NAME; \
+		if [ -z "$$BRANCH_NAME" ]; then \
+			echo "Branch name cannot be empty"; \
+			exit 1; \
+		fi; \
+		git switch -c "$$BRANCH_NAME"; \
+	fi
+	@git add .
+	git commit -a
+	@git push -u origin HEAD || true

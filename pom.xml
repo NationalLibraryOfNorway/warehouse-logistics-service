@@ -90,6 +90,7 @@
     <nayuki.qrcodegen.version>1.8.0</nayuki.qrcodegen.version>
     <mockwebserver.version>4.12.0</mockwebserver.version>
     <surefire.version>3.5.5</surefire.version>
+    <surefire.testFailureIgnore>false</surefire.testFailureIgnore>
 
     <kotlin.version>2.3.20</kotlin.version>
     <kotlin.code.style>official</kotlin.code.style>
@@ -305,12 +306,31 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+        <configuration>
+          <mainClass>no.nb.mlt.wls.HermesApplicationKt</mainClass>
+        </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-maven-plugin</artifactId>
         <version>${kotlin.version}</version>
+        <executions>
+          <execution>
+            <id>compile</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>test-compile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>test-compile</goal>
+            </goals>
+          </execution>
+        </executions>
         <configuration>
           <args>
             <arg>-Xjsr305=strict</arg>
@@ -366,6 +386,7 @@
         <configuration>
           <reportFormat>plain</reportFormat>
           <useFile>false</useFile>
+          <testFailureIgnore>${surefire.testFailureIgnore}</testFailureIgnore>
         </configuration>
       </plugin>
 
@@ -373,10 +394,14 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
         <version>${surefire.version}</version>
+        <configuration>
+          <outputDirectory>${project.build.directory}/surefire-reports/graphical</outputDirectory>
+          <outputName>hermes-test-report</outputName>
+        </configuration>
         <executions>
           <execution>
             <id>generate-test-report</id>
-            <phase>test</phase>
+            <phase>verify</phase>
             <goals>
               <goal>report-only</goal>
             </goals>

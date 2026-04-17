@@ -36,3 +36,6 @@ build/
 
 # MongoDB container replica-set keyfile
 **/keyfile.key
+
+# Ignore file used to suppress logs during tests
+src/test/resources/logback-test.xml
