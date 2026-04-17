@@ -144,6 +144,9 @@ fun Item.toMovedProduct() =
             )
     )
 
+fun orderLineFromItems(vararg items: Item): List<Order.OrderItem> =
+    items.map { item -> Order.OrderItem(item.hostId, Order.OrderItem.Status.NOT_STARTED) }
+
 fun createOrderAddress(): Order.Address = Order.Address("recipient", "addressLine1", "addressLine2", "postcode", "city", "region", "country")
 
 fun createTestItem(
